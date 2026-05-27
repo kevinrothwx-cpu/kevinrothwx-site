@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Page Not Found — Kevin Roth{% endblock %}
 {% block content %}
-<section class="max-w-2xl mx-auto px-6 py-24 text-center">
-  <p class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">404</p>
-  <h1 class="text-3xl font-bold mb-4">That page isn't here.</h1>
-  <p class="text-slate-700 mb-8">It may have moved or never existed.</p>
-  <a href="/" class="inline-flex items-center px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">← Back to home</a>
+<section class="section">
+  <div class="container-tight" style="text-align: center;">
+    <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">404</p>
+    <h1 class="h2" style="margin-bottom: 1rem;">That page isn't here.</h1>
+    <p class="lead" style="margin-bottom: 2.5rem;">It may have moved or never existed.</p>
+    <a href="/" class="btn btn-primary">← Back to home</a>
+  </div>
 </section>
 {% endblock %}

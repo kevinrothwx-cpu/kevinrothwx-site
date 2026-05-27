@@ -4,59 +4,76 @@
 {% block description %}Sports meteorologist Kevin Roth — founder of OVERcast, daily MLB weather analysis on PropFinder, and forecasts for MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar. Featured by Fox Weather, Yahoo Sports, CBS Sports, Sporting News.{% endblock %}
 
 {% block content %}
-<section class="max-w-6xl mx-auto px-6 py-16 md:py-24">
-  <div class="max-w-3xl">
-    <p class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Sports Meteorologist</p>
-    <h1 class="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-6">
-      Kevin Roth has been the go-to source for sports weather for the past 15 years.
-    </h1>
-    <p class="text-lg text-slate-700 leading-relaxed mb-8">
-      Daily MLB weather analysis on PropFinder. Founder of OVERcast.
-      Forecasts on X for MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar.
-      Former Chief Meteorologist at RotoGrinders.com (2012–2026).
+<section class="hero">
+  <div class="container-tight">
+    <p class="kicker" style="margin-bottom: 1.5rem;">Sports Meteorologist · Houston, TX</p>
+    <h1 class="display">The go-to source for sports weather for the past 15&nbsp;years.</h1>
+    <p class="lead">
+      Kevin Roth is the founder of OVERcast and writes the daily MLB Weather column for PropFinder.
+      Former Chief Meteorologist at RotoGrinders.com (2012–2026). Forecasts on X for MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar.
     </p>
-    <div class="flex flex-wrap gap-3">
-      <a href="/overcast" class="inline-flex items-center px-5 py-3 rounded-md bg-slate-900 text-white font-medium hover:bg-slate-700">
-        Try OVERcast →
-      </a>
-      <a href="/about" class="inline-flex items-center px-5 py-3 rounded-md border border-slate-300 text-slate-900 font-medium hover:bg-slate-50">
-        About Kevin
-      </a>
+    <div class="hero__cta">
+      <a href="/overcast" class="btn btn-primary">Try OVERcast →</a>
+      <a href="/about" class="btn btn-secondary">About Kevin</a>
     </div>
   </div>
 </section>
 
-<section class="bg-slate-50 border-y border-slate-200">
-  <div class="max-w-6xl mx-auto px-6 py-10">
-    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-4">Featured in</p>
-    <div class="flex flex-wrap items-center gap-x-8 gap-y-3 text-slate-700 font-medium">
-      <span>Fox Weather</span>
-      <span>Yahoo Sports</span>
-      <span>Sporting News</span>
-      <span>CBS Sports</span>
-      <span>The Weather Channel</span>
-      <span>Baseball America</span>
-      <span>Matthew Berry's Fantasy Life</span>
-      <span>Lee Enterprises</span>
+<section class="featured-strip">
+  <div class="featured-strip__inner">
+    <p class="featured-strip__label">Featured in</p>
+    <div class="featured-strip__list">
+      <span class="featured-strip__item">Fox Weather</span>
+      <span class="featured-strip__item">Yahoo Sports</span>
+      <span class="featured-strip__item">Sporting News</span>
+      <span class="featured-strip__item">CBS Sports</span>
+      <span class="featured-strip__item">The Weather Channel</span>
+      <span class="featured-strip__item">Baseball America</span>
+      <span class="featured-strip__item">Matthew Berry's Fantasy Life</span>
+      <span class="featured-strip__item">Lee Enterprises</span>
     </div>
   </div>
 </section>
 
-<section class="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-3 gap-8">
-  <a href="/overcast" class="block p-6 rounded-lg border border-slate-200 hover:border-slate-400 hover:shadow-sm transition">
-    <p class="text-sm font-medium text-slate-500 mb-2">Product</p>
-    <h3 class="text-xl font-semibold mb-2">OVERcast</h3>
-    <p class="text-sm text-slate-600">Weather-driven MLB analysis for bettors and DFS players. NFL coverage in development.</p>
-  </a>
-  <a href="/mlb-weather" class="block p-6 rounded-lg border border-slate-200 hover:border-slate-400 hover:shadow-sm transition">
-    <p class="text-sm font-medium text-slate-500 mb-2">Free</p>
-    <h3 class="text-xl font-semibold mb-2">Daily Sports Weather</h3>
-    <p class="text-sm text-slate-600">MLB weather on PropFinder daily. Forecasts on X for NFL, PGA, NCAAF, and racing.</p>
-  </a>
-  <a href="/press" class="block p-6 rounded-lg border border-slate-200 hover:border-slate-400 hover:shadow-sm transition">
-    <p class="text-sm font-medium text-slate-500 mb-2">Media</p>
-    <h3 class="text-xl font-semibold mb-2">Press & Bio</h3>
-    <p class="text-sm text-slate-600">Featured by Fox Weather, Yahoo Sports, CBS Sports, Sporting News, and more.</p>
-  </a>
+<section class="section">
+  <div class="container">
+    <div class="stats">
+      <div>
+        <div class="stat__value">87K+</div>
+        <div class="stat__label">Followers on X (@KevinRothWx)</div>
+      </div>
+      <div>
+        <div class="stat__value">15 yrs</div>
+        <div class="stat__label">Sports-weather analysis experience</div>
+      </div>
+      <div>
+        <div class="stat__value">100+</div>
+        <div class="stat__label">NFL weather articles for Sporting News</div>
+      </div>
+    </div>
+
+    <hr class="rule">
+
+    <div class="cards">
+      <a href="/overcast" class="card">
+        <span class="card__arrow">→</span>
+        <p class="card__kicker">Product</p>
+        <h3 class="card__title">OVERcast</h3>
+        <p class="card__body">Weather-driven MLB analysis for bettors and daily fantasy players. NFL coverage in development.</p>
+      </a>
+      <a href="/mlb-weather" class="card">
+        <span class="card__arrow">→</span>
+        <p class="card__kicker">Free Daily</p>
+        <h3 class="card__title">Sports Weather Forecasts</h3>
+        <p class="card__body">MLB weather on PropFinder daily. Forecasts on X for NFL, PGA, NCAAF, NASCAR, and IndyCar.</p>
+      </a>
+      <a href="/press" class="card">
+        <span class="card__arrow">→</span>
+        <p class="card__kicker">Press</p>
+        <h3 class="card__title">As featured in</h3>
+        <p class="card__body">Fox Weather, Yahoo Sports, CBS Sports, Sporting News, The Weather Channel, Baseball America, and more.</p>
+      </a>
+    </div>
+  </div>
 </section>
 {% endblock %}

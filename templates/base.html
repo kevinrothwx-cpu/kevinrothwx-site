@@ -6,30 +6,21 @@
   <title>{% block title %}Kevin Roth — Sports Meteorologist{% endblock %}</title>
   <meta name="description" content="{% block description %}Kevin Roth is a sports meteorologist and founder of OVERcast. Daily MLB weather analysis, NFL forecasts, and weather-driven sports betting insight.{% endblock %}">
   <link rel="canonical" href="https://kevinrothwx.com{{ request.path }}">
-
-  <!-- Open Graph -->
   <meta property="og:title" content="{% block og_title %}Kevin Roth — Sports Meteorologist{% endblock %}">
   <meta property="og:description" content="{% block og_description %}Sports meteorologist. Founder of OVERcast. Featured by Fox Weather, Yahoo Sports, CBS Sports, Sporting News.{% endblock %}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://kevinrothwx.com{{ request.path }}">
   <meta property="og:image" content="https://kevinrothwx.com/static/img/og-default.jpg">
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@KevinRothWx">
   <meta name="twitter:creator" content="@KevinRothWx">
   <meta name="twitter:title" content="{% block twitter_title %}Kevin Roth — Sports Meteorologist{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}Sports meteorologist. Founder of OVERcast.{% endblock %}">
   <meta name="twitter:image" content="https://kevinrothwx.com/static/img/og-default.jpg">
-
-  <!-- Tailwind via Play CDN. Trade-off: small CSS payload, no build step. Fine for a marketing site. -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-  <!-- Global WebSite schema (references the canonical Person on /about) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -43,90 +34,76 @@
     }
   }
   </script>
-
   {% block extra_head %}{% endblock %}
 </head>
-<body class="font-sans bg-white text-slate-900 antialiased">
-
-  <header class="border-b border-slate-200 bg-white">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="/" class="text-lg font-semibold tracking-tight">
-        Kevin Roth <span class="text-slate-500 font-normal">— Sports Meteorologist</span>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="/" class="brand">
+        Kevin Roth
+        <span class="brand__divider">/</span>
+        <span class="brand__role">Sports Meteorologist</span>
       </a>
-      <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a href="/about" class="hover:text-slate-600">About</a>
-        <a href="/press" class="hover:text-slate-600">Press</a>
-        <a href="/mlb-weather" class="hover:text-slate-600">MLB</a>
-        <a href="/nfl-weather" class="hover:text-slate-600">NFL</a>
-        <a href="/pga-weather" class="hover:text-slate-600">PGA</a>
-        <a href="/overcast" class="px-3 py-1.5 rounded-md bg-slate-900 text-white hover:bg-slate-700">OVERcast</a>
-      </nav>
-      <button id="mobile-menu-btn" class="md:hidden text-sm" aria-label="Menu">Menu</button>
-    </div>
-    <nav id="mobile-menu" class="md:hidden hidden border-t border-slate-200">
-      <div class="max-w-6xl mx-auto px-6 py-3 flex flex-col gap-3 text-sm">
+      <nav class="nav">
         <a href="/about">About</a>
         <a href="/press">Press</a>
-        <a href="/mlb-weather">MLB Weather</a>
-        <a href="/nfl-weather">NFL Weather</a>
-        <a href="/pga-weather">PGA Weather</a>
-        <a href="/overcast">OVERcast</a>
-        <a href="/contact">Contact</a>
-      </div>
+        <a href="/mlb-weather">MLB</a>
+        <a href="/nfl-weather">NFL</a>
+        <a href="/pga-weather">PGA</a>
+        <a href="/overcast" class="nav__cta">OVERcast</a>
+      </nav>
+      <button id="mobile-menu-btn" class="mobile-toggle" aria-label="Menu">Menu</button>
+    </div>
+    <nav id="mobile-menu" class="mobile-nav">
+      <a href="/about">About</a>
+      <a href="/press">Press</a>
+      <a href="/mlb-weather">MLB Weather</a>
+      <a href="/nfl-weather">NFL Weather</a>
+      <a href="/pga-weather">PGA Weather</a>
+      <a href="/overcast">OVERcast</a>
+      <a href="/contact">Contact</a>
     </nav>
   </header>
-
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <div class="max-w-3xl mx-auto px-6 pt-4">
+      <div class="flash">
         {% for category, msg in messages %}
-          <div class="rounded-md p-3 text-sm {% if category == 'error' %}bg-red-50 text-red-800{% else %}bg-emerald-50 text-emerald-800{% endif %}">
-            {{ msg }}
-          </div>
+          <div class="flash__msg flash__msg--{% if category == 'error' %}error{% else %}success{% endif %}">{{ msg }}</div>
         {% endfor %}
       </div>
     {% endif %}
   {% endwith %}
-
-  <main>
-    {% block content %}{% endblock %}
-  </main>
-
-  <footer class="border-t border-slate-200 mt-24 bg-slate-50">
-    <div class="max-w-6xl mx-auto px-6 py-10 grid md:grid-cols-3 gap-8 text-sm text-slate-600">
+  <main>{% block content %}{% endblock %}</main>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
       <div>
-        <p class="font-semibold text-slate-900">Kevin Roth</p>
-        <p>Sports meteorologist. Founder of OVERcast.</p>
+        <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; color: var(--ink); margin-bottom: 0.5rem;">Kevin Roth</p>
+        <p>Sports meteorologist. Founder of OVERcast. Weather analysis for bettors and daily fantasy players across MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar.</p>
       </div>
       <div>
-        <p class="font-semibold text-slate-900 mb-2">Site</p>
-        <ul class="space-y-1">
-          <li><a href="/about" class="hover:text-slate-900">About</a></li>
-          <li><a href="/press" class="hover:text-slate-900">Press</a></li>
-          <li><a href="/overcast" class="hover:text-slate-900">OVERcast</a></li>
-          <li><a href="/contact" class="hover:text-slate-900">Contact</a></li>
+        <h4>Site</h4>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/press">Press</a></li>
+          <li><a href="/overcast">OVERcast</a></li>
+          <li><a href="/contact">Contact</a></li>
         </ul>
       </div>
       <div>
-        <p class="font-semibold text-slate-900 mb-2">Connect</p>
-        <ul class="space-y-1">
-          <li><a href="https://x.com/KevinRothWx" class="hover:text-slate-900">X / Twitter</a></li>
-          <li><a href="https://www.linkedin.com/in/kevin-roth-70bb0295/" class="hover:text-slate-900">LinkedIn</a></li>
-          <li><a href="https://app.kevinrothwx.com/" class="hover:text-slate-900">OVERcast App</a></li>
+        <h4>Elsewhere</h4>
+        <ul>
+          <li><a href="https://x.com/KevinRothWx">X / Twitter</a></li>
+          <li><a href="https://www.linkedin.com/in/kevin-roth-70bb0295/">LinkedIn</a></li>
+          <li><a href="https://app.kevinrothwx.com/">OVERcast App</a></li>
+          <li><a href="https://propfinder.app/weather">PropFinder MLB</a></li>
         </ul>
       </div>
     </div>
-    <div class="border-t border-slate-200">
-      <div class="max-w-6xl mx-auto px-6 py-4 text-xs text-slate-500">
-        &copy; {{ current_year }} Kevin Roth. All rights reserved.
-      </div>
-    </div>
+    <div class="site-footer__copy">&copy; {{ current_year }} Kevin Roth. All rights reserved.</div>
   </footer>
-
   <script>
-    // Mobile menu toggle
     document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
-      document.getElementById('mobile-menu')?.classList.toggle('hidden');
+      document.getElementById('mobile-menu')?.classList.toggle('open');
     });
   </script>
 </body>
