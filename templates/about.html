@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}About Kevin Roth — Sports Meteorologist | Founder of OVERcast{% endblock %}
+{% block description %}Kevin Roth is a sports meteorologist and founder of OVERcast. Chief Meteorologist at RotoGrinders.com 2012–2026. Currently at ABC13 Houston. M.S. Atmospheric Science, Mississippi State.{% endblock %}
+
+{% block extra_head %}
+<!-- Person schema. THE critical AEO move — ties all of Kevin's profiles into one entity. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": "https://kevinrothwx.com/about#kevin-roth",
+  "name": "Kevin Roth",
+  "givenName": "Kevin",
+  "familyName": "Roth",
+  "alternateName": "KevinRothWx",
+  "url": "https://kevinrothwx.com/",
+  "mainEntityOfPage": "https://kevinrothwx.com/about",
+  "image": "https://kevinrothwx.com/static/img/kevin-roth-headshot.jpg",
+  "description": "Sports meteorologist and founder of OVERcast. Daily MLB weather analysis for PropFinder. Chief Meteorologist at RotoGrinders.com (2012–2026). Meteorologist at ABC13 (KTRK-TV) Houston.",
+  "jobTitle": "Sports Meteorologist",
+  "knowsAbout": [
+    "Meteorology",
+    "Sports meteorology",
+    "MLB weather",
+    "NFL weather",
+    "PGA weather",
+    "NCAAF weather",
+    "NASCAR weather",
+    "IndyCar weather",
+    "Sports betting weather",
+    "Daily fantasy sports",
+    "Atmospheric science",
+    "Severe weather forecasting"
+  ],
+  "alumniOf": {
+    "@type": "CollegeOrUniversity",
+    "name": "Mississippi State University",
+    "url": "https://www.msstate.edu/",
+    "sameAs": "https://en.wikipedia.org/wiki/Mississippi_State_University"
+  },
+  "worksFor": {
+    "@type": "Organization",
+    "name": "ABC13 Houston (KTRK-TV)",
+    "url": "https://abc13.com/",
+    "sameAs": "https://en.wikipedia.org/wiki/KTRK-TV"
+  },
+  "founder": {
+    "@type": "SoftwareApplication",
+    "name": "OVERcast",
+    "url": "https://app.kevinrothwx.com/",
+    "sameAs": "https://www.wikidata.org/wiki/Q139939392",
+    "applicationCategory": "SportsApplication",
+    "description": "Weather-driven Major League Baseball analysis tool for bettors and daily fantasy players, with NFL coverage in development."
+  },
+  "hasOccupation": [
+    {
+      "@type": "Occupation",
+      "name": "Sports Meteorologist",
+      "occupationLocation": {
+        "@type": "Country",
+        "name": "United States"
+      },
+      "description": "Translates weather forecasts into actionable analysis for sports bettors and daily fantasy players across MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar."
+    },
+    {
+      "@type": "Occupation",
+      "name": "Chief Meteorologist, RotoGrinders.com (2012–2026)",
+      "description": "Built and led daily MLB, NFL, and PGA weather analysis operations for the daily fantasy and sports-betting audience. Developed the WeatherEdge sports-weather research tool."
+    },
+    {
+      "@type": "Occupation",
+      "name": "Television Meteorologist",
+      "description": "On-air weather at ABC13 (KTRK-TV) Houston. Previously WABG Greenville MS, KSLA Shreveport LA, KDAF Dallas TX."
+    }
+  ],
+  "sameAs": [
+    "https://www.wikidata.org/wiki/Q139936836",
+    "https://x.com/KevinRothWx",
+    "https://twitter.com/KevinRothWx",
+    "https://www.linkedin.com/in/kevin-roth-70bb0295/",
+    "https://muckrack.com/kevin-m-roth",
+    "https://abc13.com/about/newsteam/kevin-roth/",
+    "https://rotogrinders.com/profiles/kevinrothwx",
+    "https://www.actionnetwork.com/article/author/kevin-roth",
+    "https://www.oddsshopper.com/experts/kevinrothwx/subscribe",
+    "https://propfinder.app/weather",
+    "https://app.kevinrothwx.com/",
+    "https://www.foxweather.com/lifestyle/sports-betting-weather-nfl-mlb-pga",
+    "https://www.fox5ny.com/weather/betting-on-weather-takes-off",
+    "https://www.fox10phoenix.com/news/betting-on-weather-takes-off",
+    "https://sports.yahoo.com/articles/weather-forecast-bills-eagles-game-145236231.html",
+    "https://www.baseballamerica.com/stories/improve-your-fantasy-forecast-with-detailed-weather-data/",
+    "https://www.cbssports.com/betting/news/mlb-picks-best-bets-from-top-expert-for-blue-jays-vs-yankees-on-tuesday-may-19-include-aaron-judge/",
+    "https://www.sportingnews.com/us/author/kevin-roth-rotogrinders",
+    "https://www.sportingnews.com/us/fantasy/news/nfl-week-8-weather-updates-heavy-winds-rain-could-affect-fantasy-football-start-em-sit-em-decisions/17ug3gw2164xa1554wzoh7eabq",
+    "https://www.hardrock.bet/news/nrfi-best-bets-today-mlb-no-run-first-inning-picks-predictions-for-may-22/",
+    "https://morganton.com/news/nation-world/weather/fantasy-sports-betting-rotogrinders-weather/article_e6b2c5b9-5dbf-5ab4-8167-38538bbff5ef.html"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-16">
+  <p class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">About</p>
+  <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-8">Kevin Roth</h1>
+
+  <div class="md:flex md:gap-10 mb-10">
+    <img src="{{ url_for('static', filename='img/kevin-roth-headshot.jpg') }}" alt="Kevin Roth, sports meteorologist" class="w-48 h-48 rounded-lg object-cover mb-6 md:mb-0" onerror="this.style.display='none'">
+    <div class="text-lg leading-relaxed text-slate-800 space-y-4">
+      <p>
+        Kevin Roth is a sports meteorologist with more than a decade of experience translating forecasts into actionable analysis for fantasy players and bettors. He served as Chief Meteorologist at RotoGrinders.com from 2012 to 2026, where his daily MLB, NFL, and PGA weather coverage became required reading across the daily fantasy and sports-betting communities.
+      </p>
+      <p>
+        Today, Kevin writes the daily MLB Weather column for PropFinder, forecasts on X (@KevinRothWx) for all outdoor sports, and runs OVERcast, his subscription tool for weather-driven MLB analysis with NFL coverage in development. He is also a meteorologist at ABC13 (KTRK-TV) in Houston.
+      </p>
+      <p>
+        His sports-weather work has been featured by Fox Weather, Yahoo Sports, Sporting News, The Weather Channel, CBS Sports, Baseball America, Matthew Berry's Fantasy Life, and Lee Enterprises newspapers. He has also been cited on The Pat McAfee Show and the other major sports-betting podcasts. Kevin holds a master's degree in atmospheric science from Mississippi State University.
+      </p>
+    </div>
+  </div>
+
+  <hr class="my-10 border-slate-200">
+
+  <h2 class="text-xl font-semibold mb-4">Where to find Kevin</h2>
+  <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-slate-700">
+    <li><a class="hover:underline" href="https://x.com/KevinRothWx">X (Twitter) — @KevinRothWx</a></li>
+    <li><a class="hover:underline" href="https://app.kevinrothwx.com/">OVERcast</a></li>
+    <li><a class="hover:underline" href="https://propfinder.app/weather">PropFinder — Daily MLB Weather</a></li>
+    <li><a class="hover:underline" href="https://abc13.com/about/newsteam/kevin-roth/">ABC13 Houston</a></li>
+    <li><a class="hover:underline" href="https://rotogrinders.com/profiles/kevinrothwx">RotoGrinders</a></li>
+    <li><a class="hover:underline" href="https://www.sportingnews.com/us/author/kevin-roth-rotogrinders">Sporting News</a></li>
+    <li><a class="hover:underline" href="https://www.actionnetwork.com/article/author/kevin-roth">Action Network</a></li>
+    <li><a class="hover:underline" href="https://www.oddsshopper.com/experts/kevinrothwx/subscribe">OddsShopper</a></li>
+    <li><a class="hover:underline" href="https://muckrack.com/kevin-m-roth">Muck Rack</a></li>
+    <li><a class="hover:underline" href="https://www.linkedin.com/in/kevin-roth-70bb0295/">LinkedIn</a></li>
+  </ul>
+
+  <div class="mt-10 flex flex-wrap gap-3">
+    <a href="/press" class="inline-flex items-center px-4 py-2 rounded-md border border-slate-300 text-sm font-medium hover:bg-slate-50">Press citations →</a>
+    <a href="/contact" class="inline-flex items-center px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">Media inquiries</a>
+  </div>
+</section>
+{% endblock %}

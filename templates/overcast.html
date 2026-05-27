@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}OVERcast — Weather-Driven MLB Analysis | Kevin Roth{% endblock %}
+{% block description %}OVERcast is the subscription weather-impact tool for MLB bettors and daily fantasy players, built by sports meteorologist Kevin Roth. NFL coverage in development.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "OVERcast",
+  "url": "https://app.kevinrothwx.com/",
+  "sameAs": "https://www.wikidata.org/wiki/Q139939392",
+  "applicationCategory": "SportsApplication",
+  "operatingSystem": "Web",
+  "creator": {
+    "@type": "Person",
+    "@id": "https://kevinrothwx.com/about#kevin-roth",
+    "name": "Kevin Roth"
+  },
+  "description": "Weather-driven Major League Baseball analysis tool for bettors and daily fantasy players. NFL coverage in development."
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-6 py-16">
+  <p class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">Product</p>
+  <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-6">OVERcast</h1>
+  <p class="text-xl text-slate-800 leading-relaxed mb-8">
+    Weather-driven MLB analysis built by a sports meteorologist. Every game, every day, with the weather impact already calculated for you.
+  </p>
+
+  <div class="rounded-lg border border-slate-200 p-6 mb-10 bg-slate-50">
+    <h2 class="text-lg font-semibold mb-3">What you get</h2>
+    <ul class="space-y-2 text-slate-800">
+      <li>• Full slate weather impact for every MLB game — home runs, runs, and strikeouts adjusted for conditions vs. park and league average</li>
+      <li>• Wind, temperature, humidity, and precipitation analysis on a game-by-game basis</li>
+      <li>• Updated multiple times daily, all season long</li>
+      <li>• Built and maintained by Kevin Roth, former Chief Meteorologist at RotoGrinders.com</li>
+      <li>• NFL coverage launching soon</li>
+    </ul>
+  </div>
+
+  <div class="flex flex-wrap gap-3 mb-12">
+    <a href="https://app.kevinrothwx.com/" class="inline-flex items-center px-5 py-3 rounded-md bg-slate-900 text-white font-medium hover:bg-slate-700">
+      Subscribe →
+    </a>
+    <a href="/about" class="inline-flex items-center px-5 py-3 rounded-md border border-slate-300 text-slate-900 font-medium hover:bg-slate-50">
+      About the meteorologist
+    </a>
+  </div>
+
+  <hr class="border-slate-200 mb-12">
+
+  <h2 class="text-xl font-semibold mb-4">Why weather matters in MLB</h2>
+  <p class="text-slate-700 leading-relaxed mb-4">
+    A 10 mph swirling wind at Wrigley can take an extra base off every fly ball in the park. Coors Field's altitude is well-known, but the humidor's effect changes with the day's actual humidity. Cool damp air at Fenway suppresses home runs more than dry cold. These edges compound across a 162-game season — and they're the kind of thing the standard projections systems don't account for.
+  </p>
+  <p class="text-slate-700 leading-relaxed mb-8">
+    OVERcast quantifies them. Game by game.
+  </p>
+
+  <a href="https://app.kevinrothwx.com/" class="inline-flex items-center px-5 py-3 rounded-md bg-slate-900 text-white font-medium hover:bg-slate-700">
+    Try OVERcast →
+  </a>
+</section>
+{% endblock %}

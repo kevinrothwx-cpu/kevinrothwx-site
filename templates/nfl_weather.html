@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}NFL Weather: How Weather Affects Football | Kevin Roth{% endblock %}
+{% block description %}How weather affects NFL games. Wind, cold, snow, dome vs. outdoor splits, and kicker performance explained by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How Weather Affects NFL Games",
+  "author": {
+    "@type": "Person",
+    "@id": "https://kevinrothwx.com/about#kevin-roth",
+    "name": "Kevin Roth"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Kevin Roth — Sports Meteorologist",
+    "url": "https://kevinrothwx.com/"
+  },
+  "mainEntityOfPage": "https://kevinrothwx.com/nfl-weather",
+  "about": ["NFL weather", "Football", "Sports meteorology", "Sports betting"]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-6 py-16">
+  <p class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">NFL Weather</p>
+  <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-6">How Weather Affects NFL Games</h1>
+  <p class="text-lg text-slate-700 mb-10">By Kevin Roth, sports meteorologist.</p>
+
+  <div class="prose prose-slate max-w-none text-slate-800 leading-relaxed space-y-6">
+    <p>NFL weather is dominated by one variable above all others: wind. Pass-heavy modern offenses depend on accurate downfield throws, and wind disrupts those throws more than cold, rain, or snow ever will. Beyond wind, cold-weather games change the way the ball is gripped, snow games change the way runners cut, and dome vs. outdoor splits create persistent edges that bettors and fantasy players have spent decades arguing about.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Wind and passing</h2>
+    <p>Once sustained winds cross roughly 15 mph at field level, passing efficiency starts to decline measurably. Deep balls become less accurate, kickers struggle with field goal range, and offenses adjust toward shorter routes and the run game. Above 20 mph, the effect compounds. A 25 mph sustained wind essentially eliminates the deep passing game for both teams. Bettors should note that the wind effect is symmetric — it hurts both quarterbacks, so it pushes totals down rather than favoring one side or the other.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Cold-weather games</h2>
+    <p>Below about 32°F, the football becomes harder and harder to grip, which leads to more fumbles, fewer accurate deep throws, and reduced punt and kickoff distance. Players from warm-weather rosters tend to perform worse in their first cold game of the season, but the effect fades by the playoffs as everyone adjusts. The bigger predictor is whether the cold is wet (rain that turns to ice on the ball) or dry. Dry cold is much more playable than wet cold.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Snow games</h2>
+    <p>Snow is the most visually dramatic NFL weather but often the least impactful for scoring. Light snow with no wind doesn't meaningfully affect ball flight, and most snow games actually see decent passing numbers if the wind is calm. Heavy snow with accumulation on the field is a different story: footing becomes the issue, route-running tightens up, and the running game gets a relative boost. Snow with strong wind is the worst combination, because then you're dealing with reduced visibility on top of the wind effect.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Dome vs. outdoor</h2>
+    <p>Dome teams have a documented home-field advantage that's part crowd noise, part climate consistency. The interesting bet is on dome teams playing outdoors in cold weather, where the adjustment penalty is real but often overpriced. Outdoor teams playing in domes typically see passing efficiency tick up; this is one of the most consistent and underpriced weather edges in NFL betting.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Kicker performance</h2>
+    <p>Kickers are the single most weather-sensitive position. Wind direction matters more than wind speed past a certain point — a 15 mph crosswind is harder to kick into than a 25 mph straight headwind because the kicker can compensate for known wind direction. Wet ball + cold + wind is the trifecta that turns 50-yard attempts into low-percentage shots and 40-yarders into anything but routine.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Fantasy and betting impact</h2>
+    <p>For fantasy purposes, the biggest weather move is downgrading deep-ball receivers in 15+ mph wind games, downgrading kickers in any cold-and-wet combination, and giving a small bump to power running backs in snow games. For betting, the disciplined approach is to monitor wind forecasts in the 48 hours before kickoff and act on totals that the book has been slow to move.</p>
+  </div>
+
+  <hr class="my-12 border-slate-200">
+
+  <div class="bg-slate-50 border border-slate-200 rounded-lg p-6">
+    <p class="font-semibold mb-2">Kevin's daily NFL weather coverage</p>
+    <p class="text-slate-700 mb-4">Free game-by-game NFL forecasts during football season.</p>
+    <a href="https://x.com/KevinRothWx" class="inline-flex items-center px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">Follow on X →</a>
+  </div>
+</article>
+{% endblock %}

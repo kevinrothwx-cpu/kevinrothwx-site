@@ -1,0 +1,21 @@
+/* Minimal custom CSS. Tailwind via CDN handles 99% of styling. */
+
+html {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Avoid layout shift while Tailwind CDN loads */
+body {
+  min-height: 100vh;
+}
+
+/* Print styles — keep the bio readable on print */
+@media print {
+  header, footer, nav { display: none; }
+  body { color: #000; background: #fff; }
+}

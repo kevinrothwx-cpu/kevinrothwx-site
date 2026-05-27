@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}MLB Weather: How Weather Affects Baseball | Kevin Roth{% endblock %}
+{% block description %}How weather affects MLB games. Wind, temperature, humidity, rain delays, and ballpark-specific conditions explained by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How Weather Affects MLB Games",
+  "author": {
+    "@type": "Person",
+    "@id": "https://kevinrothwx.com/about#kevin-roth",
+    "name": "Kevin Roth"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Kevin Roth — Sports Meteorologist",
+    "url": "https://kevinrothwx.com/"
+  },
+  "mainEntityOfPage": "https://kevinrothwx.com/mlb-weather",
+  "about": ["MLB weather", "Baseball", "Sports meteorology", "Sports betting"]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto px-6 py-16">
+  <p class="text-sm font-medium text-slate-500 uppercase tracking-wide mb-3">MLB Weather</p>
+  <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-6">How Weather Affects MLB Games</h1>
+  <p class="text-lg text-slate-700 mb-10">By Kevin Roth, sports meteorologist.</p>
+
+  <div class="prose prose-slate max-w-none text-slate-800 leading-relaxed space-y-6">
+    <p>Of all the major American sports, baseball is the most exposed to weather. The ball is in the air constantly. The field is open. The season runs from frost to high summer. Small differences in wind speed, air temperature, humidity, and pressure all change how the ball flies, how pitchers grip it, and how rain interrupts play.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Does wind matter in baseball?</h2>
+    <p>Wind matters more than any other weather variable in baseball. A 10 mph wind blowing out at Wrigley Field can turn warning-track outs into home runs. A 15 mph wind blowing in at the same park can knock 30–40 feet off well-hit fly balls. The direction matters as much as the speed — winds blowing across the field affect pulled fly balls differently than winds blowing straight out, and swirling winds (common at open stadiums in coastal cities) make the effect harder to predict.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">How temperature affects home runs</h2>
+    <p>Warm air is less dense than cold air, which means baseballs travel farther in hot weather. A well-hit ball that travels 400 feet on a 90-degree afternoon would travel roughly 384 feet on a 50-degree night, holding everything else constant. That difference is enough to turn home runs into outs and outs into doubles. Pitchers also grip and release the ball slightly differently in cold weather, which can affect command.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Humidity and ball flight</h2>
+    <p>Humid air is actually less dense than dry air (the H₂O molecule is lighter than N₂ or O₂), which sounds counterintuitive but is well-established physics. The effect is smaller than people think but it's real: balls fly slightly farther in humid conditions. Coors Field's humidor was introduced specifically to soften the offensive environment by storing balls at higher humidity than the surrounding desert air.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Rain delays: what triggers them, what doesn't</h2>
+    <p>MLB does not have a strict rule about exactly when a game gets delayed for rain. Umpires use judgment, factoring in radar, the type of precipitation (light drizzle is often played through, heavy downpour is not), field conditions, and the forecast for the next 60–90 minutes. The most common scenarios that trigger delays are storms with lightning anywhere within roughly 10 miles of the park, heavy rain that has already made the field unplayable, and incoming weather where the umpire crew judges that a delay is preferable to starting the game and having to stop it.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Ballpark-specific weather</h2>
+    <p>Every MLB park has its own weather personality. <strong>Coors Field</strong> in Denver sits at 5,200 feet of elevation, where thinner air means longer ball flight even with the humidor. <strong>Wrigley Field</strong>'s lake-driven winds change direction during the day, sometimes within the same game. <strong>Oracle Park</strong> in San Francisco is famous for the cold marine air and frequent right-field wind blowing in toward home plate. <strong>Fenway Park</strong>'s humid New England nights suppress fly-ball distance more than the cool temperatures alone would suggest. <strong>Globe Life Field</strong> and <strong>Truist Park</strong> have retractable roofs that change the equation entirely when they're closed.</p>
+
+    <h2 class="text-2xl font-semibold mt-10">Weather and MLB betting</h2>
+    <p>Books price weather into MLB totals, but they often underweight it, particularly mid-week games and games where wind shifts late in the day. Edges exist most consistently in: strong-wind games (above 12 mph sustained), cold-weather April and September games where books still anchor to season averages, and rain-risk situations where books are slow to drop a number after weather news breaks. The disciplined move is to wait for late information and shop multiple books for the best closing line.</p>
+  </div>
+
+  <hr class="my-12 border-slate-200">
+
+  <div class="bg-slate-50 border border-slate-200 rounded-lg p-6">
+    <p class="font-semibold mb-2">Today's MLB weather forecast</p>
+    <p class="text-slate-700 mb-4">Kevin's daily MLB weather column is published every game day on PropFinder.</p>
+    <a href="https://propfinder.app/weather" class="inline-flex items-center px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">Read today's forecast →</a>
+  </div>
+
+  <div class="mt-8 bg-slate-50 border border-slate-200 rounded-lg p-6">
+    <p class="font-semibold mb-2">Want game-by-game weather data?</p>
+    <p class="text-slate-700 mb-4">OVERcast quantifies the weather impact on every MLB game — home runs, runs, and strikeouts adjusted for conditions.</p>
+    <a href="/overcast" class="inline-flex items-center px-4 py-2 rounded-md border border-slate-300 text-slate-900 text-sm font-medium hover:bg-white">Learn more about OVERcast →</a>
+  </div>
+</article>
+{% endblock %}
