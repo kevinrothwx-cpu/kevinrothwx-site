@@ -161,3 +161,8 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cards--four .card { padding: 1.5rem; }
 .cards--four .card__title { font-size: 1.25rem; }
 .cards--four .card__body { font-size: 0.9rem; }
+
+/* Icon refinement: bigger, centered above value */
+.stats > div { text-align: center; }
+.stat__icon { margin-bottom: 1rem; }
+.stat__icon svg { width: 40px; height: 40px; margin: 0 auto; }
