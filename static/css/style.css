@@ -166,3 +166,9 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .stats > div { text-align: center; }
 .stat__icon { margin-bottom: 1rem; }
 .stat__icon svg { width: 40px; height: 40px; margin: 0 auto; }
+
+/* Inline icon next to value, override previous block-above treatment */
+.stats > div { text-align: left; }
+.stat__row { display: flex; align-items: baseline; gap: 0.55rem; }
+.stat__row .stat__icon { display: inline-flex; align-self: center; margin-bottom: 0; color: var(--ash); }
+.stat__row .stat__icon svg { width: 22px; height: 22px; display: block; }
