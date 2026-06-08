@@ -34,6 +34,13 @@ from golf.storage import (
     attach_writeups_to_slate as golf_attach_writeups,
 )
 
+from nascar.cache import get_nascar_slate, start_warmer as start_nascar_warmer
+from nascar.storage import (
+    save_writeup as nascar_save_writeup,
+    get_writeup as nascar_get_writeup,
+    attach_writeups_to_slate as nascar_attach_writeups,
+)
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
@@ -47,6 +54,7 @@ EASTERN_TZ = ZoneInfo("America/New_York")
 start_warmer()
 start_wc_warmer()
 start_golf_warmer()
+start_nascar_warmer()
 
 
 @app.context_processor
@@ -322,6 +330,29 @@ def golf_root():
     )
 
 
+
+@app.route("/nascar")
+def nascar_root():
+    """NASCAR current/upcoming Cup races."""
+    slate, meta = get_nascar_slate()
+    if slate is None:
+        slate, meta = [], {"build_err": "Slate not yet built"}
+    nascar_attach_writeups(slate)
+    return render_template("nascar/slate.html", slate=slate, meta=meta)
+
+
+@app.route("/nascar/<slug>")
+def nascar_race(slug):
+    slate, meta = get_nascar_slate()
+    if slate is None:
+        abort(404)
+    race = next((r for r in slate if r["slug"] == slug), None)
+    if not race:
+        abort(404)
+    race["writeup"] = nascar_get_writeup(race["event_id"])
+    return render_template("nascar/race.html", race=race, meta=meta)
+
+
 @app.route("/golf/<slug>")
 def golf_tournament(slug):
     """Per-tournament detail."""
@@ -434,6 +465,26 @@ def admin_golf():
         slate = []
     golf_attach_writeups(slate)
     return render_template("golf/admin.html", slate=slate)
+
+
+@app.route("/admin/nascar", methods=["GET", "POST"])
+@_admin_required
+def admin_nascar():
+    """NASCAR write-up admin."""
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            nascar_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_nascar"))
+
+    slate, _ = get_nascar_slate()
+    if slate is None:
+        slate = []
+    nascar_attach_writeups(slate)
+    return render_template("nascar/admin.html", slate=slate)
 
 
 # ===== SEO files =====

@@ -600,3 +600,24 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 /* 3-column card grid for the live-forecasts section on the homepage */
 .cards--three { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin: 1rem 0 0; }
 @media (min-width: 720px) { .cards--three { grid-template-columns: repeat(3, 1fr); } }
+
+/* ============================================================
+ * NASCAR pages
+ * ============================================================ */
+
+.nascar-race-section { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; }
+
+.race-card { display: flex; flex-direction: column; padding: 1rem 1.1rem 1.1rem; border: 1px solid var(--mist); background: var(--white); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; gap: 0.6rem; margin-bottom: 1rem; }
+.race-card:hover { border-color: var(--ink); transform: translateY(-1px); }
+.race-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--mist); }
+.race-card__name { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; }
+.race-card__time { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--storm); }
+.race-card__track { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); }
+.race-card__tracktype { display: inline-block; margin-left: 0.4rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fog); }
+.race-card__wx { display: flex; align-items: center; gap: 1rem; padding-top: 0.55rem; border-top: 1px dashed var(--smoke); }
+.race-card__wx-stack { display: flex; flex-direction: column; gap: 0.15rem; }
+.race-card__skyicon { flex-shrink: 0; }
+.race-card__temp { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+.race-card__precip, .race-card__wind { font-family: var(--font-sans); font-size: 0.8rem; }
+.race-card__wind { color: var(--ash); }
+.race-card__wx-missing { color: var(--fog); font-size: 0.85rem; font-style: italic; padding: 0.4rem 0; }

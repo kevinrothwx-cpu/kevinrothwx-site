@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "nascar/_macros.html" import race_card, race_hourly_table %}
+
+{% block title %}NASCAR Cup Series Weather — Sunday Race Forecast | Kevin Roth{% endblock %}
+{% block description %}Free NASCAR Cup Series weather forecasts for this Sunday's race. Track-specific hourly outlook by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}NASCAR Cup Series Weather{% endblock %}
+{% block og_description %}This Sunday's NASCAR weather forecast. By Kevin Roth, sports meteorologist.{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<div class="mlb-page">
+  <header class="mlb-page__header">
+    <div class="mlb-page__hed">
+      <div>
+        <p class="kicker kicker-storm">NASCAR Cup Series</p>
+        <h1 class="mlb-page__title">This week's race</h1>
+        <p class="mlb-page__sub">
+          {% if slate|length == 0 %}No upcoming race loaded.
+          {% elif slate|length == 1 %}{{ slate[0].name }}.
+          {% else %}{{ slate|length }} upcoming races.{% endif %}
+          All times Eastern.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  {% if not slate %}
+    <div class="container">
+      <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
+        {% if meta and meta.build_err %}Slate is rebuilding. Refresh in a moment.
+        {% else %}No NASCAR Cup race data right now. Check back closer to Sunday.{% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+  {% for race in slate %}
+    <section class="nascar-race-section">
+      <header class="golf-tournament__header">
+        <div>
+          <h2 class="golf-tournament__name">{{ race.name }}</h2>
+          <p class="golf-tournament__course">
+            {% if race.track_meta %}
+              {{ race.track }} · {{ race.track_meta.city }}
+              <span class="venue-roof-flag venue-roof-flag--retractable" style="margin-left:0.5rem">
+                {{ race.track_meta.track_type.replace("_", " ") }}{% if race.track_meta.length_miles %} · {{ race.track_meta.length_miles }} mi{% endif %}
+              </span>
+            {% else %}
+              {{ race.track }}
+              <span class="venue-roof-flag" style="border-color:var(--smoke);color:var(--ash)">Track not yet mapped</span>
+            {% endif %}
+          </p>
+        </div>
+        {% if race.url %}
+          <a class="golf-tournament__leaderboard" href="{{ race.url }}" rel="noopener">Race details ↗</a>
+        {% endif %}
+      </header>
+
+      {% if race.writeup %}
+        <div class="mlb-writeup mlb-writeup--{{ race.writeup.color or 'none' }}">
+          <div class="mlb-writeup__header">
+            <span class="mlb-writeup__matchup">Kevin's note · {{ race.short_name }}</span>
+            <span class="mlb-writeup__time">Green flag {{ race.green_flag_eastern_str }}</span>
+          </div>
+          <div class="mlb-writeup__body">{{ race.writeup.text }}</div>
+        </div>
+      {% endif %}
+
+      {% if race.forecast %}
+        <article class="mlb-game-block" id="race-{{ race.slug }}">
+          <header class="mlb-game-block__header">
+            <div>
+              <h3 class="mlb-game-block__matchup">Hourly forecast around green flag</h3>
+              <div class="mlb-game-block__venue">{{ race.track }} · {{ race.green_flag_eastern_str }}</div>
+            </div>
+          </header>
+          <div class="mlb-game-block__hourly" style="padding:0.6rem 1rem 0.85rem">
+            {{ race_hourly_table(race) }}
+          </div>
+        </article>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>
+{% endblock %}

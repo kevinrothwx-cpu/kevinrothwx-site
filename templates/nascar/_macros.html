@@ -1,0 +1,92 @@
+{% from "mlb/_macros.html" import weather_icon %}
+
+
+{# ── Race card for the slate (current + upcoming) ──────────── #}
+{% macro race_card(race, link_to_detail=True) %}
+  {% set f = race.forecast %}
+  {% set track = race.track_meta %}
+  {% if link_to_detail %}
+    {% set href = "/nascar/" ~ race.slug %}
+  {% else %}
+    {% set href = "#race-" ~ race.slug %}
+  {% endif %}
+  <a href="{{ href }}" class="race-card">
+    <div class="race-card__head">
+      <span class="race-card__name">{{ race.short_name or race.name }}</span>
+      <span class="race-card__time">{{ race.green_flag_eastern_str or "TBD" }}</span>
+    </div>
+    <div class="race-card__track">
+      {{ race.track }}{% if track %} · {{ track.city }}{% endif %}
+      {% if track and track.track_type %}
+        <span class="race-card__tracktype">{{ track.track_type.replace("_", " ") }}{% if track.length_miles %} · {{ track.length_miles }} mi{% endif %}</span>
+      {% endif %}
+    </div>
+    {% if f %}
+      <div class="race-card__wx">
+        <span class="race-card__skyicon">{{ weather_icon(f.precip_pct|precip_icon, 38) }}</span>
+        <div class="race-card__wx-stack">
+          <span class="race-card__temp">{{ f.temp }}°</span>
+          <span class="race-card__precip {{ f.precip_pct|precip_color }}">Rain {{ f.precip_pct }}%</span>
+          <span class="race-card__wind">Wind {{ f.wind_speed }} mph</span>
+        </div>
+      </div>
+    {% else %}
+      <div class="race-card__wx-missing">Forecast pending</div>
+    {% endif %}
+  </a>
+{% endmacro %}
+
+
+{# ── Race hourly table (pre-race + race + after) ───────────── #}
+{% macro race_hourly_table(race) %}
+  {% set hours = race.hourly or [] %}
+  {% if hours %}
+    <div class="hourly">
+      <table class="hourly__table">
+        <thead>
+          <tr>
+            <th class="hourly__label-col"></th>
+            {% for h in hours %}
+              <th class="hourly__hour-col {% if h.is_race_hour %}is-game-hour{% endif %}">
+                <div class="hourly__sky">{{ weather_icon(h.precip_pct|precip_icon, 30) }}</div>
+                <div class="hourly__time">{{ h.hour_eastern }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">
+                <span class="hourly__precip {{ h.precip_pct|precip_color }}">{{ h.precip_pct }}%</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">{{ h.temp }}°</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
+            {% endfor %}
+          </tr>
+          {% if hours[0].dew is not none %}
+          <tr>
+            <td class="hourly__label">Dewpoint</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">{{ h.dew }}°</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hourly__missing">Hourly forecast not available.</p>
+  {% endif %}
+{% endmacro %}
