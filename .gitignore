@@ -6,3 +6,8 @@ venv/
 .DS_Store
 *.swp
 instance/
+
+# Secret keys — never commit
+SECRETS*
+.env
+.env.*

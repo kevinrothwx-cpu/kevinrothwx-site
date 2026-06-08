@@ -1,0 +1,248 @@
+{# ── MLB team logo helper ────────────────────────────────────── #}
+{% macro mlb_logo(team_id, team_name, klass="cheat-card__logo") %}
+  <img class="{{ klass }}"
+       src="https://www.mlbstatic.com/team-logos/{{ team_id }}.svg"
+       alt="{{ team_name }} logo" loading="lazy" decoding="async"
+       onerror="this.style.visibility='hidden'">
+{% endmacro %}
+
+
+{# ── Inline SVG weather icons — v4 ─────────────────────────── #}
+{% macro weather_icon(icon_class, size=32) %}
+  {% if icon_class == "icon-sun" %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="wx-icon wx-icon--sun" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.5" fill="#fef3c7"/>
+      <line x1="12" y1="2.5" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="21.5"/>
+      <line x1="2.5" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="21.5" y2="12"/>
+      <line x1="5.3" y1="5.3" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="18.7" y2="18.7"/>
+      <line x1="5.3" y1="18.7" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="18.7" y2="5.3"/>
+    </svg>
+  {% elif icon_class == "icon-partly-cloudy" %}
+    {# Full sun (with all rays) + cloud overlapping the bottom-right third.
+       Cloud uses opaque white fill so rays underneath are visually erased. #}
+    <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" class="wx-icon wx-icon--partly" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">
+      <g stroke="#ca8a04" stroke-width="1.6">
+        <circle cx="10" cy="9" r="3.4" fill="#fef3c7"/>
+        <line x1="10" y1="2" x2="10" y2="3.5"/>
+        <line x1="10" y1="14.5" x2="10" y2="16"/>
+        <line x1="2.5" y1="9" x2="4" y2="9"/>
+        <line x1="16" y1="9" x2="17.5" y2="9"/>
+        <line x1="4.5" y1="3.5" x2="5.6" y2="4.6"/>
+        <line x1="14.4" y1="13.4" x2="15.5" y2="14.5"/>
+        <line x1="4.5" y1="14.5" x2="5.6" y2="13.4"/>
+        <line x1="14.4" y1="4.6" x2="15.5" y2="3.5"/>
+      </g>
+      {# Cloud drawn LAST with opaque white fill — erases sun rays underneath in its area #}
+      <path d="M 8 17.5 A 3.5 3.5 0 0 1 11.5 14 A 4.5 4.5 0 0 1 20 15.5 A 3 3 0 0 1 19 21 L 10 21 A 3.5 3.5 0 0 1 8 17.5 Z"
+            fill="var(--white)" stroke="currentColor" stroke-width="1.6"/>
+    </svg>
+  {% elif icon_class == "icon-rain" %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="wx-icon wx-icon--rain" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">
+      <path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z"/>
+      <line x1="9" y1="19.5" x2="9" y2="22"/>
+      <line x1="13" y1="19.5" x2="13" y2="22.5"/>
+      <line x1="17" y1="19.5" x2="17" y2="22"/>
+    </svg>
+  {% elif icon_class == "icon-storm" %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="wx-icon wx-icon--storm" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">
+      <path d="M5 11a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 15H8a4 4 0 01-3-4z"/>
+      <line x1="8" y1="17" x2="8" y2="19"/>
+      <line x1="16" y1="17" x2="16" y2="19"/>
+      <line x1="8" y1="21" x2="8" y2="22.5"/>
+      <line x1="16" y1="21" x2="16" y2="22.5"/>
+      <polyline points="13,15 10,20 13,20 11,24" stroke="#ca8a04" stroke-width="1.8" fill="none"/>
+    </svg>
+  {% else %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="wx-icon" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/>
+    </svg>
+  {% endif %}
+{% endmacro %}
+
+
+{# ── Wind arrow (tiny indicator for cheat-sheet) ─────────────── #}
+{% macro wind_arrow_svg(wind_info, size=14) %}
+  {% if wind_info and wind_info.bucket is not none %}
+    {% set rot = {
+      'Out to CF': 0,    'Out to RF': 45,   'Out to LF': -45,
+      'In from CF': 180, 'In from RF': -135,'In from LF': 135,
+      'Cross LF → RF': 90, 'Cross RF → LF': -90, 'Calm': 0
+    }.get(wind_info.label, 0) %}
+    <svg viewBox="0 0 24 24" class="wind-arrow-svg wind-arrow-svg--{{ wind_info.bucket }}" style="width:{{ size }}px;height:{{ size }}px;transform:rotate({{ rot }}deg)" aria-hidden="true">
+      <path d="M12 2 L12 22 M12 2 L6 8 M12 2 L18 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  {% else %}
+    <span class="wind-arrow-svg wind-arrow-svg--unknown" style="width:{{ size }}px;display:inline-block;text-align:center">·</span>
+  {% endif %}
+{% endmacro %}
+
+
+{# ── Ballpark field diagram with rotated wind arrow ───────────── #}
+{% macro field_diagram(game, size_class="") %}
+  {% set f = game.forecast %}
+  {% set wi = game.wind_info %}
+  {% set cf = game.park.cf_bearing_degrees %}
+  {% if f and wi and wi.bucket and wi.label != 'Calm' %}
+    {% set wind_to = (f.wind_deg + 180) % 360 %}
+    {% set rot = (wind_to - cf) % 360 %}
+    {% set bucket = wi.bucket %}
+  {% else %}
+    {% set rot = 0 %}
+    {% set bucket = 'unknown' %}
+  {% endif %}
+  <div class="field-diagram">
+    <svg viewBox="0 0 100 100" class="field-diagram__svg {{ size_class }}" aria-hidden="true">
+      <path class="fd-grass" d="M 50 92 L 12 50 A 50 50 0 0 1 88 50 L 50 92 Z"/>
+      <path class="fd-infield" d="M 50 80 L 35 65 L 50 50 L 65 65 Z"/>
+      <line class="fd-line" x1="50" y1="80" x2="12" y2="50"/>
+      <line class="fd-line" x1="50" y1="80" x2="88" y2="50"/>
+      <circle cx="50" cy="68" r="2" class="fd-infield"/>
+      <polygon class="fd-plate" points="47,80 53,80 53,83 50,86 47,83"/>
+      <g class="fd-arrow fd-arrow--{{ bucket }}" style="transform: rotate({{ rot }}deg); transform-origin: 50px 50px;">
+        {% if bucket != 'unknown' %}
+          <line x1="50" y1="70" x2="50" y2="32" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+          <polygon points="50,24 43,36 57,36" fill="currentColor"/>
+        {% else %}
+          <circle cx="50" cy="50" r="3" fill="var(--smoke)"/>
+        {% endif %}
+      </g>
+    </svg>
+  </div>
+{% endmacro %}
+
+
+{# ── Cheat-sheet card ────────────────────────────────────────── #}
+{% macro cheat_card(game, date_str, link_to_detail=False) %}
+  {% set f = game.forecast %}
+  {% set roof = game.park.roof_type %}
+  {% if link_to_detail %}
+    {% set href = "/mlb/" ~ date_str ~ "/" ~ game.slug %}
+  {% else %}
+    {% set href = "#game-" ~ game.slug %}
+  {% endif %}
+  <a href="{{ href }}" class="cheat-card" data-game-pk="{{ game.game_pk }}">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">{{ game.first_pitch_eastern_str }}</span>
+      {% if roof == "retractable" %}<span class="cheat-card__badge">Retractable</span>{% endif %}
+      {% if roof == "fixed_dome" %}<span class="cheat-card__badge">Dome</span>{% endif %}
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        {{ mlb_logo(game.away_team_id, game.away_name) }}
+        <span class="cheat-card__abbr">{{ game.away_abbr }}</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team" style="justify-content:flex-end">
+        <span class="cheat-card__abbr">{{ game.home_abbr }}</span>
+        {{ mlb_logo(game.home_team_id, game.home_name) }}
+      </div>
+    </div>
+    {% if f %}
+      <div class="cheat-card__wx">
+        <span class="cheat-card__temp">{{ f.temp }}°</span>
+        <div class="cheat-card__wxmid">
+          <span class="cheat-card__wind">
+            {{ wind_arrow_svg(game.wind_info, 12) }}
+            {{ f.wind_speed }} mph
+          </span>
+          <span class="cheat-card__precip {{ f.precip_pct|precip_color }}">
+            Rain {{ f.precip_pct }}%
+          </span>
+        </div>
+        <span class="cheat-card__skyicon">{{ weather_icon(f.precip_pct|precip_icon, 28) }}</span>
+      </div>
+    {% else %}
+      <div class="cheat-card__wx cheat-card__wx--missing">Forecast pending</div>
+    {% endif %}
+  </a>
+{% endmacro %}
+
+
+{# ── Game summary panel — 2x2 grid that stretches to hourly height ── #}
+{% macro game_summary_panel(game) %}
+  {% set f = game.forecast %}
+  {% set wi = game.wind_info %}
+  <div class="game-summary">
+    {% if f %}
+      {# Cell 1 (top-left): Temp + sky icon #}
+      <div class="game-summary__cell">
+        <div class="game-summary__sky">{{ weather_icon(f.precip_pct|precip_icon, 34) }}</div>
+        <span class="game-summary__primary-value">{{ f.temp }}°</span>
+        <span class="game-summary__primary-label">At first pitch</span>
+      </div>
+      {# Cell 2 (top-right): Ballpark cut-out only — no text label per Kevin #}
+      <div class="game-summary__cell game-summary__cell--field">
+        {{ field_diagram(game) }}
+      </div>
+      {# Cell 3 (bottom-left): Rain chance (swapped per Kevin) #}
+      <div class="game-summary__cell">
+        <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
+        <span class="game-summary__cell-label">Rain</span>
+      </div>
+      {# Cell 4 (bottom-right): Wind speed (swapped per Kevin) #}
+      <div class="game-summary__cell">
+        <span class="game-summary__value">{{ f.wind_speed }} <span style="font-size:0.7em;font-weight:500;color:var(--ash)">mph</span></span>
+        <span class="game-summary__cell-label">Wind</span>
+      </div>
+    {% else %}
+      <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
+        <span class="game-summary__cell-label">Forecast pending</span>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{# ── Hourly forecast table — bigger icons (sized via CSS) ────── #}
+{% macro hourly_table(game) %}
+  {% set hours = game.hourly or [] %}
+  {% if hours %}
+    <div class="hourly">
+      <table class="hourly__table">
+        <thead>
+          <tr>
+            <th class="hourly__label-col"></th>
+            {% for h in hours %}
+              <th class="hourly__hour-col {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <div class="hourly__sky">{{ weather_icon(h.precip_pct|precip_icon, 32) }}</div>
+                <div class="hourly__time">{{ h.hour_eastern }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <span class="hourly__precip {{ h.precip_pct|precip_color }}">{{ h.precip_pct }}%</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.temp }}°</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
+            {% endfor %}
+          </tr>
+          {% if hours[0].dew is not none %}
+          <tr>
+            <td class="hourly__label">Dewpoint</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.dew }}°</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hourly__missing">Hourly forecast not available for this game.</p>
+  {% endif %}
+{% endmacro %}

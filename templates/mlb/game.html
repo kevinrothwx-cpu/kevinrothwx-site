@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% from "mlb/_macros.html" import hourly_table, weather_icon, wind_arrow_svg, mlb_logo %}
+
+{% block title %}{{ game.away_name }} at {{ game.home_name }} — {{ pretty_date }} Weather | Kevin Roth{% endblock %}
+{% block description %}{{ game.away_name }} at {{ game.home_name }} weather forecast for {{ pretty_date }}. First pitch {{ game.first_pitch_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at game time, wind {{ game.wind_info.label if game.wind_info else 'unknown' }}{% endif %}. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}{{ game.away_name }} at {{ game.home_name }} — Weather Forecast{% endblock %}
+{% block og_description %}{{ pretty_date }} · {{ game.venue }} · First pitch {{ game.first_pitch_eastern_str }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ game.away_name }} at {{ game.home_name }}",
+  "startDate": "{{ game.first_pitch_utc.isoformat() }}",
+  "sport": "Baseball",
+  "location": {
+    "@type": "Place",
+    "name": "{{ game.venue }}",
+    "address": "{{ game.park.city }}",
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": {{ game.park.lat }},
+      "longitude": {{ game.park.lon }}
+    }
+  },
+  "homeTeam": { "@type": "SportsTeam", "name": "{{ game.home_name }}" },
+  "awayTeam": { "@type": "SportsTeam", "name": "{{ game.away_name }}" },
+  "url": "https://kevinrothwx.com/mlb/{{ date_str }}/{{ game.slug }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<article class="game-page">
+  <p class="game-page__kicker">MLB Weather · {{ pretty_date }}</p>
+  <h1 class="game-page__title"><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ game.away_team_id }}.svg" alt="" loading="lazy"><span>{{ game.away_name }}</span><span class="matchup-at">at</span><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ game.home_team_id }}.svg" alt="" loading="lazy"><span>{{ game.home_name }}</span></h1>
+  <p class="game-page__meta">
+    {{ game.venue }}, {{ game.park.city }} · First pitch {{ game.first_pitch_eastern_str }}
+    {% if game.park.roof_type == "retractable" %} · Retractable roof{% endif %}
+    {% if game.park.roof_type == "fixed_dome" %} · Domed venue{% endif %}
+  </p>
+
+  {# ── Editorial hero: temp big, wind + precip flanking ─────── #}
+  {% if game.forecast %}
+    {% set f = game.forecast %}
+    <div class="game-hero">
+      <div class="game-hero__metric game-hero__metric--primary">
+        <div class="game-hero__icon">{{ weather_icon(f.precip_pct|precip_icon, 48) }}</div>
+        <div class="game-hero__value">{{ f.temp }}<span class="game-hero__value-unit">°F</span></div>
+        <div class="game-hero__label">At first pitch</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon">{{ wind_arrow_svg(game.wind_info, 40) }}</div>
+        <div class="game-hero__value">{{ f.wind_speed }}<span class="game-hero__value-unit">mph</span></div>
+        <div class="game-hero__label">{{ game.wind_info.label if game.wind_info else "Wind" }}</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon"><span class="{{ f.precip_pct|precip_color }}" style="font-family:var(--font-serif);font-size:2rem;font-weight:600">{{ f.precip_pct }}%</span></div>
+        <div class="game-hero__value" style="font-size:1.6rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">Rain chance</div>
+        <div class="game-hero__label">Dewpoint {{ f.dew }}° · Humidity {{ f.humidity_pct }}%</div>
+      </div>
+    </div>
+  {% endif %}
+
+  {# ── Kevin's write-up (if exists) OR big CTAs ──────────────── #}
+  {% if game.writeup %}
+    <div class="game-writeup">
+      <div class="game-writeup__label">Kevin's note</div>
+      <div class="game-writeup__body">{{ game.writeup.text }}</div>
+    </div>
+  {% else %}
+    {% include "mlb/_ctas.html" %}
+  {% endif %}
+
+  {# ── Hourly forecast ──────────────────────────────────────── #}
+  <h2 class="game-section-h2">Hourly forecast</h2>
+  {{ hourly_table(game) }}
+
+  {# ── Ballpark microclimate (editorial aside) ───────────────── #}
+  <aside class="game-microclimate">
+    <p class="game-microclimate__label">Ballpark notes</p>
+    <h3 class="game-microclimate__title">Weather at {{ game.venue }}</h3>
+    <div class="game-microclimate__body">
+      {% set canonical = game.park._canonical_name %}
+      {% if canonical == "Coors Field" %}
+        Denver's mile-high elevation lets balls travel about 10% farther than at sea level. Dry summer air shrinks breaking-pitch movement. Wind off the Front Range typically blows out to right-center on hot afternoons.
+      {% elif canonical == "Wrigley Field" %}
+        Wind off Lake Michigan is the dominant variable. North-northeast wind blows in from center; south wind blows out. The flags on the foul poles are the most-watched piece of meteorological equipment in baseball.
+      {% elif canonical == "Oracle Park" %}
+        San Francisco's marine layer keeps temperatures cool and air dense. The prevailing onshore wind blows in off McCovey Cove, knocking down fly balls to right field. Day games can be deceptively chilly.
+      {% elif canonical == "Fenway Park" %}
+        Wind off Boston Harbor and the Charles tends to swirl above the Green Monster. Spring games often run 10–15° colder than the city forecast. Humid summer nights favor offense.
+      {% elif canonical == "Yankee Stadium" %}
+        The short porch in right field is amplified by any wind with an easterly component. River breezes off the Harlem can shift mid-game. Late-summer humidity is heavy and persistent.
+      {% elif canonical == "Oriole Park at Camden Yards" %}
+        Camden sits between the Chesapeake and the city. Onshore flow off the bay typically holds balls in to right; offshore southwest wind blows out to left. Summer thunderstorms are routine.
+      {% elif canonical == "Citi Field" %}
+        Wind off Flushing Bay blows in from right and center most evenings, suppressing home runs. Spring games can be cold and damp; late-summer humidity is high.
+      {% elif canonical == "Citizens Bank Park" %}
+        A small park where wind direction matters disproportionately. South wind blows out to right-center. Philadelphia's summer humidity keeps the ball flying.
+      {% elif canonical == "Nationals Park" %}
+        Sited near the Anacostia, with a typical southerly summer flow that blows out to right. Washington's heat and humidity are among the most extreme in the league.
+      {% elif canonical == "Truist Park" %}
+        Atlanta's heat and humidity drive offense. The park sits high enough above the Chattahoochee Valley that thunderstorm cells often pass north or south of the venue.
+      {% elif canonical == "Great American Ball Park" %}
+        A homer-friendly park. Summer southwest wind on the Ohio River blows out to right-center. Storms tend to track west-southwest to east-northeast through the region.
+      {% elif canonical == "PNC Park" %}
+        Wind off the Allegheny and Monongahela complicates short-range forecasts. The park is small to right field; out winds amplify the effect.
+      {% elif canonical == "Busch Stadium" %}
+        Hot Midwest summers and warm Mississippi Valley air make this a hitter's park in July and August. Southwest wind blows out to left.
+      {% elif canonical == "Kauffman Stadium" %}
+        One of the largest outfields in the league. Strong southwest wind in summer aids the long ball; cold spring nights kill it.
+      {% elif canonical == "Target Field" %}
+        Northern climate, so early-season cold is a real factor. Summer thunderstorms are frequent. Wind off downtown buildings creates turbulence in the outfield.
+      {% elif canonical == "Comerica Park" %}
+        Detroit's lake-influenced climate means cool spring and fall games. Center field is deep; wind direction matters most for the alleys.
+      {% elif canonical == "Progressive Field" %}
+        Lake Erie shapes the local weather: cool spring days, humid summer nights. Wind off the lake from the north blows in from center.
+      {% elif canonical == "Guaranteed Rate Field" %}
+        Chicago's South Side sees similar lake influences to Wrigley but with the wind compass rotated. Southeast wind blows in here rather than out.
+      {% elif canonical == "Angel Stadium" %}
+        Southern California marine layer keeps the air dense on overcast mornings. Hot, dry days with offshore Santa Ana flow are home-run weather.
+      {% elif canonical == "Dodger Stadium" %}
+        Sited in a valley. Afternoon thermal flow up the canyon creates an out-to-center-field wind on hot days. Marine layer mornings cool things down.
+      {% elif canonical == "Petco Park" %}
+        San Diego's marine climate keeps air consistently dense. Onshore breezes from the Pacific blow in toward home plate, suppressing the long ball.
+      {% elif canonical == "Sutter Health Park" %}
+        Sacramento's Central Valley heat is extreme in summer. The Delta breeze from the southwest typically arrives in the late afternoon, lowering temps and pushing balls out.
+      {% elif canonical == "T-Mobile Park" %}
+        Even with the roof closed, the open sides let weather influence play. Marine air keeps the ball from flying. Cool spring evenings are common.
+      {% elif canonical == "American Family Field" %}
+        Retractable roof is closed in cold or rainy weather. When open, summer southwest wind blows out to right-center.
+      {% elif canonical == "Minute Maid Park" %}
+        Houston heat almost guarantees the roof closes during day games. When open, prevailing south flow from the Gulf blows in toward home plate.
+      {% elif canonical == "Globe Life Field" %}
+        Texas heat usually keeps the roof closed in July and August. Open-air conditions feature hot, sometimes gusty south flow.
+      {% elif canonical == "Chase Field" %}
+        Phoenix summer heat keeps the roof closed for most day games. When open, the desert dry air keeps the ball flying.
+      {% elif canonical == "loanDepot park" %}
+        South Florida humidity and storms make the retractable roof essential. When open, the prevailing southeast sea-breeze blows in from right.
+      {% elif canonical == "Rogers Centre" %}
+        Toronto's Rogers Centre is one of MLB's three retractable-roof venues. Open-air conditions feature variable lake-influenced winds.
+      {% elif canonical == "Tropicana Field" %}
+        Fixed dome. Outdoor weather has no effect on play.
+      {% else %}
+        Local microclimate affects every game at this park. Wind off nearby water bodies, terrain, and prevailing summer flow all shape what happens between first pitch and the final out.
+      {% endif %}
+    </div>
+  </aside>
+
+  <a href="/mlb/{{ date_str }}" class="game-page__back">← All games on {{ pretty_date }}</a>
+</article>
+{% endblock %}

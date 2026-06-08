@@ -172,3 +172,350 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .stat__row { display: flex; align-items: baseline; gap: 0.55rem; }
 .stat__row .stat__icon { display: inline-flex; align-self: center; margin-bottom: 0; color: var(--ash); }
 .stat__row .stat__icon svg { width: 22px; height: 22px; display: block; }
+
+/* ============================================================
+ * Sport navigation — strip below site header on /sport/* pages
+ * ============================================================ */
+
+.sport-nav { border-bottom: 1px solid var(--mist); background: var(--white); }
+.sport-nav__inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+.sport-nav__inner::-webkit-scrollbar { display: none; }
+.sport-nav__item { flex-shrink: 0; padding: 1rem 1.25rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; scroll-snap-align: start; white-space: nowrap; transition: color 0.15s ease, border-color 0.15s ease; }
+.sport-nav__item:hover { color: var(--ink); }
+.sport-nav__item.is-active { color: var(--ink); border-bottom-color: var(--storm); }
+.sport-nav__count { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem; background: var(--mist); color: var(--slate); border-radius: 999px; font-size: 0.7rem; font-weight: 700; vertical-align: 1px; }
+.sport-nav__item.is-active .sport-nav__count { background: var(--ink); color: var(--white); }
+
+/* ============================================================
+ * MLB slate / per-game pages — editorial baseline
+ * ============================================================ */
+
+/* Page header */
+.mlb-page { padding-top: 2.5rem; padding-bottom: 4rem; }
+.mlb-page__header { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 2rem; border-bottom: 1px solid var(--mist); margin-bottom: 2.5rem; }
+.mlb-page__hed { display: flex; align-items: baseline; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+.mlb-page__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0.4rem 0 0; }
+.mlb-page__sub { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); margin-top: 0.75rem; }
+.mlb-page__datenav { display: flex; gap: 0.5rem; align-items: center; }
+.mlb-page__datelink { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); text-decoration: none; padding: 0.4rem 0.8rem; border: 1px solid var(--mist); transition: all 0.15s ease; }
+.mlb-page__datelink:hover { color: var(--ink); border-color: var(--ash); }
+.mlb-page__datelink.is-active { color: var(--white); background: var(--ink); border-color: var(--ink); }
+
+/* ============================================================
+ * Cheat-sheet row — minimal editorial cards with team logos
+ * ============================================================ */
+
+.cheat-row { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+
+.cheat-card { display: block; background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.9rem; text-decoration: none; color: var(--ink); position: relative; transition: border-color 0.15s ease, transform 0.15s ease; }
+.cheat-card:hover { border-color: var(--ink); }
+.cheat-card:hover .cheat-card__time { color: var(--storm); }
+
+.cheat-card__rule { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.75rem; }
+.cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; }
+.cheat-card__badge { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); }
+
+.cheat-card__teams { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
+.cheat-card__team { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; }
+.cheat-card__logo { width: 28px; height: 28px; flex-shrink: 0; object-fit: contain; }
+.cheat-card__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); }
+.cheat-card__at { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0; padding: 0 0.15rem; }
+
+.cheat-card__wx { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); }
+.cheat-card__temp { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+.cheat-card__wxmid { display: flex; flex-direction: column; gap: 0.15rem; }
+.cheat-card__wind { font-family: var(--font-sans); font-size: 0.75rem; color: var(--slate); display: flex; align-items: center; gap: 0.3rem; }
+.cheat-card__precip { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; }
+.cheat-card__skyicon { width: 32px; height: 32px; }
+.cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); }
+
+/* Wind SVG arrow */
+.wind-arrow-svg { width: 14px; height: 14px; transition: transform 0.2s ease; }
+.wind-arrow-svg--out { color: #15803d; }   /* green-700, more editorial than bright */
+.wind-arrow-svg--in { color: #b91c1c; }    /* red-700 */
+.wind-arrow-svg--cross { color: var(--fog); }
+.wind-arrow-svg--unknown { color: var(--smoke); }
+
+/* Precip color buckets — editorial weights, not neon */
+.precip-green  { color: #15803d; font-weight: 600; }
+.precip-yellow { color: #b45309; font-weight: 600; }
+.precip-orange { color: #c2410c; font-weight: 700; }
+.precip-red    { color: #b91c1c; font-weight: 700; }
+.precip-none   { color: var(--fog); }
+
+/* Weather icons — minimal stroke style */
+.wx-icon { width: 32px; height: 32px; flex-shrink: 0; }
+.wx-icon--sun { color: #ca8a04; }       /* yellow-600 */
+.wx-icon--partly { color: var(--fog); }
+.wx-icon--rain { color: var(--storm); }
+.wx-icon--storm { color: var(--slate); }
+
+/* ============================================================
+ * Section 2 — write-ups or CTA pair
+ * ============================================================ */
+
+.mlb-section { max-width: 900px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+
+/* Big CTA pair — editorial, not gradient buttons */
+.mlb-ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--ink); margin-bottom: 2rem; }
+@media (max-width: 640px) { .mlb-ctas { grid-template-columns: 1fr; } }
+.mlb-cta { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.75rem 1.75rem 2rem; text-decoration: none; color: var(--ink); transition: background 0.15s ease, color 0.15s ease; position: relative; }
+.mlb-cta + .mlb-cta { border-left: 1px solid var(--mist); }
+@media (max-width: 640px) { .mlb-cta + .mlb-cta { border-left: 0; border-top: 1px solid var(--mist); } }
+.mlb-cta:hover { background: var(--ink); color: var(--white); }
+.mlb-cta:hover .mlb-cta__kicker, .mlb-cta:hover .mlb-cta__sub { color: rgba(255,255,255,0.7); }
+.mlb-cta:hover .mlb-cta__arrow { transform: translateX(4px); }
+.mlb-cta__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); transition: color 0.15s ease; }
+.mlb-cta__title { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 0.5rem; }
+.mlb-cta__arrow { font-weight: 400; transition: transform 0.2s ease; }
+.mlb-cta__sub { font-family: var(--font-sans); font-size: 0.9rem; color: var(--ash); transition: color 0.15s ease; }
+
+/* Small OVERcast tease (when writeups exist) */
+.mlb-overcast-tease { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border: 1px solid var(--mist); background: var(--paper); margin-bottom: 2rem; text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, background 0.15s ease; }
+.mlb-overcast-tease:hover { border-color: var(--ink); background: var(--white); }
+.mlb-overcast-tease__text { display: flex; flex-direction: column; }
+.mlb-overcast-tease__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.mlb-overcast-tease__title { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; margin-top: 0.1rem; }
+.mlb-overcast-tease__arrow { font-family: var(--font-sans); font-size: 1.25rem; color: var(--ash); transition: transform 0.2s ease; }
+.mlb-overcast-tease:hover .mlb-overcast-tease__arrow { transform: translateX(4px); color: var(--ink); }
+
+/* Ad slot — editorial restraint */
+.mlb-ad-slot { display: flex; justify-content: center; align-items: center; min-height: 90px; border: 1px dashed var(--smoke); background: var(--paper); margin-bottom: 2rem; }
+.mlb-ad-slot__placeholder { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fog); }
+
+/* Write-up block */
+.mlb-writeup { padding: 1.5rem 1.75rem 1.75rem; border-left: 3px solid var(--storm); background: var(--paper); margin-bottom: 1.25rem; }
+.mlb-writeup__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.65rem; gap: 1rem; flex-wrap: wrap; }
+.mlb-writeup__matchup { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+.mlb-writeup__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+.mlb-writeup__body { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.55; color: var(--slate); white-space: pre-wrap; }
+
+/* ============================================================
+ * Section 3 — hourly tables stacked per game
+ * ============================================================ */
+
+.mlb-hourly-group { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+.mlb-game-block { margin-bottom: 3rem; scroll-margin-top: 90px; }
+.mlb-game-block__header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--ink); }
+.mlb-game-block__matchup { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+.mlb-game-block__venue { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); margin-top: 0.2rem; }
+.mlb-game-block__time { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+.mlb-game-block__deeplink { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; color: var(--storm); text-decoration: none; margin-top: 0.75rem; }
+.mlb-game-block__deeplink:hover { color: var(--storm-hover); text-decoration: underline; }
+
+/* Hourly forecast table — RotoGrinders-inspired compact stack */
+.hourly { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hourly__table { width: 100%; border-collapse: collapse; font-family: var(--font-sans); font-size: 0.85rem; }
+.hourly__label-col, .hourly__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog); text-align: left; padding: 0.45rem 0.85rem 0.45rem 0; white-space: nowrap; }
+.hourly__hour-col { padding: 0.5rem 0.5rem 0.4rem; text-align: center; border-bottom: 1px solid var(--mist); min-width: 56px; }
+.hourly__hour-col.is-game-hour { background: rgba(30,58,138,0.06); }
+.hourly__sky { display: flex; justify-content: center; margin-bottom: 0.15rem; }
+.hourly__time { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; color: var(--slate); }
+.hourly__cell { text-align: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--mist); color: var(--slate); }
+.hourly__cell.is-game-hour { background: rgba(30,58,138,0.06); }
+.hourly tbody tr:last-child td { border-bottom: 0; }
+.hourly__precip { font-weight: 700; }
+.hourly__missing { font-family: var(--font-sans); color: var(--fog); font-style: italic; padding: 1.25rem 0; }
+
+/* ============================================================
+ * Per-game detail page
+ * ============================================================ */
+
+.game-page { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+.game-page__kicker { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
+.game-page__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.85rem, 3.5vw + 0.5rem, 3rem); letter-spacing: -0.02em; line-height: 1.08; margin: 0.5rem 0 0.5rem; }
+.game-page__meta { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); margin-bottom: 2.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--mist); }
+
+/* Hero block — editorial big-number layout */
+.game-hero { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 0; border: 1px solid var(--ink); margin-bottom: 3rem; }
+@media (max-width: 640px) { .game-hero { grid-template-columns: 1fr; } }
+.game-hero__metric { padding: 1.75rem 1.5rem; text-align: center; }
+.game-hero__metric + .game-hero__metric { border-left: 1px solid var(--mist); }
+@media (max-width: 640px) { .game-hero__metric + .game-hero__metric { border-left: 0; border-top: 1px solid var(--mist); } }
+.game-hero__metric--primary { background: var(--ink); color: var(--white); }
+.game-hero__icon { display: flex; justify-content: center; margin-bottom: 0.5rem; }
+.game-hero__icon .wx-icon { width: 48px; height: 48px; }
+.game-hero__icon .wx-icon--sun { color: #fbbf24; }
+.game-hero__value { font-family: var(--font-serif); font-size: 2.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.game-hero__value-unit { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 500; color: var(--ash); margin-left: 0.15em; }
+.game-hero__metric--primary .game-hero__value-unit { color: rgba(255,255,255,0.5); }
+.game-hero__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); margin-top: 0.7rem; }
+.game-hero__metric--primary .game-hero__label { color: rgba(255,255,255,0.65); }
+
+/* Microclimate — feels like a sidebar/aside in editorial layout */
+.game-microclimate { margin: 3rem 0; padding: 1.75rem 1.75rem 2rem; background: var(--paper); border-left: 3px solid var(--ink); }
+.game-microclimate__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); margin-bottom: 0.6rem; }
+.game-microclimate__title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.65rem; letter-spacing: -0.01em; }
+.game-microclimate__body { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.6; color: var(--slate); }
+
+/* Game-page write-up */
+.game-writeup { padding: 1.75rem; border-left: 3px solid var(--storm); background: var(--paper); margin-bottom: 2.5rem; }
+.game-writeup__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); margin-bottom: 0.6rem; }
+.game-writeup__body { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.6; color: var(--slate); white-space: pre-wrap; }
+
+.game-page__back { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 2.5rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); text-decoration: none; }
+.game-page__back:hover { color: var(--ink); }
+
+/* Section header inside game page */
+.game-section-h2 { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 3rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+
+/* ============================================================
+ * v3 polish — tighten layout, add game-block borders,
+ * add per-game summary panel beside hourly table
+ * ============================================================ */
+
+/* Tighter page header so cheat-sheet fits closer to viewport top */
+.mlb-page { padding-top: 1.5rem; }
+.mlb-page__header { padding: 0 1.5rem 1.25rem; margin: 0 auto 1.5rem; }
+.mlb-page__title { margin-top: 0.3rem; }
+.mlb-page__sub { margin-top: 0.5rem; }
+
+/* Compact cheat-sheet — smaller cards, tighter gap */
+.cheat-row { gap: 0.6rem; margin-bottom: 2rem; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); }
+.cheat-card { padding: 0.7rem 0.85rem 0.75rem; }
+.cheat-card__rule { padding-bottom: 0.5rem; margin-bottom: 0.55rem; }
+.cheat-card__teams { gap: 0.5rem; margin-bottom: 0.55rem; }
+.cheat-card__logo { width: 22px; height: 22px; }
+.cheat-card__abbr { font-size: 1.05rem; }
+.cheat-card__wx { gap: 0.5rem; padding-top: 0.5rem; }
+.cheat-card__temp { font-size: 1.35rem; }
+.cheat-card__skyicon { width: 28px; height: 28px; }
+
+/* ── Ballpark cut-out diamond with rotated wind arrow ──────── */
+.field-diagram { display: inline-flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.field-diagram__svg { width: 64px; height: 64px; flex-shrink: 0; }
+.field-diagram__svg--sm { width: 38px; height: 38px; }
+.field-diagram__svg--lg { width: 110px; height: 110px; }
+.field-diagram__label { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); text-align: center; line-height: 1.2; }
+.field-diagram__sublabel { font-family: var(--font-sans); font-size: 0.72rem; color: var(--ash); margin-top: 0.1rem; }
+
+/* Field outline strokes */
+.fd-grass { fill: #f4f6f4; stroke: var(--smoke); stroke-width: 1; }
+.fd-infield { fill: var(--mist); stroke: var(--ash); stroke-width: 0.5; }
+.fd-line { stroke: var(--ash); stroke-width: 0.8; fill: none; }
+.fd-plate { fill: var(--slate); }
+.fd-arrow { transform-origin: 50% 50%; transition: transform 0.25s ease; }
+.fd-arrow--out { color: #15803d; fill: #15803d; }
+.fd-arrow--in  { color: #b91c1c; fill: #b91c1c; }
+.fd-arrow--cross { color: var(--ash); fill: var(--ash); }
+.fd-arrow--unknown { color: var(--smoke); fill: var(--smoke); }
+
+/* ── Game block redesigned as a bordered card ───────────────── */
+.mlb-game-block { margin-bottom: 1.75rem; scroll-margin-top: 90px; border: 1px solid var(--mist); background: var(--white); padding: 0; }
+.mlb-game-block__header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--mist); }
+.mlb-game-block__matchup { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.mlb-game-block__venue { font-size: 0.76rem; margin-top: 0.18rem; }
+.mlb-game-block__time { white-space: nowrap; }
+
+/* Side-by-side: summary panel | hourly table */
+.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; }
+@media (max-width: 720px) { .mlb-game-block__body { grid-template-columns: 1fr; } }
+
+.game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
+@media (max-width: 720px) { .game-summary { border-right: 0; border-bottom: 1px solid var(--mist); flex-direction: row; justify-content: space-around; flex-wrap: wrap; } }
+
+.game-summary__skyicon .wx-icon { width: 44px; height: 44px; }
+.game-summary__primary { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.game-summary__temp { font-family: var(--font-serif); font-size: 2.25rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1; }
+.game-summary__label { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash); }
+.game-summary__metrics { display: flex; gap: 0.85rem; justify-content: center; }
+.game-summary__metric { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
+.game-summary__metric-value { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; line-height: 1; }
+.game-summary__metric-label { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+
+.game-summary__field { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding-top: 0.4rem; border-top: 1px dashed var(--smoke); width: 100%; }
+
+/* Hourly table moves inside the game block, no longer needs its own border */
+.mlb-game-block__hourly { padding: 0.6rem 1rem 0.85rem; }
+.mlb-game-block__hourly .hourly { overflow-x: auto; }
+.mlb-game-block__hourly .hourly__hour-col { min-width: 52px; padding: 0.45rem 0.4rem 0.35rem; }
+.mlb-game-block__hourly .hourly__label { padding: 0.35rem 0.7rem 0.35rem 0; font-size: 0.66rem; }
+.mlb-game-block__hourly .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
+
+/* Deep-link to per-game page */
+.mlb-game-block__deeplink { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.25rem 0.85rem; font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--storm); text-decoration: none; border-top: 1px solid var(--mist); width: 100%; box-sizing: border-box; transition: background 0.15s ease; }
+.mlb-game-block__deeplink:hover { background: var(--paper); color: var(--storm-hover); text-decoration: underline; }
+
+/* Hourly group container no longer needs gutters since cards have their own */
+.mlb-hourly-group { padding: 0 1.5rem; }
+
+/* ============================================================
+ * v4 polish — summary panel 2x2 grid, fills hourly height
+ * ============================================================ */
+
+/* Reset the old single-column game-summary layout */
+.game-summary {
+  background: var(--paper);
+  border-right: 1px solid var(--mist);
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  align-items: stretch;
+  gap: 0;
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .game-summary { border-right: 0; border-bottom: 1px solid var(--mist); }
+}
+
+.game-summary__cell {
+  padding: 0.85rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 0;
+}
+.game-summary__cell:nth-child(even) { border-left: 1px dashed var(--smoke); }
+.game-summary__cell:nth-child(n+3) { border-top: 1px dashed var(--smoke); }
+
+.game-summary__sky { display: flex; justify-content: center; }
+.game-summary__sky .wx-icon { width: 34px; height: 34px; }
+
+.game-summary__primary-value {
+  font-family: var(--font-serif);
+  font-size: 2.1rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.game-summary__primary-label,
+.game-summary__cell-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+  line-height: 1.2;
+}
+.game-summary__value {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+/* Tighter field diagram inside summary cell — fits the 2x2 layout */
+.game-summary .field-diagram__svg { width: 52px; height: 52px; }
+.game-summary .field-diagram__label { font-size: 0.62rem; }
+
+/* Bigger hourly icons per Kevin's spec */
+.mlb-game-block__hourly .hourly__hour-col { min-width: 56px; padding: 0.5rem 0.45rem 0.4rem; }
+.mlb-game-block__hourly .hourly__sky .wx-icon { width: 32px; height: 32px; }
+
+
+/* v5: text label removed below field diagram, so make the diagram bigger */
+.game-summary__cell--field { padding: 0.6rem 0.5rem; }
+.game-summary .field-diagram__svg { width: 72px; height: 72px; }
+
+/* v6: inline team logos beside team names in section headers */
+.mlb-game-block__matchup,
+.game-page__title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.matchup-logo { width: 1.4em; height: 1.4em; object-fit: contain; flex-shrink: 0; vertical-align: middle; }
+.matchup-at { font-family: var(--font-sans); font-size: 0.65em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); padding: 0 0.15rem; }

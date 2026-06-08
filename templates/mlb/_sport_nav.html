@@ -1,0 +1,39 @@
+{# Sport-tab strip — below site header on /sport/* pages.
+   `active_sport` is a string like "mlb", "worldcup", "nfl", "ncaaf", "pga", "nascar", "cws"
+   `sport_counts` is an optional dict with the "today" indicator per sport.
+   Example: {"mlb": "15", "worldcup": "4", "nfl": "Sun", "pga": "Round 3", "nascar": "Sun"}
+#}
+<nav class="sport-nav" aria-label="Sport navigation">
+  <div class="sport-nav__inner">
+    <a href="/mlb/today" class="sport-nav__item {% if active_sport == 'mlb' %}is-active{% endif %}">
+      MLB
+      {% if sport_counts and sport_counts.mlb %}<span class="sport-nav__count">{{ sport_counts.mlb }}</span>{% endif %}
+    </a>
+    <a href="/worldcup" class="sport-nav__item {% if active_sport == 'worldcup' %}is-active{% endif %}">
+      World&nbsp;Cup
+      {% if sport_counts and sport_counts.worldcup %}<span class="sport-nav__count">{{ sport_counts.worldcup }}</span>{% endif %}
+    </a>
+    <a href="/nfl" class="sport-nav__item {% if active_sport == 'nfl' %}is-active{% endif %}">
+      NFL
+      {% if sport_counts and sport_counts.nfl %}<span class="sport-nav__count">{{ sport_counts.nfl }}</span>{% endif %}
+    </a>
+    <a href="/ncaaf" class="sport-nav__item {% if active_sport == 'ncaaf' %}is-active{% endif %}">
+      NCAAF
+      {% if sport_counts and sport_counts.ncaaf %}<span class="sport-nav__count">{{ sport_counts.ncaaf }}</span>{% endif %}
+    </a>
+    <a href="/golf" class="sport-nav__item {% if active_sport == 'pga' %}is-active{% endif %}">
+      PGA
+      {% if sport_counts and sport_counts.pga %}<span class="sport-nav__count">{{ sport_counts.pga }}</span>{% endif %}
+    </a>
+    <a href="/nascar" class="sport-nav__item {% if active_sport == 'nascar' %}is-active{% endif %}">
+      NASCAR
+      {% if sport_counts and sport_counts.nascar %}<span class="sport-nav__count">{{ sport_counts.nascar }}</span>{% endif %}
+    </a>
+    {% if sport_counts and sport_counts.cws %}
+    <a href="/cws" class="sport-nav__item {% if active_sport == 'cws' %}is-active{% endif %}">
+      CWS
+      <span class="sport-nav__count">{{ sport_counts.cws }}</span>
+    </a>
+    {% endif %}
+  </div>
+</nav>
