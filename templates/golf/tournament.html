@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "golf/_macros.html" import round_summary_card, round_hourly_table %}
+
+{% block title %}{{ tournament.name }} — Weather Forecast | Kevin Roth{% endblock %}
+{% block description %}{{ tournament.name }} weather forecast for every round. {{ tournament.course }} in {{ tournament.location }}. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<article class="game-page">
+  <p class="game-page__kicker">PGA Tour</p>
+  <h1 class="game-page__title">{{ tournament.name }}</h1>
+  <p class="game-page__meta">
+    {% if tournament.course_meta %}
+      {{ tournament.course }} · {{ tournament.course_meta.city }}
+    {% else %}
+      {{ tournament.course }}{% if tournament.location %} · {{ tournament.location }}{% endif %}
+    {% endif %}
+  </p>
+
+  {% if tournament.writeup %}
+    <div class="game-writeup game-writeup--{{ tournament.writeup.color or 'none' }}">
+      <div class="game-writeup__label">Kevin's note</div>
+      <div class="game-writeup__body">{{ tournament.writeup.text }}</div>
+    </div>
+  {% endif %}
+
+  {% if tournament.rounds %}
+    <div class="round-row" style="margin-bottom:2rem">
+      {% for r in tournament.rounds %}
+        {{ round_summary_card(r) }}
+      {% endfor %}
+    </div>
+
+    {% for r in tournament.rounds %}
+      <h2 class="game-section-h2" id="round-{{ r.round_num }}">Round {{ r.round_num }} · {{ r.date_label }}</h2>
+      {{ round_hourly_table(r) }}
+    {% endfor %}
+  {% else %}
+    <p class="hourly__missing">Course forecast not available.</p>
+  {% endif %}
+
+  <a href="/golf" class="game-page__back">← All current tournaments</a>
+</article>
+{% endblock %}

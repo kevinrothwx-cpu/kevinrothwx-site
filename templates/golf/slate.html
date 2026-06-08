@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% from "golf/_macros.html" import round_summary_card, round_hourly_table %}
+
+{% block title %}PGA Tour Weather — This Week's Tournament | Kevin Roth{% endblock %}
+{% block description %}Free PGA Tour weather forecasts for this week's tournament rounds. Course-specific 4-day outlook by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}PGA Tour Weather Forecasts{% endblock %}
+{% block og_description %}Round-by-round weather for the current PGA Tour event. By Kevin Roth, sports meteorologist.{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<div class="mlb-page">
+  <header class="mlb-page__header">
+    <div class="mlb-page__hed">
+      <div>
+        <p class="kicker kicker-storm">PGA Tour</p>
+        <h1 class="mlb-page__title">This week's weather</h1>
+        <p class="mlb-page__sub">
+          {% if slate|length == 0 %}No active tournament loaded.
+          {% elif slate|length == 1 %}{{ slate[0].name }}.
+          {% else %}{{ slate|length }} active or upcoming tournaments.{% endif %}
+          Times shown in course-local time.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  {% if not slate %}
+    <div class="container">
+      <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
+        {% if meta and meta.build_err %}Slate is rebuilding. Refresh in a moment.
+        {% else %}No PGA tournament data right now. Check back closer to Thursday.{% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+  {% for tournament in slate %}
+    <section class="golf-tournament">
+      <header class="golf-tournament__header">
+        <div>
+          <h2 class="golf-tournament__name">{{ tournament.name }}</h2>
+          <p class="golf-tournament__course">
+            {% if tournament.course_meta %}
+              {{ tournament.course }} · {{ tournament.course_meta.city }}
+            {% else %}
+              {{ tournament.course }}{% if tournament.location %} · {{ tournament.location }}{% endif %}
+              <span class="venue-roof-flag" style="border-color:var(--smoke);color:var(--ash)">Course not yet mapped</span>
+            {% endif %}
+          </p>
+        </div>
+        {% if tournament.url %}
+          <a class="golf-tournament__leaderboard" href="{{ tournament.url }}" rel="noopener">Leaderboard ↗</a>
+        {% endif %}
+      </header>
+
+      {% if tournament.writeup %}
+        <div class="mlb-writeup mlb-writeup--{{ tournament.writeup.color or 'none' }}">
+          <div class="mlb-writeup__header">
+            <span class="mlb-writeup__matchup">Kevin's note · {{ tournament.short_name }}</span>
+          </div>
+          <div class="mlb-writeup__body">{{ tournament.writeup.text }}</div>
+        </div>
+      {% endif %}
+
+      {% if tournament.rounds %}
+        <div class="round-row">
+          {% for r in tournament.rounds %}
+            {{ round_summary_card(r) }}
+          {% endfor %}
+        </div>
+
+        {% for r in tournament.rounds %}
+          <article class="mlb-game-block" id="round-{{ r.round_num }}">
+            <header class="mlb-game-block__header">
+              <div>
+                <h3 class="mlb-game-block__matchup">Round {{ r.round_num }}</h3>
+                <div class="mlb-game-block__venue">{{ r.date_label }} · play hours shown</div>
+              </div>
+            </header>
+            <div class="mlb-game-block__hourly" style="padding:0.6rem 1rem 0.85rem">
+              {{ round_hourly_table(r) }}
+            </div>
+          </article>
+        {% endfor %}
+      {% else %}
+        <p class="hourly__missing">Course not mapped yet — add it to <code>golf/courses.py</code> with lat/lon to populate the forecast.</p>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.round-card');
+    if (!card) return;
+    var href = card.getAttribute('href');
+    if (href && href.charAt(0) === '#') {
+      e.preventDefault();
+      var target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        history.replaceState(null, '', href);
+      }
+    }
+  });
+</script>
+{% endblock %}

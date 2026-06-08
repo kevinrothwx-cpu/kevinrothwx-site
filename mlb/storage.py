@@ -1,18 +1,11 @@
 """
-mlb.storage — write-up storage interface.
+mlb.storage — write-up storage with optional color tag.
 
-Phase 1 (NOW): in-memory dict, wiped on every Render restart.
-  Kevin won't be using the write-up feature yet, so this is fine.
+Phase 1: in-memory dict, wiped on Render restart. Upgrade to SQLite when
+Kevin starts using the feature regularly (requires Render Starter plan).
 
-Phase 2 (when Kevin starts writing): swap _MEMORY_STORE for a SQLite
-  backend. Requires upgrading kevinrothwx-site Render service to
-  Starter ($7/mo) with persistent disk add-on. The interface here
-  (get_writeup, save_writeup, list_writeups) stays identical.
-
-A write-up is keyed by MLB game_pk (unique per game per day). Storing
-by game_pk means doubleheaders are naturally distinct, and a write-up
-written for "today's Cubs game" never bleeds into "tomorrow's Cubs game"
-the way a (team, date) key could.
+Each write-up: {text, color, updated_at_utc}
+  color ∈ {"green", "yellow", "orange", "red", None}
 """
 
 from __future__ import annotations
@@ -22,33 +15,40 @@ from datetime import datetime, timezone
 from typing import Optional
 
 
-# game_pk → {"text": str, "updated_at_utc": datetime}
+VALID_COLORS = {"green", "yellow", "orange", "red"}
+
 _MEMORY_STORE: dict[int, dict] = {}
 _lock = threading.Lock()
 
 
 def get_writeup(game_pk: int) -> Optional[dict]:
-    """Return {"text", "updated_at_utc"} or None if no write-up exists."""
     with _lock:
         return _MEMORY_STORE.get(int(game_pk))
 
 
-def save_writeup(game_pk: int, text: str) -> None:
-    """Save (or replace) a write-up for one game. Empty text = delete."""
+def save_writeup(game_pk: int, text: str, color: Optional[str] = None) -> None:
+    """
+    Save (or replace) a write-up. Empty text = delete.
+    Color must be one of VALID_COLORS or None.
+    """
     pk = int(game_pk)
     text = (text or "").strip()
+    if color and color.lower() not in VALID_COLORS:
+        color = None
+    elif color:
+        color = color.lower()
     with _lock:
         if not text:
             _MEMORY_STORE.pop(pk, None)
             return
         _MEMORY_STORE[pk] = {
             "text":           text,
+            "color":          color,
             "updated_at_utc": datetime.now(timezone.utc),
         }
 
 
 def list_writeups(game_pks: list[int]) -> dict[int, dict]:
-    """Return a {game_pk: writeup} dict, only including pks that have write-ups."""
     out = {}
     with _lock:
         for pk in game_pks:
@@ -59,10 +59,6 @@ def list_writeups(game_pks: list[int]) -> dict[int, dict]:
 
 
 def attach_writeups_to_slate(slate: list[dict]) -> None:
-    """
-    Mutates slate in place: adds `writeup` key to each game dict
-    (either the writeup dict or None).
-    """
     pks = [g["game_pk"] for g in slate if g.get("game_pk")]
     writeups = list_writeups(pks)
     for g in slate:
@@ -70,6 +66,5 @@ def attach_writeups_to_slate(slate: list[dict]) -> None:
 
 
 def clear_all() -> None:
-    """Test helper — clears the in-memory store."""
     with _lock:
         _MEMORY_STORE.clear()

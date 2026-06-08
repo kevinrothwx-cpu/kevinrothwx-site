@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}MLB Write-up Admin{% endblock %}
+{% block title %}World Cup Write-up Admin{% endblock %}
 {% block extra_head %}
 <meta name="robots" content="noindex, nofollow">
 <style>
@@ -39,21 +39,21 @@
 
 {% block content %}
 <div class="admin-page">
-  <h1 class="admin-page__h1">MLB Write-up Admin</h1>
+  <h1 class="admin-page__h1">World Cup Write-up Admin</h1>
   <p class="admin-page__sub">
-    {{ date_str }} · {{ slate|length }} games loaded.
+    {{ date_str }} · {{ slate|length }} matches loaded.
     Storage is in-memory — resets on every Render restart until SQLite upgrade.
   </p>
 
-  <form class="admin-form" method="POST" action="/admin/mlb?date={{ date_str }}">
+  <form class="admin-form" method="POST" action="/admin/worldcup?date={{ date_str }}">
     <div>
-      <label for="game_pk">Game</label>
-      <select id="game_pk" name="game_pk" required>
-        <option value="">— pick a game —</option>
-        {% for g in slate %}
-          <option value="{{ g.game_pk }}">
-            {{ g.first_pitch_eastern_str }} — {{ g.away_name }} at {{ g.home_name }} ({{ g.venue }})
-            {%- if g.writeup %} · has write-up{% endif -%}
+      <label for="event_id">Match</label>
+      <select id="event_id" name="event_id" required>
+        <option value="">— pick a match —</option>
+        {% for m in slate %}
+          <option value="{{ m.event_id }}">
+            {{ m.kickoff_eastern_str }} — {{ m.away.name }} vs {{ m.home.name }} ({{ m.venue }})
+            {%- if m.writeup %} · has write-up{% endif -%}
           </option>
         {% endfor %}
       </select>
@@ -72,7 +72,7 @@
 
     <div>
       <label for="text">Write-up</label>
-      <textarea id="text" name="text" placeholder="Heavy thunderstorms expected after 7 PM ET. Likely delay between innings 3-5..."></textarea>
+      <textarea id="text" name="text" placeholder="Storm cell developing over Mexico City — kickoff likely delayed..."></textarea>
     </div>
     <button type="submit">Save write-up</button>
   </form>
@@ -81,13 +81,13 @@
   {% if existing %}
     <div class="admin-existing">
       <h3>Current write-ups for {{ date_str }}</h3>
-      {% for g in existing %}
-        <div class="admin-existing-item admin-existing-item--{{ g.writeup.color or 'none' }}">
-          <div class="admin-existing-item__head">{{ g.away_abbr }} @ {{ g.home_abbr }} · {{ g.first_pitch_eastern_str }}</div>
-          <div class="admin-existing-item__body">{{ g.writeup.text }}</div>
+      {% for m in existing %}
+        <div class="admin-existing-item admin-existing-item--{{ m.writeup.color or 'none' }}">
+          <div class="admin-existing-item__head">{{ m.away.short_name or m.away.name }} vs {{ m.home.short_name or m.home.name }} · {{ m.kickoff_eastern_str }}</div>
+          <div class="admin-existing-item__body">{{ m.writeup.text }}</div>
           <div class="admin-existing-item__meta">
-            Color: {{ g.writeup.color|upper if g.writeup.color else 'none' }} ·
-            updated {{ g.writeup.updated_at_utc.strftime("%H:%M UTC") }}
+            Color: {{ m.writeup.color|upper if m.writeup.color else 'none' }} ·
+            updated {{ m.writeup.updated_at_utc.strftime("%H:%M UTC") }}
           </div>
         </div>
       {% endfor %}

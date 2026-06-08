@@ -19,6 +19,21 @@ from mlb.cache import get_slate, start_warmer
 from mlb.slate import precip_color, precip_icon
 from mlb.storage import save_writeup, attach_writeups_to_slate, get_writeup
 
+from worldcup.cache import get_matchday, start_warmer as start_wc_warmer
+from worldcup.schedule import match_slug as wc_match_slug
+from worldcup.storage import (
+    save_writeup as wc_save_writeup,
+    get_writeup as wc_get_writeup,
+    attach_writeups_to_slate as wc_attach_writeups,
+)
+
+from golf.cache import get_pga_slate, start_warmer as start_golf_warmer
+from golf.storage import (
+    save_writeup as golf_save_writeup,
+    get_writeup as golf_get_writeup,
+    attach_writeups_to_slate as golf_attach_writeups,
+)
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
@@ -30,6 +45,8 @@ EASTERN_TZ = ZoneInfo("America/New_York")
 
 # Start the slate warmer thread on import (gunicorn imports app:app once per worker)
 start_warmer()
+start_wc_warmer()
+start_golf_warmer()
 
 
 @app.context_processor
@@ -216,6 +233,111 @@ def mlb_game(date_str, slug):
     )
 
 
+
+# ===== World Cup 2026 =====
+
+@app.route("/worldcup")
+def worldcup_root():
+    """Matchday view: today + next 2 days."""
+    return _render_worldcup_matchday(_eastern_today(), days=3)
+
+
+@app.route("/worldcup/<date_str>")
+def worldcup_date(date_str):
+    """Specific-date matchday."""
+    if not _valid_date_str(date_str):
+        abort(404)
+    return _render_worldcup_matchday(date_str, days=1)
+
+
+@app.route("/worldcup/<date_str>/<slug>")
+def worldcup_match(date_str, slug):
+    """Per-match detail page."""
+    if not _valid_date_str(date_str):
+        abort(404)
+    slate, meta = get_matchday(date_str)
+    if slate is None:
+        abort(404)
+    match = next((m for m in slate if m["slug"] == slug), None)
+    if not match:
+        abort(404)
+    match["writeup"] = wc_get_writeup(match["event_id"])
+    d = datetime.strptime(date_str, "%Y-%m-%d").date()
+    pretty_date = d.strftime("%A, %B %-d")
+    return render_template(
+        "worldcup/match.html",
+        match=match, meta=meta, date_str=date_str, pretty_date=pretty_date,
+    )
+
+
+def _render_worldcup_matchday(start_date_str, days=3):
+    """Helper: render one or multiple days of matches on the matchday page."""
+    if not _valid_date_str(start_date_str):
+        start_date_str = _eastern_today()
+
+    days_data = []
+    start_d = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+    today = datetime.now(EASTERN_TZ).date()
+    for i in range(days):
+        d = start_d + timedelta(days=i)
+        ds = d.strftime("%Y-%m-%d")
+        slate, meta = get_matchday(ds, allow_build=False)
+        if slate is None:
+            slate, meta = [], None
+        wc_attach_writeups(slate)
+        days_data.append({
+            "date_str":    ds,
+            "pretty_date": d.strftime("%A, %B %-d"),
+            "is_today":    (d == today),
+            "is_tomorrow": (d == today + timedelta(days=1)),
+            "is_past":     (d < today),
+            "slate":       slate,
+            "match_count": len(slate),
+        })
+
+    total_matches = sum(day["match_count"] for day in days_data)
+
+    return render_template(
+        "worldcup/slate.html",
+        days_data=days_data,
+        total_matches=total_matches,
+        start_date_str=start_date_str,
+        showing_multiple=(days > 1),
+    )
+
+
+
+# ===== PGA Tour =====
+
+@app.route("/golf")
+def golf_root():
+    """Current PGA slate — usually 1-3 active/upcoming tournaments."""
+    slate, meta = get_pga_slate()
+    if slate is None:
+        slate, meta = [], {"build_err": "Slate not yet built"}
+    golf_attach_writeups(slate)
+    return render_template(
+        "golf/slate.html",
+        slate=slate, meta=meta,
+    )
+
+
+@app.route("/golf/<slug>")
+def golf_tournament(slug):
+    """Per-tournament detail."""
+    slate, meta = get_pga_slate()
+    if slate is None:
+        abort(404)
+    tournament = next((t for t in slate if t["slug"] == slug), None)
+    if not tournament:
+        abort(404)
+    tournament["writeup"] = golf_get_writeup(tournament["event_id"])
+    return render_template(
+        "golf/tournament.html",
+        tournament=tournament, meta=meta,
+    )
+
+
 # ===== Admin write-up route (in-memory storage; not yet used) =====
 
 def _check_admin_auth() -> bool:
@@ -253,8 +375,9 @@ def admin_mlb():
         except ValueError:
             game_pk = 0
         text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
         if game_pk:
-            save_writeup(game_pk, text)
+            save_writeup(game_pk, text, color=color)
             flash("Write-up saved.", "success")
         return redirect(url_for("admin_mlb", date=date_str))
 
@@ -264,6 +387,53 @@ def admin_mlb():
     attach_writeups_to_slate(slate)
 
     return render_template("mlb/admin.html", slate=slate, date_str=date_str)
+
+
+
+
+@app.route("/admin/worldcup", methods=["GET", "POST"])
+@_admin_required
+def admin_worldcup():
+    """Write-up admin for World Cup matches. Color tag supported."""
+    date_str = request.args.get("date", _eastern_today())
+    if not _valid_date_str(date_str):
+        date_str = _eastern_today()
+
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            wc_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_worldcup", date=date_str))
+
+    slate, _ = get_matchday(date_str)
+    if slate is None:
+        slate = []
+    wc_attach_writeups(slate)
+
+    return render_template("worldcup/admin.html", slate=slate, date_str=date_str)
+
+
+@app.route("/admin/golf", methods=["GET", "POST"])
+@_admin_required
+def admin_golf():
+    """PGA write-up admin."""
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            golf_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_golf"))
+
+    slate, _ = get_pga_slate()
+    if slate is None:
+        slate = []
+    golf_attach_writeups(slate)
+    return render_template("golf/admin.html", slate=slate)
 
 
 # ===== SEO files =====
@@ -296,6 +466,16 @@ def sitemap():
         dynamic_urls.append((f"/mlb/{d}", "0.85", "hourly"))
         for g in slate:
             dynamic_urls.append((f"/mlb/{d}/{g['slug']}", "0.7", "hourly"))
+
+    # World Cup matchday + per-match URLs (today + next 2 days)
+    for offset in (0, 1, 2):
+        d = (datetime.now(EASTERN_TZ) + timedelta(days=offset)).strftime("%Y-%m-%d")
+        wc_slate, _ = get_matchday(d, allow_build=False)
+        if not wc_slate:
+            continue
+        dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
+        for m in wc_slate:
+            dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
 
     all_urls = static_urls + dynamic_urls
     today_str = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d")

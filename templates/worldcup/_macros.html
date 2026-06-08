@@ -1,0 +1,180 @@
+{# ── Country / national-team logo from ESPN's CDN ──────────────── #}
+{% macro wc_logo(team, klass="cheat-card__logo") %}
+  {% if team.logo %}
+    <img class="{{ klass }}" src="{{ team.logo }}" alt="{{ team.name }} crest" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">
+  {% endif %}
+{% endmacro %}
+
+
+{# ── Inline SVG weather icons — imported from MLB so styling matches ── #}
+{% from "mlb/_macros.html" import weather_icon %}
+
+
+{# ── Soccer pitch diagram with compass wind arrow ──────────────── #}
+{# Unlike baseball, pitch orientation doesn't carry tactical meaning,
+   so we show the wind arrow in real compass space: arrow points the
+   direction the wind is BLOWING TO. North is up. #}
+{% macro pitch_diagram(forecast) %}
+  {% if forecast %}
+    {% set wind_to = (forecast.wind_deg + 180) % 360 %}
+    {% set rot = wind_to %}
+  {% else %}
+    {% set rot = 0 %}
+  {% endif %}
+  <div class="field-diagram">
+    <svg viewBox="0 0 100 100" class="field-diagram__svg" aria-hidden="true">
+      {# Pitch outline (horizontal, ~1.55:1 ratio like a real pitch from above) #}
+      <rect x="12" y="28" width="76" height="44" rx="1.5" class="fd-grass"/>
+      {# Center line + center circle #}
+      <line class="fd-line" x1="50" y1="28" x2="50" y2="72"/>
+      <circle cx="50" cy="50" r="7" class="fd-line" fill="none"/>
+      <circle cx="50" cy="50" r="1" fill="var(--ash)"/>
+      {# Goals on left/right ends #}
+      <rect x="9" y="46" width="3" height="8" class="fd-infield"/>
+      <rect x="88" y="46" width="3" height="8" class="fd-infield"/>
+      {# Penalty boxes #}
+      <rect x="12" y="38" width="14" height="24" stroke="var(--ash)" stroke-width="0.5" fill="none"/>
+      <rect x="74" y="38" width="14" height="24" stroke="var(--ash)" stroke-width="0.5" fill="none"/>
+      {# Six-yard boxes #}
+      <rect x="12" y="44" width="6" height="12" stroke="var(--ash)" stroke-width="0.4" fill="none"/>
+      <rect x="82" y="44" width="6" height="12" stroke="var(--ash)" stroke-width="0.4" fill="none"/>
+      {# Wind arrow centered, rotated by compass direction #}
+      {% if forecast %}
+      <g class="fd-arrow fd-arrow--cross" style="transform: rotate({{ rot }}deg); transform-origin: 50px 50px;">
+        <line x1="50" y1="68" x2="50" y2="34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="50,28 44,38 56,38" fill="currentColor"/>
+      </g>
+      {% else %}
+      <circle cx="50" cy="50" r="3" fill="var(--smoke)"/>
+      {% endif %}
+    </svg>
+  </div>
+{% endmacro %}
+
+
+{# ── Cheat-sheet card for a match ──────────────────────────────── #}
+{% macro wc_cheat_card(match, link_to_detail=False) %}
+  {% set f = match.forecast %}
+  {% set venue = match.venue_meta %}
+  {% set date_str = match.kickoff_eastern.strftime("%Y-%m-%d") %}
+  {% if link_to_detail %}
+    {% set href = "/worldcup/" ~ date_str ~ "/" ~ match.slug %}
+  {% else %}
+    {% set href = "#match-" ~ match.slug %}
+  {% endif %}
+  <a href="{{ href }}" class="cheat-card" data-event-id="{{ match.event_id }}">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">{{ match.kickoff_eastern_str }}</span>
+      {% if venue and venue.roof_type == "retractable" %}<span class="cheat-card__badge">Retractable</span>{% endif %}
+      {% if venue and venue.roof_type == "fixed_dome" %}<span class="cheat-card__badge">Dome</span>{% endif %}
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        {{ wc_logo(match.away) }}
+        <span class="cheat-card__abbr">{{ match.away.short_name or match.away.abbreviation or match.away.name }}</span>
+      </div>
+      <span class="cheat-card__at">vs</span>
+      <div class="cheat-card__team" style="justify-content:flex-end">
+        <span class="cheat-card__abbr">{{ match.home.short_name or match.home.abbreviation or match.home.name }}</span>
+        {{ wc_logo(match.home) }}
+      </div>
+    </div>
+    {% if f %}
+      <div class="cheat-card__wx">
+        <span class="cheat-card__temp">{{ f.temp }}°</span>
+        <div class="cheat-card__wxmid">
+          <span class="cheat-card__wind">{{ f.wind_speed }} mph</span>
+          <span class="cheat-card__precip {{ f.precip_pct|precip_color }}">Rain {{ f.precip_pct }}%</span>
+        </div>
+        <span class="cheat-card__skyicon">{{ weather_icon(f.precip_pct|precip_icon, 28) }}</span>
+      </div>
+    {% else %}
+      <div class="cheat-card__wx cheat-card__wx--missing">Forecast pending</div>
+    {% endif %}
+  </a>
+{% endmacro %}
+
+
+{# ── Per-match summary panel (2x2, mirrors MLB) ────────────────── #}
+{% macro wc_summary_panel(match) %}
+  {% set f = match.forecast %}
+  <div class="game-summary">
+    {% if f %}
+      <div class="game-summary__cell">
+        <div class="game-summary__sky">{{ weather_icon(f.precip_pct|precip_icon, 34) }}</div>
+        <span class="game-summary__primary-value">{{ f.temp }}°</span>
+        <span class="game-summary__primary-label">At kickoff</span>
+      </div>
+      <div class="game-summary__cell game-summary__cell--field">
+        {{ pitch_diagram(f) }}
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
+        <span class="game-summary__cell-label">Rain</span>
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__value">{{ f.wind_speed }} <span style="font-size:0.7em;font-weight:500;color:var(--ash)">mph</span></span>
+        <span class="game-summary__cell-label">Wind</span>
+      </div>
+    {% else %}
+      <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
+        <span class="game-summary__cell-label">Forecast pending</span>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{# ── Hourly forecast table — identical pattern to MLB ──────────── #}
+{% macro wc_hourly_table(match) %}
+  {% set hours = match.hourly or [] %}
+  {% if hours %}
+    <div class="hourly">
+      <table class="hourly__table">
+        <thead>
+          <tr>
+            <th class="hourly__label-col"></th>
+            {% for h in hours %}
+              <th class="hourly__hour-col {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <div class="hourly__sky">{{ weather_icon(h.precip_pct|precip_icon, 32) }}</div>
+                <div class="hourly__time">{{ h.hour_eastern }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <span class="hourly__precip {{ h.precip_pct|precip_color }}">{{ h.precip_pct }}%</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.temp }}°</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
+            {% endfor %}
+          </tr>
+          {% if hours[0].dew is not none %}
+          <tr>
+            <td class="hourly__label">Dewpoint</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.dew }}°</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hourly__missing">Hourly forecast not available for this match.</p>
+  {% endif %}
+{% endmacro %}

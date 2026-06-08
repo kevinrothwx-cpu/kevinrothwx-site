@@ -49,7 +49,7 @@
     {% set any_writeups = slate | selectattr("writeup") | list %}
     {% if any_writeups %}
       {% for g in any_writeups %}
-        <div class="mlb-writeup">
+        <div class="mlb-writeup mlb-writeup--{{ g.writeup.color or 'none' }}">
           <div class="mlb-writeup__header">
             <span class="mlb-writeup__matchup">{{ g.away_name }} at {{ g.home_name }}</span>
             <span class="mlb-writeup__time">{{ g.first_pitch_eastern_str }}</span>
@@ -61,7 +61,6 @@
     {% else %}
       {% include "mlb/_ctas.html" %}
     {% endif %}
-    {% include "mlb/_ad_slot.html" %}
   </section>
 
   {# ── Section 3: per-game blocks (summary panel + hourly side-by-side) ─ #}

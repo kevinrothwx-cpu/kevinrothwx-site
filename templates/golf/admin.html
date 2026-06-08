@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-
-{% block title %}MLB Write-up Admin{% endblock %}
+{% block title %}PGA Write-up Admin{% endblock %}
 {% block extra_head %}
 <meta name="robots" content="noindex, nofollow">
 <style>
@@ -24,37 +23,20 @@
   .color-radio input:checked + span { border-color: var(--ink); color: var(--ink); background: var(--white); }
   .admin-form button { padding: 0.85rem 1.5rem; background: var(--ink); color: var(--white); border: 0; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; align-self: flex-start; }
   .admin-form button:hover { background: var(--storm); }
-  .admin-existing { margin-top: 2.5rem; }
-  .admin-existing h3 { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); margin-bottom: 0.75rem; }
-  .admin-existing-item { padding: 1rem 1.25rem; border: 1px solid var(--mist); border-left-width: 4px; margin-bottom: 0.6rem; background: var(--white); }
-  .admin-existing-item--green  { border-left-color: #15803d; }
-  .admin-existing-item--yellow { border-left-color: #ca8a04; }
-  .admin-existing-item--orange { border-left-color: #ea580c; }
-  .admin-existing-item--red    { border-left-color: #b91c1c; }
-  .admin-existing-item__head { font-weight: 600; margin-bottom: 0.4rem; }
-  .admin-existing-item__body { font-family: var(--font-serif); font-size: 0.95rem; line-height: 1.5; color: var(--slate); white-space: pre-wrap; }
-  .admin-existing-item__meta { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); margin-top: 0.4rem; letter-spacing: 0.05em; }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="admin-page">
-  <h1 class="admin-page__h1">MLB Write-up Admin</h1>
-  <p class="admin-page__sub">
-    {{ date_str }} · {{ slate|length }} games loaded.
-    Storage is in-memory — resets on every Render restart until SQLite upgrade.
-  </p>
+  <h1 class="admin-page__h1">PGA Write-up Admin</h1>
+  <p class="admin-page__sub">{{ slate|length }} tournaments loaded. Storage is in-memory.</p>
 
-  <form class="admin-form" method="POST" action="/admin/mlb?date={{ date_str }}">
+  <form class="admin-form" method="POST" action="/admin/golf">
     <div>
-      <label for="game_pk">Game</label>
-      <select id="game_pk" name="game_pk" required>
-        <option value="">— pick a game —</option>
-        {% for g in slate %}
-          <option value="{{ g.game_pk }}">
-            {{ g.first_pitch_eastern_str }} — {{ g.away_name }} at {{ g.home_name }} ({{ g.venue }})
-            {%- if g.writeup %} · has write-up{% endif -%}
-          </option>
+      <label for="event_id">Tournament</label>
+      <select id="event_id" name="event_id" required>
+        <option value="">— pick a tournament —</option>
+        {% for t in slate %}
+          <option value="{{ t.event_id }}">{{ t.name }} ({{ t.course }}){% if t.writeup %} · has write-up{% endif %}</option>
         {% endfor %}
       </select>
     </div>
@@ -72,26 +54,9 @@
 
     <div>
       <label for="text">Write-up</label>
-      <textarea id="text" name="text" placeholder="Heavy thunderstorms expected after 7 PM ET. Likely delay between innings 3-5..."></textarea>
+      <textarea id="text" name="text" placeholder="Thursday morning fog expected, may delay first wave by 1-2 hours. Afternoon dry but breezy out of the south..."></textarea>
     </div>
     <button type="submit">Save write-up</button>
   </form>
-
-  {% set existing = slate | selectattr("writeup") | list %}
-  {% if existing %}
-    <div class="admin-existing">
-      <h3>Current write-ups for {{ date_str }}</h3>
-      {% for g in existing %}
-        <div class="admin-existing-item admin-existing-item--{{ g.writeup.color or 'none' }}">
-          <div class="admin-existing-item__head">{{ g.away_abbr }} @ {{ g.home_abbr }} · {{ g.first_pitch_eastern_str }}</div>
-          <div class="admin-existing-item__body">{{ g.writeup.text }}</div>
-          <div class="admin-existing-item__meta">
-            Color: {{ g.writeup.color|upper if g.writeup.color else 'none' }} ·
-            updated {{ g.writeup.updated_at_utc.strftime("%H:%M UTC") }}
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
 </div>
 {% endblock %}

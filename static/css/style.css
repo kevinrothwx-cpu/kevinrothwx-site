@@ -519,3 +519,80 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .game-page__title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
 .matchup-logo { width: 1.4em; height: 1.4em; object-fit: contain; flex-shrink: 0; vertical-align: middle; }
 .matchup-at { font-family: var(--font-sans); font-size: 0.65em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); padding: 0 0.15rem; }
+
+/* v7: credentials strip — "real meteorologist, not AI" branding */
+.mlb-credline {
+  max-width: 1100px;
+  margin: 0 auto 1.75rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--paper);
+  border-top: 1px solid var(--mist);
+  border-bottom: 1px solid var(--mist);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--slate);
+}
+.mlb-credline__bullet { color: var(--storm); font-size: 0.7rem; flex-shrink: 0; }
+.mlb-credline strong { color: var(--ink); font-weight: 700; }
+.mlb-credline em { color: var(--storm); font-style: normal; font-weight: 700; letter-spacing: 0.02em; }
+
+/* Hourly table — bigger row heights so it matches summary panel vertical */
+.mlb-game-block__hourly .hourly__hour-col { padding: 0.7rem 0.45rem 0.5rem; }
+.mlb-game-block__hourly .hourly__label,
+.mlb-game-block__hourly .hourly__cell { padding: 0.6rem 0.5rem; }
+.mlb-game-block__hourly .hourly__sky .wx-icon { width: 34px; height: 34px; }
+
+/* World Cup matchday day headers */
+.wc-dayhed { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; letter-spacing: -0.01em; margin: 2.5rem 0 1.25rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--ink); display: flex; align-items: baseline; gap: 0.85rem; flex-wrap: wrap; }
+.wc-dayhed__tag { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); background: var(--storm); padding: 0.25rem 0.65rem; border-radius: 3px; }
+.wc-dayhed__count { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); margin-left: auto; }
+
+/* Colored write-up borders (per Kevin's color-tagging scheme) */
+.mlb-writeup--green  { border-left-color: #15803d; }
+.mlb-writeup--yellow { border-left-color: #ca8a04; }
+.mlb-writeup--orange { border-left-color: #ea580c; }
+.mlb-writeup--red    { border-left-color: #b91c1c; }
+.game-writeup--green  { border-left-color: #15803d; }
+.game-writeup--yellow { border-left-color: #ca8a04; }
+.game-writeup--orange { border-left-color: #ea580c; }
+.game-writeup--red    { border-left-color: #b91c1c; }
+
+/* Venue roof status badges (World Cup) */
+.venue-roof-flag { display: inline-block; font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; margin-left: 0.5rem; border: 1px solid; vertical-align: middle; }
+.venue-roof-flag--closed         { color: #b91c1c; border-color: #b91c1c; background: #fef2f2; }
+.venue-roof-flag--likely-closed  { color: #c2410c; border-color: #c2410c; background: #fff7ed; }
+.venue-roof-flag--variable       { color: var(--ash); border-color: var(--smoke); background: var(--paper); }
+.venue-roof-flag--canopy         { color: var(--storm); border-color: var(--storm); background: var(--paper); }
+.venue-roof-flag--retractable    { color: var(--ash); border-color: var(--smoke); background: var(--paper); }
+
+/* ============================================================
+ * PGA Tour pages
+ * ============================================================ */
+
+.golf-tournament { max-width: 1100px; margin: 0 auto 3.5rem; padding: 0 1.5rem; }
+.golf-tournament__header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
+.golf-tournament__name { font-family: var(--font-serif); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.015em; margin: 0; line-height: 1.15; }
+.golf-tournament__course { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); margin: 0.35rem 0 0; letter-spacing: 0.03em; }
+.golf-tournament__leaderboard { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; color: var(--storm); text-decoration: none; }
+.golf-tournament__leaderboard:hover { text-decoration: underline; }
+
+/* Round summary cards — 4 per row (Thu/Fri/Sat/Sun) */
+.round-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 2.5rem; }
+.round-card { display: flex; flex-direction: column; align-items: center; padding: 1.1rem 0.85rem 1.25rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s, transform 0.15s; gap: 0.5rem; }
+.round-card:hover { border-color: var(--ink); transform: translateY(-1px); }
+.round-card__head { display: flex; justify-content: space-between; align-items: baseline; width: 100%; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+.round-card__num { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--storm); }
+.round-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; color: var(--ash); }
+.round-card__icon { margin: 0.2rem 0; }
+.round-card__temps { display: flex; align-items: baseline; gap: 0.4rem; font-family: var(--font-serif); }
+.round-card__hi { font-size: 1.7rem; font-weight: 600; letter-spacing: -0.02em; }
+.round-card__sep { color: var(--smoke); font-size: 1rem; }
+.round-card__lo { font-size: 1.1rem; font-weight: 500; color: var(--ash); }
+.round-card__meta { display: flex; gap: 0.85rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); margin-top: 0.1rem; }
+.round-card__precip { font-weight: 700; }
+.round-card__wind { color: var(--slate); }
+.round-card__missing { color: var(--fog); font-size: 0.85rem; font-style: italic; padding: 1rem 0; }

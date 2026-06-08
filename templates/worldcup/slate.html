@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% from "worldcup/_macros.html" import wc_cheat_card, wc_hourly_table, wc_summary_panel %}
+
+{% block title %}World Cup 2026 Weather — Matchday Forecasts | Kevin Roth{% endblock %}
+{% block description %}Live weather forecasts for every 2026 FIFA World Cup match across the United States, Mexico, and Canada. Built by sports meteorologist Kevin Roth. Real forecasts, not AI.{% endblock %}
+
+{% block og_title %}World Cup 2026 Weather Forecasts{% endblock %}
+{% block og_description %}Real weather for every World Cup match. By Kevin Roth, sports meteorologist with 15+ years of experience.{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<div class="mlb-page">
+  <header class="mlb-page__header">
+    <div class="mlb-page__hed">
+      <div>
+        <p class="kicker kicker-storm">World Cup 2026 · Matchday</p>
+        <h1 class="mlb-page__title">
+          {% if showing_multiple %}Upcoming matches{% else %}{{ days_data[0].pretty_date }}{% endif %}
+        </h1>
+        <p class="mlb-page__sub">
+          {% if showing_multiple %}Today + next 2 days · {{ total_matches }} matches.
+          {% else %}{{ total_matches }} matches.{% endif %}
+          All times Eastern.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  {# ── Cheat-sheet row (all days combined for quick scan) ──────── #}
+  {% set total_matches_check = days_data | map(attribute='match_count') | sum %}
+  {% if total_matches_check > 0 %}
+    <div class="cheat-row">
+      {% for day in days_data %}
+        {% for m in day.slate %}
+          {{ wc_cheat_card(m) }}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="container">
+      <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
+        No World Cup matches scheduled in this window.
+      </p>
+    </div>
+  {% endif %}
+
+  {# ── Section 2: write-ups (if any) + CTAs ─────────────────── #}
+  <section class="mlb-section">
+    {% set any_writeups = [] %}
+    {% for day in days_data %}{% for m in day.slate %}{% if m.writeup %}{% set _ = any_writeups.append(m) %}{% endif %}{% endfor %}{% endfor %}
+    {% if any_writeups %}
+      {% for m in any_writeups %}
+        <div class="mlb-writeup mlb-writeup--{{ m.writeup.color or 'none' }}">
+          <div class="mlb-writeup__header">
+            <span class="mlb-writeup__matchup">{{ m.away.name }} vs {{ m.home.name }}</span>
+            <span class="mlb-writeup__time">{{ m.kickoff_eastern_str }}</span>
+          </div>
+          <div class="mlb-writeup__body">{{ m.writeup.text }}</div>
+        </div>
+      {% endfor %}
+      {% include "mlb/_overcast_tease.html" %}
+    {% else %}
+      {% include "mlb/_ctas.html" %}
+    {% endif %}
+  </section>
+
+  {# ── Section 3: per-match blocks, grouped by day ─────────── #}
+  {% for day in days_data %}
+    {% if day.match_count > 0 %}
+      <div class="mlb-hourly-group">
+        {% if showing_multiple %}
+          <h2 class="wc-dayhed">
+            {{ day.pretty_date }}
+            {% if day.is_today %}<span class="wc-dayhed__tag">Today</span>{% endif %}
+            {% if day.is_tomorrow %}<span class="wc-dayhed__tag">Tomorrow</span>{% endif %}
+            <span class="wc-dayhed__count">{{ day.match_count }} {{ "match" if day.match_count == 1 else "matches" }}</span>
+          </h2>
+        {% endif %}
+        {% for m in day.slate %}
+          <article class="mlb-game-block" id="match-{{ m.slug }}">
+            <header class="mlb-game-block__header">
+              <div>
+                <h3 class="mlb-game-block__matchup">
+                  <img class="matchup-logo" src="{{ m.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                  <span>{{ m.away.name }}</span>
+                  <span class="matchup-at">vs</span>
+                  <img class="matchup-logo" src="{{ m.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                  <span>{{ m.home.name }}</span>
+                </h3>
+                <div class="mlb-game-block__venue">
+                  {{ m.venue }} · {{ m.venue_meta.city if m.venue_meta else "" }}
+                  {% if m.venue_meta and m.venue_meta.roof_summer_status == "likely_closed" %}
+                    <span class="venue-roof-flag venue-roof-flag--likely-closed">Roof likely closed</span>
+                  {% elif m.venue_meta and m.venue_meta.roof_type == "fixed_canopy" %}
+                    <span class="venue-roof-flag venue-roof-flag--canopy">Fixed canopy open air</span>
+                  {% elif m.venue_meta and m.venue_meta.roof_type == "retractable" %}
+                    <span class="venue-roof-flag venue-roof-flag--retractable">Retractable roof</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="mlb-game-block__time">Kickoff · {{ m.kickoff_eastern_str }}</div>
+            </header>
+            <div class="mlb-game-block__body">
+              {{ wc_summary_panel(m) }}
+              <div class="mlb-game-block__hourly">
+                {{ wc_hourly_table(m) }}
+              </div>
+            </div>
+            <a class="mlb-game-block__deeplink" href="/worldcup/{{ day.date_str }}/{{ m.slug }}">
+              Full forecast for this match <span aria-hidden="true">→</span>
+            </a>
+          </article>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.cheat-card');
+    if (!card) return;
+    var href = card.getAttribute('href');
+    if (href && href.charAt(0) === '#') {
+      e.preventDefault();
+      var target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        history.replaceState(null, '', href);
+      }
+    }
+  });
+</script>
+{% endblock %}

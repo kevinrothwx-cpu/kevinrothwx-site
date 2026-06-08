@@ -68,7 +68,7 @@
 
   {# ── Kevin's write-up (if exists) OR big CTAs ──────────────── #}
   {% if game.writeup %}
-    <div class="game-writeup">
+    <div class="game-writeup game-writeup--{{ game.writeup.color or 'none' }}">
       <div class="game-writeup__label">Kevin's note</div>
       <div class="game-writeup__body">{{ game.writeup.text }}</div>
     </div>

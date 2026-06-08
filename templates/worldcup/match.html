@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "worldcup/_macros.html" import wc_hourly_table %}
+{% from "mlb/_macros.html" import weather_icon %}
+
+{% block title %}{{ match.away.name }} vs {{ match.home.name }} — {{ pretty_date }} Weather | World Cup 2026 | Kevin Roth{% endblock %}
+{% block description %}{{ match.away.name }} vs {{ match.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ match.kickoff_eastern_str }} at {{ match.venue }}. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}{{ match.away.name }} vs {{ match.home.name }} — Weather Forecast{% endblock %}
+{% block og_description %}{{ pretty_date }} · {{ match.venue }} · Kickoff {{ match.kickoff_eastern_str }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ match.away.name }} vs {{ match.home.name }}",
+  "startDate": "{{ match.kickoff_utc_dt.isoformat() }}",
+  "sport": "Soccer",
+  "location": {
+    "@type": "Place",
+    "name": "{{ match.venue }}",
+    "address": "{{ match.venue_meta.city if match.venue_meta else '' }}"{% if match.venue_meta %},
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": {{ match.venue_meta.lat }},
+      "longitude": {{ match.venue_meta.lon }}
+    }{% endif %}
+  },
+  "homeTeam": { "@type": "SportsTeam", "name": "{{ match.home.name }}" },
+  "awayTeam": { "@type": "SportsTeam", "name": "{{ match.away.name }}" },
+  "url": "https://kevinrothwx.com/worldcup/{{ date_str }}/{{ match.slug }}"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<article class="game-page">
+  <p class="game-page__kicker">World Cup 2026 · {{ pretty_date }}</p>
+  <h1 class="game-page__title">
+    <img class="matchup-logo" src="{{ match.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <span>{{ match.away.name }}</span>
+    <span class="matchup-at">vs</span>
+    <img class="matchup-logo" src="{{ match.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <span>{{ match.home.name }}</span>
+  </h1>
+  <p class="game-page__meta">
+    {{ match.venue }}, {{ match.venue_meta.city if match.venue_meta else "" }} · Kickoff {{ match.kickoff_eastern_str }}
+    {% if match.venue_meta and match.venue_meta.roof_type == "retractable" %} · Retractable roof{% endif %}
+  </p>
+
+  {% if match.forecast %}
+    {% set f = match.forecast %}
+    <div class="game-hero">
+      <div class="game-hero__metric game-hero__metric--primary">
+        <div class="game-hero__icon">{{ weather_icon(f.precip_pct|precip_icon, 48) }}</div>
+        <div class="game-hero__value">{{ f.temp }}<span class="game-hero__value-unit">°F</span></div>
+        <div class="game-hero__label">At kickoff</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon" style="font-size:1.8rem;font-weight:600;font-family:var(--font-serif)">{{ f.wind_speed }}</div>
+        <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">mph wind</div>
+        <div class="game-hero__label">Dewpoint {{ f.dew }}°</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon"><span class="{{ f.precip_pct|precip_color }}" style="font-family:var(--font-serif);font-size:2rem;font-weight:600">{{ f.precip_pct }}%</span></div>
+        <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">Rain chance</div>
+        <div class="game-hero__label">Humidity {{ f.humidity_pct }}%</div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% include "mlb/_ctas.html" %}
+
+  <h2 class="game-section-h2">Hourly forecast</h2>
+  {{ wc_hourly_table(match) }}
+
+  <a href="/worldcup/{{ date_str }}" class="game-page__back">← All matches on {{ pretty_date }}</a>
+</article>
+{% endblock %}
