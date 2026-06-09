@@ -41,6 +41,13 @@ from nascar.storage import (
     attach_writeups_to_slate as nascar_attach_writeups,
 )
 
+from cws.cache import get_cws_slate, start_warmer as start_cws_warmer, is_in_window as cws_in_window
+from cws.storage import (
+    save_writeup as cws_save_writeup,
+    get_writeup as cws_get_writeup,
+    attach_writeups_to_slate as cws_attach_writeups,
+)
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
@@ -55,6 +62,7 @@ start_warmer()
 start_wc_warmer()
 start_golf_warmer()
 start_nascar_warmer()
+start_cws_warmer()
 
 
 @app.context_processor
@@ -64,6 +72,16 @@ def inject_globals():
         "current_year": datetime.utcnow().year,
         "site_url": "https://kevinrothwx.com",
     }
+
+
+@app.context_processor
+def inject_sport_nav():
+    """Inject sport_counts so the sport-nav strip can show indicators on every page."""
+    counts = {}
+    # CWS shows up only during its 10-day window
+    if cws_in_window():
+        counts["cws"] = "Live"
+    return {"sport_counts": counts}
 
 
 # Optional: contact form email destination (set in Render env vars)
@@ -315,6 +333,50 @@ def _render_worldcup_matchday(start_date_str, days=3):
 
 
 
+
+# ===== College World Series =====
+
+@app.route("/cws")
+def cws_root():
+    """CWS today's slate."""
+    return redirect(url_for("cws_date", date_str=_eastern_today()), code=302)
+
+
+@app.route("/cws/<date_str>")
+def cws_date(date_str):
+    if not _valid_date_str(date_str):
+        abort(404)
+    slate, meta = get_cws_slate(date_str)
+    if slate is None:
+        slate, meta = [], {"build_err": "Slate not yet built"}
+    cws_attach_writeups(slate)
+    d = datetime.strptime(date_str, "%Y-%m-%d").date()
+    pretty_date = d.strftime("%A, %B %-d")
+    today = datetime.now(EASTERN_TZ).date()
+    return render_template(
+        "cws/slate.html",
+        slate=slate, meta=meta, date_str=date_str, pretty_date=pretty_date,
+        is_today=(d == today), is_tomorrow=(d == today + timedelta(days=1)),
+        is_past=(d < today),
+    )
+
+
+@app.route("/cws/<date_str>/<slug>")
+def cws_game(date_str, slug):
+    if not _valid_date_str(date_str):
+        abort(404)
+    slate, meta = get_cws_slate(date_str)
+    if slate is None:
+        abort(404)
+    game = next((g for g in slate if g["slug"] == slug), None)
+    if not game:
+        abort(404)
+    game["writeup"] = cws_get_writeup(game["event_id"])
+    d = datetime.strptime(date_str, "%Y-%m-%d").date()
+    return render_template("cws/game.html", game=game, meta=meta, date_str=date_str,
+                           pretty_date=d.strftime("%A, %B %-d"))
+
+
 # ===== PGA Tour =====
 
 @app.route("/golf")
@@ -485,6 +547,27 @@ def admin_nascar():
         slate = []
     nascar_attach_writeups(slate)
     return render_template("nascar/admin.html", slate=slate)
+
+
+@app.route("/admin/cws", methods=["GET", "POST"])
+@_admin_required
+def admin_cws():
+    """CWS write-up admin."""
+    date_str = request.args.get("date", _eastern_today())
+    if not _valid_date_str(date_str):
+        date_str = _eastern_today()
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            cws_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_cws", date=date_str))
+    slate, _ = get_cws_slate(date_str)
+    if slate is None: slate = []
+    cws_attach_writeups(slate)
+    return render_template("cws/admin.html", slate=slate, date_str=date_str)
 
 
 # ===== SEO files =====

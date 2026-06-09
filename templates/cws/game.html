@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "cws/_macros.html" import cws_hourly_table %}
+{% from "mlb/_macros.html" import weather_icon, wind_arrow_svg %}
+
+{% block title %}{{ game.away.name }} vs {{ game.home.name }} — CWS {{ pretty_date }} Weather | Kevin Roth{% endblock %}
+{% block description %}{{ game.away.name }} vs {{ game.home.name }} College World Series weather forecast for {{ pretty_date }}. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<article class="game-page">
+  <p class="game-page__kicker">College World Series · {{ pretty_date }}</p>
+  <h1 class="game-page__title">
+    {% if game.away.logo %}<img class="matchup-logo" src="{{ game.away.logo }}" alt="" loading="lazy">{% endif %}
+    <span>{{ game.away.name }}</span>
+    <span class="matchup-at">vs</span>
+    {% if game.home.logo %}<img class="matchup-logo" src="{{ game.home.logo }}" alt="" loading="lazy">{% endif %}
+    <span>{{ game.home.name }}</span>
+  </h1>
+  <p class="game-page__meta">Charles Schwab Field Omaha · First pitch {{ game.first_pitch_eastern_str }}</p>
+
+  {% if game.forecast %}
+    {% set f = game.forecast %}
+    <div class="game-hero">
+      <div class="game-hero__metric game-hero__metric--primary">
+        <div class="game-hero__icon">{{ weather_icon(f.precip_pct|precip_icon, 48) }}</div>
+        <div class="game-hero__value">{{ f.temp }}<span class="game-hero__value-unit">°F</span></div>
+        <div class="game-hero__label">At first pitch</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon">{{ wind_arrow_svg(game.wind_info, 40) }}</div>
+        <div class="game-hero__value">{{ f.wind_speed }}<span class="game-hero__value-unit">mph</span></div>
+        <div class="game-hero__label">{{ game.wind_info.label if game.wind_info else "Wind" }}</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon"><span class="{{ f.precip_pct|precip_color }}" style="font-family:var(--font-serif);font-size:2rem;font-weight:600">{{ f.precip_pct }}%</span></div>
+        <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">Rain chance</div>
+        <div class="game-hero__label">Dewpoint {{ f.dew }}°</div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if game.writeup %}
+    <div class="game-writeup game-writeup--{{ game.writeup.color or 'none' }}">
+      <div class="game-writeup__label">Kevin's note</div>
+      <div class="game-writeup__body">{{ game.writeup.text }}</div>
+    </div>
+  {% endif %}
+
+  <h2 class="game-section-h2">Hourly forecast</h2>
+  {{ cws_hourly_table(game) }}
+
+  <aside class="game-microclimate">
+    <p class="game-microclimate__label">Ballpark notes</p>
+    <h3 class="game-microclimate__title">Charles Schwab Field, Omaha</h3>
+    <div class="game-microclimate__body">
+      The CWS host venue sits a half-mile west of the Missouri River in downtown Omaha. South wind off the plains tends to blow out to right-center during summer evenings, and afternoon thunderstorm complexes often track ENE across eastern Nebraska. June nights can be muggy with dew points in the 60s, suppressing fly-ball carry slightly relative to a dry-air park.
+    </div>
+  </aside>
+
+  <a href="/cws/{{ date_str }}" class="game-page__back">← All CWS games on {{ pretty_date }}</a>
+</article>
+{% endblock %}

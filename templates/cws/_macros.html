@@ -1,0 +1,123 @@
+{% from "mlb/_macros.html" import weather_icon, wind_arrow_svg, field_diagram %}
+
+
+{# ── Cheat-sheet card for one CWS game ────────────────────────── #}
+{% macro cws_cheat_card(game, date_str, link_to_detail=False) %}
+  {% set f = game.forecast %}
+  {% if link_to_detail %}
+    {% set href = "/cws/" ~ date_str ~ "/" ~ game.slug %}
+  {% else %}
+    {% set href = "#game-" ~ game.slug %}
+  {% endif %}
+  <a href="{{ href }}" class="cheat-card" data-event-id="{{ game.event_id }}">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">{{ game.first_pitch_eastern_str }}</span>
+      {% if game.round %}<span class="cheat-card__badge">{{ game.round }}</span>{% endif %}
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        {% if game.away.logo %}<img class="cheat-card__logo" src="{{ game.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
+        <span class="cheat-card__abbr">
+          {% if game.away.rank %}<sup style="font-size:0.65em;color:var(--storm);font-weight:700">#{{ game.away.rank }}</sup> {% endif %}{{ game.away.abbreviation or game.away.short_name }}
+        </span>
+      </div>
+      <span class="cheat-card__at">vs</span>
+      <div class="cheat-card__team" style="justify-content:flex-end">
+        <span class="cheat-card__abbr">
+          {% if game.home.rank %}<sup style="font-size:0.65em;color:var(--storm);font-weight:700">#{{ game.home.rank }}</sup> {% endif %}{{ game.home.abbreviation or game.home.short_name }}
+        </span>
+        {% if game.home.logo %}<img class="cheat-card__logo" src="{{ game.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
+      </div>
+    </div>
+    {% if f %}
+      <div class="cheat-card__wx">
+        <span class="cheat-card__temp">{{ f.temp }}°</span>
+        <div class="cheat-card__wxmid">
+          <span class="cheat-card__wind">
+            {{ wind_arrow_svg(game.wind_info, 12) }}
+            {{ f.wind_speed }} mph
+          </span>
+          <span class="cheat-card__precip {{ f.precip_pct|precip_color }}">Rain {{ f.precip_pct }}%</span>
+        </div>
+        <span class="cheat-card__skyicon">{{ weather_icon(f.precip_pct|precip_icon, 28) }}</span>
+      </div>
+    {% else %}
+      <div class="cheat-card__wx cheat-card__wx--missing">Forecast pending</div>
+    {% endif %}
+  </a>
+{% endmacro %}
+
+
+{# ── Summary panel for a single game (2x2 grid, same as MLB) ─── #}
+{% macro cws_summary_panel(game) %}
+  {% set f = game.forecast %}
+  <div class="game-summary">
+    {% if f %}
+      <div class="game-summary__cell">
+        <div class="game-summary__sky">{{ weather_icon(f.precip_pct|precip_icon, 34) }}</div>
+        <span class="game-summary__primary-value">{{ f.temp }}°</span>
+        <span class="game-summary__primary-label">At first pitch</span>
+      </div>
+      <div class="game-summary__cell game-summary__cell--field">
+        {{ field_diagram(game) }}
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
+        <span class="game-summary__cell-label">Rain</span>
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__value">{{ f.wind_speed }} <span style="font-size:0.7em;font-weight:500;color:var(--ash)">mph</span></span>
+        <span class="game-summary__cell-label">Wind</span>
+      </div>
+    {% else %}
+      <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
+        <span class="game-summary__cell-label">Forecast pending</span>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{# ── Hourly table — reuse MLB's pattern ────────────────────────── #}
+{% macro cws_hourly_table(game) %}
+  {% set hours = game.hourly or [] %}
+  {% if hours %}
+    <div class="hourly">
+      <table class="hourly__table">
+        <thead>
+          <tr>
+            <th class="hourly__label-col"></th>
+            {% for h in hours %}
+              <th class="hourly__hour-col {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <div class="hourly__sky">{{ weather_icon(h.precip_pct|precip_icon, 32) }}</div>
+                <div class="hourly__time">{{ h.hour_eastern }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for h in hours %}<td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}"><span class="hourly__precip {{ h.precip_pct|precip_color }}">{{ h.precip_pct }}%</span></td>{% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for h in hours %}<td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.temp }}°</td>{% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for h in hours %}<td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>{% endfor %}
+          </tr>
+          {% if hours[0].dew is not none %}
+          <tr>
+            <td class="hourly__label">Dewpoint</td>
+            {% for h in hours %}<td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.dew }}°</td>{% endfor %}
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hourly__missing">Hourly forecast not available.</p>
+  {% endif %}
+{% endmacro %}

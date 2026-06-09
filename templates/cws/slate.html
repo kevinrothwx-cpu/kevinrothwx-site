@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "cws/_macros.html" import cws_cheat_card, cws_hourly_table, cws_summary_panel %}
+
+{% block title %}College World Series Weather — {{ pretty_date }} | Kevin Roth{% endblock %}
+{% block description %}Free College World Series weather forecasts for every game at Charles Schwab Field in Omaha. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}CWS Weather — {{ pretty_date }}{% endblock %}
+{% block og_description %}Every College World Series game today in Omaha. By Kevin Roth, sports meteorologist.{% endblock %}
+
+{% block content %}
+{% include "mlb/_sport_nav.html" %}
+
+<div class="mlb-page">
+  <header class="mlb-page__header">
+    <div class="mlb-page__hed">
+      <div>
+        <p class="kicker kicker-storm">College World Series · Omaha</p>
+        <h1 class="mlb-page__title">{{ pretty_date }}</h1>
+        <p class="mlb-page__sub">
+          {% if is_today %}Today's games at Charles Schwab Field. {% elif is_tomorrow %}Tomorrow's games. {% elif is_past %}Archived. {% endif %}
+          All times Eastern.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  {% if slate %}
+    <div class="cheat-row">
+      {% for g in slate %}
+        {{ cws_cheat_card(g, date_str) }}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="container">
+      <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
+        {% if meta and meta.build_err %}Slate is rebuilding. Refresh in a moment.
+        {% else %}No CWS games scheduled at Omaha for this date.{% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+  {# ── Write-ups OR CTA pair ───────────────────────────────── #}
+  <section class="mlb-section">
+    {% set any_writeups = slate | selectattr("writeup") | list %}
+    {% if any_writeups %}
+      {% for g in any_writeups %}
+        <div class="mlb-writeup mlb-writeup--{{ g.writeup.color or 'none' }}">
+          <div class="mlb-writeup__header">
+            <span class="mlb-writeup__matchup">{{ g.away.name }} vs {{ g.home.name }}</span>
+            <span class="mlb-writeup__time">{{ g.first_pitch_eastern_str }}</span>
+          </div>
+          <div class="mlb-writeup__body">{{ g.writeup.text }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+
+  {# ── Per-game blocks ─────────────────────────────────────── #}
+  {% if slate %}
+    <div class="mlb-hourly-group">
+      {% for g in slate %}
+        <article class="mlb-game-block" id="game-{{ g.slug }}">
+          <header class="mlb-game-block__header">
+            <div>
+              <h2 class="mlb-game-block__matchup">
+                {% if g.away.logo %}<img class="matchup-logo" src="{{ g.away.logo }}" alt="" loading="lazy">{% endif %}
+                <span>{% if g.away.rank %}#{{ g.away.rank }} {% endif %}{{ g.away.name }}</span>
+                <span class="matchup-at">vs</span>
+                {% if g.home.logo %}<img class="matchup-logo" src="{{ g.home.logo }}" alt="" loading="lazy">{% endif %}
+                <span>{% if g.home.rank %}#{{ g.home.rank }} {% endif %}{{ g.home.name }}</span>
+              </h2>
+              <div class="mlb-game-block__venue">Charles Schwab Field Omaha · {{ g.round if g.round else "Bracket play" }}</div>
+            </div>
+            <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
+          </header>
+          <div class="mlb-game-block__body">
+            {{ cws_summary_panel(g) }}
+            <div class="mlb-game-block__hourly">
+              {{ cws_hourly_table(g) }}
+            </div>
+          </div>
+          <a class="mlb-game-block__deeplink" href="/cws/{{ date_str }}/{{ g.slug }}">
+            Full forecast for this game <span aria-hidden="true">→</span>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.cheat-card');
+    if (!card) return;
+    var href = card.getAttribute('href');
+    if (href && href.charAt(0) === '#') {
+      e.preventDefault();
+      var target = document.querySelector(href);
+      if (target) { target.scrollIntoView({behavior: 'smooth', block: 'start'}); history.replaceState(null, '', href); }
+    }
+  });
+</script>
+{% endblock %}
