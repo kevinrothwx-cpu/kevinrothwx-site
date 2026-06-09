@@ -67,14 +67,27 @@
   {% if slate %}
     <div class="mlb-hourly-group">
       {% for g in slate %}
-        <article class="mlb-game-block" id="game-{{ g.slug }}">
+        {% set has_toggle = g.park.roof_type == "retractable" or g.park.roof_type == "fixed_dome" %}
+        <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="game-{{ g.slug }}">
           <header class="mlb-game-block__header">
             <div>
               <h2 class="mlb-game-block__matchup"><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ g.away_team_id }}.svg" alt="" loading="lazy"><span>{{ g.away_name }}</span><span class="matchup-at">at</span><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ g.home_team_id }}.svg" alt="" loading="lazy"><span>{{ g.home_name }}</span></h2>
               <div class="mlb-game-block__venue">{{ g.venue }} · {{ g.park.city }}</div>
             </div>
-            <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
+            {% if has_toggle %}
+              <div class="roof-toggle" role="group" aria-label="Roof status">
+                <button class="roof-toggle__option is-active" data-roof="closed">Closed</button>
+                <button class="roof-toggle__option" data-roof="open">Open</button>
+              </div>
+            {% else %}
+              <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
+            {% endif %}
           </header>
+          {% if has_toggle %}
+            <div class="roof-closed-message">
+              <strong>{% if g.park.roof_type == "fixed_dome" %}Fixed dome{% else %}Retractable roof{% endif %}</strong> — weather has no impact when closed. Toggle <strong>Open</strong> above to see the outdoor forecast for {{ g.first_pitch_eastern_str }}.
+            </div>
+          {% endif %}
           <div class="mlb-game-block__body">
             {{ game_summary_panel(g) }}
             <div class="mlb-game-block__hourly">
@@ -102,6 +115,22 @@
         target.scrollIntoView({behavior: 'smooth', block: 'start'});
         history.replaceState(null, '', href);
       }
+    }
+  });
+
+  // Roof toggle: close/open the weather body for retractable-roof games
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.roof-toggle__option');
+    if (!btn) return;
+    var toggle = btn.closest('.roof-toggle');
+    var block = btn.closest('.has-roof-toggle');
+    if (!toggle || !block) return;
+    toggle.querySelectorAll('.roof-toggle__option').forEach(function(o) { o.classList.remove('is-active'); });
+    btn.classList.add('is-active');
+    if (btn.dataset.roof === 'open') {
+      block.classList.remove('is-roof-closed');
+    } else {
+      block.classList.add('is-roof-closed');
     }
   });
 </script>

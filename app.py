@@ -78,9 +78,19 @@ def inject_globals():
 def inject_sport_nav():
     """Inject sport_counts so the sport-nav strip can show indicators on every page."""
     counts = {}
-    # CWS shows up only during its 10-day window
     if cws_in_window():
         counts["cws"] = "Live"
+    today = datetime.now(EASTERN_TZ).date()
+    # Show countdown indicator for sports whose season hasn't started yet
+    try:
+        nfl_days = (datetime(2026, 9, 10).date() - today).days
+        if nfl_days > 0:
+            counts["nfl"] = f"{nfl_days}d" if nfl_days < 100 else "Fall"
+        ncaaf_days = (datetime(2026, 8, 29).date() - today).days
+        if ncaaf_days > 0:
+            counts["ncaaf"] = f"{ncaaf_days}d" if ncaaf_days < 100 else "Fall"
+    except Exception:
+        pass
     return {"sport_counts": counts}
 
 
@@ -332,6 +342,31 @@ def _render_worldcup_matchday(start_date_str, days=3):
     )
 
 
+
+
+
+# ===== NFL + NCAAF stubs (live forecasts coming when season starts) =====
+
+NFL_KICKOFF_2026   = datetime(2026, 9, 10).date()   # Thursday night opener
+NCAAF_KICKOFF_2026 = datetime(2026, 8, 29).date()    # Week 1 Saturday
+
+
+@app.route("/nfl")
+def nfl_root():
+    today = datetime.now(EASTERN_TZ).date()
+    days_until = max(0, (NFL_KICKOFF_2026 - today).days)
+    return render_template("nfl/coming-soon.html",
+                           sport_name="NFL", days_until=days_until,
+                           kickoff_date=NFL_KICKOFF_2026.strftime("%B %-d"))
+
+
+@app.route("/ncaaf")
+def ncaaf_root():
+    today = datetime.now(EASTERN_TZ).date()
+    days_until = max(0, (NCAAF_KICKOFF_2026 - today).days)
+    return render_template("ncaaf/coming-soon.html",
+                           sport_name="NCAAF", days_until=days_until,
+                           kickoff_date=NCAAF_KICKOFF_2026.strftime("%B %-d"))
 
 
 # ===== College World Series =====

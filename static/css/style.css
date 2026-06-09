@@ -621,3 +621,37 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .race-card__precip, .race-card__wind { font-family: var(--font-sans); font-size: 0.8rem; }
 .race-card__wind { color: var(--ash); }
 .race-card__wx-missing { color: var(--fog); font-size: 0.85rem; font-style: italic; padding: 0.4rem 0; }
+
+/* ============================================================
+ * Coming-soon stub pages (NFL, NCAAF)
+ * ============================================================ */
+
+.comingsoon { max-width: 1100px; margin: 0 auto 4rem; padding: 0 1.5rem; display: grid; grid-template-columns: 1fr; gap: 2.5rem; }
+@media (min-width: 900px) { .comingsoon { grid-template-columns: 1.6fr 1fr; } }
+.comingsoon__copy { display: flex; flex-direction: column; gap: 1rem; }
+.comingsoon__h2 { font-family: var(--font-serif); font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; margin: 0; }
+.comingsoon__lead { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.6; color: var(--slate); }
+.comingsoon__sidebar { padding: 1.5rem 1.75rem; background: var(--paper); border-left: 3px solid var(--ink); }
+.comingsoon__list { list-style: none; padding: 0; margin: 0.6rem 0 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.comingsoon__list li { font-family: var(--font-sans); font-size: 0.92rem; color: var(--slate); padding-left: 1rem; position: relative; line-height: 1.45; }
+.comingsoon__list li::before { content: "→"; position: absolute; left: 0; color: var(--storm); font-weight: 700; }
+
+/* ============================================================
+ * Retractable-roof toggle widget — adopted from OVERcast
+ * ============================================================ */
+
+.roof-toggle { display: inline-flex; background: var(--paper); border: 1px solid var(--mist); border-radius: 999px; padding: 2px; gap: 0; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; user-select: none; cursor: pointer; }
+.roof-toggle__option { padding: 0.4rem 0.95rem; border: 0; background: transparent; border-radius: 999px; color: var(--ash); font: inherit; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; line-height: 1; }
+.roof-toggle__option.is-active { background: var(--ink); color: var(--white); }
+.roof-toggle__option:hover:not(.is-active) { color: var(--ink); }
+
+/* When a game block is in "roof closed" state, hide the weather body
+   visually but keep it in the DOM so crawlers still index it. */
+.has-roof-toggle.is-roof-closed .mlb-game-block__body { display: none; }
+.has-roof-toggle.is-roof-closed .mlb-game-block__deeplink { display: none; }
+.has-roof-toggle .roof-closed-message { display: none; padding: 1rem 1.25rem 1.1rem; color: var(--slate); font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5; border-bottom: 1px solid var(--mist); }
+.has-roof-toggle.is-roof-closed .roof-closed-message { display: block; }
+.roof-closed-message strong { color: var(--ink); font-weight: 700; }
+
+/* Toggle in game-block header */
+.mlb-game-block__header .roof-toggle { align-self: center; }

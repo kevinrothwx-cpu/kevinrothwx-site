@@ -78,7 +78,9 @@
           </h2>
         {% endif %}
         {% for m in day.slate %}
-          <article class="mlb-game-block" id="match-{{ m.slug }}">
+          {% set has_toggle = m.venue_meta and (m.venue_meta.roof_type == "retractable" or m.venue_meta.roof_type == "fixed_canopy") %}
+        {% set default_closed = m.venue_meta and m.venue_meta.roof_summer_status == "likely_closed" %}
+        <article class="mlb-game-block {% if has_toggle %}has-roof-toggle{% if default_closed or m.venue_meta.roof_type == "fixed_canopy" %} is-roof-closed{% endif %}{% endif %}" id="match-{{ m.slug }}">
             <header class="mlb-game-block__header">
               <div>
                 <h3 class="mlb-game-block__matchup">
@@ -100,7 +102,18 @@
                 </div>
               </div>
               <div class="mlb-game-block__time">Kickoff · {{ m.kickoff_eastern_str }}</div>
+              {% if has_toggle %}
+                <div class="roof-toggle" role="group" aria-label="Roof status">
+                  <button class="roof-toggle__option {% if default_closed or m.venue_meta.roof_type == "fixed_canopy" %}is-active{% endif %}" data-roof="closed">Closed</button>
+                  <button class="roof-toggle__option {% if not (default_closed or m.venue_meta.roof_type == "fixed_canopy") %}is-active{% endif %}" data-roof="open">Open</button>
+                </div>
+              {% endif %}
             </header>
+            {% if has_toggle %}
+              <div class="roof-closed-message">
+                <strong>{% if m.venue_meta.roof_type == "fixed_canopy" %}Fixed canopy{% else %}Retractable roof{% endif %}</strong> — weather has limited impact when closed. Toggle <strong>Open</strong> to see the outdoor forecast at kickoff.
+              </div>
+            {% endif %}
             <div class="mlb-game-block__body">
               {{ wc_summary_panel(m) }}
               <div class="mlb-game-block__hourly">
