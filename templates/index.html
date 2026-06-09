@@ -19,8 +19,7 @@
     <div class="home-grid">
 
       <a href="/mlb/today" class="home-sport-card home-sport-card--mlb">
-        <span class="home-sport-card__kicker">Today's slate</span>
-        <h2 class="home-sport-card__title">MLB Weather</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Today's slate</span><h2 class="home-sport-card__title">MLB Weather</h2></div></div>
         <p class="home-sport-card__body">Every game today and tomorrow — temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
@@ -29,8 +28,7 @@
       </a>
 
       <a href="/worldcup" class="home-sport-card home-sport-card--wc">
-        <span class="home-sport-card__kicker">Matchday view</span>
-        <h2 class="home-sport-card__title">World Cup 2026</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Matchday view</span><h2 class="home-sport-card__title">World Cup 2026</h2></div></div>
         <p class="home-sport-card__body">Every match across the next 3 days in 16 US, Mexico, and Canada venues. Retractable roof toggles where they matter.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;matches this week{% else %}See matchday view{% endif %}
@@ -39,8 +37,7 @@
       </a>
 
       <a href="/golf" class="home-sport-card home-sport-card--pga">
-        <span class="home-sport-card__kicker">This week's event</span>
-        <h2 class="home-sport-card__title">PGA Tour</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">This week's event</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
         <p class="home-sport-card__body">Round-by-round outlook for the current tournament. Course-local play hours, all four rounds.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}See this week's tournament{% endif %}
@@ -49,8 +46,7 @@
       </a>
 
       <a href="/nascar" class="home-sport-card home-sport-card--nascar">
-        <span class="home-sport-card__kicker">Cup Series</span>
-        <h2 class="home-sport-card__title">NASCAR</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/fa6-solid:flag-checkered.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Cup Series</span><h2 class="home-sport-card__title">NASCAR</h2></div></div>
         <p class="home-sport-card__body">Track-specific hourly weather around the green flag, race window highlighted. Storm timing and red-flag risk.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.nascar %}Next race: <strong>{{ sport_counts.nascar }}</strong>{% else %}See upcoming races{% endif %}
@@ -59,8 +55,7 @@
       </a>
 
       <a href="/cws" class="home-sport-card home-sport-card--cws">
-        <span class="home-sport-card__kicker">College World Series</span>
-        <h2 class="home-sport-card__title">CWS Omaha</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">College World Series</span><h2 class="home-sport-card__title">CWS Omaha</h2></div></div>
         <p class="home-sport-card__body">Hourly forecasts for every game at Charles Schwab Field during the tournament window.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.cws %}<strong>Live</strong>&nbsp;through June 24{% else %}Tournament June 13–23{% endif %}
@@ -69,8 +64,7 @@
       </a>
 
       <a href="/nfl" class="home-sport-card home-sport-card--nfl">
-        <span class="home-sport-card__kicker">2026 Season</span>
-        <h2 class="home-sport-card__title">NFL Weather</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
         <p class="home-sport-card__body">Per-game forecasts for every Thursday, Sunday, and Monday — launching with the 2026 season opener.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;until kickoff{% else %}Coming this fall{% endif %}
@@ -79,8 +73,7 @@
       </a>
 
       <a href="/ncaaf" class="home-sport-card home-sport-card--ncaaf">
-        <span class="home-sport-card__kicker">2026 Season</span>
-        <h2 class="home-sport-card__title">NCAAF Weather</h2>
+        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NCAAF Weather</h2></div></div>
         <p class="home-sport-card__body">Saturday college football forecasts launching with Week 1.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.ncaaf %}<strong>{{ sport_counts.ncaaf }}</strong>&nbsp;until kickoff{% else %}Coming this fall{% endif %}
