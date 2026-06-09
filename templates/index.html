@@ -1,134 +1,138 @@
 {% extends "base.html" %}
 
-{% block title %}Kevin Roth — Sports Meteorologist | MLB, NFL, PGA Weather{% endblock %}
-{% block description %}Sports meteorologist Kevin Roth — founder of OVERcast, daily MLB weather analysis on PropFinder, and forecasts for MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar. Featured by Fox Weather, Yahoo Sports, CBS Sports, Sporting News.{% endblock %}
+{% block title %}Sports Weather Forecasts — MLB, World Cup, PGA, NASCAR | Kevin Roth{% endblock %}
+{% block description %}Free live weather forecasts for every MLB game, World Cup match, PGA Tour round, NASCAR race, and college baseball game. Updated continuously from NWS data. Built by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block content %}
-<section class="hero">
-  <div class="container-tight">
-    <p class="kicker" style="margin-bottom: 1.5rem;">Sports Meteorologist · Houston, TX</p>
-    <h1 class="display">The original sports meteorologist.</h1>
-    <p class="lead">
-      Live weather forecasts for every MLB game, World Cup match, and PGA Tour round —
-      built by Kevin Roth, sports meteorologist. Founder of OVERcast. Daily MLB Weather columnist on PropFinder.
-      Former Chief Meteorologist at RotoGrinders.com (2012–2026).
-    </p>
-    <div class="hero__cta">
-      <a href="/mlb/today" class="btn btn-primary">Today's MLB Weather →</a>
-      <a href="/worldcup" class="btn btn-secondary">World Cup Matchday →</a>
-    </div>
-  </div>
-</section>
-
-<section class="featured-strip">
-  <div class="featured-strip__inner">
-    <p class="featured-strip__label">Featured in</p>
-    <div class="featured-strip__list">
-      <span class="featured-strip__item">Fox Weather</span>
-      <span class="featured-strip__item">Yahoo Sports</span>
-      <span class="featured-strip__item">Sporting News</span>
-      <span class="featured-strip__item">CBS Sports</span>
-      <span class="featured-strip__item">The Weather Channel</span>
-      <span class="featured-strip__item">Baseball America</span>
-      <span class="featured-strip__item">Matthew Berry's Fantasy Life</span>
-      <span class="featured-strip__item">Lee Enterprises</span>
-    </div>
-  </div>
-</section>
-
-<section class="section">
+<section class="home-hero">
   <div class="container">
-    <div class="stats stats--four">
-      <div>
-        <div class="stat__row">
-          <span class="stat__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-          </span>
-          <span class="stat__value">89K+</span>
-        </div>
-        <div class="stat__label">Followers on X (@KevinRothWx)</div>
-      </div>
-      <div>
-        <div class="stat__row">
-          <span class="stat__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" width="22" height="22"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-          </span>
-          <span class="stat__value">15+</span>
-        </div>
-        <div class="stat__label">Years sports-weather experience</div>
-      </div>
-      <div>
-        <div class="stat__row">
-          <span class="stat__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" width="22" height="22"><path d="M2 9l10-4 10 4-10 4z"/><path d="M6 11v4c0 1.5 2.5 3 6 3s6-1.5 6-3v-4"/><path d="M22 9v5"/></svg>
-          </span>
-          <span class="stat__value">M.S.</span>
-        </div>
-        <div class="stat__label">Meteorology, Mississippi State</div>
-      </div>
-      <div>
-        <div class="stat__row">
-          <span class="stat__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" width="22" height="22"><path d="M7 18a4 4 0 010-8 5 5 0 019.9-1A4 4 0 0117 18H7z"/><path d="M10 20l-1 2M14 20l-1 2"/></svg>
-          </span>
-          <span class="stat__value">100,000+</span>
-        </div>
-        <div class="stat__label">Sports-weather forecasts</div>
-      </div>
+    <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
+    <h1 class="home-hero__title">Weather for every game, match, race, and round.</h1>
+    <p class="home-hero__lead">
+      Live forecasts across every sport currently in season — plus countdowns and stubs for the ones that aren't.
+    </p>
+  </div>
+</section>
+
+<section class="home-section">
+  <div class="container">
+    <div class="home-grid">
+
+      <a href="/mlb/today" class="home-sport-card home-sport-card--mlb">
+        <span class="home-sport-card__kicker">Today's slate</span>
+        <h2 class="home-sport-card__title">MLB Weather</h2>
+        <p class="home-sport-card__body">Every game today and tomorrow — temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
+      <a href="/worldcup" class="home-sport-card home-sport-card--wc">
+        <span class="home-sport-card__kicker">Matchday view</span>
+        <h2 class="home-sport-card__title">World Cup 2026</h2>
+        <p class="home-sport-card__body">Every match across the next 3 days in 16 US, Mexico, and Canada venues. Retractable roof toggles where they matter.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;matches this week{% else %}See matchday view{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
+      <a href="/golf" class="home-sport-card home-sport-card--pga">
+        <span class="home-sport-card__kicker">This week's event</span>
+        <h2 class="home-sport-card__title">PGA Tour</h2>
+        <p class="home-sport-card__body">Round-by-round outlook for the current tournament. Course-local play hours, all four rounds.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}See this week's tournament{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
+      <a href="/nascar" class="home-sport-card home-sport-card--nascar">
+        <span class="home-sport-card__kicker">Cup Series</span>
+        <h2 class="home-sport-card__title">NASCAR</h2>
+        <p class="home-sport-card__body">Track-specific hourly weather around the green flag, race window highlighted. Storm timing and red-flag risk.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.nascar %}Next race: <strong>{{ sport_counts.nascar }}</strong>{% else %}See upcoming races{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
+      <a href="/cws" class="home-sport-card home-sport-card--cws">
+        <span class="home-sport-card__kicker">College World Series</span>
+        <h2 class="home-sport-card__title">CWS Omaha</h2>
+        <p class="home-sport-card__body">Hourly forecasts for every game at Charles Schwab Field during the tournament window.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.cws %}<strong>Live</strong>&nbsp;through June 24{% else %}Tournament June 13–23{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
+      <a href="/nfl" class="home-sport-card home-sport-card--nfl">
+        <span class="home-sport-card__kicker">2026 Season</span>
+        <h2 class="home-sport-card__title">NFL Weather</h2>
+        <p class="home-sport-card__body">Per-game forecasts for every Thursday, Sunday, and Monday — launching with the 2026 season opener.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;until kickoff{% else %}Coming this fall{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
+      <a href="/ncaaf" class="home-sport-card home-sport-card--ncaaf">
+        <span class="home-sport-card__kicker">2026 Season</span>
+        <h2 class="home-sport-card__title">NCAAF Weather</h2>
+        <p class="home-sport-card__body">Saturday college football forecasts launching with Week 1.</p>
+        <span class="home-sport-card__indicator">
+          {% if sport_counts.ncaaf %}<strong>{{ sport_counts.ncaaf }}</strong>&nbsp;until kickoff{% else %}Coming this fall{% endif %}
+          <span class="home-sport-card__arrow">→</span>
+        </span>
+      </a>
+
     </div>
+  </div>
+</section>
 
-    <hr class="rule">
+<section class="home-section home-section--secondary">
+  <div class="container">
+    <div class="home-secondary">
+      <div class="home-secondary__col">
+        <p class="kicker kicker-storm">Behind the forecasts</p>
+        <h2 class="home-secondary__h2">Built by Kevin Roth — sports meteorologist, 15+ years.</h2>
+        <p class="home-secondary__body">
+          M.S. Meteorology from Mississippi State. Former Chief Meteorologist at RotoGrinders.com (2012–2026).
+          Founder of OVERcast and daily MLB Weather columnist on PropFinder. 89K+ followers on X.
+          Featured on Fox Weather, Yahoo Sports, CBS Sports, Sporting News, The Weather Channel, Baseball America.
+        </p>
+        <div style="margin-top: 1.25rem;">
+          <a href="/about" class="btn btn-secondary">About Kevin →</a>
+          <a href="/press" class="btn btn-secondary">Press →</a>
+        </div>
+      </div>
 
-    <h2 class="h2" style="margin-bottom: 0.6rem;">Live forecasts</h2>
-    <p style="color: var(--ash); margin-bottom: 1.75rem; max-width: 50rem;">Free automated forecasts updated continuously from NWS data — for every active game, match, and round.</p>
-    <div class="cards cards--three">
-      <a href="/mlb/today" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">Today's slate</p>
-        <h3 class="card__title">MLB Weather</h3>
-        <p class="card__body">Every MLB game today and tomorrow — temp, wind direction relative to each ballpark, rain probability hour by hour.</p>
-      </a>
-      <a href="/worldcup" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">Matchday view</p>
-        <h3 class="card__title">World&nbsp;Cup&nbsp;2026</h3>
-        <p class="card__body">Every match across the next 3 days, in all 16 US, Mexico, and Canada venues. Roof-status flags where it matters.</p>
-      </a>
-      <a href="/golf" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">This week's event</p>
-        <h3 class="card__title">PGA Tour</h3>
-        <p class="card__body">Round-by-round outlook for the current and upcoming tournament. Course-local play hours, all four rounds.</p>
-      </a>
-    </div>
-
-    <hr class="rule">
-
-    <div class="cards cards--four">
-      <a href="/overcast" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">Premium product</p>
-        <h3 class="card__title">OVERcast</h3>
-        <p class="card__body">Weather-driven MLB scoring projections for bettors and daily fantasy players. Wind, weather, and park-tuned impact stats.</p>
-      </a>
-      <a href="https://propfinder.app/weather" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">Kevin's written column</p>
-        <h3 class="card__title">MLB Weather on PropFinder</h3>
-        <p class="card__body">Kevin's daily written MLB Weather column. Free every game day, on PropFinder.</p>
-      </a>
-      <a href="https://x.com/KevinRothWx" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">Live on X</p>
-        <h3 class="card__title">Pregame Radar & Alerts</h3>
-        <p class="card__body">Real-time radar, weather alerts, and forecasts for MLB, NFL, PGA, NCAAF, NASCAR, and IndyCar.</p>
-      </a>
-      <a href="/press" class="card">
-        <span class="card__arrow">→</span>
-        <p class="card__kicker">Press</p>
-        <h3 class="card__title">As featured in</h3>
-        <p class="card__body">Fox Weather, Yahoo Sports, CBS Sports, Sporting News, The Weather Channel, Baseball America, and more.</p>
-      </a>
+      <div class="home-secondary__col home-secondary__col--products">
+        <p class="kicker kicker-storm">Premium products</p>
+        <div class="home-product">
+          <a href="https://app.kevinrothwx.com" class="home-product__link" rel="noopener">
+            <span class="home-product__name">OVERcast</span>
+            <span class="home-product__desc">Weather-driven MLB scoring projections for bettors and daily fantasy players</span>
+            <span class="home-product__arrow">→</span>
+          </a>
+        </div>
+        <div class="home-product">
+          <a href="https://propfinder.app/weather" class="home-product__link" rel="noopener">
+            <span class="home-product__name">PropFinder MLB Column</span>
+            <span class="home-product__desc">Kevin's daily written MLB Weather column. Free.</span>
+            <span class="home-product__arrow">→</span>
+          </a>
+        </div>
+        <div class="home-product">
+          <a href="https://x.com/KevinRothWx" class="home-product__link" rel="noopener">
+            <span class="home-product__name">@KevinRothWx on X</span>
+            <span class="home-product__desc">Live pregame radar and alerts across every sport</span>
+            <span class="home-product__arrow">→</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </section>

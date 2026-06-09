@@ -76,12 +76,59 @@ def inject_globals():
 
 @app.context_processor
 def inject_sport_nav():
-    """Inject sport_counts so the sport-nav strip can show indicators on every page."""
+    """Inject sport_counts so the sport-nav strip shows live indicators per sport."""
     counts = {}
+    today = datetime.now(EASTERN_TZ).date()
+    today_str = today.strftime("%Y-%m-%d")
+
+    # MLB — today's game count (warmer keeps cache fresh)
+    try:
+        mlb_slate, _ = get_slate(today_str, allow_build=False)
+        if mlb_slate:
+            counts["mlb"] = str(len(mlb_slate))
+    except Exception:
+        pass
+
+    # World Cup — count matches today + next 2 days
+    try:
+        total_wc = 0
+        for offset in (0, 1, 2):
+            d = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
+            wc_slate, _ = get_matchday(d, allow_build=False)
+            if wc_slate:
+                total_wc += len(wc_slate)
+        if total_wc > 0:
+            counts["worldcup"] = str(total_wc)
+    except Exception:
+        pass
+
+    # PGA — active tournament count
+    try:
+        pga_slate, _ = get_pga_slate(allow_build=False)
+        if pga_slate:
+            counts["pga"] = str(len(pga_slate))
+    except Exception:
+        pass
+
+    # NASCAR — show day-of-week for next race
+    try:
+        nas_slate, _ = get_nascar_slate(allow_build=False)
+        if nas_slate:
+            from datetime import datetime as _dt
+            try:
+                gf = _dt.fromisoformat(nas_slate[0]["green_flag_utc"].replace("Z", "+00:00"))
+                gf_eastern = gf.astimezone(EASTERN_TZ)
+                counts["nascar"] = gf_eastern.strftime("%a")
+            except Exception:
+                counts["nascar"] = "Soon"
+    except Exception:
+        pass
+
+    # CWS — live during 10-day window
     if cws_in_window():
         counts["cws"] = "Live"
-    today = datetime.now(EASTERN_TZ).date()
-    # Show countdown indicator for sports whose season hasn't started yet
+
+    # NFL / NCAAF — countdown until season starts
     try:
         nfl_days = (datetime(2026, 9, 10).date() - today).days
         if nfl_days > 0:
@@ -91,6 +138,7 @@ def inject_sport_nav():
             counts["ncaaf"] = f"{ncaaf_days}d" if ncaaf_days < 100 else "Fall"
     except Exception:
         pass
+
     return {"sport_counts": counts}
 
 

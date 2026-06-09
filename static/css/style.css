@@ -655,3 +655,70 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 
 /* Toggle in game-block header */
 .mlb-game-block__header .roof-toggle { align-self: center; }
+
+/* v2 polish: toggle widget smaller + better header alignment */
+.roof-toggle { font-size: 0.66rem; padding: 1px; }
+.roof-toggle__option { padding: 0.35rem 0.7rem; }
+
+/* Game block header: stop using baseline alignment so the toggle sits centered vertically; allow header to wrap cleanly */
+.mlb-game-block__header { align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.mlb-game-block__header > div:first-child { flex: 1 1 auto; min-width: 0; }
+.mlb-game-block__header .roof-toggle,
+.mlb-game-block__header .mlb-game-block__time { flex-shrink: 0; }
+
+/* Cheat-card badge: slightly tighter so 'Roof' or 'Dome' never crowds the time text */
+.cheat-card__badge { font-size: 0.58rem; padding: 0.08rem 0.42rem; letter-spacing: 0.08em; }
+.cheat-card__rule { gap: 0.4rem; }
+.cheat-card__time { font-size: 0.72rem; }
+
+/* ============================================================
+ * Homepage — sports-first redesign
+ * ============================================================ */
+
+.home-hero { padding: 3rem 0 2rem; border-bottom: 1px solid var(--mist); }
+.home-hero .kicker { margin-bottom: 0.85rem; }
+.home-hero__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.85rem, 3.5vw + 0.5rem, 3.25rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1rem; max-width: 32ch; }
+.home-hero__lead { font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.55; color: var(--slate); max-width: 50rem; margin: 0; }
+
+.home-section { padding: 2.5rem 0; }
+.home-section--secondary { padding: 3rem 0 4rem; background: var(--paper); border-top: 1px solid var(--mist); }
+
+/* Sport-card grid */
+.home-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 720px)  { .home-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1100px) { .home-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+.home-sport-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem 1.3rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; position: relative; min-height: 180px; }
+.home-sport-card:hover { border-color: var(--ink); transform: translateY(-2px); }
+.home-sport-card__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
+.home-sport-card__title { font-family: var(--font-serif); font-size: 1.55rem; font-weight: 600; letter-spacing: -0.015em; margin: 0; line-height: 1.15; }
+.home-sport-card__body { font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5; color: var(--slate); margin: 0; flex: 1; }
+.home-sport-card__indicator { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; padding-top: 0.7rem; border-top: 1px solid var(--mist); }
+.home-sport-card__indicator strong { color: var(--storm); font-weight: 700; font-size: 1.05rem; }
+.home-sport-card__arrow { font-size: 1.1rem; transition: transform 0.2s ease; color: var(--ash); }
+.home-sport-card:hover .home-sport-card__arrow { transform: translateX(4px); color: var(--ink); }
+
+/* Distinctive accent stripes per sport */
+.home-sport-card--mlb    { border-top: 3px solid #1e3a8a; }
+.home-sport-card--wc     { border-top: 3px solid #15803d; }
+.home-sport-card--pga    { border-top: 3px solid #166534; }
+.home-sport-card--nascar { border-top: 3px solid #b91c1c; }
+.home-sport-card--cws    { border-top: 3px solid #ca8a04; }
+.home-sport-card--nfl    { border-top: 3px solid var(--ash); }
+.home-sport-card--ncaaf  { border-top: 3px solid var(--ash); }
+
+/* Secondary section: Kevin bio + products */
+.home-secondary { display: grid; grid-template-columns: 1fr; gap: 2.5rem; }
+@media (min-width: 900px) { .home-secondary { grid-template-columns: 1.4fr 1fr; gap: 4rem; } }
+.home-secondary__col .kicker { margin-bottom: 0.6rem; }
+.home-secondary__h2 { font-family: var(--font-serif); font-size: clamp(1.4rem, 2.5vw, 1.85rem); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; margin: 0 0 0.85rem; }
+.home-secondary__body { font-family: var(--font-serif); font-size: 1.02rem; line-height: 1.6; color: var(--slate); margin: 0; }
+.home-secondary .btn { margin-right: 0.5rem; }
+
+.home-product { margin-bottom: 0.85rem; }
+.home-product__link { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.95rem 1.1rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); position: relative; transition: border-color 0.15s ease; }
+.home-product__link:hover { border-color: var(--ink); }
+.home-product__name { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; }
+.home-product__desc { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); line-height: 1.4; }
+.home-product__arrow { position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); color: var(--ash); font-size: 1.05rem; transition: transform 0.2s ease, color 0.2s ease; }
+.home-product__link:hover .home-product__arrow { transform: translateY(-50%) translateX(4px); color: var(--ink); }

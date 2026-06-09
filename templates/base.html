@@ -45,9 +45,6 @@
         <span class="brand__role">Sports Meteorologist</span>
       </a>
       <nav class="nav">
-        <a href="/mlb/today">MLB</a>
-        <a href="/worldcup">World&nbsp;Cup</a>
-        <a href="/golf">PGA</a>
         <a href="/about">About</a>
         <a href="/press">Press</a>
         <a href="/overcast" class="nav__cta">OVERcast</a>
@@ -58,12 +55,15 @@
       <a href="/mlb/today">MLB Weather</a>
       <a href="/worldcup">World Cup Weather</a>
       <a href="/golf">PGA Tour Weather</a>
+      <a href="/nascar">NASCAR Weather</a>
       <a href="/about">About</a>
       <a href="/press">Press</a>
       <a href="/overcast">OVERcast</a>
       <a href="/contact">Contact</a>
     </nav>
   </header>
+  {# Persistent sport-nav strip across every page #}
+  {% include "mlb/_sport_nav.html" %}
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="flash">

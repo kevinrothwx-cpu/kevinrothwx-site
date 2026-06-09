@@ -33,8 +33,6 @@
 {% endblock %}
 
 {% block content %}
-{% include "mlb/_sport_nav.html" %}
-
 <article class="game-page">
   <p class="game-page__kicker">MLB Weather · {{ pretty_date }}</p>
   <h1 class="game-page__title"><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ game.away_team_id }}.svg" alt="" loading="lazy"><span>{{ game.away_name }}</span><span class="matchup-at">at</span><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ game.home_team_id }}.svg" alt="" loading="lazy"><span>{{ game.home_name }}</span></h1>
