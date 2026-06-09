@@ -722,3 +722,6 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .home-product__desc { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); line-height: 1.4; }
 .home-product__arrow { position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); color: var(--ash); font-size: 1.05rem; transition: transform 0.2s ease, color 0.2s ease; }
 .home-product__link:hover .home-product__arrow { transform: translateY(-50%) translateX(4px); color: var(--ink); }
+
+/* Inline compass label next to wind speed in hourly cells */
+.hourly__windcompass { display: inline-block; margin-left: 0.3rem; padding: 0.05rem 0.4rem; background: var(--paper); border: 1px solid var(--mist); border-radius: 3px; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; color: var(--slate); vertical-align: 1px; }

@@ -18,6 +18,7 @@ from flask import (
 from mlb.cache import get_slate, start_warmer
 from mlb.slate import precip_color, precip_icon
 from mlb.storage import save_writeup, attach_writeups_to_slate, get_writeup
+from mlb.wind import wind_compass
 
 from worldcup.cache import get_matchday, start_warmer as start_wc_warmer
 from worldcup.schedule import match_slug as wc_match_slug
@@ -54,6 +55,7 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-pr
 # Templates get the precip color/icon helpers as filters
 app.jinja_env.filters["precip_color"] = precip_color
 app.jinja_env.filters["precip_icon"]  = precip_icon
+app.jinja_env.filters["wind_compass"] = wind_compass
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 

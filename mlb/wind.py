@@ -158,3 +158,35 @@ def get_wind_info(
         "arrow": arrow,
         "wind_speed": wind_speed,
     }
+
+
+
+# ── Compass direction label ─────────────────────────────────────
+
+_COMPASS_16 = ["N","NNE","NE","ENE","E","ESE","SE","SSE",
+               "S","SSW","SW","WSW","W","WNW","NW","NNW"]
+_COMPASS_8  = ["N","NE","E","SE","S","SW","W","NW"]
+
+
+def wind_compass(deg, points: int = 16) -> str:
+    """
+    Convert meteorological wind direction (FROM, 0-360°) to a compass label.
+
+    points=16  →  N, NNE, NE, ENE, ...    (default; hourly forecast detail)
+    points=8   →  N, NE, E, SE, S, SW, W, NW  (cheat-sheet brevity)
+
+    Returns "" for None/NaN/Calm.
+    """
+    if deg is None:
+        return ""
+    try:
+        import math
+        d = float(deg) % 360
+        if math.isnan(d):
+            return ""
+    except Exception:
+        return ""
+
+    labels = _COMPASS_16 if points == 16 else _COMPASS_8
+    bucket = int((d + (180 / len(labels))) % 360 // (360 / len(labels)))
+    return labels[bucket]

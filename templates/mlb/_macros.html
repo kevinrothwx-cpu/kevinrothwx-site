@@ -228,7 +228,7 @@
           <tr>
             <td class="hourly__label">Wind</td>
             {% for h in hours %}
-              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }}<span class="hourly__windcompass">{{ h.wind_deg|wind_compass }}</span></td>
             {% endfor %}
           </tr>
           {% if hours[0].dew is not none %}
