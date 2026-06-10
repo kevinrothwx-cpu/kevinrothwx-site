@@ -121,16 +121,17 @@ def build_tournament(event: dict) -> dict:
         weather_source = source
         weather_err = err
 
-        # Also fetch HRRR (CONUS only, ~48 h horizon). May be None for
-        # international courses or on Open-Meteo failure. Failures are
-        # silent and the toggle just won't render — never blocks NWS.
+        # Also fetch HRRR (CONUS only, ~48 h horizon). HRRR coverage is
+        # decided by the bounding-box check inside get_hrrr_periods, not
+        # by NWS coverage — a Canadian course just over the border can
+        # still get real HRRR data. Failures are silent and the toggle
+        # just won't render; this never blocks the NWS forecast.
         hrrr_periods = None
-        if not course.get("nws_unsupported"):
-            try:
-                hrrr_periods = get_hrrr_periods(course["lat"], course["lon"])
-            except Exception as e:
-                print(f"[golf.slate] HRRR fetch error for {course.get('name','?')}: {e}", flush=True)
-                hrrr_periods = None
+        try:
+            hrrr_periods = get_hrrr_periods(course["lat"], course["lon"])
+        except Exception as e:
+            print(f"[golf.slate] HRRR fetch error for {course.get('name','?')}: {e}", flush=True)
+            hrrr_periods = None
 
         num_rounds = (last_round_local - first_round_local).days + 1
         cur = first_round_local

@@ -1,6 +1,7 @@
 """
 worldcup.storage — write-up storage with optional color tag.
 Mirror of mlb.storage but keyed by ESPN event_id (string).
+Disk-backed via persistence module — survives Render restarts.
 """
 
 from __future__ import annotations
@@ -9,11 +10,31 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
+from persistence import load_json, save_json
+
 
 VALID_COLORS = {"green", "yellow", "orange", "red"}
+_DISK_FILE = "writeups_worldcup.json"
 
 _MEMORY_STORE: dict[str, dict] = {}
 _lock = threading.Lock()
+
+
+def _load_from_disk() -> None:
+    raw = load_json(_DISK_FILE, default={})
+    with _lock:
+        _MEMORY_STORE.clear()
+        for k, v in raw.items():
+            _MEMORY_STORE[str(k)] = v
+
+
+def _persist() -> None:
+    with _lock:
+        snapshot = dict(_MEMORY_STORE)
+    save_json(_DISK_FILE, snapshot)
+
+
+_load_from_disk()
 
 
 def get_writeup(event_id: str) -> Optional[dict]:
@@ -31,12 +52,13 @@ def save_writeup(event_id: str, text: str, color: Optional[str] = None) -> None:
     with _lock:
         if not text:
             _MEMORY_STORE.pop(eid, None)
-            return
-        _MEMORY_STORE[eid] = {
-            "text":           text,
-            "color":          color,
-            "updated_at_utc": datetime.now(timezone.utc),
-        }
+        else:
+            _MEMORY_STORE[eid] = {
+                "text":           text,
+                "color":          color,
+                "updated_at_utc": datetime.now(timezone.utc),
+            }
+    _persist()
 
 
 def list_writeups(event_ids: list[str]) -> dict[str, dict]:

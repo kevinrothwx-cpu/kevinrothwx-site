@@ -94,16 +94,15 @@ def build_race(event):
         gf_local = gf_utc.astimezone(tz)
         gf_eastern = gf_utc.astimezone(EASTERN_TZ)
 
-        # HRRR (CONUS only, ~48 h horizon). Sliced with the exact same
-        # window as the NWS pull so the two tables are hour-aligned.
-        # Silent on failure — toggle just won't render.
-        if not track.get("nws_unsupported"):
-            try:
-                hrrr_periods = get_hrrr_periods(track["lat"], track["lon"])
-                if hrrr_periods:
-                    hrrr_hourly = _hourly_window(hrrr_periods, gf_utc)
-            except Exception as e:
-                print(f"[nascar.slate] HRRR fetch error for {track.get('name','?')}: {e}", flush=True)
+        # HRRR (CONUS only, ~48 h horizon). Bounding-box check inside
+        # get_hrrr_periods decides coverage — independent of NWS. Silent
+        # on failure; toggle just won't render.
+        try:
+            hrrr_periods = get_hrrr_periods(track["lat"], track["lon"])
+            if hrrr_periods:
+                hrrr_hourly = _hourly_window(hrrr_periods, gf_utc)
+        except Exception as e:
+            print(f"[nascar.slate] HRRR fetch error for {track.get('name','?')}: {e}", flush=True)
 
     return {
         **event,
