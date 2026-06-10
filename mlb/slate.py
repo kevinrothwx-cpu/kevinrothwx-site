@@ -35,6 +35,7 @@ from typing import Optional
 
 from .park_metadata import PARK_METADATA, PARK_NAME_TO_CANONICAL, EXCLUDED_VENUES
 from .wind import get_wind_info
+from . import forecast_freeze
 from .nws import (
     get_mlb_schedule, parse_mlb_game,
     get_nws_hourly_url, get_nws_periods,
@@ -139,7 +140,7 @@ def _hourly_window(periods: list[dict], first_pitch_utc: datetime, tz: ZoneInfo)
             start = start.replace(tzinfo=timezone.utc)
         start_utc = start.astimezone(timezone.utc)
 
-        if window_start <= start_utc <= window_end:
+        if window_start <= start_utc < window_end:
             # Annotate with Eastern time for display
             start_eastern = start_utc.astimezone(EASTERN_TZ)
             p2 = dict(p)
@@ -176,20 +177,33 @@ def build_slate(date_str: str) -> list[dict]:
         fp_local   = fp_utc.astimezone(park_tz)
         fp_eastern = fp_utc.astimezone(EASTERN_TZ)
 
-        # Fetch forecast + full hourly band
-        forecast, all_periods, source, err = _forecast_for_park(park, fp_utc)
-
-        # Compute wind info (only if we have a forecast)
-        wind_info = None
-        if forecast:
-            wind_info = get_wind_info(
-                wind_deg=forecast["wind_deg"],
-                cf_bearing=park["cf_bearing_degrees"],
-                wind_speed=forecast["wind_speed"],
-            )
-
-        # Trim to the ±game window
-        hourly = _hourly_window(all_periods or [], fp_utc, park_tz)
+        # FREEZE pattern: if the game has already started AND we have a frozen
+        # snapshot from before first pitch, use it. Otherwise refresh from NWS
+        # and (if the game is still in the future) save the snapshot.
+        now_utc = datetime.now(timezone.utc)
+        game_pk = parsed["game_pk"]
+        if fp_utc <= now_utc and forecast_freeze.has(game_pk):
+            # Game has started — read the locked snapshot
+            frozen = forecast_freeze.get(game_pk)
+            forecast = frozen["forecast"]
+            wind_info = frozen["wind_info"]
+            hourly    = frozen["hourly"]
+            source    = "nws-frozen"
+            err       = None
+        else:
+            # Fetch fresh
+            forecast, all_periods, source, err = _forecast_for_park(park, fp_utc)
+            wind_info = None
+            if forecast:
+                wind_info = get_wind_info(
+                    wind_deg=forecast["wind_deg"],
+                    cf_bearing=park["cf_bearing_degrees"],
+                    wind_speed=forecast["wind_speed"],
+                )
+            hourly = _hourly_window(all_periods or [], fp_utc, park_tz)
+            # Lock the snapshot while game is still upcoming
+            if fp_utc > now_utc and forecast and hourly:
+                forecast_freeze.freeze(game_pk, forecast, wind_info, hourly)
 
         slug = game_slug(parsed["away_name"], parsed["home_name"])
         # Doubleheaders: append game_num

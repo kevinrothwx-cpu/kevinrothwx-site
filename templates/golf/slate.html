@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "golf/_macros.html" import round_summary_card, round_hourly_table %}
+{% from "golf/_macros.html" import round_hourly_table %}
 
 {% block title %}PGA Tour Weather — This Week's Tournament | Kevin Roth{% endblock %}
 {% block description %}Free PGA Tour weather forecasts for this week's tournament rounds. Course-specific 4-day outlook by sports meteorologist Kevin Roth.{% endblock %}
@@ -62,12 +62,6 @@
       {% endif %}
 
       {% if tournament.rounds %}
-        <div class="round-row">
-          {% for r in tournament.rounds %}
-            {{ round_summary_card(r) }}
-          {% endfor %}
-        </div>
-
         {% for r in tournament.rounds %}
           <article class="mlb-game-block" id="round-{{ r.round_num }}">
             <header class="mlb-game-block__header">
