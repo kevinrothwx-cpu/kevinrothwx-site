@@ -130,16 +130,8 @@ def inject_sport_nav():
     if cws_in_window():
         counts["cws"] = "Live"
 
-    # NFL / NCAAF — countdown until season starts
-    try:
-        nfl_days = (datetime(2026, 9, 10).date() - today).days
-        if nfl_days > 0:
-            counts["nfl"] = f"{nfl_days}d" if nfl_days < 100 else "Fall"
-        ncaaf_days = (datetime(2026, 8, 29).date() - today).days
-        if ncaaf_days > 0:
-            counts["ncaaf"] = f"{ncaaf_days}d" if ncaaf_days < 100 else "Fall"
-    except Exception:
-        pass
+    # NFL / NCAAF — no badge during off-season (cleaner header).
+    # The sport tab still shows; just no countdown number next to it.
 
     return {"sport_counts": counts}
 

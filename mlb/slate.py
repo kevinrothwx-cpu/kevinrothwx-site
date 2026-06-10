@@ -122,6 +122,10 @@ def _hourly_window(periods: list[dict], first_pitch_utc: datetime, tz: ZoneInfo)
     first_pitch + HOURS_GAME + HOURS_AFTER]. Annotates each with
     `hour_eastern` (str like "7 PM") for display per Kevin's spec
     (Eastern time across the board).
+
+    Handles in-progress games: if first pitch is in the past, the window
+    starts at "now" rounded down to the hour so users still see forecast
+    for the remaining game hours instead of "not available".
     """
     if not periods:
         return []
@@ -130,6 +134,13 @@ def _hourly_window(periods: list[dict], first_pitch_utc: datetime, tz: ZoneInfo)
     fp = first_pitch_utc.replace(minute=0, second=0, microsecond=0)
     window_start = fp - timedelta(hours=HOURS_BEFORE)
     window_end   = fp + timedelta(hours=HOURS_GAME + HOURS_AFTER)
+
+    # If the entire window is in the past, anchor to now so we still show something
+    now_utc = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    if window_start < now_utc:
+        window_start = now_utc
+        if window_end < now_utc + timedelta(hours=1):
+            window_end = now_utc + timedelta(hours=HOURS_GAME + HOURS_AFTER)
 
     selected = []
     for p in periods:
