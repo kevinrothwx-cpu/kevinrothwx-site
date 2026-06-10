@@ -10,7 +10,7 @@ yet started, refresh its forecast from NWS and save it here. Once the
 game has started (first_pitch <= now_utc), the warmer stops touching it
 and the page reads from the frozen snapshot indefinitely.
 
-Storage is disk-backed via the persistence module — survives Render
+Storage is disk-backed via the persistence module, survives Render
 restarts. Frozen snapshots for finished games are cleaned up by
 clear_old() (called by the daily roll-over).
 """
@@ -26,7 +26,7 @@ from persistence import load_json, save_json, parse_dt
 
 _DISK_FILE = "mlb_forecast_freeze.json"
 
-# game_pk → {"forecast", "wind_info", "hourly", "frozen_at_utc"}
+# game_pk -> {"forecast", "wind_info", "hourly", "frozen_at_utc"}
 _frozen: dict[int, dict] = {}
 _lock = threading.Lock()
 
@@ -43,10 +43,6 @@ def _load_from_disk() -> None:
                 pk = int(k)
             except (TypeError, ValueError):
                 continue
-            # Rehydrate top-level frozen_at_utc to a real datetime for
-            # comparison in clear_old(). Nested datetimes inside forecast/
-            # hourly stay as ISO strings — templates only use the pre-
-            # formatted *_eastern string variants, not the *_dt objects.
             if isinstance(v, dict) and "frozen_at_utc" in v:
                 v["frozen_at_utc"] = parse_dt(v["frozen_at_utc"])
             _frozen[pk] = v

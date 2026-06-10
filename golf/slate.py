@@ -7,7 +7,7 @@ window, but we read from the API for exact dates). Per round we produce:
   - hourly forecast for play hours (default 6 AM - 8 PM local)
 
 Course is looked up from courses.PGA_COURSES. Unknown courses produce
-a slate entry with course_meta=None and forecast missing — page handles
+a slate entry with course_meta=None and forecast missing, page handles
 gracefully.
 """
 
@@ -30,9 +30,8 @@ from hrrr import get_hrrr_periods
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
-# Hours of the day we care about for play (local time)
 PLAY_START_HOUR = 6
-PLAY_END_HOUR   = 20   # 8 PM cushion
+PLAY_END_HOUR   = 20
 
 
 def _all_hourly_for_course(course_meta):
@@ -86,12 +85,7 @@ def _summarize_day(round_periods):
 
 
 def build_tournament(event: dict) -> dict:
-    """
-    Build the full tournament dict ready for the template:
-      - metadata (name, course, dates)
-      - rounds: list of {round_num, round_label, date_local, daily_summary, hourly}
-      - weather_source, weather_error
-    """
+    """Build the full tournament dict ready for the template."""
     course = lookup_course(event["course"])
     rounds_out = []
     weather_source = None
@@ -106,8 +100,6 @@ def build_tournament(event: dict) -> dict:
     if course and start:
         tz = ZoneInfo(course["timezone"])
         first_round_local = start.astimezone(tz).date()
-        # Defensive: cap window. Most events are 3-4 days. Monday finishes push to 5.
-        # 7-day cap absorbs playoffs/weather delays without building a bogus tournament.
         if end:
             last_round_local = end.astimezone(tz).date()
         else:
@@ -116,16 +108,10 @@ def build_tournament(event: dict) -> dict:
         if last_round_local > max_round_date:
             last_round_local = max_round_date
 
-        # Fetch full hourly periods once, then slice per round
         periods, source, err = _all_hourly_for_course(course)
         weather_source = source
         weather_err = err
 
-        # Also fetch HRRR (CONUS only, ~48 h horizon). HRRR coverage is
-        # decided by the bounding-box check inside get_hrrr_periods, not
-        # by NWS coverage — a Canadian course just over the border can
-        # still get real HRRR data. Failures are silent and the toggle
-        # just won't render; this never blocks the NWS forecast.
         hrrr_periods = None
         try:
             hrrr_periods = get_hrrr_periods(course["lat"], course["lon"])
@@ -138,10 +124,7 @@ def build_tournament(event: dict) -> dict:
         round_num = 1
         while cur <= last_round_local:
             day_periods = _periods_for_round_day(periods or [], cur, tz)
-            # Slice HRRR with the exact same window logic so the two tables
-            # are directly comparable hour-for-hour.
             day_hrrr = _periods_for_round_day(hrrr_periods or [], cur, tz) if hrrr_periods else []
-            # Better round labels: 3-day events show "Final Round" not "Round 3"
             if round_num == num_rounds and num_rounds < 4:
                 label = "Final Round"
             elif round_num == num_rounds:
@@ -171,9 +154,7 @@ def build_tournament(event: dict) -> dict:
 
 
 def build_pga_slate() -> list[dict]:
-    """
-    Build the current PGA slate (typically 1-3 active/upcoming tournaments).
-    """
+    """Build the current PGA slate (typically 1-3 active/upcoming tournaments)."""
     raw = get_pga_scoreboard()
     out = []
     for event in raw:
@@ -182,7 +163,5 @@ def build_pga_slate() -> list[dict]:
             continue
         tournament = build_tournament(parsed)
         out.append(tournament)
-
-    # Sort by start date
     out.sort(key=lambda t: t.get("start_iso", ""))
     return out

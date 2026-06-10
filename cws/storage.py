@@ -1,5 +1,5 @@
 """cws.storage — write-up storage with color tag.
-Disk-backed via persistence module — survives Render restarts."""
+Disk-backed via persistence module, survives Render restarts."""
 
 from __future__ import annotations
 

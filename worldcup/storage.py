@@ -1,7 +1,7 @@
 """
 worldcup.storage — write-up storage with optional color tag.
 Mirror of mlb.storage but keyed by ESPN event_id (string).
-Disk-backed via persistence module — survives Render restarts.
+Disk-backed via persistence module, survives Render restarts.
 """
 
 from __future__ import annotations

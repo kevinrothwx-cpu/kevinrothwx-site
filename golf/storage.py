@@ -1,5 +1,5 @@
 """golf.storage — write-up storage for PGA tournaments (mirror of MLB).
-Disk-backed via persistence module — survives Render restarts."""
+Disk-backed via persistence module, survives Render restarts."""
 
 from __future__ import annotations
 

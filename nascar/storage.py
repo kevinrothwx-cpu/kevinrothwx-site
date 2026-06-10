@@ -1,5 +1,5 @@
 """nascar.storage — write-up storage with color tag.
-Disk-backed via persistence module — survives Render restarts."""
+Disk-backed via persistence module, survives Render restarts."""
 
 from __future__ import annotations
 
@@ -60,7 +60,8 @@ def list_writeups(event_ids):
     with _lock:
         for eid in event_ids:
             entry = _MEMORY_STORE.get(str(eid))
-            if entry: out[str(eid)] = entry
+            if entry:
+                out[str(eid)] = entry
     return out
 
 

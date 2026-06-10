@@ -5,7 +5,6 @@ Disk-backed via persistence module. Reads /var/data/writeups_mlb.json on
 import; writes on every save_writeup. Survives Render restarts.
 
 Each write-up: {text, color, updated_at_utc}
-  color ∈ {"green", "yellow", "orange", "red", None}
 """
 
 from __future__ import annotations
@@ -44,7 +43,6 @@ def _persist() -> None:
     save_json(_DISK_FILE, snapshot)
 
 
-# Populate from disk on module import
 _load_from_disk()
 
 
@@ -54,10 +52,7 @@ def get_writeup(game_pk: int) -> Optional[dict]:
 
 
 def save_writeup(game_pk: int, text: str, color: Optional[str] = None) -> None:
-    """
-    Save (or replace) a write-up. Empty text = delete.
-    Color must be one of VALID_COLORS or None.
-    """
+    """Save (or replace) a write-up. Empty text = delete."""
     pk = int(game_pk)
     text = (text or "").strip()
     if color and color.lower() not in VALID_COLORS:

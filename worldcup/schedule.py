@@ -3,15 +3,6 @@ worldcup.schedule — ESPN's unofficial scoreboard API for the 2026 World Cup.
 
 Endpoint pattern (no auth required):
     https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=YYYYMMDD
-
-Returns a list of events (matches) with:
-    - id, name, date (ISO UTC)
-    - competitions[0].venue.fullName
-    - competitions[0].competitors (home/away with team metadata, logos)
-    - status (scheduled/in-progress/final/postponed)
-
-If ESPN returns no events (preseason window, rate limit, API change), we
-fall back to a minimal hand-curated schedule so the page is never empty.
 """
 
 from __future__ import annotations
@@ -32,11 +23,8 @@ REQUEST_HEADERS = {
 
 
 def get_worldcup_schedule(date_str: str) -> list[dict]:
-    """
-    Fetch World Cup matches for a date (YYYY-MM-DD).
-    Returns a list of raw event dicts from ESPN.
-    """
-    date_compact = date_str.replace("-", "")  # ESPN wants YYYYMMDD
+    """Fetch World Cup matches for a date (YYYY-MM-DD)."""
+    date_compact = date_str.replace("-", "")
     try:
         resp = requests.get(
             ESPN_SCOREBOARD_URL,
@@ -52,10 +40,7 @@ def get_worldcup_schedule(date_str: str) -> list[dict]:
 
 
 def parse_worldcup_event(event: dict) -> Optional[dict]:
-    """
-    Normalize one ESPN event into our internal shape. Returns None if event
-    is missing critical fields or has been cancelled.
-    """
+    """Normalize one ESPN event into our internal shape."""
     try:
         competition = (event.get("competitions") or [{}])[0]
         if not competition:
@@ -65,20 +50,16 @@ def parse_worldcup_event(event: dict) -> Optional[dict]:
         if "CANCELED" in status_name.upper() or "CANCELLED" in status_name.upper():
             return None
 
-        # Teams — find home + away
         home = away = None
         for c in competition.get("competitors", []):
             team = c.get("team", {}) or {}
             display_name = team.get("displayName", team.get("name", ""))
-            # Prefer our FIFA-code lookup over ESPN's inconsistent
-            # `abbreviation` field. Falls through to ESPN's value if the
-            # team isn't in the lookup.
             fifa = fifa_code_for(display_name)
             entry = {
                 "name":         display_name,
                 "short_name":   team.get("shortDisplayName", team.get("abbreviation", "")),
                 "abbreviation": fifa or team.get("abbreviation", ""),
-                "logo":         team.get("logo", ""),  # often a remote URL
+                "logo":         team.get("logo", ""),
                 "team_id":      team.get("id", ""),
                 "score":        c.get("score", ""),
             }
