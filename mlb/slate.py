@@ -127,8 +127,13 @@ def _hourly_window(periods: list[dict], first_pitch_utc: datetime, tz: ZoneInfo)
     if not periods:
         return []
 
-    # Round first pitch to its hour
-    fp = first_pitch_utc.replace(minute=0, second=0, microsecond=0)
+    # Round first pitch to its hour (round-at-30 to match find_period_for_time;
+    # 6:35 PM → 7 PM, so the highlighted game-hours band starts at 7 PM, not 6 PM)
+    fp = first_pitch_utc.replace(second=0, microsecond=0)
+    if fp.minute >= 30:
+        fp = fp.replace(minute=0) + timedelta(hours=1)
+    else:
+        fp = fp.replace(minute=0)
     window_start = fp - timedelta(hours=HOURS_BEFORE)
     window_end   = fp + timedelta(hours=HOURS_GAME + HOURS_AFTER)
 

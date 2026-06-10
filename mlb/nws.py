@@ -131,7 +131,14 @@ def get_nws_periods(hourly_url: str) -> list:
     if hourly_url not in _nws_periods_cache:
         resp = requests.get(hourly_url, headers=NWS_HEADERS, timeout=15)
         resp.raise_for_status()
-        _nws_periods_cache[hourly_url] = resp.json()["properties"]["periods"]
+        data = resp.json()["properties"]
+        _nws_periods_cache[hourly_url] = data["periods"]
+        # Diagnostic: log NWS updateTime on each fresh fetch. If consecutive
+        # warmer cycles show the same updateTime while NWS has actually moved,
+        # we have an upstream cache problem. Quiet (one short line per venue
+        # per 25-min cycle).
+        short = hourly_url.split("/gridpoints/")[-1] if "/gridpoints/" in hourly_url else hourly_url[-40:]
+        print(f"[mlb.nws] fetched {short} updateTime={data.get('updateTime')}", flush=True)
     return _nws_periods_cache[hourly_url]
 
 
