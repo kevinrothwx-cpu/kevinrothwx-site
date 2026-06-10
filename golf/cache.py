@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from .slate import build_pga_slate
 from mlb.nws import clear_periods_cache as clear_nws_periods
+from hrrr import clear_periods_cache as clear_hrrr_periods
 
 
 REFRESH_SECONDS = 25 * 60
@@ -44,6 +45,7 @@ def _rebuild():
     slate = []
     try:
         clear_nws_periods()
+        clear_hrrr_periods()
         slate = build_pga_slate()
     except Exception as e:
         err = f"{type(e).__name__}: {e}"

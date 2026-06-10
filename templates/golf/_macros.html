@@ -30,9 +30,11 @@
 {% endmacro %}
 
 
-{# ── Hourly forecast table for one round (play hours only) ──── #}
-{% macro round_hourly_table(round_data) %}
-  {% set hours = round_data.hourly or [] %}
+{# ── Hourly forecast table for one round (play hours only) ────
+    Accepts an optional `hours` param so the same macro can render
+    NWS (default: round_data.hourly) or HRRR (round_data.hrrr_hourly). #}
+{% macro round_hourly_table(round_data, hours=None) %}
+  {% if hours is none %}{% set hours = round_data.hourly or [] %}{% endif %}
   {% if hours %}
     <div class="hourly">
       <table class="hourly__table">

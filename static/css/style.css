@@ -229,6 +229,19 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__skyicon { width: 32px; height: 32px; }
 .cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
 
+/* ============================================================
+ * HRRR secondary forecast toggle (PGA + NASCAR)
+ * ============================================================ */
+.hrrr-toggle { margin: 0.75rem 0 0; }
+.hrrr-toggle > summary { cursor: pointer; list-style: none; user-select: none; font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--storm); padding: 0.55rem 0.85rem; border: 1px solid var(--mist); background: var(--white); display: inline-flex; align-items: center; gap: 0.5rem; transition: border-color 0.15s ease, background 0.15s ease; }
+.hrrr-toggle > summary::-webkit-details-marker { display: none; }
+.hrrr-toggle > summary::before { content: "▸"; font-size: 0.7rem; color: var(--ash); transition: transform 0.15s ease; display: inline-block; }
+.hrrr-toggle[open] > summary::before { transform: rotate(90deg); }
+.hrrr-toggle > summary:hover { border-color: var(--ink); background: var(--cream, #fafaf7); }
+.hrrr-toggle__meta { font-weight: 500; color: var(--ash); font-size: 0.78rem; letter-spacing: 0.01em; }
+.hrrr-section { margin-top: 0.75rem; padding: 0.6rem 0.75rem 0.75rem; border-left: 3px solid var(--storm); background: rgba(30, 58, 138, 0.025); }
+.hrrr-section .hourly { margin-bottom: 0; }
+
 /* Wind SVG arrow */
 .wind-arrow-svg { width: 14px; height: 14px; transition: transform 0.2s ease; }
 .wind-arrow-svg--out { color: #15803d; }   /* green-700, more editorial than bright */

@@ -37,9 +37,11 @@
 {% endmacro %}
 
 
-{# ── Race hourly table (pre-race + race + after) ───────────── #}
-{% macro race_hourly_table(race) %}
-  {% set hours = race.hourly or [] %}
+{# ── Race hourly table (pre-race + race + after) ─────────────
+    Accepts optional `hours` so the same macro renders NWS (default:
+    race.hourly) or HRRR (race.hrrr_hourly). #}
+{% macro race_hourly_table(race, hours=None) %}
+  {% if hours is none %}{% set hours = race.hourly or [] %}{% endif %}
   {% if hours %}
     <div class="hourly">
       <table class="hourly__table">

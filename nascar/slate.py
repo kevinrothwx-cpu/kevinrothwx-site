@@ -21,6 +21,7 @@ from mlb.nws import (
     find_period_for_time, extract_forecast,
 )
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
+from hrrr import get_hrrr_periods
 
 
 EASTERN_TZ = ZoneInfo("America/New_York")
@@ -85,12 +86,24 @@ def build_race(event):
     except Exception:
         pass
 
+    hrrr_hourly = []
     if track and gf_utc:
         forecast, periods, source, err = _forecast_for_track(track, gf_utc)
         hourly = _hourly_window(periods or [], gf_utc)
         tz = ZoneInfo(track["timezone"])
         gf_local = gf_utc.astimezone(tz)
         gf_eastern = gf_utc.astimezone(EASTERN_TZ)
+
+        # HRRR (CONUS only, ~48 h horizon). Sliced with the exact same
+        # window as the NWS pull so the two tables are hour-aligned.
+        # Silent on failure — toggle just won't render.
+        if not track.get("nws_unsupported"):
+            try:
+                hrrr_periods = get_hrrr_periods(track["lat"], track["lon"])
+                if hrrr_periods:
+                    hrrr_hourly = _hourly_window(hrrr_periods, gf_utc)
+            except Exception as e:
+                print(f"[nascar.slate] HRRR fetch error for {track.get('name','?')}: {e}", flush=True)
 
     return {
         **event,
@@ -101,6 +114,7 @@ def build_race(event):
         "green_flag_eastern_str": gf_eastern.strftime("%-I:%M %p ET").lstrip("0") if gf_eastern else "",
         "forecast":    forecast,
         "hourly":      hourly,
+        "hrrr_hourly": hrrr_hourly,
         "slug":        race_slug(event["short_name"] or event["name"]),
         "weather_source": source,
         "weather_error":  err,

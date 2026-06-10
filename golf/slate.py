@@ -25,6 +25,7 @@ from mlb.nws import (
     find_period_for_time, extract_forecast,
 )
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
+from hrrr import get_hrrr_periods
 
 
 EASTERN_TZ = ZoneInfo("America/New_York")
@@ -120,11 +121,25 @@ def build_tournament(event: dict) -> dict:
         weather_source = source
         weather_err = err
 
+        # Also fetch HRRR (CONUS only, ~48 h horizon). May be None for
+        # international courses or on Open-Meteo failure. Failures are
+        # silent and the toggle just won't render — never blocks NWS.
+        hrrr_periods = None
+        if not course.get("nws_unsupported"):
+            try:
+                hrrr_periods = get_hrrr_periods(course["lat"], course["lon"])
+            except Exception as e:
+                print(f"[golf.slate] HRRR fetch error for {course.get('name','?')}: {e}", flush=True)
+                hrrr_periods = None
+
         num_rounds = (last_round_local - first_round_local).days + 1
         cur = first_round_local
         round_num = 1
         while cur <= last_round_local:
             day_periods = _periods_for_round_day(periods or [], cur, tz)
+            # Slice HRRR with the exact same window logic so the two tables
+            # are directly comparable hour-for-hour.
+            day_hrrr = _periods_for_round_day(hrrr_periods or [], cur, tz) if hrrr_periods else []
             # Better round labels: 3-day events show "Final Round" not "Round 3"
             if round_num == num_rounds and num_rounds < 4:
                 label = "Final Round"
@@ -139,6 +154,7 @@ def build_tournament(event: dict) -> dict:
                 "date_label":  cur.strftime("%a %b %-d"),
                 "summary":     _summarize_day(day_periods),
                 "hourly":      day_periods,
+                "hrrr_hourly": day_hrrr,
             })
             cur += timedelta(days=1)
             round_num += 1
