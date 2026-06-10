@@ -43,11 +43,12 @@
     </div>
   {% endif %}
 
-  {# ── Section 2: write-ups (if any) + CTAs ─────────────────── #}
-  <section class="mlb-section">
-    {% set any_writeups = [] %}
-    {% for day in days_data %}{% for m in day.slate %}{% if m.writeup %}{% set _ = any_writeups.append(m) %}{% endif %}{% endfor %}{% endfor %}
-    {% if any_writeups %}
+  {# ── Section 2: write-ups (if any). MLB-specific CTAs removed — they
+       don't belong on a soccer page. ─────────────────────────────── #}
+  {% set any_writeups = [] %}
+  {% for day in days_data %}{% for m in day.slate %}{% if m.writeup %}{% set _ = any_writeups.append(m) %}{% endif %}{% endfor %}{% endfor %}
+  {% if any_writeups %}
+    <section class="mlb-section">
       {% for m in any_writeups %}
         <div class="mlb-writeup mlb-writeup--{{ m.writeup.color or 'none' }}">
           <div class="mlb-writeup__header">
@@ -57,11 +58,8 @@
           <div class="mlb-writeup__body">{{ m.writeup.text }}</div>
         </div>
       {% endfor %}
-      {% include "mlb/_overcast_tease.html" %}
-    {% else %}
-      {% include "mlb/_ctas.html" %}
-    {% endif %}
-  </section>
+    </section>
+  {% endif %}
 
   {# ── Section 3: per-match blocks, grouped by day ─────────── #}
   {% for day in days_data %}

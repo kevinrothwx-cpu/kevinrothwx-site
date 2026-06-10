@@ -359,7 +359,9 @@ def _render_worldcup_matchday(start_date_str, days=3):
     for i in range(days):
         d = start_d + timedelta(days=i)
         ds = d.strftime("%Y-%m-%d")
-        slate, meta = get_matchday(ds, allow_build=False)
+        # allow_build=True so a fresh page load after a deploy/restart builds
+        # the slate inline instead of showing empty. Matches MLB behavior.
+        slate, meta = get_matchday(ds, allow_build=True)
         if slate is None:
             slate, meta = [], None
         wc_attach_writeups(slate)
