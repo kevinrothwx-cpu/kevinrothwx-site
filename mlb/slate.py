@@ -139,7 +139,7 @@ def _hourly_window(periods: list[dict], first_pitch_utc: datetime, tz: ZoneInfo)
             start = start.replace(tzinfo=timezone.utc)
         start_utc = start.astimezone(timezone.utc)
 
-        if window_start <= start_utc < window_end:
+        if window_start <= start_utc <= window_end:
             # Annotate with Eastern time for display
             start_eastern = start_utc.astimezone(EASTERN_TZ)
             p2 = dict(p)
