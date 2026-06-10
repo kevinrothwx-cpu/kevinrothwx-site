@@ -757,3 +757,14 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .home-sport-card__icon { width: 40px; height: 40px; flex-shrink: 0; margin-top: 0.05rem; }
 .home-sport-card__heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .home-sport-card__heading .home-sport-card__title { margin-top: 0.1rem; }
+
+/* v8 polish: tighten page header so the cheat-sheet starts above the fold */
+.mlb-page { padding-top: 0.75rem; }
+.mlb-page__header { padding: 0 1.5rem 0.4rem; margin: 0 auto 1rem; border-bottom: 0; }
+.mlb-page__title { font-size: clamp(1.45rem, 2vw + 0.5rem, 2rem); margin-top: 0.15rem; margin-bottom: 0; line-height: 1.1; }
+.mlb-page__sub { display: none; }
+.mlb-page__datenav a { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
+/* Make the kicker sit inline-ish with the title to save more vertical */
+.mlb-page__hed { gap: 0.75rem 1.5rem; align-items: center; }
+.mlb-page__hed > div .kicker { margin-bottom: 0.1rem; }
