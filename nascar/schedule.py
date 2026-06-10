@@ -1,18 +1,32 @@
 """
 nascar.schedule — ESPN unofficial NASCAR Cup Series scoreboard.
 
-Endpoint:
-    https://site.api.espn.com/apis/site/v2/sports/racing/nascar-cup-series/scoreboard
+ESPN's documented NASCAR Cup endpoint stopped returning data sometime
+before June 2026 — every URL pattern tested returns 400 or empty events.
+The community ESPN-API gist no longer lists a NASCAR endpoint.
+
+We still try the original URL plus two plausible alternatives each
+fetch in case ESPN restores access. If all three return nothing, we
+fall back to the hand-curated 2026 schedule in schedule_fallback.py
+so the /nascar page is never blank during the active season.
 """
 
 from __future__ import annotations
 
 import requests
 import re
+from datetime import datetime, timezone
 from typing import Optional
 
+from .schedule_fallback import get_fallback_events
 
-ESPN_NASCAR_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/racing/nascar-cup-series/scoreboard"
+
+# Patterns to try, in order. The first that returns events wins.
+ESPN_NASCAR_URLS = [
+    "https://site.api.espn.com/apis/site/v2/sports/racing/nascar-cup-series/scoreboard",
+    "https://site.api.espn.com/apis/site/v2/sports/racing/nascar/scoreboard",
+    "https://site.api.espn.com/apis/site/v2/sports/racing/nascar-premier-series/scoreboard",
+]
 REQUEST_HEADERS = {
     "User-Agent": "kevinrothwx-site/1.0 (kevinrothwx@gmail.com)",
     "Accept":     "application/json",
@@ -20,18 +34,28 @@ REQUEST_HEADERS = {
 
 
 def get_nascar_scoreboard() -> list[dict]:
-    """Fetch current/upcoming NASCAR Cup races."""
-    try:
-        resp = requests.get(
-            ESPN_NASCAR_SCOREBOARD_URL,
-            headers=REQUEST_HEADERS,
-            timeout=15,
-        )
-        resp.raise_for_status()
-        return resp.json().get("events", [])
-    except Exception as e:
-        print(f"[nascar.schedule] ESPN error: {e}", flush=True)
-        return []
+    """
+    Fetch current/upcoming NASCAR Cup races. Tries ESPN's known URL
+    patterns first; if none return data, falls back to the embedded
+    2026 schedule so the page stays useful while ESPN access is broken.
+    """
+    for url in ESPN_NASCAR_URLS:
+        try:
+            resp = requests.get(url, headers=REQUEST_HEADERS, timeout=15)
+            resp.raise_for_status()
+            events = resp.json().get("events", []) or []
+            if events:
+                print(f"[nascar.schedule] ESPN returned {len(events)} events from {url}", flush=True)
+                return events
+        except Exception as e:
+            print(f"[nascar.schedule] ESPN error at {url}: {e}", flush=True)
+            continue
+
+    # All ESPN attempts failed or returned empty — use the embedded schedule.
+    fallback = get_fallback_events(datetime.now(timezone.utc))
+    if fallback:
+        print(f"[nascar.schedule] using fallback schedule, {len(fallback)} upcoming races", flush=True)
+    return fallback
 
 
 def parse_nascar_event(event: dict) -> Optional[dict]:

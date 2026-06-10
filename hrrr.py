@@ -26,12 +26,21 @@ OUTPUT FORMAT:
 
 from __future__ import annotations
 
+import os
 import requests
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
-OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+# Open-Meteo serves two endpoints:
+#   - api.open-meteo.com:           free, anonymous, IP-rate-limited
+#   - customer-api.open-meteo.com:  paid, API-key authenticated, no IP throttle
+# When OPEN_METEO_API_KEY env var is set we use the paid endpoint and
+# include the key as a query param. When it isn't, we fall back to the
+# free endpoint (where Render's shared IP gets throttled).
+OPEN_METEO_FREE_URL = "https://api.open-meteo.com/v1/forecast"
+OPEN_METEO_PAID_URL = "https://customer-api.open-meteo.com/v1/forecast"
+
 HRRR_USER_AGENT = "kevinrothwx.com (contact: kevinrothwx@gmail.com)"
 
 # Backoff windows — how long to refuse retries after a failure. Open-Meteo's
@@ -103,9 +112,14 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         "wind_speed_unit": "mph",
         "forecast_days": 2,
     }
+    # Use paid endpoint with API key when available, free endpoint otherwise.
+    api_key = (os.environ.get("OPEN_METEO_API_KEY") or "").strip()
+    url = OPEN_METEO_PAID_URL if api_key else OPEN_METEO_FREE_URL
+    if api_key:
+        params["apikey"] = api_key
     try:
         resp = requests.get(
-            OPEN_METEO_URL,
+            url,
             params=params,
             headers={"User-Agent": HRRR_USER_AGENT},
             timeout=15,
