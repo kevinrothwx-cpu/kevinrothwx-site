@@ -30,6 +30,52 @@
 {% endmacro %}
 
 
+{# ── 18-hole course map, holes colored by wind impact ────────── #}
+{% macro course_hole_map(map) %}
+  <figure class="hole-map">
+    <svg viewBox="0 0 {{ map.width }} {{ map.height }}" class="hole-map__svg" role="img"
+         aria-label="Top-down course map: each hole colored by whether the forecast wind is helping, hurting, or across the line of play">
+      <rect x="0.5" y="0.5" width="{{ map.width - 1 }}" height="{{ map.height - 1 }}" class="hole-map__frame"/>
+
+      {% for h in map.holes %}
+        <g class="hole-map__holegroup">
+          <title>Hole {{ h.num }}{% if h.name %} · {{ h.name }}{% endif %}{% if h.par %} · Par {{ h.par }}{% endif %} · {{ h.yards }} yd · plays {{ h.plays }}{% if h.impact != 'unknown' %} · wind {{ h.impact }}{% endif %}</title>
+          <polyline points="{{ h.points_attr }}" class="hole-map__hole hole-impact-{{ h.impact }}"/>
+          <circle cx="{{ h.tee[0] }}" cy="{{ h.tee[1] }}" r="3.5" class="hole-map__tee"/>
+          <text x="{{ h.label[0] }}" y="{{ h.label[1] }}" class="hole-map__num">{{ h.num }}</text>
+        </g>
+      {% endfor %}
+
+      {# Wind compass inset — north-up map, arrow points where wind blows TO #}
+      <g transform="translate({{ map.compass[0] }} {{ map.compass[1] }})" class="hole-map__compass">
+        <circle r="34" class="hole-map__compass-face"/>
+        <line x1="0" y1="-34" x2="0" y2="-28" class="hole-map__compass-tick"/>
+        <text y="-39" class="hole-map__compass-n">N</text>
+        {% if map.wind_deg is not none %}
+          {% set wind_to = (map.wind_deg + 180) % 360 %}
+          <g transform="rotate({{ wind_to }})">
+            <line x1="0" y1="16" x2="0" y2="-8" class="hole-map__compass-arrow"/>
+            <polygon points="0,-22 -7,-8 7,-8" class="hole-map__compass-head"/>
+          </g>
+        {% else %}
+          <circle r="3.5" class="hole-map__compass-calm"/>
+        {% endif %}
+      </g>
+    </svg>
+    <figcaption class="hole-map__caption">
+      <span class="hole-map__chip"><i class="hole-map__swatch hole-map__swatch--helping"></i>Helping</span>
+      <span class="hole-map__chip"><i class="hole-map__swatch hole-map__swatch--hurting"></i>Hurting</span>
+      <span class="hole-map__chip"><i class="hole-map__swatch hole-map__swatch--cross"></i>Crosswind</span>
+      {% if map.wind_deg is not none %}
+        <span class="hole-map__windnote">Wind {{ map.wind_deg|wind_compass }} {{ map.wind_speed }} mph · {{ map.round_label }}</span>
+      {% else %}
+        <span class="hole-map__windnote">Wind forecast pending</span>
+      {% endif %}
+    </figcaption>
+  </figure>
+{% endmacro %}
+
+
 {# ── Hourly forecast table for one round (play hours only) ──── #}
 {% macro round_hourly_table(round_data) %}
   {% set hours = round_data.hourly or [] %}

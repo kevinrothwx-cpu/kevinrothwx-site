@@ -182,13 +182,25 @@ PGA_COURSES = {
         "lat": 21.2683, "lon": -157.7689,
         "timezone": "Pacific/Honolulu",
     },
+
+    # ── CANADA / INTERNATIONAL ───────────────────────────────────
+    "TPC Toronto at Osprey Valley": {
+        "city": "Caledon, ON", "country": "CA",
+        "lat": 43.8517, "lon": -80.0344,  # Heathlands Course area
+        "timezone": "America/Toronto",
+        "nws_unsupported": True,  # NWS does not cover Canada
+        "aliases": ["TPC Toronto", "Osprey Valley", "TPC Toronto Osprey Valley"],
+    },
 }
 
 
-# Build lowercase lookup for fuzzy matching against API venue names
+# Build lowercase lookup for fuzzy matching against API venue names.
+# Includes canonical names AND all listed aliases per course.
 COURSE_NAME_TO_CANONICAL = {}
-for canon in PGA_COURSES:
+for canon, meta in PGA_COURSES.items():
     COURSE_NAME_TO_CANONICAL[canon.lower()] = canon
+    for alias in meta.get("aliases", []):
+        COURSE_NAME_TO_CANONICAL[alias.lower()] = canon
 
 
 def lookup_course(name: str):

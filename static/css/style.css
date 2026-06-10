@@ -601,6 +601,32 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cards--three { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin: 1rem 0 0; }
 @media (min-width: 720px) { .cards--three { grid-template-columns: repeat(3, 1fr); } }
 
+/* ── Golf course map with per-hole wind impact ──────────────── */
+.hole-map { margin: 1.25rem 0 0.5rem; }
+.hole-map__svg { display: block; width: 100%; max-width: 760px; height: auto; }
+.hole-map__frame { fill: var(--paper); stroke: var(--mist); stroke-width: 1; }
+.hole-map__hole { fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+.hole-impact-helping { stroke: #15803d; }  /* matches precip-green */
+.hole-impact-hurting { stroke: #b91c1c; }  /* matches precip-red */
+.hole-impact-cross   { stroke: var(--ash); }
+.hole-impact-unknown { stroke: var(--smoke); }
+.hole-map__tee { fill: var(--white); stroke: var(--ash); stroke-width: 1.5; }
+.hole-map__num { font-family: var(--font-sans); font-size: 15px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: var(--paper); stroke-width: 4; }
+.hole-map__compass-face { fill: var(--white); fill-opacity: 0.88; stroke: var(--smoke); stroke-width: 1; }
+.hole-map__compass-tick { stroke: var(--ash); stroke-width: 1.5; }
+.hole-map__compass-n { font-family: var(--font-sans); font-size: 12px; font-weight: 700; fill: var(--ash); text-anchor: middle; }
+.hole-map__compass-arrow { stroke: var(--storm); stroke-width: 4; stroke-linecap: round; }
+.hole-map__compass-head { fill: var(--storm); }
+.hole-map__compass-calm { fill: var(--smoke); }
+.hole-map__caption { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; margin-top: 0.6rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); }
+.hole-map__chip { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; }
+.hole-map__swatch { display: inline-block; width: 14px; height: 4px; border-radius: 2px; }
+.hole-map__swatch--helping { background: #15803d; }
+.hole-map__swatch--hurting { background: #b91c1c; }
+.hole-map__swatch--cross { background: var(--ash); }
+.hole-map__windnote { margin-left: auto; font-weight: 600; color: var(--storm); }
+@media (max-width: 600px) { .hole-map__windnote { margin-left: 0; flex-basis: 100%; } }
+
 /* ============================================================
  * NASCAR pages
  * ============================================================ */

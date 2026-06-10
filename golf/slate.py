@@ -18,7 +18,9 @@ from zoneinfo import ZoneInfo
 from typing import Optional
 
 from .courses import lookup_course
+from .holes import get_course_holes, prepare_course_map
 from .schedule import get_pga_scoreboard, parse_pga_event, tournament_slug
+from .wind_impact import attach_wind_impact, circular_mean_deg
 
 from mlb.nws import (
     get_nws_hourly_url, get_nws_periods,
@@ -75,11 +77,13 @@ def _summarize_day(round_periods):
     temps = [p["temp"] for p in round_periods if p.get("temp") is not None]
     precips = [p.get("precip_pct", 0) or 0 for p in round_periods]
     winds = [p["wind_speed"] for p in round_periods if p.get("wind_speed") is not None]
+    wind_dirs = [p["wind_deg"] for p in round_periods if p.get("wind_deg") is not None]
     return {
         "high_temp": max(temps) if temps else None,
         "low_temp":  min(temps) if temps else None,
         "max_precip": max(precips) if precips else 0,
         "avg_wind":  round(sum(winds) / len(winds)) if winds else 0,
+        "avg_wind_deg": circular_mean_deg(wind_dirs),
         "dominant_precip_pct": max(precips) if precips else 0,
     }
 
@@ -132,9 +136,45 @@ def build_tournament(event: dict) -> dict:
         "slug":         tournament_slug(event["short_name"] or event["name"]),
         "course_meta":  course,
         "rounds":       rounds_out,
+        "course_map":   _build_course_map(course, rounds_out),
         "weather_source": weather_source,
         "weather_error":  weather_err,
     }
+
+
+def _build_course_map(course, rounds_out) -> Optional[dict]:
+    """
+    Fetch (or read cached) OSM hole geometry and classify each hole against
+    the first round with a usable wind forecast. Returns None when the
+    course is unmapped or geometry is unavailable — page degrades to no map.
+    """
+    if not course:
+        return None
+    try:
+        holes = get_course_holes(course)
+        course_map = prepare_course_map(holes) if holes else None
+    except Exception as e:
+        print(f"[golf.slate] course map build failed: {e}", flush=True)
+        return None
+    if not course_map:
+        return None
+
+    wind_round = next(
+        (r for r in rounds_out
+         if r.get("summary") and r["summary"].get("avg_wind_deg") is not None),
+        None,
+    )
+    if wind_round:
+        s = wind_round["summary"]
+        attach_wind_impact(course_map, s["avg_wind_deg"])
+        course_map["wind_deg"] = s["avg_wind_deg"]
+        course_map["wind_speed"] = s["avg_wind"]
+        course_map["round_label"] = (
+            f"Round {wind_round['round_num']} · {wind_round['date_label']}"
+        )
+    else:
+        attach_wind_impact(course_map, None)
+    return course_map
 
 
 def build_pga_slate() -> list[dict]:
