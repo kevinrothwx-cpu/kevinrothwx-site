@@ -207,7 +207,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 
 .cheat-row { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
 
-.cheat-card { display: block; background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.9rem; text-decoration: none; color: var(--ink); position: relative; transition: border-color 0.15s ease, transform 0.15s ease; }
+.cheat-card { display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.9rem; text-decoration: none; color: var(--ink); position: relative; transition: border-color 0.15s ease, transform 0.15s ease; }
 .cheat-card:hover { border-color: var(--ink); }
 .cheat-card:hover .cheat-card__time { color: var(--storm); }
 
@@ -218,16 +218,16 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__teams { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
 .cheat-card__team { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; }
 .cheat-card__logo { width: 28px; height: 28px; flex-shrink: 0; object-fit: contain; }
-.cheat-card__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); }
+.cheat-card__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .cheat-card__at { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0; padding: 0 0.15rem; }
 
-.cheat-card__wx { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); }
+.cheat-card__wx { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
 .cheat-card__temp { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .cheat-card__wxmid { display: flex; flex-direction: column; gap: 0.15rem; }
 .cheat-card__wind { font-family: var(--font-sans); font-size: 0.75rem; color: var(--slate); display: flex; align-items: center; gap: 0.3rem; }
 .cheat-card__precip { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; }
 .cheat-card__skyicon { width: 32px; height: 32px; }
-.cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); }
+.cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
 
 /* Wind SVG arrow */
 .wind-arrow-svg { width: 14px; height: 14px; transition: transform 0.2s ease; }
