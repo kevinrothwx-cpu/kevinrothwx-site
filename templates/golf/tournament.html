@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "golf/_macros.html" import round_summary_card, round_hourly_table, course_hole_map %}
+{% from "golf/_macros.html" import round_summary_card, round_hourly_table %}
 
 {% block title %}{{ tournament.name }} — Weather Forecast | Kevin Roth{% endblock %}
 {% block description %}{{ tournament.name }} weather forecast for every round. {{ tournament.course }} in {{ tournament.location }}. By sports meteorologist Kevin Roth.{% endblock %}
@@ -30,11 +30,14 @@
       {% endfor %}
     </div>
 
-    {% if tournament.course_map %}
-      <h2 class="game-section-h2">Course map — wind impact</h2>
-      {{ course_hole_map(tournament.course_map) }}
-    {% endif %}
-
     {% for r in tournament.rounds %}
       <h2 class="game-section-h2" id="round-{{ r.round_num }}">{{ r.round_label or ("Round " ~ r.round_num) }} · {{ r.date_label }}</h2>
-      {{ round_hourl
+      {{ round_hourly_table(r) }}
+    {% endfor %}
+  {% else %}
+    <p class="hourly__missing">Course forecast not available.</p>
+  {% endif %}
+
+  <a href="/golf" class="game-page__back">← All current tournaments</a>
+</article>
+{% endblock %}

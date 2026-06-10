@@ -30,29 +30,56 @@
 {% endmacro %}
 
 
-{# ── 18-hole course map, holes colored by wind impact ────────── #}
-{% macro course_hole_map(map) %}
-  <figure class="hole-map">
-    <svg viewBox="0 0 {{ map.width }} {{ map.height }}" class="hole-map__svg" role="img"
-         aria-label="Top-down course map: each hole colored by whether the forecast wind is helping, hurting, or across the line of play">
-      <rect x="0.5" y="0.5" width="{{ map.width - 1 }}" height="{{ map.height - 1 }}" class="hole-map__frame"/>
-
-      {% for h in map.holes %}
-        <g class="hole-map__holegroup">
-          <title>Hole {{ h.num }}{% if h.name %} · {{ h.name }}{% endif %}{% if h.par %} · Par {{ h.par }}{% endif %} · {{ h.yards }} yd · plays {{ h.plays }}{% if h.impact != 'unknown' %} · wind {{ h.impact }}{% endif %}</title>
-          <polyline points="{{ h.points_attr }}" class="hole-map__hole hole-impact-{{ h.impact }}"/>
-          <circle cx="{{ h.tee[0] }}" cy="{{ h.tee[1] }}" r="3.5" class="hole-map__tee"/>
-          <text x="{{ h.label[0] }}" y="{{ h.label[1] }}" class="hole-map__num">{{ h.num }}</text>
-        </g>
-      {% endfor %}
-
-      {# Wind compass inset — north-up map, arrow points where wind blows TO #}
-      <g transform="translate({{ map.compass[0] }} {{ map.compass[1] }})" class="hole-map__compass">
-        <circle r="34" class="hole-map__compass-face"/>
-        <line x1="0" y1="-34" x2="0" y2="-28" class="hole-map__compass-tick"/>
-        <text y="-39" class="hole-map__compass-n">N</text>
-        {% if map.wind_deg is not none %}
-          {% set wind_to = (map.wind_deg + 180) % 360 %}
-          <g transform="rotate({{ wind_to }})">
-            <line x1="0" y1="16" x2="0" y2="-8" class="hole-map__compass-arrow"/>
-            <polygon points="0,-22 -7,-8 7,-8" class="ho
+{# ── Hourly forecast table for one round (play hours only) ──── #}
+{% macro round_hourly_table(round_data) %}
+  {% set hours = round_data.hourly or [] %}
+  {% if hours %}
+    <div class="hourly">
+      <table class="hourly__table">
+        <thead>
+          <tr>
+            <th class="hourly__label-col"></th>
+            {% for h in hours %}
+              <th class="hourly__hour-col">
+                <div class="hourly__sky">{{ weather_icon(h.precip_pct|precip_icon, 30) }}</div>
+                <div class="hourly__time">{{ h.hour_local }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for h in hours %}
+              <td class="hourly__cell">
+                <span class="hourly__precip {{ h.precip_pct|precip_color }}">{{ h.precip_pct }}%</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for h in hours %}
+              <td class="hourly__cell">{{ h.temp }}°</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for h in hours %}
+              <td class="hourly__cell">{{ h.wind_speed }}<span class="hourly__windcompass">{{ h.wind_deg|wind_compass }}</span></td>
+            {% endfor %}
+          </tr>
+          {% if hours[0].dew is not none %}
+          <tr>
+            <td class="hourly__label">Dewpoint</td>
+            {% for h in hours %}
+              <td class="hourly__cell">{{ h.dew }}°</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hourly__missing">Hourly forecast not available.</p>
+  {% endif %}
+{% endmacro %}
