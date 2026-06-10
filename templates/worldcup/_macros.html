@@ -6,7 +6,7 @@
 {% endmacro %}
 
 
-{# ── Inline SVG weather icons — imported from MLB so styling matches ── #}
+{# ── Inline SVG weather icons, imported from MLB so styling matches ── #}
 {% from "mlb/_macros.html" import weather_icon %}
 
 
@@ -125,7 +125,7 @@
 {% endmacro %}
 
 
-{# ── Hourly forecast table — identical pattern to MLB ──────────── #}
+{# ── Hourly forecast table, identical pattern to MLB ──────────── #}
 {% macro wc_hourly_table(match) %}
   {% set hours = match.hourly or [] %}
   {% if hours %}

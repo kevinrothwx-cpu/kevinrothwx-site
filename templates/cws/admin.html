@@ -33,9 +33,9 @@
     <div>
       <label for="event_id">Game</label>
       <select id="event_id" name="event_id" required>
-        <option value="">— pick a game —</option>
+        <option value="">- pick a game -</option>
         {% for g in slate %}
-          <option value="{{ g.event_id }}">{{ g.first_pitch_eastern_str }} — {{ g.away.name }} vs {{ g.home.name }}{% if g.writeup %} · has write-up{% endif %}</option>
+          <option value="{{ g.event_id }}">{{ g.first_pitch_eastern_str }}, {{ g.away.name }} vs {{ g.home.name }}{% if g.writeup %} · has write-up{% endif %}</option>
         {% endfor %}
       </select>
     </div>

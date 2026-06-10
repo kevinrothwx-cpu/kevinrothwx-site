@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "mlb/_macros.html" import cheat_card, hourly_table, game_summary_panel %}
 
-{% block title %}MLB Weather Forecast — {{ pretty_date }} | Kevin Roth{% endblock %}
+{% block title %}MLB Weather Forecast, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}Free MLB weather forecasts for every ballpark on {{ pretty_date }}: hourly temperature, wind direction relative to center field, precipitation. By sports meteorologist Kevin Roth.{% endblock %}
 
-{% block og_title %}MLB Weather — {{ pretty_date }}{% endblock %}
+{% block og_title %}MLB Weather, {{ pretty_date }}{% endblock %}
 {% block og_description %}Every MLB game on {{ pretty_date }}: weather, wind, and rain forecasts at first pitch and through the game.{% endblock %}
 
 {% block content %}
@@ -83,7 +83,7 @@
           </header>
           {% if has_toggle %}
             <div class="roof-closed-message">
-              <strong>{% if g.park.roof_type == "fixed_dome" %}Fixed dome{% else %}Retractable roof{% endif %}</strong> — weather has no impact when closed. Toggle <strong>Open</strong> above to see the outdoor forecast for {{ g.first_pitch_eastern_str }}.
+              <strong>{% if g.park.roof_type == "fixed_dome" %}Fixed dome{% else %}Retractable roof{% endif %}</strong>, weather has no impact when closed. Toggle <strong>Open</strong> above to see the outdoor forecast for {{ g.first_pitch_eastern_str }}.
             </div>
           {% endif %}
           <div class="mlb-game-block__body">

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sports Weather Forecasts — MLB, World Cup, PGA, NASCAR | Kevin Roth{% endblock %}
+{% block title %}Sports Weather Forecasts, MLB, World Cup, PGA, NASCAR | Kevin Roth{% endblock %}
 {% block description %}Free live weather forecasts for every MLB game, World Cup match, PGA Tour round, NASCAR race, and college baseball game. Updated continuously from NWS data. Built by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@
     <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
     <h1 class="home-hero__title">Weather for every game, match, race, and round.</h1>
     <p class="home-hero__lead">
-      Live forecasts across every sport &mdash; built by a meteorologist.
+      Live forecasts across every sport, built by a meteorologist.
     </p>
   </div>
 </section>
@@ -20,7 +20,7 @@
 
       <a href="/mlb/today" class="home-sport-card home-sport-card--mlb">
         <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Today's slate</span><h2 class="home-sport-card__title">MLB Weather</h2></div></div>
-        <p class="home-sport-card__body">Every game today and tomorrow — temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
+        <p class="home-sport-card__body">Every game today and tomorrow, temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
           <span class="home-sport-card__arrow">→</span>
@@ -65,7 +65,7 @@
 
       <a href="/nfl" class="home-sport-card home-sport-card--nfl">
         <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
-        <p class="home-sport-card__body">Per-game forecasts for every Thursday, Sunday, and Monday — launching with the 2026 season opener.</p>
+        <p class="home-sport-card__body">Per-game forecasts for every Thursday, Sunday, and Monday, launching with the 2026 season opener.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;until kickoff{% else %}Coming this fall{% endif %}
           <span class="home-sport-card__arrow">→</span>
@@ -90,7 +90,7 @@
     <div class="home-secondary">
       <div class="home-secondary__col">
         <p class="kicker kicker-storm">Behind the forecasts</p>
-        <h2 class="home-secondary__h2">Built by Kevin Roth &mdash; the original sports meteorologist.</h2>
+        <h2 class="home-secondary__h2">Built by Kevin Roth, the original sports meteorologist.</h2>
         <p class="home-secondary__body">
           15+ years on the beat. Masters degree in Meteorology from Mississippi State. Former Chief Meteorologist at RotoGrinders.com (2012&ndash;2026).
           Founder of OVERcast. Daily MLB Weather columnist on PropFinder. 89K+ followers on X.

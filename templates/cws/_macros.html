@@ -78,7 +78,7 @@
 {% endmacro %}
 
 
-{# ── Hourly table — reuse MLB's pattern ────────────────────────── #}
+{# ── Hourly table, reuse MLB's pattern ────────────────────────── #}
 {% macro cws_hourly_table(game) %}
   {% set hours = game.hourly or [] %}
   {% if hours %}

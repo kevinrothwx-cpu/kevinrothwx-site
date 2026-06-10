@@ -7,7 +7,7 @@
 {% endmacro %}
 
 
-{# ── Inline SVG weather icons — v4 ─────────────────────────── #}
+{# ── Inline SVG weather icons, v4 ─────────────────────────── #}
 {% macro weather_icon(icon_class, size=32) %}
   {% if icon_class == "icon-sun" %}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="wx-icon wx-icon--sun" style="width:{{ size }}px;height:{{ size }}px" aria-hidden="true">
@@ -32,7 +32,7 @@
         <line x1="4.5" y1="14.5" x2="5.6" y2="13.4"/>
         <line x1="14.4" y1="4.6" x2="15.5" y2="3.5"/>
       </g>
-      {# Cloud drawn LAST with opaque white fill — erases sun rays underneath in its area #}
+      {# Cloud drawn LAST with opaque white fill, erases sun rays underneath in its area #}
       <path d="M 8 17.5 A 3.5 3.5 0 0 1 11.5 14 A 4.5 4.5 0 0 1 20 15.5 A 3 3 0 0 1 19 21 L 10 21 A 3.5 3.5 0 0 1 8 17.5 Z"
             fill="var(--white)" stroke="currentColor" stroke-width="1.6"/>
     </svg>
@@ -158,7 +158,7 @@
 {% endmacro %}
 
 
-{# ── Game summary panel — 2x2 grid that stretches to hourly height ── #}
+{# ── Game summary panel, 2x2 grid that stretches to hourly height ── #}
 {% macro game_summary_panel(game) %}
   {% set f = game.forecast %}
   {% set wi = game.wind_info %}
@@ -170,7 +170,7 @@
         <span class="game-summary__primary-value">{{ f.temp }}°</span>
         <span class="game-summary__primary-label">At first pitch</span>
       </div>
-      {# Cell 2 (top-right): Ballpark cut-out only — no text label per Kevin #}
+      {# Cell 2 (top-right): Ballpark cut-out only, no text label per Kevin #}
       <div class="game-summary__cell game-summary__cell--field">
         {{ field_diagram(game) }}
       </div>
@@ -193,7 +193,7 @@
 {% endmacro %}
 
 
-{# ── Hourly forecast table — bigger icons (sized via CSS) ────── #}
+{# ── Hourly forecast table, bigger icons (sized via CSS) ────── #}
 {% macro hourly_table(game) %}
   {% set hours = game.hourly or [] %}
   {% if hours %}

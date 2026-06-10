@@ -42,17 +42,17 @@
   <h1 class="admin-page__h1">MLB Write-up Admin</h1>
   <p class="admin-page__sub">
     {{ date_str }} · {{ slate|length }} games loaded.
-    Storage is in-memory — resets on every Render restart until SQLite upgrade.
+    Storage is in-memory, resets on every Render restart until SQLite upgrade.
   </p>
 
   <form class="admin-form" method="POST" action="/admin/mlb?date={{ date_str }}">
     <div>
       <label for="game_pk">Game</label>
       <select id="game_pk" name="game_pk" required>
-        <option value="">— pick a game —</option>
+        <option value="">- pick a game -</option>
         {% for g in slate %}
           <option value="{{ g.game_pk }}">
-            {{ g.first_pitch_eastern_str }} — {{ g.away_name }} at {{ g.home_name }} ({{ g.venue }})
+            {{ g.first_pitch_eastern_str }}, {{ g.away_name }} at {{ g.home_name }} ({{ g.venue }})
             {%- if g.writeup %} · has write-up{% endif -%}
           </option>
         {% endfor %}

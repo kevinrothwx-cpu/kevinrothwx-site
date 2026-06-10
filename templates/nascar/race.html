@@ -2,7 +2,7 @@
 {% from "nascar/_macros.html" import race_hourly_table %}
 {% from "mlb/_macros.html" import weather_icon %}
 
-{% block title %}{{ race.name }} — Weather Forecast | Kevin Roth{% endblock %}
+{% block title %}{{ race.name }}, Weather Forecast | Kevin Roth{% endblock %}
 {% block description %}{{ race.name }} weather forecast. {{ race.track }}. Green flag {{ race.green_flag_eastern_str }}. By sports meteorologist Kevin Roth.{% endblock %}
 
 {% block content %}
@@ -46,13 +46,4 @@
   {{ race_hourly_table(race) }}
   {% if race.hrrr_hourly %}
     <details class="hrrr-toggle">
-      <summary>Show high-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
-      <div class="hrrr-section">
-        {{ race_hourly_table(race, hours=race.hrrr_hourly) }}
-      </div>
-    </details>
-  {% endif %}
-
-  <a href="/nascar" class="game-page__back">← All current Cup races</a>
-</article>
-{% endblock %}
+      <summary>Show high-resolution mod

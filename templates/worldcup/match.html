@@ -2,10 +2,10 @@
 {% from "worldcup/_macros.html" import wc_hourly_table %}
 {% from "mlb/_macros.html" import weather_icon %}
 
-{% block title %}{{ match.away.name }} vs {{ match.home.name }} — {{ pretty_date }} Weather | World Cup 2026 | Kevin Roth{% endblock %}
+{% block title %}{{ match.away.name }} vs {{ match.home.name }}, {{ pretty_date }} Weather | World Cup 2026 | Kevin Roth{% endblock %}
 {% block description %}{{ match.away.name }} vs {{ match.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ match.kickoff_eastern_str }} at {{ match.venue }}. By sports meteorologist Kevin Roth.{% endblock %}
 
-{% block og_title %}{{ match.away.name }} vs {{ match.home.name }} — Weather Forecast{% endblock %}
+{% block og_title %}{{ match.away.name }} vs {{ match.home.name }}, Weather Forecast{% endblock %}
 {% block og_description %}{{ pretty_date }} · {{ match.venue }} · Kickoff {{ match.kickoff_eastern_str }}{% endblock %}
 
 {% block extra_head %}

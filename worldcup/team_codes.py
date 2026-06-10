@@ -22,6 +22,7 @@ FIFA_CODES = {
     "USA":                       "USA",
     "Canada":                    "CAN",
     "Mexico":                    "MEX",
+    "México":                    "MEX",
     "Costa Rica":                "CRC",
     "Jamaica":                   "JAM",
     "Panama":                    "PAN",

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "worldcup/_macros.html" import wc_cheat_card, wc_hourly_table, wc_summary_panel %}
 
-{% block title %}World Cup 2026 Weather — Matchday Forecasts | Kevin Roth{% endblock %}
+{% block title %}World Cup 2026 Weather, Matchday Forecasts | Kevin Roth{% endblock %}
 {% block description %}Live weather forecasts for every 2026 FIFA World Cup match across the United States, Mexico, and Canada. Built by sports meteorologist Kevin Roth. Real forecasts, not AI.{% endblock %}
 
 {% block og_title %}World Cup 2026 Weather Forecasts{% endblock %}
@@ -43,7 +43,7 @@
     </div>
   {% endif %}
 
-  {# ── Section 2: write-ups (if any). MLB-specific CTAs removed — they
+  {# ── Section 2: write-ups (if any). MLB-specific CTAs removed, they
        don't belong on a soccer page. ─────────────────────────────── #}
   {% set any_writeups = [] %}
   {% for day in days_data %}{% for m in day.slate %}{% if m.writeup %}{% set _ = any_writeups.append(m) %}{% endif %}{% endfor %}{% endfor %}
@@ -107,7 +107,7 @@
             </header>
             {% if has_toggle %}
               <div class="roof-closed-message">
-                <strong>{% if m.venue_meta.roof_type == "fixed_canopy" %}Fixed canopy{% else %}Retractable roof{% endif %}</strong> — weather has limited impact when closed. Toggle <strong>Open</strong> to see the outdoor forecast at kickoff.
+                <strong>{% if m.venue_meta.roof_type == "fixed_canopy" %}Fixed canopy{% else %}Retractable roof{% endif %}</strong>, weather has limited impact when closed. Toggle <strong>Open</strong> to see the outdoor forecast at kickoff.
               </div>
             {% endif %}
             <div class="mlb-game-block__body">

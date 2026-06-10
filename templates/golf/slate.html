@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "golf/_macros.html" import round_hourly_table %}
 
-{% block title %}PGA Tour Weather — This Week's Tournament | Kevin Roth{% endblock %}
+{% block title %}PGA Tour Weather, This Week's Tournament | Kevin Roth{% endblock %}
 {% block description %}Free PGA Tour weather forecasts for this week's tournament rounds. Course-specific 4-day outlook by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block og_title %}PGA Tour Weather Forecasts{% endblock %}
@@ -84,7 +84,7 @@
           </article>
         {% endfor %}
       {% else %}
-        <p class="hourly__missing">Course not mapped yet — add it to <code>golf/courses.py</code> with lat/lon to populate the forecast.</p>
+        <p class="hourly__missing">Course not mapped yet, add it to <code>golf/courses.py</code> with lat/lon to populate the forecast.</p>
       {% endif %}
     </section>
   {% endfor %}
@@ -92,17 +92,4 @@
 
 <script>
   document.addEventListener('click', function(e) {
-    var card = e.target.closest('.round-card');
-    if (!card) return;
-    var href = card.getAttribute('href');
-    if (href && href.charAt(0) === '#') {
-      e.preventDefault();
-      var target = document.querySelector(href);
-      if (target) {
-        target.scrollIntoView({behavior: 'smooth', block: 'start'});
-        history.replaceState(null, '', href);
-      }
-    }
-  });
-</script>
-{% endblock %}
+ 

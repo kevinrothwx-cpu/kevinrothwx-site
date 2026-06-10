@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "mlb/_macros.html" import hourly_table, weather_icon, wind_arrow_svg, mlb_logo %}
 
-{% block title %}{{ game.away_name }} at {{ game.home_name }} — {{ pretty_date }} Weather | Kevin Roth{% endblock %}
+{% block title %}{{ game.away_name }} at {{ game.home_name }}, {{ pretty_date }} Weather | Kevin Roth{% endblock %}
 {% block description %}{{ game.away_name }} at {{ game.home_name }} weather forecast for {{ pretty_date }}. First pitch {{ game.first_pitch_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at game time, wind {{ game.wind_info.label if game.wind_info else 'unknown' }}{% endif %}. By sports meteorologist Kevin Roth.{% endblock %}
 
-{% block og_title %}{{ game.away_name }} at {{ game.home_name }} — Weather Forecast{% endblock %}
+{% block og_title %}{{ game.away_name }} at {{ game.home_name }}, Weather Forecast{% endblock %}
 {% block og_description %}{{ pretty_date }} · {{ game.venue }} · First pitch {{ game.first_pitch_eastern_str }}{% endblock %}
 
 {% block extra_head %}

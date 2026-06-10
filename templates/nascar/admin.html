@@ -33,7 +33,7 @@
     <div>
       <label for="event_id">Race</label>
       <select id="event_id" name="event_id" required>
-        <option value="">— pick a race —</option>
+        <option value="">- pick a race -</option>
         {% for r in slate %}
           <option value="{{ r.event_id }}">{{ r.name }} ({{ r.track }}){% if r.writeup %} · has write-up{% endif %}</option>
         {% endfor %}
