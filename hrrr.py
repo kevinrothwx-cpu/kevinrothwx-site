@@ -27,18 +27,35 @@ OUTPUT FORMAT:
 from __future__ import annotations
 
 import requests
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 HRRR_USER_AGENT = "kevinrothwx.com (contact: kevinrothwx@gmail.com)"
 
-# (lat,lon) key → list of period dicts. Cleared by the per-sport warmers.
+# Backoff windows — how long to refuse retries after a failure. Open-Meteo's
+# free tier rate-limits per IP, and Render uses shared egress, so a 429 can
+# happen even when our own request volume is tiny. Long backoff on 429
+# stops us from hammering them and getting throttled harder; short backoff
+# on other errors (network blip, 5xx) so we recover quickly when they pass.
+_BACKOFF_429 = timedelta(hours=1)
+_BACKOFF_OTHER = timedelta(minutes=10)
+
+# (lat,lon) key → list of period dicts. Cleared by the per-sport warmers
+# every 25 min to get fresh HRRR runs.
 _hrrr_cache: dict[str, list] = {}
+
+# (lat,lon) key → datetime when we're allowed to retry. NOT cleared by the
+# warmer — backoffs need to survive cache flushes to be effective. Cleared
+# only on success in get_hrrr_periods.
+_backoff_until: dict[str, datetime] = {}
 
 
 def clear_periods_cache() -> None:
-    """Called by background warmers (golf, nascar) to force fresh fetches."""
+    """Called by background warmers (golf, nascar) to force fresh fetches.
+    Backoff timestamps are intentionally preserved — a warmer cycle alone
+    is not a signal that rate-limiting has lifted."""
     _hrrr_cache.clear()
 
 
@@ -69,6 +86,13 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         cached = _hrrr_cache[key]
         return cached if cached else None  # empty list = previous failure
 
+    # Respect backoff. Survives warmer cache clears so we don't keep
+    # hammering Open-Meteo when they're already telling us to stop.
+    now = datetime.now(timezone.utc)
+    backoff_until = _backoff_until.get(key)
+    if backoff_until and now < backoff_until:
+        return None
+
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -86,10 +110,20 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
             headers={"User-Agent": HRRR_USER_AGENT},
             timeout=15,
         )
+        # Detect rate-limit explicitly so we can apply a longer backoff
+        # than other transient errors.
+        if resp.status_code == 429:
+            _backoff_until[key] = now + _BACKOFF_429
+            print(f"[hrrr] 429 rate-limited for {lat},{lon} — backing off "
+                  f"until {_backoff_until[key].isoformat()}", flush=True)
+            _hrrr_cache[key] = []
+            return None
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
-        print(f"[hrrr] fetch failed for {lat},{lon}: {e}", flush=True)
+        _backoff_until[key] = now + _BACKOFF_OTHER
+        print(f"[hrrr] fetch failed for {lat},{lon}: {e} — short backoff "
+              f"until {_backoff_until[key].isoformat()}", flush=True)
         _hrrr_cache[key] = []
         return None
 
@@ -126,6 +160,8 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         _hrrr_cache[key] = []
         return None
 
+    # Success — clear any leftover backoff so future cycles run normally
+    _backoff_until.pop(key, None)
     _hrrr_cache[key] = periods
     print(f"[hrrr] fetched {len(periods)} periods for {lat},{lon}", flush=True)
     return periods
