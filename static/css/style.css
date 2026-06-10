@@ -373,6 +373,10 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 /* Section header inside game page */
 .game-section-h2 { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 3rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
 
+/* Stadium notes (per-venue climatological context, World Cup match page) */
+.stadium-notes { margin-bottom: 1rem; }
+.stadium-notes__body { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.6; color: var(--ink); max-width: 62ch; }
+
 /* ============================================================
  * v3 polish — tighten layout, add game-block borders,
  * add per-game summary panel beside hourly table

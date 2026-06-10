@@ -340,6 +340,9 @@ def worldcup_match(date_str, slug):
     if not match:
         abort(404)
     match["writeup"] = wc_get_writeup(match["event_id"])
+    # Attach climatological notes for the venue (used on the match page).
+    from worldcup.stadium_notes import get_stadium_notes
+    match["stadium_notes"] = get_stadium_notes(match.get("venue", ""))
     d = datetime.strptime(date_str, "%Y-%m-%d").date()
     pretty_date = d.strftime("%A, %B %-d")
     return render_template(

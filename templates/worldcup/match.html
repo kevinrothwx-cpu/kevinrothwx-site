@@ -69,7 +69,12 @@
     </div>
   {% endif %}
 
-  {% include "mlb/_ctas.html" %}
+  {% if match.stadium_notes %}
+    <section class="stadium-notes">
+      <h2 class="game-section-h2">Stadium notes</h2>
+      <p class="stadium-notes__body">{{ match.stadium_notes }}</p>
+    </section>
+  {% endif %}
 
   <h2 class="game-section-h2">Hourly forecast</h2>
   {{ wc_hourly_table(match) }}
