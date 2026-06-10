@@ -20,6 +20,8 @@ import requests
 from datetime import datetime
 from typing import Optional
 
+from .team_codes import fifa_code_for
+
 
 ESPN_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
 
@@ -67,10 +69,15 @@ def parse_worldcup_event(event: dict) -> Optional[dict]:
         home = away = None
         for c in competition.get("competitors", []):
             team = c.get("team", {}) or {}
+            display_name = team.get("displayName", team.get("name", ""))
+            # Prefer our FIFA-code lookup over ESPN's inconsistent
+            # `abbreviation` field. Falls through to ESPN's value if the
+            # team isn't in the lookup.
+            fifa = fifa_code_for(display_name)
             entry = {
-                "name":         team.get("displayName", team.get("name", "")),
+                "name":         display_name,
                 "short_name":   team.get("shortDisplayName", team.get("abbreviation", "")),
-                "abbreviation": team.get("abbreviation", ""),
+                "abbreviation": fifa or team.get("abbreviation", ""),
                 "logo":         team.get("logo", ""),  # often a remote URL
                 "team_id":      team.get("id", ""),
                 "score":        c.get("score", ""),

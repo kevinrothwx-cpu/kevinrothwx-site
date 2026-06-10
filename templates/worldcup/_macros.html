@@ -71,11 +71,11 @@
     <div class="cheat-card__teams">
       <div class="cheat-card__team">
         {{ wc_logo(match.away) }}
-        <span class="cheat-card__abbr">{{ match.away.short_name or match.away.abbreviation or match.away.name }}</span>
+        <span class="cheat-card__abbr">{{ match.away.abbreviation or match.away.short_name or match.away.name }}</span>
       </div>
       <span class="cheat-card__at">vs</span>
       <div class="cheat-card__team" style="justify-content:flex-end">
-        <span class="cheat-card__abbr">{{ match.home.short_name or match.home.abbreviation or match.home.name }}</span>
+        <span class="cheat-card__abbr">{{ match.home.abbreviation or match.home.short_name or match.home.name }}</span>
         {{ wc_logo(match.home) }}
       </div>
     </div>
