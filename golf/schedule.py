@@ -61,6 +61,10 @@ def parse_pga_event(event: dict) -> Optional[dict]:
         comps = event.get("competitions") or []
         venue_obj = (comps[0].get("venue") if comps else {}) or {}
         course = venue_obj.get("fullName") or ""
+        if not course:
+            # ESPN sometimes omits venue.fullName for pre-tournament events.
+            # Fall back to tournament name → course mapping.
+            course = lookup_course_by_tournament(name) or lookup_course_by_tournament(short_name)
         address = venue_obj.get("address") or {}
         city = (address.get("city") or "").strip()
         state = (address.get("state") or "").strip()
@@ -83,6 +87,80 @@ def parse_pga_event(event: dict) -> Optional[dict]:
     except Exception as e:
         print(f"[golf.schedule] parse error: {e}", flush=True)
         return None
+
+
+# When ESPN doesn't populate venue.fullName (common pre-tournament), look up
+# the course by tournament name. Keys are matched case-insensitively against
+# event['name'] or event['shortName']. Add new tournaments as they come up.
+TOURNAMENT_NAME_TO_COURSE = {
+    # Majors 2026
+    "the masters":               "Augusta National Golf Club",
+    "masters tournament":        "Augusta National Golf Club",
+    "pga championship":          "Aronimink Golf Club",
+    "u.s. open":                 "Shinnecock Hills Golf Club",
+    "us open":                   "Shinnecock Hills Golf Club",
+    "the open championship":     "Royal Birkdale Golf Club",
+    "the open":                  "Royal Birkdale Golf Club",
+    "open championship":         "Royal Birkdale Golf Club",
+
+    # Regular PGA Tour stops (alphabetical by tournament name)
+    "rbc canadian open":         "TPC Toronto at Osprey Valley",
+    "canadian open":             "TPC Toronto at Osprey Valley",
+    "the memorial tournament":   "Muirfield Village Golf Club",
+    "memorial tournament":       "Muirfield Village Golf Club",
+    "the memorial tournament presented by workday": "Muirfield Village Golf Club",
+    "the players championship":  "TPC Sawgrass",
+    "the players":               "TPC Sawgrass",
+    "players championship":      "TPC Sawgrass",
+    "arnold palmer invitational": "Bay Hill Club and Lodge",
+    "arnold palmer invitational presented by mastercard": "Bay Hill Club and Lodge",
+    "wm phoenix open":           "TPC Scottsdale",
+    "phoenix open":              "TPC Scottsdale",
+    "the genesis invitational":  "Riviera Country Club",
+    "genesis invitational":      "Riviera Country Club",
+    "farmers insurance open":    "Torrey Pines Golf Course",
+    "the sentry":                "Plantation Course at Kapalua",
+    "sony open in hawaii":       "Waialae Country Club",
+    "sony open":                 "Waialae Country Club",
+    "att pebble beach pro-am":   "Pebble Beach Golf Links",
+    "at&t pebble beach pro-am":  "Pebble Beach Golf Links",
+    "cognizant classic":         "PGA National Resort",
+    "valspar championship":      "Innisbrook Resort (Copperhead Course)",
+    "texas children's houston open": "Memorial Park Golf Course",
+    "houston open":              "Memorial Park Golf Course",
+    "the cj cup byron nelson":   "TPC Craig Ranch",
+    "cj cup byron nelson":       "TPC Craig Ranch",
+    "wells fargo championship":  "Quail Hollow Club",
+    "truist championship":       "Quail Hollow Club",
+    "charles schwab challenge":  "Colonial Country Club",
+    "the travelers championship": "TPC River Highlands",
+    "travelers championship":    "TPC River Highlands",
+    "rocket mortgage classic":   "Detroit Golf Club",
+    "john deere classic":        "TPC Deere Run",
+    "genesis scottish open":     "Renaissance Club",
+    "scottish open":             "Renaissance Club",
+    "the 3m open":               "TPC Twin Cities",
+    "3m open":                   "TPC Twin Cities",
+    "wyndham championship":      "Sedgefield Country Club",
+    "fedex st. jude championship": "TPC Southwind",
+    "fedex st jude championship":  "TPC Southwind",
+    "bmw championship":          "Castle Pines Golf Club",
+    "tour championship":         "East Lake Golf Club",
+    "procore championship":      "Silverado Resort",
+
+    # Fall / silly season
+    "rsm classic":               "Sea Island Resort (Seaside Course)",
+    "the rsm classic":           "Sea Island Resort (Seaside Course)",
+    "sanderson farms championship": "Country Club of Jackson",
+    "world wide technology championship": "El Camaleón Golf Club",
+}
+
+
+def lookup_course_by_tournament(name: str) -> str:
+    """Fallback: when ESPN omits venue.fullName, look up by tournament name."""
+    if not name:
+        return ""
+    return TOURNAMENT_NAME_TO_COURSE.get(name.lower().strip(), "")
 
 
 def tournament_slug(name: str) -> str:
