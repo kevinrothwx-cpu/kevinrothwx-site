@@ -36,13 +36,5 @@
     {% endif %}
 
     {% for r in tournament.rounds %}
-      <h2 class="game-section-h2" id="round-{{ r.round_num }}">Round {{ r.round_num }} · {{ r.date_label }}</h2>
-      {{ round_hourly_table(r) }}
-    {% endfor %}
-  {% else %}
-    <p class="hourly__missing">Course forecast not available.</p>
-  {% endif %}
-
-  <a href="/golf" class="game-page__back">← All current tournaments</a>
-</article>
-{% endblock %}
+      <h2 class="game-section-h2" id="round-{{ r.round_num }}">{{ r.round_label or ("Round " ~ r.round_num) }} · {{ r.date_label }}</h2>
+      {{ round_hourl

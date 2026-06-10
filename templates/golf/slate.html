@@ -72,7 +72,7 @@
           <article class="mlb-game-block" id="round-{{ r.round_num }}">
             <header class="mlb-game-block__header">
               <div>
-                <h3 class="mlb-game-block__matchup">Round {{ r.round_num }}</h3>
+                <h3 class="mlb-game-block__matchup">{{ r.round_label or ("Round " ~ r.round_num) }}</h3>
                 <div class="mlb-game-block__venue">{{ r.date_label }} · play hours shown</div>
               </div>
             </header>

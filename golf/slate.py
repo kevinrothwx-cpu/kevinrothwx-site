@@ -18,9 +18,7 @@ from zoneinfo import ZoneInfo
 from typing import Optional
 
 from .courses import lookup_course
-from .holes import get_course_holes, prepare_course_map
 from .schedule import get_pga_scoreboard, parse_pga_event, tournament_slug
-from .wind_impact import attach_wind_impact, circular_mean_deg
 
 from mlb.nws import (
     get_nws_hourly_url, get_nws_periods,
@@ -77,13 +75,11 @@ def _summarize_day(round_periods):
     temps = [p["temp"] for p in round_periods if p.get("temp") is not None]
     precips = [p.get("precip_pct", 0) or 0 for p in round_periods]
     winds = [p["wind_speed"] for p in round_periods if p.get("wind_speed") is not None]
-    wind_dirs = [p["wind_deg"] for p in round_periods if p.get("wind_deg") is not None]
     return {
         "high_temp": max(temps) if temps else None,
         "low_temp":  min(temps) if temps else None,
         "max_precip": max(precips) if precips else 0,
         "avg_wind":  round(sum(winds) / len(winds)) if winds else 0,
-        "avg_wind_deg": circular_mean_deg(wind_dirs),
         "dominant_precip_pct": max(precips) if precips else 0,
     }
 
@@ -92,7 +88,7 @@ def build_tournament(event: dict) -> dict:
     """
     Build the full tournament dict ready for the template:
       - metadata (name, course, dates)
-      - rounds: list of {round_num, date_local, daily_summary, hourly}
+      - rounds: list of {round_num, round_label, date_local, daily_summary, hourly}
       - weather_source, weather_error
     """
     course = lookup_course(event["course"])
@@ -109,24 +105,40 @@ def build_tournament(event: dict) -> dict:
     if course and start:
         tz = ZoneInfo(course["timezone"])
         first_round_local = start.astimezone(tz).date()
-        # If end < start_iso + 3 days, default to a 4-day tournament window
-        last_round_local = end.astimezone(tz).date() if end else first_round_local + timedelta(days=3)
+        # Defensive: cap window. Most events are 3-4 days. Monday finishes push to 5.
+        # 7-day cap absorbs playoffs/weather delays without building a bogus tournament.
+        if end:
+            last_round_local = end.astimezone(tz).date()
+        else:
+            last_round_local = first_round_local + timedelta(days=3)
+        max_round_date = first_round_local + timedelta(days=6)
+        if last_round_local > max_round_date:
+            last_round_local = max_round_date
 
         # Fetch full hourly periods once, then slice per round
         periods, source, err = _all_hourly_for_course(course)
         weather_source = source
         weather_err = err
 
+        num_rounds = (last_round_local - first_round_local).days + 1
         cur = first_round_local
         round_num = 1
-        while cur <= last_round_local and round_num <= 4:
+        while cur <= last_round_local:
             day_periods = _periods_for_round_day(periods or [], cur, tz)
+            # Better round labels: 3-day events show "Final Round" not "Round 3"
+            if round_num == num_rounds and num_rounds < 4:
+                label = "Final Round"
+            elif round_num == num_rounds:
+                label = f"Final Round (R{round_num})"
+            else:
+                label = f"Round {round_num}"
             rounds_out.append({
-                "round_num": round_num,
-                "date_local": cur,
-                "date_label": cur.strftime("%a %b %-d"),
-                "summary": _summarize_day(day_periods),
-                "hourly":  day_periods,
+                "round_num":   round_num,
+                "round_label": label,
+                "date_local":  cur,
+                "date_label":  cur.strftime("%a %b %-d"),
+                "summary":     _summarize_day(day_periods),
+                "hourly":      day_periods,
             })
             cur += timedelta(days=1)
             round_num += 1
@@ -136,45 +148,9 @@ def build_tournament(event: dict) -> dict:
         "slug":         tournament_slug(event["short_name"] or event["name"]),
         "course_meta":  course,
         "rounds":       rounds_out,
-        "course_map":   _build_course_map(course, rounds_out),
         "weather_source": weather_source,
         "weather_error":  weather_err,
     }
-
-
-def _build_course_map(course, rounds_out) -> Optional[dict]:
-    """
-    Fetch (or read cached) OSM hole geometry and classify each hole against
-    the first round with a usable wind forecast. Returns None when the
-    course is unmapped or geometry is unavailable — page degrades to no map.
-    """
-    if not course:
-        return None
-    try:
-        holes = get_course_holes(course)
-        course_map = prepare_course_map(holes) if holes else None
-    except Exception as e:
-        print(f"[golf.slate] course map build failed: {e}", flush=True)
-        return None
-    if not course_map:
-        return None
-
-    wind_round = next(
-        (r for r in rounds_out
-         if r.get("summary") and r["summary"].get("avg_wind_deg") is not None),
-        None,
-    )
-    if wind_round:
-        s = wind_round["summary"]
-        attach_wind_impact(course_map, s["avg_wind_deg"])
-        course_map["wind_deg"] = s["avg_wind_deg"]
-        course_map["wind_speed"] = s["avg_wind"]
-        course_map["round_label"] = (
-            f"Round {wind_round['round_num']} · {wind_round['date_label']}"
-        )
-    else:
-        attach_wind_impact(course_map, None)
-    return course_map
 
 
 def build_pga_slate() -> list[dict]:

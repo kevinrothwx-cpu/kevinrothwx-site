@@ -55,7 +55,7 @@ def fetch_weatherapi_hourly(lat: float, lon: float) -> list[dict]:
         params={
             "key":   _api_key(),
             "q":     f"{lat},{lon}",
-            "days":  3,
+            "days":  14,  # max on paid tiers (free returns whatever cap the key allows)
             "aqi":   "no",
             "alerts":"no",
         },
