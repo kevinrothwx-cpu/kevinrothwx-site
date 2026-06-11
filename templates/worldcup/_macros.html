@@ -65,8 +65,7 @@
   <a href="{{ href }}" class="cheat-card" data-event-id="{{ match.event_id }}">
     <div class="cheat-card__rule">
       <span class="cheat-card__time">{{ match.kickoff_eastern_str }}</span>
-      {% if venue and venue.roof_type == "retractable" %}<span class="cheat-card__badge">Retractable</span>{% endif %}
-      {% if venue and venue.roof_type == "fixed_dome" %}<span class="cheat-card__badge">Dome</span>{% endif %}
+      <span class="cheat-card__date">{{ match.kickoff_eastern.strftime("%-m/%-d") }}</span>
     </div>
     <div class="cheat-card__teams">
       <div class="cheat-card__team">

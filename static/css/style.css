@@ -214,6 +214,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__rule { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.75rem; }
 .cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; }
 .cheat-card__badge { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); }
+.cheat-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); }
 
 .cheat-card__teams { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
 .cheat-card__team { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; }
@@ -398,6 +399,24 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__wx { gap: 0.5rem; padding-top: 0.5rem; }
 .cheat-card__temp { font-size: 1.35rem; }
 .cheat-card__skyicon { width: 28px; height: 28px; }
+
+/* Mobile cheat-sheet — 2 cards per row, much tighter, so the slate isn't 8 screens of scrolling */
+@media (max-width: 720px) {
+  .cheat-row { grid-template-columns: 1fr 1fr; gap: 0.45rem; padding: 0 0.85rem; margin-bottom: 1.25rem; }
+  .cheat-card { padding: 0.55rem 0.65rem 0.6rem; }
+  .cheat-card__rule { padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
+  .cheat-card__time { font-size: 0.66rem; letter-spacing: 0.06em; }
+  .cheat-card__date { font-size: 0.66rem; }
+  .cheat-card__teams { gap: 0.3rem; margin-bottom: 0.45rem; }
+  .cheat-card__logo { width: 18px; height: 18px; }
+  .cheat-card__abbr { font-size: 0.9rem; }
+  .cheat-card__at { font-size: 0.62rem; padding: 0 0.05rem; }
+  .cheat-card__wx { grid-template-columns: auto 1fr auto; gap: 0.35rem; padding-top: 0.4rem; }
+  .cheat-card__temp { font-size: 1.1rem; }
+  .cheat-card__wind { font-size: 0.68rem; }
+  .cheat-card__precip { font-size: 0.7rem; }
+  .cheat-card__skyicon { width: 22px; height: 22px; }
+}
 
 /* ── Ballpark cut-out diamond with rotated wind arrow ──────── */
 .field-diagram { display: inline-flex; flex-direction: column; align-items: center; gap: 0.3rem; }
