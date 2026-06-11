@@ -73,6 +73,9 @@ def inject_globals():
     return {
         "current_year": datetime.utcnow().year,
         "site_url": "https://kevinrothwx.com",
+        # GA4 measurement ID from env var so the snippet renders only in
+        # production. Local dev leaves it unset, no tracking.
+        "ga_measurement_id": os.environ.get("GA_MEASUREMENT_ID", "").strip(),
     }
 
 
