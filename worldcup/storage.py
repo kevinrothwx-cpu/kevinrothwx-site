@@ -10,7 +10,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
-from persistence import load_json, save_json
+from persistence import load_json, save_json, parse_dt
 
 
 VALID_COLORS = {"green", "yellow", "orange", "red"}
@@ -21,10 +21,15 @@ _lock = threading.Lock()
 
 
 def _load_from_disk() -> None:
+    """Read writeups from disk. JSON serializes datetimes to ISO strings,
+    so rehydrate updated_at_utc back to datetime — the admin template calls
+    .strftime() on it and would crash on a string."""
     raw = load_json(_DISK_FILE, default={})
     with _lock:
         _MEMORY_STORE.clear()
         for k, v in raw.items():
+            if isinstance(v, dict) and isinstance(v.get("updated_at_utc"), str):
+                v["updated_at_utc"] = parse_dt(v["updated_at_utc"])
             _MEMORY_STORE[str(k)] = v
 
 
