@@ -16,6 +16,23 @@
 
 <section class="home-section">
   <div class="container">
+
+    {# Featured World Cup banner — pin to top through the tournament window (June 11 to July 19, 2026) #}
+    <a href="/worldcup" class="home-featured home-featured--wc">
+      <div class="home-featured__top">
+        <span class="live-badge">Live · Matchday</span>
+        <span class="home-featured__kicker">World Cup 2026</span>
+      </div>
+      <h2 class="home-featured__title">Real meteorologist breakdowns for every World Cup match.</h2>
+      <p class="home-featured__body">
+        Stadium-specific notes on altitude, humidity, roof status, and storm risk. 16 venues across the US, Mexico, and Canada. Built by a meteorologist, not AI.
+      </p>
+      <span class="home-featured__cta">
+        {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;matches this week{% else %}See all matches{% endif %}
+        <span class="home-featured__arrow">→</span>
+      </span>
+    </a>
+
     <div class="home-grid">
 
       <a href="/mlb/today" class="home-sport-card home-sport-card--mlb">
@@ -23,15 +40,6 @@
         <p class="home-sport-card__body">Every game today and tomorrow, temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
         <span class="home-sport-card__indicator">
           {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
-          <span class="home-sport-card__arrow">→</span>
-        </span>
-      </a>
-
-      <a href="/worldcup" class="home-sport-card home-sport-card--wc">
-        <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Matchday view</span><h2 class="home-sport-card__title">World Cup 2026</h2></div></div>
-        <p class="home-sport-card__body">Every match across the next 3 days in 16 US, Mexico, and Canada venues. Retractable roof toggles where they matter.</p>
-        <span class="home-sport-card__indicator">
-          {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;matches this week{% else %}See matchday view{% endif %}
           <span class="home-sport-card__arrow">→</span>
         </span>
       </a>
@@ -58,7 +66,7 @@
         <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">College World Series</span><h2 class="home-sport-card__title">CWS Omaha</h2></div></div>
         <p class="home-sport-card__body">Hourly forecasts for every game at Charles Schwab Field during the tournament window.</p>
         <span class="home-sport-card__indicator">
-          {% if sport_counts.cws %}<strong>Live</strong>&nbsp;through June 24{% else %}Tournament June 13–23{% endif %}
+          {% if sport_counts.cws %}<strong>Live</strong>&nbsp;through June 24{% else %}Tournament June 13&ndash;23{% endif %}
           <span class="home-sport-card__arrow">→</span>
         </span>
       </a>

@@ -731,6 +731,23 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 @media (min-width: 720px)  { .home-grid { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1100px) { .home-grid { grid-template-columns: 1fr 1fr 1fr; } }
 
+/* Featured top-of-page block (used to promote the active World Cup during
+   the tournament window). Bigger, bolder, with a Live pill at the top. */
+.home-featured { display: block; padding: 2rem 1.75rem 1.75rem; background: var(--white); border: 1px solid var(--ink); text-decoration: none; color: var(--ink); position: relative; margin-bottom: 1.25rem; transition: border-color 0.15s ease, transform 0.15s ease; }
+.home-featured:hover { border-color: var(--storm); transform: translateY(-2px); }
+.home-featured__top { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.home-featured__kicker { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.home-featured__title { font-family: var(--font-serif); font-size: clamp(1.55rem, 2.4vw + 0.4rem, 2.25rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.18; margin: 0 0 0.85rem; max-width: 28ch; }
+.home-featured__body { font-family: var(--font-sans); font-size: 1rem; line-height: 1.55; color: var(--slate); max-width: 65ch; margin: 0 0 1.25rem; }
+.home-featured__cta { font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--ink); display: inline-flex; align-items: center; gap: 0.5rem; padding-top: 0.9rem; border-top: 1px solid var(--mist); }
+.home-featured__arrow { transition: transform 0.15s ease; }
+.home-featured:hover .home-featured__arrow { transform: translateX(3px); }
+
+/* Live pulse pill */
+.live-badge { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: white; background: #c41e3a; padding: 0.32rem 0.7rem 0.34rem; border-radius: 999px; display: inline-flex; align-items: center; gap: 0.45rem; line-height: 1; }
+.live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse-live 1.6s ease-in-out infinite; }
+@keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
 .home-sport-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem 1.3rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; position: relative; min-height: 180px; }
 .home-sport-card:hover { border-color: var(--ink); transform: translateY(-2px); }
 .home-sport-card__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
