@@ -34,6 +34,10 @@
   .admin-existing-item__head { font-weight: 600; margin-bottom: 0.4rem; }
   .admin-existing-item__body { font-family: var(--font-serif); font-size: 0.95rem; line-height: 1.5; color: var(--slate); white-space: pre-wrap; }
   .admin-existing-item__meta { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); margin-top: 0.4rem; letter-spacing: 0.05em; }
+  .admin-existing-item__actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  .admin-action { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.4rem 0.85rem; border: 1px solid var(--mist); background: var(--white); color: var(--slate); cursor: pointer; }
+  .admin-action:hover { border-color: var(--ink); color: var(--ink); }
+  .admin-action--delete:hover { border-color: #b91c1c; color: #b91c1c; }
 </style>
 {% endblock %}
 
@@ -42,7 +46,6 @@
   <h1 class="admin-page__h1">World Cup Write-up Admin</h1>
   <p class="admin-page__sub">
     {{ date_str }} · {{ slate|length }} matches loaded.
-    Storage is in-memory, resets on every Render restart until SQLite upgrade.
   </p>
 
   <form class="admin-form" method="POST" action="/admin/worldcup?date={{ date_str }}">
@@ -51,7 +54,9 @@
       <select id="event_id" name="event_id" required>
         <option value="">- pick a match -</option>
         {% for m in slate %}
-          <option value="{{ m.event_id }}">
+          <option value="{{ m.event_id }}"
+                  data-text="{{ (m.writeup.text if m.writeup else '')|e }}"
+                  data-color="{{ (m.writeup.color if m.writeup and m.writeup.color else '')|e }}">
             {{ m.kickoff_eastern_str }}, {{ m.away.name }} vs {{ m.home.name }} ({{ m.venue }})
             {%- if m.writeup %} · has write-up{% endif -%}
           </option>
@@ -89,9 +94,48 @@
             Color: {{ m.writeup.color|upper if m.writeup.color else 'none' }} ·
             updated {{ m.writeup.updated_at_utc.strftime("%H:%M UTC") }}
           </div>
+          <div class="admin-existing-item__actions">
+            <button type="button" class="admin-action admin-action--edit" data-event-id="{{ m.event_id }}">Edit</button>
+            <form method="POST" action="/admin/worldcup?date={{ date_str }}" onsubmit="return confirm('Delete this write-up?')" style="display:inline">
+              <input type="hidden" name="event_id" value="{{ m.event_id }}">
+              <input type="hidden" name="text" value="">
+              <button type="submit" class="admin-action admin-action--delete">Delete</button>
+            </form>
+          </div>
         </div>
       {% endfor %}
     </div>
   {% endif %}
 </div>
+
+<script>
+  (function(){
+    var sel = document.getElementById('event_id');
+    var textarea = document.getElementById('text');
+    if (!sel || !textarea) return;
+
+    function applyOption(opt) {
+      if (!opt) return;
+      textarea.value = opt.getAttribute('data-text') || '';
+      var color = opt.getAttribute('data-color') || '';
+      var radio = document.querySelector('input[name="color"][value="' + color + '"]');
+      if (radio) { radio.checked = true; }
+      else { var noneRadio = document.querySelector('input[name="color"][value=""]'); if (noneRadio) noneRadio.checked = true; }
+    }
+
+    sel.addEventListener('change', function(){
+      applyOption(sel.options[sel.selectedIndex]);
+    });
+
+    document.querySelectorAll('.admin-action--edit').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var eid = btn.getAttribute('data-event-id');
+        sel.value = eid;
+        applyOption(sel.options[sel.selectedIndex]);
+        document.querySelector('.admin-form').scrollIntoView({behavior:'smooth', block:'start'});
+        textarea.focus();
+      });
+    });
+  })();
+</script>
 {% endblock %}
