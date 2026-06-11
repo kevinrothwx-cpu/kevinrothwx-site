@@ -1,7 +1,7 @@
 {% from "mlb/_macros.html" import weather_icon %}
 
 
-{# ── Race card for the slate (current + upcoming) ──────────── #}
+{# Race card for the slate (current + upcoming) #}
 {% macro race_card(race, link_to_detail=True) %}
   {% set f = race.forecast %}
   {% set track = race.track_meta %}
@@ -37,9 +37,9 @@
 {% endmacro %}
 
 
-{# ── Race hourly table (pre-race + race + after) ─────────────
-    Accepts optional `hours` so the same macro renders NWS (default:
-    race.hourly) or HRRR (race.hrrr_hourly). #}
+{# Race hourly table (pre-race + race + after). Accepts optional `hours`
+   so the same macro renders NWS (default: race.hourly) or HRRR
+   (race.hrrr_hourly). #}
 {% macro race_hourly_table(race, hours=None) %}
   {% if hours is none %}{% set hours = race.hourly or [] %}{% endif %}
   {% if hours %}

@@ -1,7 +1,7 @@
 {% from "mlb/_macros.html" import weather_icon %}
 
 
-{# ── Round summary card (Thu/Fri/Sat/Sun snapshot) ───────────── #}
+{# Round summary card (Thu/Fri/Sat/Sun snapshot) #}
 {% macro round_summary_card(round_data, link_anchor=None) %}
   {% set s = round_data.summary %}
   {% set href = link_anchor or ("#round-" ~ round_data.round_num) %}
@@ -30,9 +30,9 @@
 {% endmacro %}
 
 
-{# ── Hourly forecast table for one round (play hours only) ────
-    Accepts an optional `hours` param so the same macro can render
-    NWS (default: round_data.hourly) or HRRR (round_data.hrrr_hourly). #}
+{# Hourly forecast table for one round (play hours only). Accepts an
+   optional `hours` param so the same macro can render NWS (default:
+   round_data.hourly) or HRRR (round_data.hrrr_hourly). #}
 {% macro round_hourly_table(round_data, hours=None) %}
   {% if hours is none %}{% set hours = round_data.hourly or [] %}{% endif %}
   {% if hours %}

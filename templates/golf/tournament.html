@@ -30,4 +30,16 @@
       {% if r.hrrr_hourly %}
         <details class="hrrr-toggle">
           <summary>Show high-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
-          <div cla
+          <div class="hrrr-section">
+            {{ round_hourly_table(r, hours=r.hrrr_hourly) }}
+          </div>
+        </details>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <p class="hourly__missing">Course forecast not available.</p>
+  {% endif %}
+
+  <a href="/golf" class="game-page__back">← All current tournaments</a>
+</article>
+{% endblock %}
