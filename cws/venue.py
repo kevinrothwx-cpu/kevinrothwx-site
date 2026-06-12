@@ -8,7 +8,7 @@ CHARLES_SCHWAB_FIELD = {
     "lon":               -95.9251,
     "timezone":          "America/Chicago",
     "roof_type":         "open_air",
-    "cf_bearing_degrees": 30,   # CF is roughly NNE
+    "cf_bearing_degrees": 135,  # CF points SE (home plate in NW corner of field)
     "aliases":           ["Charles Schwab Field", "TD Ameritrade Park", "Omaha"],
 }
 
