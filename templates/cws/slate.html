@@ -22,18 +22,6 @@
     </div>
   </header>
 
-  {# Daily note at the top — covers all games for the day #}
-  {% if daily_writeup %}
-    <section class="mlb-section">
-      <div class="mlb-writeup mlb-writeup--{{ daily_writeup.color or 'none' }}">
-        <div class="mlb-writeup__header">
-          <span class="mlb-writeup__matchup">Kevin's note for {{ pretty_date }}</span>
-        </div>
-        <div class="mlb-writeup__body">{{ daily_writeup.text }}</div>
-      </div>
-    </section>
-  {% endif %}
-
   {% if slate %}
     <div class="cheat-row">
       {% for g in slate %}
@@ -47,6 +35,18 @@
         {% else %}No CWS games scheduled at Omaha for this date.{% endif %}
       </p>
     </div>
+  {% endif %}
+
+  {# Daily note between cheat cards and per-game blocks #}
+  {% if daily_writeup %}
+    <section class="mlb-section">
+      <div class="mlb-writeup mlb-writeup--{{ daily_writeup.color or 'none' }}">
+        <div class="mlb-writeup__header">
+          <span class="mlb-writeup__matchup">Kevin's note for {{ pretty_date }}</span>
+        </div>
+        <div class="mlb-writeup__body">{{ daily_writeup.text }}</div>
+      </div>
+    </section>
   {% endif %}
 
   {% if slate %}

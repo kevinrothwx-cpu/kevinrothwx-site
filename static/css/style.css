@@ -224,7 +224,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__teams { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
 .cheat-card__team { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; }
 .cheat-card__logo { width: 28px; height: 28px; flex-shrink: 0; object-fit: contain; }
-.cheat-card__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.cheat-card__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap; }
 .cheat-card__at { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0; padding: 0 0.15rem; }
 
 .cheat-card__wx { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
