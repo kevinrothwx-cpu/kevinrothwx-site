@@ -435,12 +435,15 @@ def cws_date(date_str):
     if slate is None:
         slate, meta = [], {"build_err": "Slate not yet built"}
     cws_attach_writeups(slate)
+    # Daily note keyed by date_str. One writeup covers all games that day.
+    daily_writeup = cws_get_writeup(date_str)
     d = datetime.strptime(date_str, "%Y-%m-%d").date()
     pretty_date = d.strftime("%A, %B %-d")
     today = datetime.now(EASTERN_TZ).date()
     return render_template(
         "cws/slate.html",
         slate=slate, meta=meta, date_str=date_str, pretty_date=pretty_date,
+        daily_writeup=daily_writeup,
         is_today=(d == today), is_tomorrow=(d == today + timedelta(days=1)),
         is_past=(d < today),
     )
@@ -637,22 +640,36 @@ def admin_nascar():
 @app.route("/admin/cws", methods=["GET", "POST"])
 @_admin_required
 def admin_cws():
-    """CWS write-up admin."""
+    """CWS write-up admin — one note per DAY, covers all games that day.
+    The writeup is keyed by date_str (YYYY-MM-DD) instead of per game."""
     date_str = request.args.get("date", _eastern_today())
     if not _valid_date_str(date_str):
         date_str = _eastern_today()
     if request.method == "POST":
-        event_id = request.form.get("event_id", "").strip()
+        target_date = request.form.get("event_id", "").strip()
         text = request.form.get("text", "")
         color = request.form.get("color", "").strip() or None
-        if event_id:
-            cws_save_writeup(event_id, text, color=color)
-            flash("Write-up saved.", "success")
+        if target_date:
+            cws_save_writeup(target_date, text, color=color)
+            flash("Daily note saved.", "success")
         return redirect(url_for("admin_cws", date=date_str))
-    slate, _ = get_cws_slate(date_str)
-    if slate is None: slate = []
-    cws_attach_writeups(slate)
-    return render_template("cws/admin.html", slate=slate, date_str=date_str)
+
+    # Build the tournament-window date list from the canonical CWS constants
+    # so we don't drift from the actual schedule.
+    from cws.venue import CWS_2026_START, CWS_2026_END
+    start = datetime.strptime(CWS_2026_START, "%Y-%m-%d").date()
+    end   = datetime.strptime(CWS_2026_END,   "%Y-%m-%d").date()
+    dates = []
+    cur = start
+    while cur <= end:
+        ds = cur.strftime("%Y-%m-%d")
+        dates.append({
+            "date_str": ds,
+            "display":  cur.strftime("%a %b %-d"),
+            "writeup":  cws_get_writeup(ds),
+        })
+        cur += timedelta(days=1)
+    return render_template("cws/admin.html", dates=dates, date_str=date_str)
 
 
 # ===== SEO files =====
@@ -703,6 +720,7 @@ def sitemap():
     for path, priority, changefreq in all_urls:
         xml.append("  <url>")
         xml.append(f"    <loc>{SITE_URL}{path}</loc>")
+        xml.append(f"    <loc>{SITE_URL}{path}</loc>")
         xml.append(f"    <lastmod>{today_str}</lastmod>")
         xml.append(f"    <changefreq>{changefreq}</changefreq>")
         xml.append(f"    <priority>{priority}</priority>")
@@ -724,12 +742,4 @@ def robots():
     return Response(body, mimetype="text/plain")
 
 
-# ===== Error handlers =====
-
-@app.errorhandler(404)
-def not_found(e):
-    return render_template("404.html"), 404
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+# ===== E

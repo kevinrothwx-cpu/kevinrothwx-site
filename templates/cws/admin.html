@@ -23,19 +23,38 @@
   .color-radio input:checked + span { border-color: var(--ink); color: var(--ink); background: var(--white); }
   .admin-form button { padding: 0.85rem 1.5rem; background: var(--ink); color: var(--white); border: 0; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; align-self: flex-start; }
   .admin-form button:hover { background: var(--storm); }
+  .admin-existing { margin-top: 2.5rem; }
+  .admin-existing h3 { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); margin-bottom: 0.75rem; }
+  .admin-existing-item { padding: 1rem 1.25rem; border: 1px solid var(--mist); border-left-width: 4px; margin-bottom: 0.6rem; background: var(--white); }
+  .admin-existing-item--green  { border-left-color: #15803d; }
+  .admin-existing-item--yellow { border-left-color: #ca8a04; }
+  .admin-existing-item--orange { border-left-color: #ea580c; }
+  .admin-existing-item--red    { border-left-color: #b91c1c; }
+  .admin-existing-item__head { font-weight: 600; margin-bottom: 0.4rem; }
+  .admin-existing-item__body { font-family: var(--font-serif); font-size: 0.95rem; line-height: 1.5; color: var(--slate); white-space: pre-wrap; }
+  .admin-existing-item__meta { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); margin-top: 0.4rem; letter-spacing: 0.05em; }
+  .admin-existing-item__actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  .admin-action { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.4rem 0.85rem; border: 1px solid var(--mist); background: var(--white); color: var(--slate); cursor: pointer; }
+  .admin-action:hover { border-color: var(--ink); color: var(--ink); }
+  .admin-action--delete:hover { border-color: #b91c1c; color: #b91c1c; }
 </style>
 {% endblock %}
 {% block content %}
 <div class="admin-page">
-  <h1 class="admin-page__h1">CWS Write-up Admin</h1>
-  <p class="admin-page__sub">{{ date_str }} · {{ slate|length }} games loaded. Storage is in-memory.</p>
+  <h1 class="admin-page__h1">CWS Daily Note Admin</h1>
+  <p class="admin-page__sub">One note per day, covers every game at Omaha that day.</p>
+
   <form class="admin-form" method="POST" action="/admin/cws?date={{ date_str }}">
     <div>
-      <label for="event_id">Game</label>
+      <label for="event_id">Tournament day</label>
       <select id="event_id" name="event_id" required>
-        <option value="">- pick a game -</option>
-        {% for g in slate %}
-          <option value="{{ g.event_id }}">{{ g.first_pitch_eastern_str }}, {{ g.away.name }} vs {{ g.home.name }}{% if g.writeup %} · has write-up{% endif %}</option>
+        <option value="">- pick a day -</option>
+        {% for d in dates %}
+          <option value="{{ d.date_str }}"
+                  data-text="{{ (d.writeup.text if d.writeup else '')|e }}"
+                  data-color="{{ (d.writeup.color if d.writeup and d.writeup.color else '')|e }}">
+            {{ d.display }} ({{ d.date_str }}){%- if d.writeup %} · has note{% endif -%}
+          </option>
         {% endfor %}
       </select>
     </div>
@@ -50,10 +69,66 @@
       </div>
     </div>
     <div>
-      <label for="text">Write-up</label>
-      <textarea id="text" name="text" placeholder="Plains storm cells building south of Omaha. Likely 30-45 minute delay between innings 5-6 if game starts on time..."></textarea>
+      <label for="text">Daily note</label>
+      <textarea id="text" name="text" placeholder="Plains storm cells likely 7-10 PM CT. Expect a 30-45 minute delay during the late game..."></textarea>
     </div>
-    <button type="submit">Save write-up</button>
+    <button type="submit">Save daily note</button>
   </form>
+
+  {% set existing = dates | selectattr("writeup") | list %}
+  {% if existing %}
+    <div class="admin-existing">
+      <h3>Current daily notes</h3>
+      {% for d in existing %}
+        <div class="admin-existing-item admin-existing-item--{{ d.writeup.color or 'none' }}">
+          <div class="admin-existing-item__head">{{ d.display }} ({{ d.date_str }})</div>
+          <div class="admin-existing-item__body">{{ d.writeup.text }}</div>
+          <div class="admin-existing-item__meta">
+            Color: {{ d.writeup.color|upper if d.writeup.color else 'none' }} ·
+            updated {{ d.writeup.updated_at_utc.strftime("%H:%M UTC") }}
+          </div>
+          <div class="admin-existing-item__actions">
+            <button type="button" class="admin-action admin-action--edit" data-event-id="{{ d.date_str }}">Edit</button>
+            <form method="POST" action="/admin/cws?date={{ date_str }}" onsubmit="return confirm('Delete this daily note?')" style="display:inline">
+              <input type="hidden" name="event_id" value="{{ d.date_str }}">
+              <input type="hidden" name="text" value="">
+              <button type="submit" class="admin-action admin-action--delete">Delete</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  (function(){
+    var sel = document.getElementById('event_id');
+    var textarea = document.getElementById('text');
+    if (!sel || !textarea) return;
+
+    function applyOption(opt) {
+      if (!opt) return;
+      textarea.value = opt.getAttribute('data-text') || '';
+      var color = opt.getAttribute('data-color') || '';
+      var radio = document.querySelector('input[name="color"][value="' + color + '"]');
+      if (radio) { radio.checked = true; }
+      else { var noneRadio = document.querySelector('input[name="color"][value=""]'); if (noneRadio) noneRadio.checked = true; }
+    }
+
+    sel.addEventListener('change', function(){
+      applyOption(sel.options[sel.selectedIndex]);
+    });
+
+    document.querySelectorAll('.admin-action--edit').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var eid = btn.getAttribute('data-event-id');
+        sel.value = eid;
+        applyOption(sel.options[sel.selectedIndex]);
+        document.querySelector('.admin-form').scrollIntoView({behavior:'smooth', block:'start'});
+        textarea.focus();
+      });
+    });
+  })();
+</script>
 {% endblock %}

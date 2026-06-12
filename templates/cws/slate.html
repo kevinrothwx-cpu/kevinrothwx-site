@@ -22,6 +22,18 @@
     </div>
   </header>
 
+  {# Daily note at the top — covers all games for the day #}
+  {% if daily_writeup %}
+    <section class="mlb-section">
+      <div class="mlb-writeup mlb-writeup--{{ daily_writeup.color or 'none' }}">
+        <div class="mlb-writeup__header">
+          <span class="mlb-writeup__matchup">Kevin's note for {{ pretty_date }}</span>
+        </div>
+        <div class="mlb-writeup__body">{{ daily_writeup.text }}</div>
+      </div>
+    </section>
+  {% endif %}
+
   {% if slate %}
     <div class="cheat-row">
       {% for g in slate %}
@@ -37,23 +49,6 @@
     </div>
   {% endif %}
 
-  {# ── Write-ups OR CTA pair ───────────────────────────────── #}
-  <section class="mlb-section">
-    {% set any_writeups = slate | selectattr("writeup") | list %}
-    {% if any_writeups %}
-      {% for g in any_writeups %}
-        <div class="mlb-writeup mlb-writeup--{{ g.writeup.color or 'none' }}">
-          <div class="mlb-writeup__header">
-            <span class="mlb-writeup__matchup">{{ g.away.name }} vs {{ g.home.name }}</span>
-            <span class="mlb-writeup__time">{{ g.first_pitch_eastern_str }}</span>
-          </div>
-          <div class="mlb-writeup__body">{{ g.writeup.text }}</div>
-        </div>
-      {% endfor %}
-    {% endif %}
-  </section>
-
-  {# ── Per-game blocks ─────────────────────────────────────── #}
   {% if slate %}
     <div class="mlb-hourly-group">
       {% for g in slate %}

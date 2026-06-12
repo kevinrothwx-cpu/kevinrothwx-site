@@ -1,5 +1,8 @@
 """cws.storage — write-up storage with color tag.
-Disk-backed via persistence module, survives Render restarts."""
+Disk-backed via persistence module, survives Render restarts.
+
+For CWS we key by date_str (one daily note covers all games that day),
+but the storage doesn't care — any string key works."""
 
 from __future__ import annotations
 
@@ -7,7 +10,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
-from persistence import load_json, save_json
+from persistence import load_json, save_json, parse_dt
 
 
 VALID_COLORS = {"green", "yellow", "orange", "red"}
@@ -18,10 +21,14 @@ _lock = threading.Lock()
 
 
 def _load_from_disk() -> None:
+    """Rehydrate updated_at_utc strings back to datetime so the admin
+    template's .strftime() call doesn't blow up after a restart."""
     raw = load_json(_DISK_FILE, default={})
     with _lock:
         _MEMORY_STORE.clear()
         for k, v in raw.items():
+            if isinstance(v, dict) and isinstance(v.get("updated_at_utc"), str):
+                v["updated_at_utc"] = parse_dt(v["updated_at_utc"])
             _MEMORY_STORE[str(k)] = v
 
 
@@ -56,6 +63,8 @@ def save_writeup(event_id, text, color: Optional[str] = None):
 
 
 def attach_writeups_to_slate(slate):
+    """Legacy per-game attachment. Kept for backward compat but CWS now
+    uses get_writeup(date_str) directly for the daily note."""
     eids = [g.get("event_id") for g in slate if g.get("event_id")]
     with _lock:
         for g in slate:
