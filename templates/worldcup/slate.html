@@ -25,7 +25,7 @@
     </div>
   </header>
 
-  {# ── Cheat-sheet row (all days combined for quick scan) ──────── #}
+  {# Cheat-sheet row (all days combined for quick scan) #}
   {% set total_matches_check = days_data | map(attribute='match_count') | sum %}
   {% if total_matches_check > 0 %}
     <div class="cheat-row">
@@ -43,8 +43,7 @@
     </div>
   {% endif %}
 
-  {# ── Section 2: write-ups (if any). MLB-specific CTAs removed, they
-       don't belong on a soccer page. ─────────────────────────────── #}
+  {# Section 2: write-ups (if any). MLB-specific CTAs removed, they don't belong on a soccer page. #}
   {% set any_writeups = [] %}
   {% for day in days_data %}{% for m in day.slate %}{% if m.writeup %}{% set _ = any_writeups.append(m) %}{% endif %}{% endfor %}{% endfor %}
   {% if any_writeups %}
@@ -61,7 +60,7 @@
     </section>
   {% endif %}
 
-  {# ── Section 3: per-match blocks, grouped by day ─────────── #}
+  {# Section 3: per-match blocks, grouped by day #}
   {% for day in days_data %}
     {% if day.match_count > 0 %}
       <div class="mlb-hourly-group">
@@ -138,6 +137,23 @@
         target.scrollIntoView({behavior: 'smooth', block: 'start'});
         history.replaceState(null, '', href);
       }
+    }
+  });
+
+  // Roof toggle: open/close the weather body for retractable-roof venues
+  // (mirrors the MLB slate handler).
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.roof-toggle__option');
+    if (!btn) return;
+    var toggle = btn.closest('.roof-toggle');
+    var block = btn.closest('.has-roof-toggle');
+    if (!toggle || !block) return;
+    toggle.querySelectorAll('.roof-toggle__option').forEach(function(o) { o.classList.remove('is-active'); });
+    btn.classList.add('is-active');
+    if (btn.dataset.roof === 'open') {
+      block.classList.remove('is-roof-closed');
+    } else {
+      block.classList.add('is-roof-closed');
     }
   });
 </script>
