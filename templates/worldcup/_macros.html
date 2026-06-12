@@ -1,4 +1,4 @@
-{# ── Country / national-team logo from ESPN's CDN ──────────────── #}
+{# Country / national-team logo from ESPN's CDN #}
 {% macro wc_logo(team, klass="cheat-card__logo") %}
   {% if team.logo %}
     <img class="{{ klass }}" src="{{ team.logo }}" alt="{{ team.name }} crest" loading="lazy" decoding="async" onerror="this.style.visibility='hidden'">
@@ -6,14 +6,14 @@
 {% endmacro %}
 
 
-{# ── Inline SVG weather icons, imported from MLB so styling matches ── #}
+{# Inline SVG weather icons, imported from MLB so styling matches #}
 {% from "mlb/_macros.html" import weather_icon %}
 
 
-{# ── Soccer pitch diagram with compass wind arrow ──────────────── #}
-{# Unlike baseball, pitch orientation doesn't carry tactical meaning,
-   so we show the wind arrow in real compass space: arrow points the
-   direction the wind is BLOWING TO. North is up. #}
+{# Soccer pitch diagram with compass wind arrow. Unlike baseball, pitch
+   orientation doesn't carry tactical meaning, so we show the wind arrow
+   in real compass space: arrow points the direction the wind is BLOWING
+   TO. North is up. #}
 {% macro pitch_diagram(forecast) %}
   {% if forecast %}
     {% set wind_to = (forecast.wind_deg + 180) % 360 %}
@@ -23,22 +23,16 @@
   {% endif %}
   <div class="field-diagram">
     <svg viewBox="0 0 100 100" class="field-diagram__svg" aria-hidden="true">
-      {# Pitch outline (horizontal, ~1.55:1 ratio like a real pitch from above) #}
       <rect x="12" y="28" width="76" height="44" rx="1.5" class="fd-grass"/>
-      {# Center line + center circle #}
       <line class="fd-line" x1="50" y1="28" x2="50" y2="72"/>
       <circle cx="50" cy="50" r="7" class="fd-line" fill="none"/>
       <circle cx="50" cy="50" r="1" fill="var(--ash)"/>
-      {# Goals on left/right ends #}
       <rect x="9" y="46" width="3" height="8" class="fd-infield"/>
       <rect x="88" y="46" width="3" height="8" class="fd-infield"/>
-      {# Penalty boxes #}
       <rect x="12" y="38" width="14" height="24" stroke="var(--ash)" stroke-width="0.5" fill="none"/>
       <rect x="74" y="38" width="14" height="24" stroke="var(--ash)" stroke-width="0.5" fill="none"/>
-      {# Six-yard boxes #}
       <rect x="12" y="44" width="6" height="12" stroke="var(--ash)" stroke-width="0.4" fill="none"/>
       <rect x="82" y="44" width="6" height="12" stroke="var(--ash)" stroke-width="0.4" fill="none"/>
-      {# Wind arrow centered, rotated by compass direction #}
       {% if forecast %}
       <g class="fd-arrow fd-arrow--cross" style="transform: rotate({{ rot }}deg); transform-origin: 50px 50px;">
         <line x1="50" y1="68" x2="50" y2="34" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
@@ -52,7 +46,7 @@
 {% endmacro %}
 
 
-{# ── Cheat-sheet card for a match ──────────────────────────────── #}
+{# Cheat-sheet card for a match #}
 {% macro wc_cheat_card(match, link_to_detail=False) %}
   {% set f = match.forecast %}
   {% set venue = match.venue_meta %}
@@ -65,7 +59,12 @@
   <a href="{{ href }}" class="cheat-card" data-event-id="{{ match.event_id }}">
     <div class="cheat-card__rule">
       <span class="cheat-card__time">{{ match.kickoff_eastern_str }}</span>
-      <span class="cheat-card__date">{{ match.kickoff_eastern.strftime("%-m/%-d") }}</span>
+      <span class="cheat-card__rule-right">
+        {% if venue and venue.roof_type == "retractable" %}<span class="cheat-card__roof cheat-card__roof--retractable">Roof</span>{% endif %}
+        {% if venue and venue.roof_type == "fixed_canopy" %}<span class="cheat-card__roof cheat-card__roof--canopy">Canopy</span>{% endif %}
+        {% if venue and venue.roof_type == "fixed_dome" %}<span class="cheat-card__roof cheat-card__roof--dome">Dome</span>{% endif %}
+        <span class="cheat-card__date">{{ match.kickoff_eastern.strftime("%-m/%-d") }}</span>
+      </span>
     </div>
     <div class="cheat-card__teams">
       <div class="cheat-card__team">
@@ -94,7 +93,7 @@
 {% endmacro %}
 
 
-{# ── Per-match summary panel (2x2, mirrors MLB) ────────────────── #}
+{# Per-match summary panel (2x2, mirrors MLB) #}
 {% macro wc_summary_panel(match) %}
   {% set f = match.forecast %}
   <div class="game-summary">
@@ -124,7 +123,7 @@
 {% endmacro %}
 
 
-{# ── Hourly forecast table, identical pattern to MLB ──────────── #}
+{# Hourly forecast table, identical pattern to MLB #}
 {% macro wc_hourly_table(match) %}
   {% set hours = match.hourly or [] %}
   {% if hours %}

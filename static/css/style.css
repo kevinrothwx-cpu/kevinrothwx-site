@@ -215,6 +215,11 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; }
 .cheat-card__badge { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); }
 .cheat-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); }
+.cheat-card__rule-right { display: inline-flex; align-items: center; gap: 0.4rem; }
+.cheat-card__roof { font-family: var(--font-sans); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.1rem 0.4rem; border: 1px solid var(--smoke); color: var(--slate); border-radius: 2px; line-height: 1.4; }
+.cheat-card__roof--retractable { border-color: #1e3a8a; color: #1e3a8a; }
+.cheat-card__roof--canopy      { border-color: var(--ash); color: var(--ash); }
+.cheat-card__roof--dome        { border-color: #4b5563; color: #4b5563; }
 
 .cheat-card__teams { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
 .cheat-card__team { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; }
