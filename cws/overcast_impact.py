@@ -67,6 +67,27 @@ def _wind_phrase(wind_from, cf=CF_BEARING):
         return where, "boosts", b
     return "crossing the field", "has a mixed effect on", b
 
+def _wind_lead(mph):
+    """Speed-aware lead-in adjective so light vs strong winds produce different prose."""
+    n = int(round(mph))
+    if mph < 5:  return f"A calm {n} mph wind"
+    if mph < 9:  return f"A light {n} mph wind"
+    if mph < 14: return f"A steady {n} mph wind"
+    if mph < 19: return f"A brisk {n} mph wind"
+    return f"A strong {n} mph wind"
+
+def _effect_tail(mph, effect):
+    """Pair the historical-effect verb with a strength modifier matched to wind speed."""
+    if "mixed" in effect:
+        return f"historically {effect} scoring at Charles Schwab Field"
+    if mph < 5:
+        return f"historically {effect} scoring only marginally at Charles Schwab Field"
+    if mph < 9:
+        return f"historically {effect} scoring modestly at Charles Schwab Field"
+    if mph < 19:
+        return f"historically {effect} scoring at Charles Schwab Field"
+    return f"historically {effect} scoring meaningfully at Charles Schwab Field"
+
 # ---------------- engine ----------------
 def _num(v):
     try: return float(v)
@@ -124,7 +145,7 @@ def _score(pool, stat, temp, dew, wind, wdir):
             "sim": round(shrunk, 1), "base": round(base, 1)}
 
 def compute_impact(temp, dew, wind_mph, wind_dir_deg, csv_path=CSV_PATH):
-    """Return {'R':{...}, 'HR':{...}, 'K':{...}} — raw results if you'd rather render your own."""
+    """Return {'R':{...}, 'HR':{...}, 'K':{...}} for callers that want to render their own."""
     pool = _load_pool(csv_path)
     return {col: _score(pool, col, temp, dew, wind_mph, wind_dir_deg) for col, _, _ in STATS}
 
@@ -132,7 +153,7 @@ def compute_impact(temp, dew, wind_mph, wind_dir_deg, csv_path=CSV_PATH):
 def _tile(label, unit, res, coverage, hero):
     width = "1.5fr" if hero else "1fr"
     if not res or res.get("pct") is None:
-        body = '<div style="font-size:13px;color:#9ca3af;font-style:italic;margin-top:10px;">building &mdash; not enough data yet</div>'
+        body = '<div style="font-size:13px;color:#9ca3af;font-style:italic;margin-top:10px;">building, not enough data yet</div>'
         return f'<div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#6b7280;font-weight:600;white-space:nowrap;">{label}</div>{body}</div>'
     pct = res["pct"]
     color = "#16a34a" if pct > 0 else ("#dc2626" if pct < 0 else "#6b7280")
@@ -151,7 +172,8 @@ def render_impact_strip(temp, dew, wind_mph, wind_dir_deg, csv_path=CSV_PATH):
     """Return the OVERcast impact strip as an HTML string for one game."""
     results = compute_impact(temp, dew, wind_mph, wind_dir_deg, csv_path)
     where, effect, _ = _wind_phrase(wind_dir_deg)
-    wind_round = int(round(wind_mph))
+    lead = _wind_lead(wind_mph)
+    tail = _effect_tail(wind_mph, effect)
     tiles = "".join(_tile(lbl, "/gm", results.get(col), cov, hero=(col == "R"))
                     for col, lbl, cov in STATS)
     return f'''<div style="max-width:860px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827;">
@@ -160,7 +182,7 @@ def render_impact_strip(temp, dew, wind_mph, wind_dir_deg, csv_path=CSV_PATH):
     <div style="font-size:12px;color:#9ca3af;font-weight:600;letter-spacing:.04em;">OVER<span style="color:#0ea5e9;">cast</span></div>
   </div>
   <div style="margin:12px 0 16px;font-size:15px;color:#374151;line-height:1.5;">
-    {wind_round}&nbsp;mph wind, <strong style="color:#111827;">{where}</strong> &mdash; which historically {effect} scoring at Charles Schwab Field.
+    {lead}, <strong style="color:#111827;">{where}</strong>, which {tail}.
   </div>
   <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:12px;align-items:start;">{tiles}</div>
   <div style="font-size:11.5px;color:#9ca3af;margin-top:14px;line-height:1.5;">
