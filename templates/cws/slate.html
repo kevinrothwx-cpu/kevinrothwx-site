@@ -71,13 +71,13 @@
             <div class="mlb-game-block__hourly">
               {{ cws_hourly_table(g) }}
             </div>
-            {# OVERcast weather-impact strip, upcoming games only #}
-            {% if not is_past and g.forecast %}
-              <div class="cws-impact-strip" style="padding: 0.5rem 1rem 1rem;">
-                {{ cws_impact_strip(g.forecast) }}
-              </div>
-            {% endif %}
           </div>
+          {# OVERcast weather-impact strip, full width under the body, upcoming games only #}
+          {% if not is_past and g.forecast %}
+            <div class="cws-impact-strip">
+              {{ cws_impact_strip(g.forecast) }}
+            </div>
+          {% endif %}
           <a class="mlb-game-block__deeplink" href="/cws/{{ date_str }}/{{ g.slug }}">
             Full forecast for this game <span aria-hidden="true">→</span>
           </a>

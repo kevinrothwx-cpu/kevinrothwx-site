@@ -8,6 +8,7 @@ from typing import Optional
 
 from .venue import CHARLES_SCHWAB_FIELD
 from .schedule import get_cws_schedule, parse_cws_event, game_slug
+from . import forecast_freeze
 from mlb.nws import get_nws_hourly_url, get_nws_periods, find_period_for_time, extract_forecast
 from mlb.wind import get_wind_info
 
@@ -63,13 +64,28 @@ def build_cws_slate(date_str: str):
         venue_tz = ZoneInfo(CHARLES_SCHWAB_FIELD["timezone"])
         fp_local = fp_utc.astimezone(venue_tz)
         fp_eastern = fp_utc.astimezone(EASTERN_TZ)
-        forecast, all_periods, err = _forecast_for_omaha(fp_utc)
 
-        wind_info = None
-        if forecast:
-            wind_info = get_wind_info(forecast["wind_deg"], CHARLES_SCHWAB_FIELD["cf_bearing_degrees"], forecast["wind_speed"])
+        # FREEZE pattern (mirrors MLB): once a game starts, read the locked
+        # snapshot from disk. While the game is still in the future, fetch
+        # fresh NWS each warmer cycle and re-save the snapshot so it tracks
+        # NWS up to first pitch.
+        now_utc = datetime.now(timezone.utc)
+        event_id = parsed.get("event_id", "")
+        err = None
+        if fp_utc <= now_utc and event_id and forecast_freeze.has(event_id):
+            frozen = forecast_freeze.get(event_id)
+            forecast  = frozen["forecast"]
+            wind_info = frozen["wind_info"]
+            hourly    = frozen["hourly"]
+        else:
+            forecast, all_periods, err = _forecast_for_omaha(fp_utc)
+            wind_info = None
+            if forecast:
+                wind_info = get_wind_info(forecast["wind_deg"], CHARLES_SCHWAB_FIELD["cf_bearing_degrees"], forecast["wind_speed"])
+            hourly = _hourly_window(all_periods or [], fp_utc)
+            if fp_utc > now_utc and event_id and forecast and hourly:
+                forecast_freeze.freeze(event_id, forecast, wind_info, hourly)
 
-        hourly = _hourly_window(all_periods or [], fp_utc)
         slug = game_slug(parsed["away"]["name"], parsed["home"]["name"])
 
         out.append({
