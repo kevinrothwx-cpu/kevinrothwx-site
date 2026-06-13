@@ -48,6 +48,7 @@ from cws.storage import (
     get_writeup as cws_get_writeup,
     attach_writeups_to_slate as cws_attach_writeups,
 )
+from cws.overcast_impact import render_impact_strip as _cws_render_impact_strip
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
@@ -56,6 +57,29 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-pr
 app.jinja_env.filters["precip_color"] = precip_color
 app.jinja_env.filters["precip_icon"]  = precip_icon
 app.jinja_env.filters["wind_compass"] = wind_compass
+
+
+def cws_impact_strip(forecast):
+    """Render the OVERcast CWS weather-impact strip as safe HTML.
+    Always returns a Markup string; on any error returns an empty Markup
+    so the page renders cleanly even if the engine has a bad day."""
+    from markupsafe import Markup
+    if not forecast:
+        return Markup("")
+    try:
+        html = _cws_render_impact_strip(
+            temp=forecast.get("temp"),
+            dew=forecast.get("dew"),
+            wind_mph=forecast.get("wind_speed"),
+            wind_dir_deg=forecast.get("wind_deg"),
+        )
+        return Markup(html)
+    except Exception as e:
+        print(f"[cws.impact] render failed: {e}", flush=True)
+        return Markup("")
+
+
+app.jinja_env.globals["cws_impact_strip"] = cws_impact_strip
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
@@ -720,7 +744,6 @@ def sitemap():
     for path, priority, changefreq in all_urls:
         xml.append("  <url>")
         xml.append(f"    <loc>{SITE_URL}{path}</loc>")
-        xml.append(f"    <loc>{SITE_URL}{path}</loc>")
         xml.append(f"    <lastmod>{today_str}</lastmod>")
         xml.append(f"    <changefreq>{changefreq}</changefreq>")
         xml.append(f"    <priority>{priority}</priority>")
@@ -742,4 +765,12 @@ def robots():
     return Response(body, mimetype="text/plain")
 
 
-# ===== E
+# ===== Error handlers =====
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template("404.html"), 404
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
