@@ -262,27 +262,11 @@ def _valid_date_str(date_str: str) -> bool:
     return (today - timedelta(days=1)) <= d <= (today + timedelta(days=7))
 
 
-@app.route("/mlb")
-def mlb_root():
-    """Redirect /mlb to today's slate."""
-    return redirect(url_for("mlb_slate", date_str=_eastern_today()), code=302)
-
-
-@app.route("/mlb/today")
-def mlb_today():
-    """Permalink alias for today's slate."""
-    return redirect(url_for("mlb_slate", date_str=_eastern_today()), code=302)
-
-
-@app.route("/mlb/tomorrow")
-def mlb_tomorrow():
-    """Permalink alias for tomorrow's slate."""
-    return redirect(url_for("mlb_slate", date_str=_eastern_tomorrow()), code=302)
-
-
-@app.route("/mlb/<date_str>")
-def mlb_slate(date_str):
-    """Slate page for a specific date."""
+def _render_mlb_slate(date_str, canonical_path):
+    """Render the MLB slate for date_str with an explicit canonical URL.
+    Used by all the MLB landing routes (/mlb, /mlb/today, /mlb/tomorrow,
+    /mlb/<date>) so they render inline instead of redirecting — Google
+    flagged the old redirect-to-date pattern as a Search Console error."""
     if not _valid_date_str(date_str):
         abort(404)
     slate, meta = get_slate(date_str)
@@ -308,7 +292,37 @@ def mlb_slate(date_str):
         is_today=is_today,
         is_tomorrow=is_tomorrow,
         is_past=is_past,
+        canonical_path=canonical_path,
     )
+
+
+@app.route("/mlb")
+def mlb_root():
+    """Render today's MLB slate inline. /mlb is the canonical hub URL
+    Google should rank for 'MLB weather' queries."""
+    return _render_mlb_slate(_eastern_today(), canonical_path="/mlb")
+
+
+@app.route("/mlb/today")
+def mlb_today():
+    """Permalink alias for today's slate, canonicalizes back to /mlb."""
+    return _render_mlb_slate(_eastern_today(), canonical_path="/mlb")
+
+
+@app.route("/mlb/tomorrow")
+def mlb_tomorrow():
+    """Permalink alias for tomorrow's slate, self-canonical."""
+    return _render_mlb_slate(_eastern_tomorrow(), canonical_path="/mlb/tomorrow")
+
+
+@app.route("/mlb/<date_str>")
+def mlb_slate(date_str):
+    """Slate page for a specific date. Today's date canonicalizes back
+    to /mlb so link equity accumulates on the stable hub URL instead of
+    fragmenting across daily-rotating URLs."""
+    today = _eastern_today()
+    canonical = "/mlb" if date_str == today else f"/mlb/{date_str}"
+    return _render_mlb_slate(date_str, canonical_path=canonical)
 
 
 @app.route("/mlb/<date_str>/<slug>")
@@ -407,14 +421,17 @@ def _render_worldcup_matchday(start_date_str, days=3):
 
     total_matches = sum(day["match_count"] for day in days_data)
 
+    # /worldcup is the canonical hub; specific-date pages are self-canonical.
+    canonical_path = "/worldcup" if days > 1 else f"/worldcup/{start_date_str}"
+
     return render_template(
         "worldcup/slate.html",
         days_data=days_data,
         total_matches=total_matches,
         start_date_str=start_date_str,
         showing_multiple=(days > 1),
+        canonical_path=canonical_path,
     )
-
 
 
 
@@ -445,14 +462,11 @@ def ncaaf_root():
 
 # ===== College World Series =====
 
-@app.route("/cws")
-def cws_root():
-    """CWS today's slate."""
-    return redirect(url_for("cws_date", date_str=_eastern_today()), code=302)
-
-
-@app.route("/cws/<date_str>")
-def cws_date(date_str):
+def _render_cws_slate(date_str, canonical_path):
+    """Render the CWS slate for date_str with an explicit canonical URL.
+    Used by /cws (today's hub) and /cws/<date> so /cws renders inline
+    instead of redirecting — Google flagged the old redirect as a
+    Search Console error on Jun 12, 2026."""
     if not _valid_date_str(date_str):
         abort(404)
     slate, meta = get_cws_slate(date_str)
@@ -470,7 +484,22 @@ def cws_date(date_str):
         daily_writeup=daily_writeup,
         is_today=(d == today), is_tomorrow=(d == today + timedelta(days=1)),
         is_past=(d < today),
+        canonical_path=canonical_path,
     )
+
+
+@app.route("/cws")
+def cws_root():
+    """Render today's CWS slate inline. /cws is the canonical hub URL."""
+    return _render_cws_slate(_eastern_today(), canonical_path="/cws")
+
+
+@app.route("/cws/<date_str>")
+def cws_date(date_str):
+    """CWS slate for a specific date. Today canonicalizes back to /cws."""
+    today = _eastern_today()
+    canonical = "/cws" if date_str == today else f"/cws/{date_str}"
+    return _render_cws_slate(date_str, canonical_path=canonical)
 
 
 @app.route("/cws/<date_str>/<slug>")
@@ -501,6 +530,7 @@ def golf_root():
     return render_template(
         "golf/slate.html",
         slate=slate, meta=meta,
+        canonical_path="/golf",
     )
 
 
@@ -512,7 +542,8 @@ def nascar_root():
     if slate is None:
         slate, meta = [], {"build_err": "Slate not yet built"}
     nascar_attach_writeups(slate)
-    return render_template("nascar/slate.html", slate=slate, meta=meta)
+    return render_template("nascar/slate.html", slate=slate, meta=meta,
+                           canonical_path="/nascar")
 
 
 @app.route("/nascar/<slug>")
@@ -701,17 +732,23 @@ def admin_cws():
 @app.route("/sitemap.xml")
 def sitemap():
     """
-    Sitemap includes the evergreen pages plus today's slate and per-game pages
-    (and tomorrow's, so Google can pre-crawl). Older archives are discoverable
-    by internal link only, to keep the sitemap small.
+    Sitemap lists the canonical hub URLs (/mlb, /cws, /worldcup, /golf,
+    /nascar) so Google indexes the stable landing pages, plus the static
+    evergreen pages and today's/tomorrow's date-specific MLB slate so
+    Google can pre-crawl. Older archives are discoverable by internal
+    link only, to keep the sitemap small.
     """
     static_urls = [
         ("/", "1.0", "daily"),
         ("/about", "0.9", "monthly"),
         ("/press", "0.8", "monthly"),
         ("/overcast", "0.9", "monthly"),
-        ("/mlb/today", "0.95", "hourly"),
+        ("/mlb", "0.95", "hourly"),
         ("/mlb/tomorrow", "0.9", "hourly"),
+        ("/worldcup", "0.9", "hourly"),
+        ("/cws", "0.85", "hourly"),
+        ("/golf", "0.85", "daily"),
+        ("/nascar", "0.85", "daily"),
         ("/mlb-weather", "0.8", "monthly"),
         ("/nfl-weather", "0.8", "monthly"),
         ("/pga-weather", "0.8", "monthly"),
