@@ -15,7 +15,7 @@ DATA SOURCE:
 COVERAGE:
     - Domain: continental US only. Outside CONUS → returns None and the
       caller should fall back to NWS / WeatherAPI alone.
-    - Horizon: ~48 hours via the gfs_hrrr model. Rounds / races more
+    - Horizon: ~48-60 hours via the gfs_hrrr model. Rounds / races more
       than ~48 h out will have no HRRR coverage and the toggle won't show.
 
 OUTPUT FORMAT:
@@ -111,13 +111,19 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
                   "wind_direction_10m,wind_gusts_10m",
         # Open-Meteo renamed their HRRR identifier from "hrrr_conus" to
         # "gfs_hrrr" at some point. The latter is a blended product that
-        # uses HRRR for the first ~48 hours within CONUS and returns null
-        # values beyond that horizon (which our parser drops below where
-        # temps[i] is None).
+        # uses HRRR for the first ~48-60 hours within CONUS and returns
+        # null values beyond that horizon (which our parser drops below
+        # where temps[i] is None).
         "models": "gfs_hrrr",
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
-        "forecast_days": 2,
+        # forecast_days=3 returns today + next 2 days. HRRR's model
+        # horizon is ~48-60 hours, so the 3rd day will often be partially
+        # null — our parser drops null entries. The reason we need 3
+        # (not 2) is that Open-Meteo counts from today 00:00 UTC; for a
+        # tournament starting in 2-3 days, forecast_days=2 cuts off
+        # before the round and we'd never have HRRR for it.
+        "forecast_days": 3,
     }
     # Use paid endpoint with API key when available, free endpoint otherwise.
     api_key = (os.environ.get("OPEN_METEO_API_KEY") or "").strip()
