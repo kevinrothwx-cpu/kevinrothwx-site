@@ -7,6 +7,45 @@
 {% block og_title %}PGA Tour Weather Forecasts{% endblock %}
 {% block og_description %}Round-by-round weather for the current PGA Tour event. By Kevin Roth, sports meteorologist.{% endblock %}
 
+{% block extra_head %}
+<style>
+  /* PGA HRRR refinements per Kevin:
+     - dial up the blue backdrop a notch (was 0.025 in the base CSS)
+     - keep HRRR table column widths consistent with NWS table so the
+       9-hour HRRR table doesn't visually balloon next to the 14-hour NWS one
+     - small accent border on the left edge to separate HRRR section */
+  .hrrr-section {
+    background: rgba(30, 58, 138, 0.07) !important;
+    border-left: 3px solid rgba(30, 58, 138, 0.35) !important;
+    padding: 0.35rem 0.55rem 0.65rem !important;
+    margin-top: 0.5rem !important;
+  }
+  .hrrr-section .hourly__table { width: auto; max-width: 100%; }
+  /* The "HRRR available" pill that now lives next to the toggle summary */
+  .hrrr-summary-badge {
+    display: inline-block;
+    margin-left: 0.45rem;
+    padding: 0.1rem 0.45rem;
+    background: var(--storm);
+    color: var(--white);
+    font-family: var(--font-sans);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    vertical-align: middle;
+    line-height: 1.5;
+  }
+  .nws-source-tag {
+    color: var(--fog);
+    font-weight: 500;
+    margin-left: 0.4rem;
+    font-size: 0.85em;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mlb-page">
   <header class="mlb-page__header">
@@ -66,20 +105,22 @@
           <article class="mlb-game-block" id="round-{{ r.round_num }}">
             <header class="mlb-game-block__header">
               <div>
-                <h3 class="mlb-game-block__matchup">
-                  {{ r.round_label or ("Round " ~ r.round_num) }}
-                  {% if r.hrrr_hourly %}
-                    <span class="hrrr-badge" style="display:inline-block;margin-left:0.5rem;padding:0.15rem 0.5rem;background:var(--storm);color:var(--white);font-family:var(--font-sans);font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;vertical-align:middle;line-height:1.4" title="High-resolution HRRR model data available for this round">HRRR available</span>
-                  {% endif %}
-                </h3>
-                <div class="mlb-game-block__venue">{{ r.date_label }} · play hours shown</div>
+                <h3 class="mlb-game-block__matchup">{{ r.round_label or ("Round " ~ r.round_num) }}</h3>
+                <div class="mlb-game-block__venue">
+                  {{ r.date_label }} · play hours shown
+                  <span class="nws-source-tag">· National Weather Service data</span>
+                </div>
               </div>
             </header>
             <div class="mlb-game-block__hourly" style="padding:0.6rem 1rem 0.85rem">
               {{ round_hourly_table(r) }}
               {% if r.hrrr_hourly %}
-                <details class="hrrr-toggle" open>
-                  <summary>High-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
+                <details class="hrrr-toggle">
+                  <summary>
+                    Click to see high-res forecast data
+                    <span class="hrrr-summary-badge">HRRR available</span>
+                    <span class="hrrr-toggle__meta">3 km · hourly updates</span>
+                  </summary>
                   <div class="hrrr-section">
                     {{ round_hourly_table(r, hours=r.hrrr_hourly) }}
                   </div>
