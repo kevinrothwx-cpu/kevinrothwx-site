@@ -8,13 +8,22 @@ only depends on `requests`.
 NWS coverage:
     US (contiguous + Alaska + Hawaii) only. For Rogers Centre (Toronto)
     we fall back to Open-Meteo, see mlb/open_meteo.py.
+
+NWS endpoints used:
+    1. /points/{lat},{lon} — returns forecastHourly + forecastGridData URLs
+    2. forecastHourly URL — list of hourly periods with temp/wind/precip
+    3. forecastGridData URL — raw model grid with windGust series
+
+The forecastHourly endpoint does NOT include gust data; gusts live only on
+the gridpoint endpoint. We fetch both and merge gust values into the
+normalized period dicts so templates can display them.
 """
 
 from __future__ import annotations
 
 import re
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
@@ -33,6 +42,9 @@ COMPASS_TO_DEG = {
     "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5,
     "CALM": 0, "VRB": 0, "VAR": 0,
 }
+
+# km/h to mph
+_KMH_TO_MPH = 0.621371
 
 
 def get_mlb_schedule(date_str: str) -> list[dict]:
@@ -76,27 +88,49 @@ def parse_mlb_game(game: dict) -> Optional[dict]:
     }
 
 
-_nws_hourly_url_cache: dict[str, str] = {}
+# ── Caches ──────────────────────────────────────────────────────────────
+# _nws_point_cache holds both URLs from a single /points fetch — the points
+# endpoint returns both forecastHourly and forecastGridData URLs in one
+# response, so we cache both together to avoid duplicate calls.
+_nws_point_cache: dict[str, dict] = {}
 _nws_periods_cache: dict[str, list] = {}
+_nws_gusts_cache: dict[str, dict] = {}
 
 
 def clear_periods_cache() -> None:
-    """Called by the background warmer to force fresh forecasts."""
+    """Called by background warmers to force fresh forecasts.
+    Clears both hourly period and gust caches so we get fresh data each cycle.
+    The /points endpoint cache is preserved — those URLs are stable per location."""
     _nws_periods_cache.clear()
+    _nws_gusts_cache.clear()
 
 
-def get_nws_hourly_url(lat: float, lon: float) -> str:
-    """Two-step NWS lookup."""
+def _get_nws_point_data(lat: float, lon: float) -> dict:
+    """Fetch (and cache) the /points response, returning both forecast URLs."""
     key = f"{lat:.4f},{lon:.4f}"
-    if key not in _nws_hourly_url_cache:
+    if key not in _nws_point_cache:
         resp = requests.get(
             NWS_POINTS_URL.format(lat=lat, lon=lon),
             headers=NWS_HEADERS,
             timeout=15,
         )
         resp.raise_for_status()
-        _nws_hourly_url_cache[key] = resp.json()["properties"]["forecastHourly"]
-    return _nws_hourly_url_cache[key]
+        props = resp.json().get("properties", {})
+        _nws_point_cache[key] = {
+            "hourly_url": props.get("forecastHourly", ""),
+            "grid_url":   props.get("forecastGridData", ""),
+        }
+    return _nws_point_cache[key]
+
+
+def get_nws_hourly_url(lat: float, lon: float) -> str:
+    """Two-step NWS lookup. Returns the forecastHourly URL."""
+    return _get_nws_point_data(lat, lon)["hourly_url"]
+
+
+def get_nws_gridpoint_url(lat: float, lon: float) -> str:
+    """Return the forecastGridData URL (raw model grid, has windGust series)."""
+    return _get_nws_point_data(lat, lon)["grid_url"]
 
 
 def get_nws_periods(hourly_url: str) -> list:
@@ -109,6 +143,105 @@ def get_nws_periods(hourly_url: str) -> list:
         short = hourly_url.split("/gridpoints/")[-1] if "/gridpoints/" in hourly_url else hourly_url[-40:]
         print(f"[mlb.nws] fetched {short} updateTime={data.get('updateTime')}", flush=True)
     return _nws_periods_cache[hourly_url]
+
+
+def _parse_iso_duration_hours(dur: str) -> int:
+    """Parse an ISO 8601 duration like 'PT3H' or 'PT1H' to integer hours.
+    NWS gridpoints uses these to declare how long a value is valid for."""
+    m = re.match(r"PT(\d+)H", dur or "")
+    return int(m.group(1)) if m else 1
+
+
+def get_nws_gusts(lat: float, lon: float) -> dict[str, int]:
+    """
+    Fetch NWS gridpoint windGust series for a location. Returns a dict
+    mapping ISO-formatted UTC hour timestamps to gust mph (rounded int).
+
+    The gridpoint endpoint reports gusts in km/h with ISO-8601 duration
+    spans (e.g. one value valid for PT3H). We expand each span into the
+    per-hour entries it covers so callers can look up by exact hour.
+
+    Cached per location. Empty dict on fetch failure so callers can fall
+    back gracefully without blowing up the page.
+    """
+    key = f"{lat:.4f},{lon:.4f}"
+    if key in _nws_gusts_cache:
+        return _nws_gusts_cache[key]
+
+    try:
+        grid_url = get_nws_gridpoint_url(lat, lon)
+        if not grid_url:
+            _nws_gusts_cache[key] = {}
+            return {}
+        resp = requests.get(grid_url, headers=NWS_HEADERS, timeout=15)
+        resp.raise_for_status()
+        gust_obj = resp.json().get("properties", {}).get("windGust", {}) or {}
+        values = gust_obj.get("values") or []
+        unit = gust_obj.get("uom", "")
+        # NWS reports km/h by default; convert if needed.
+        is_kmh = "km_h-1" in unit
+
+        out: dict[str, int] = {}
+        for entry in values:
+            valid_time = entry.get("validTime", "")
+            val = entry.get("value")
+            if val is None or "/" not in valid_time:
+                continue
+            time_str, duration_str = valid_time.split("/", 1)
+            try:
+                start = datetime.fromisoformat(time_str)
+            except ValueError:
+                continue
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            start_utc = start.astimezone(timezone.utc).replace(
+                minute=0, second=0, microsecond=0
+            )
+            hours = _parse_iso_duration_hours(duration_str)
+            mph = float(val) * _KMH_TO_MPH if is_kmh else float(val)
+            mph_int = round(mph)
+            for h in range(hours):
+                t = start_utc + timedelta(hours=h)
+                out[t.isoformat()] = mph_int
+
+        _nws_gusts_cache[key] = out
+        print(f"[mlb.nws] fetched {len(out)} hourly gust entries for {lat},{lon}", flush=True)
+        return out
+    except Exception as e:
+        print(f"[mlb.nws] gust fetch failed for {lat},{lon}: {e}", flush=True)
+        _nws_gusts_cache[key] = {}
+        return {}
+
+
+def attach_nws_gusts(periods: list, lat: float, lon: float) -> list:
+    """
+    Mutate a list of normalized period dicts in place to attach gust mph
+    looked up from the NWS gridpoint windGust series. Only fills periods
+    whose 'gust' field is None — preserves values populated by HRRR or
+    another source. Returns the same list for chaining convenience.
+    """
+    if not periods:
+        return periods
+    gusts = get_nws_gusts(lat, lon)
+    if not gusts:
+        return periods
+    for p in periods:
+        if p.get("gust") is not None:
+            continue
+        st_raw = p.get("start_time")
+        if not st_raw:
+            continue
+        try:
+            st = datetime.fromisoformat(st_raw)
+        except ValueError:
+            continue
+        if st.tzinfo is None:
+            st = st.replace(tzinfo=timezone.utc)
+        st_utc = st.astimezone(timezone.utc).replace(
+            minute=0, second=0, microsecond=0
+        )
+        p["gust"] = gusts.get(st_utc.isoformat())
+    return periods
 
 
 def find_period_for_time(periods: list, target_utc: datetime) -> dict:
@@ -155,7 +288,9 @@ def parse_wind_speed(wind_str) -> float:
 
 
 def extract_forecast(period: dict) -> dict:
-    """Pull temp, dew, wind, precip, humidity from one NWS hourly period."""
+    """Pull temp, dew, wind, precip, humidity from one NWS hourly period.
+    The 'gust' field is left as None — gusts come from a separate gridpoint
+    fetch and get merged in by attach_nws_gusts()."""
     temp = period.get("temperature", 70)
     if period.get("temperatureUnit") == "C":
         temp = temp * 9 / 5 + 32
@@ -190,6 +325,7 @@ def extract_forecast(period: dict) -> dict:
         "dew":            dew,
         "wind_speed":     wind_speed,
         "wind_deg":       wind_deg,
+        "gust":           None,
         "precip_pct":     precip_pct,
         "humidity_pct":   humidity_pct,
         "short_forecast": period.get("shortForecast", ""),

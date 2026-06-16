@@ -23,6 +23,7 @@ from .schedule import get_pga_scoreboard, parse_pga_event, tournament_slug
 from mlb.nws import (
     get_nws_hourly_url, get_nws_periods,
     find_period_for_time, extract_forecast,
+    attach_nws_gusts,
 )
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from hrrr import get_hrrr_periods
@@ -45,7 +46,11 @@ def _all_hourly_for_course(course_meta):
     try:
         url = get_nws_hourly_url(course_meta["lat"], course_meta["lon"])
         raw = get_nws_periods(url)
-        return [extract_forecast(p) for p in raw], "nws", None
+        periods = [extract_forecast(p) for p in raw]
+        # Merge in gusts from NWS gridpoint windGust series (separate fetch
+        # since the hourly forecast endpoint doesn't include gust data).
+        attach_nws_gusts(periods, course_meta["lat"], course_meta["lon"])
+        return periods, "nws", None
     except Exception as e:
         return None, "nws", str(e)
 

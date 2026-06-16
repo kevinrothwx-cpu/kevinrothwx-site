@@ -39,6 +39,10 @@
         <div>
           <h2 class="golf-tournament__name">{{ race.name }}</h2>
           <p class="golf-tournament__course">
+            {% if race.green_flag_eastern_date_str %}
+              <strong>{{ race.green_flag_eastern_date_str }}{% if race.green_flag_eastern_str %} · {{ race.green_flag_eastern_str }}{% endif %}</strong>
+              <span style="margin:0 0.4rem;color:var(--smoke)">·</span>
+            {% endif %}
             {% if race.track_meta %}
               {{ race.track }} · {{ race.track_meta.city }}
               <span class="venue-roof-flag venue-roof-flag--retractable" style="margin-left:0.5rem">
@@ -69,15 +73,24 @@
         <article class="mlb-game-block" id="race-{{ race.slug }}">
           <header class="mlb-game-block__header">
             <div>
-              <h3 class="mlb-game-block__matchup">Hourly forecast around green flag</h3>
-              <div class="mlb-game-block__venue">{{ race.track }} · {{ race.green_flag_eastern_str }}</div>
+              <h3 class="mlb-game-block__matchup">
+                Hourly forecast around green flag
+                {% if race.hrrr_hourly %}
+                  <span class="hrrr-badge" style="display:inline-block;margin-left:0.5rem;padding:0.15rem 0.5rem;background:var(--storm);color:var(--white);font-family:var(--font-sans);font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;vertical-align:middle;line-height:1.4" title="High-resolution HRRR model data available for this race">HRRR available</span>
+                {% endif %}
+              </h3>
+              <div class="mlb-game-block__venue">
+                {{ race.track }}
+                {% if race.green_flag_eastern_date_str %} · {{ race.green_flag_eastern_date_str }}{% endif %}
+                {% if race.green_flag_eastern_str %} · {{ race.green_flag_eastern_str }}{% endif %}
+              </div>
             </div>
           </header>
           <div class="mlb-game-block__hourly" style="padding:0.6rem 1rem 0.85rem">
             {{ race_hourly_table(race) }}
             {% if race.hrrr_hourly %}
-              <details class="hrrr-toggle">
-                <summary>Show high-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
+              <details class="hrrr-toggle" open>
+                <summary>High-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
                 <div class="hrrr-section">
                   {{ race_hourly_table(race, hours=race.hrrr_hourly) }}
                 </div>

@@ -19,6 +19,7 @@ from .schedule import get_nascar_scoreboard, parse_nascar_event, race_slug
 from mlb.nws import (
     get_nws_hourly_url, get_nws_periods,
     find_period_for_time, extract_forecast,
+    attach_nws_gusts,
 )
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from hrrr import get_hrrr_periods
@@ -45,6 +46,15 @@ def _forecast_for_track(track, target_utc):
         chosen_raw = find_period_for_time(raw, target_utc)
         chosen = extract_forecast(chosen_raw)
         normalized = [extract_forecast(p) for p in raw]
+        # Merge in gusts from NWS gridpoint windGust series.
+        attach_nws_gusts(normalized, track["lat"], track["lon"])
+        # Also try to attach a gust to the chosen-period summary so the
+        # green-flag forecast block can show gust if templates want it.
+        if normalized:
+            for p in normalized:
+                if p.get("start_time") == chosen.get("start_time"):
+                    chosen["gust"] = p.get("gust")
+                    break
         return chosen, normalized, "nws", None
     except Exception as e:
         return None, None, "nws", str(e)
@@ -111,6 +121,7 @@ def build_race(event):
         "green_flag_local":  gf_local,
         "green_flag_eastern": gf_eastern,
         "green_flag_eastern_str": gf_eastern.strftime("%-I:%M %p ET").lstrip("0") if gf_eastern else "",
+        "green_flag_eastern_date_str": gf_eastern.strftime("%a, %b %-d") if gf_eastern else "",
         "forecast":    forecast,
         "hourly":      hourly,
         "hrrr_hourly": hrrr_hourly,

@@ -66,15 +66,20 @@
           <article class="mlb-game-block" id="round-{{ r.round_num }}">
             <header class="mlb-game-block__header">
               <div>
-                <h3 class="mlb-game-block__matchup">{{ r.round_label or ("Round " ~ r.round_num) }}</h3>
+                <h3 class="mlb-game-block__matchup">
+                  {{ r.round_label or ("Round " ~ r.round_num) }}
+                  {% if r.hrrr_hourly %}
+                    <span class="hrrr-badge" style="display:inline-block;margin-left:0.5rem;padding:0.15rem 0.5rem;background:var(--storm);color:var(--white);font-family:var(--font-sans);font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;vertical-align:middle;line-height:1.4" title="High-resolution HRRR model data available for this round">HRRR available</span>
+                  {% endif %}
+                </h3>
                 <div class="mlb-game-block__venue">{{ r.date_label }} · play hours shown</div>
               </div>
             </header>
             <div class="mlb-game-block__hourly" style="padding:0.6rem 1rem 0.85rem">
               {{ round_hourly_table(r) }}
               {% if r.hrrr_hourly %}
-                <details class="hrrr-toggle">
-                  <summary>Show high-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
+                <details class="hrrr-toggle" open>
+                  <summary>High-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
                   <div class="hrrr-section">
                     {{ round_hourly_table(r, hours=r.hrrr_hourly) }}
                   </div>

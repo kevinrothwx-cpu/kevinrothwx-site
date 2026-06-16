@@ -193,7 +193,9 @@
 {% endmacro %}
 
 
-{# ── Hourly forecast table, bigger icons (sized via CSS) ────── #}
+{# ── Hourly forecast table.
+   Row order: Precip, Temp, Wind, Wind dir, Dewpoint.
+   MLB keeps Dewpoint (gusts not displayed here per Kevin's spec). #}
 {% macro hourly_table(game) %}
   {% set hours = game.hourly or [] %}
   {% if hours %}
@@ -229,6 +231,12 @@
             <td class="hourly__label">Wind</td>
             {% for h in hours %}
               <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind dir</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ (h.wind_deg|wind_compass) or "—" }}</td>
             {% endfor %}
           </tr>
           {% if hours[0].dew is not none %}

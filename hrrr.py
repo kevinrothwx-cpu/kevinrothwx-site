@@ -21,7 +21,8 @@ COVERAGE:
 OUTPUT FORMAT:
     Pre-normalized to the same period dict shape as mlb.nws.extract_forecast,
     so existing _hourly_window / _periods_for_round_day helpers slice the
-    HRRR list interchangeably with NWS.
+    HRRR list interchangeably with NWS. Includes a "gust" field (mph)
+    from wind_gusts_10m, populated when HRRR returns it.
 """
 
 from __future__ import annotations
@@ -106,7 +107,8 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         "latitude": lat,
         "longitude": lon,
         "hourly": "temperature_2m,relative_humidity_2m,dewpoint_2m,"
-                  "precipitation_probability,wind_speed_10m,wind_direction_10m",
+                  "precipitation_probability,wind_speed_10m,"
+                  "wind_direction_10m,wind_gusts_10m",
         "models": "hrrr_conus",
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
@@ -149,6 +151,7 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
     pops  = hourly.get("precipitation_probability") or []
     winds = hourly.get("wind_speed_10m") or []
     wdirs = hourly.get("wind_direction_10m") or []
+    gusts = hourly.get("wind_gusts_10m") or []
 
     periods = []
     for i, t_str in enumerate(times):
@@ -164,6 +167,7 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
             "dew":            round(float(dews[i])) if i < len(dews) and dews[i] is not None else None,
             "wind_speed":     round(float(winds[i])) if i < len(winds) and winds[i] is not None else 0,
             "wind_deg":       float(wdirs[i]) if i < len(wdirs) and wdirs[i] is not None else 0,
+            "gust":           round(float(gusts[i])) if i < len(gusts) and gusts[i] is not None else None,
             "precip_pct":     int(pops[i]) if i < len(pops) and pops[i] is not None else 0,
             "humidity_pct":   int(rhs[i]) if i < len(rhs) and rhs[i] is not None else None,
             "short_forecast": "",

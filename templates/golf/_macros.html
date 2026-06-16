@@ -32,10 +32,16 @@
 
 {# Hourly forecast table for one round (play hours only). Accepts an
    optional `hours` param so the same macro can render NWS (default:
-   round_data.hourly) or HRRR (round_data.hrrr_hourly). #}
+   round_data.hourly) or HRRR (round_data.hrrr_hourly).
+
+   Row order: Precip, Temp, Wind, Wind dir, Gusts (fallback Dewpoint).
+   Gusts come from HRRR's wind_gusts_10m or NWS's gridpoint windGust
+   series — if neither populates a value, the row falls back to Dewpoint
+   so the table never looks empty. #}
 {% macro round_hourly_table(round_data, hours=None) %}
   {% if hours is none %}{% set hours = round_data.hourly or [] %}{% endif %}
   {% if hours %}
+    {% set has_gusts = hours|selectattr('gust', 'ne', none)|list|length > 0 %}
     <div class="hourly">
       <table class="hourly__table">
         <thead>
@@ -70,7 +76,20 @@
               <td class="hourly__cell">{{ h.wind_speed }} mph</td>
             {% endfor %}
           </tr>
-          {% if hours[0].dew is not none %}
+          <tr>
+            <td class="hourly__label">Wind dir</td>
+            {% for h in hours %}
+              <td class="hourly__cell">{{ (h.wind_deg|wind_compass) or "—" }}</td>
+            {% endfor %}
+          </tr>
+          {% if has_gusts %}
+          <tr>
+            <td class="hourly__label">Gusts</td>
+            {% for h in hours %}
+              <td class="hourly__cell">{% if h.gust is not none %}{{ h.gust }} mph{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% elif hours[0].dew is not none %}
           <tr>
             <td class="hourly__label">Dewpoint</td>
             {% for h in hours %}
