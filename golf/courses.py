@@ -46,6 +46,19 @@ PGA_COURSES = {
         "timezone": "Europe/London",
         "nws_unsupported": True,
     },
+    "Shinnecock Hills Golf Club": {
+        "city": "Southampton, NY", "country": "US",
+        "lat": 40.8944, "lon": -72.4528,
+        "timezone": "America/New_York",
+        "aliases": ["Shinnecock Hills", "Shinnecock"],
+    },
+    "Royal Birkdale Golf Club": {
+        "city": "Southport, England", "country": "UK",
+        "lat": 53.6286, "lon": -3.0303,
+        "timezone": "Europe/London",
+        "nws_unsupported": True,
+        "aliases": ["Royal Birkdale", "Birkdale"],
+    },
 
     # ── REGULAR PGA TOUR STAPLES ─────────────────────────────────
     "TPC Sawgrass": {
@@ -133,6 +146,7 @@ PGA_COURSES = {
         "lat": 56.0489, "lon": -2.7611,
         "timezone": "Europe/London",
         "nws_unsupported": True,
+        "aliases": ["The Renaissance Club"],
     },
     "TPC Southwind": {
         "city": "Memphis, TN", "country": "US",
@@ -154,12 +168,37 @@ PGA_COURSES = {
         "lat": 39.4044, "lon": -104.8722,
         "timezone": "America/Denver",
     },
+    "Sedgefield Country Club": {
+        "city": "Greensboro, NC", "country": "US",
+        "lat": 36.0467, "lon": -79.8369,
+        "timezone": "America/New_York",
+        "aliases": ["Sedgefield"],
+    },
+    "Bellerive Country Club": {
+        "city": "Town and Country, MO", "country": "US",
+        "lat": 38.6447, "lon": -90.4347,
+        "timezone": "America/Chicago",
+        "aliases": ["Bellerive"],
+    },
+    "The Cliffs at Walnut Cove": {
+        "city": "Asheville, NC", "country": "US",
+        "lat": 35.4456, "lon": -82.5631,
+        "timezone": "America/New_York",
+        "aliases": ["Walnut Cove", "Cliffs at Walnut Cove"],
+    },
+    "Medinah CC (No. 3)": {
+        "city": "Medinah, IL", "country": "US",
+        "lat": 41.9789, "lon": -88.0420,
+        "timezone": "America/Chicago",
+        "aliases": ["Medinah Country Club", "Medinah CC", "Medinah Country Club (No. 3)"],
+    },
 
     # ── FALL/SILLY SEASON ────────────────────────────────────────
     "Sea Island Resort (Seaside Course)": {
         "city": "St. Simons Island, GA", "country": "US",
         "lat": 31.1769, "lon": -81.3939,
         "timezone": "America/New_York",
+        "aliases": ["Sea Island Golf Club (Seaside Course)", "Sea Island"],
     },
     "Country Club of Jackson": {
         "city": "Jackson, MS", "country": "US",
@@ -181,6 +220,58 @@ PGA_COURSES = {
         "city": "Honolulu, HI", "country": "US",
         "lat": 21.2683, "lon": -157.7689,
         "timezone": "Pacific/Honolulu",
+    },
+    "Black Desert Resort": {
+        "city": "Ivins, UT", "country": "US",
+        "lat": 37.1561, "lon": -113.6917,
+        "timezone": "America/Denver",
+        "aliases": ["Black Desert"],
+    },
+    "Omni Barton Creek Resort": {
+        "city": "Austin, TX", "country": "US",
+        "lat": 30.2811, "lon": -97.8489,
+        "timezone": "America/Chicago",
+        "aliases": ["Barton Creek", "Omni Barton Creek", "Omni Barton Creek Resort & Spa"],
+    },
+    "Tiburon Golf Club": {
+        "city": "Naples, FL", "country": "US",
+        "lat": 26.2569, "lon": -81.7464,
+        "timezone": "America/New_York",
+        "aliases": ["Tiburón Golf Club", "Tiburon"],
+    },
+
+    # ── INTERNATIONAL (NWS unsupported, weather via WeatherAPI) ──
+    "Yokohama Country Club": {
+        "city": "Yokohama", "country": "JP",
+        "lat": 35.5066, "lon": 139.5847,
+        "timezone": "Asia/Tokyo",
+        "nws_unsupported": True,
+    },
+    "Port Royal Golf Course": {
+        "city": "Southampton, Bermuda", "country": "BM",
+        "lat": 32.2553, "lon": -64.8869,
+        "timezone": "Atlantic/Bermuda",
+        "nws_unsupported": True,
+    },
+    "Vidanta Vallarta": {
+        "city": "Nuevo Vallarta", "country": "MX",
+        "lat": 20.7000, "lon": -105.2667,
+        "timezone": "America/Mexico_City",
+        "nws_unsupported": True,
+    },
+    "El Cardonal at Diamante": {
+        "city": "Los Cabos", "country": "MX",
+        "lat": 23.0086, "lon": -109.9408,
+        "timezone": "America/Mazatlan",
+        "nws_unsupported": True,
+        "aliases": ["El Cardonal", "Diamante"],
+    },
+    "Albany GC": {
+        "city": "Nassau", "country": "BS",
+        "lat": 24.9911, "lon": -77.5664,
+        "timezone": "America/Nassau",
+        "nws_unsupported": True,
+        "aliases": ["Albany"],
     },
 
     # ── CANADA / INTERNATIONAL ───────────────────────────────────

@@ -94,14 +94,15 @@ def _tournament_to_espn_dict(t: tuple) -> dict:
     }
 
 
-def get_fallback_events(now_utc: datetime | None = None, lookahead_days: int = 21) -> list[dict]:
+def get_fallback_events(now_utc: datetime | None = None, lookahead_days: int = 8) -> list[dict]:
     """
     Return upcoming tournaments within the next `lookahead_days` window,
     formatted like ESPN's event dicts so parse_pga_event handles them
     transparently. Past tournaments are filtered out.
 
-    Default lookahead of 21 days surfaces this week's tournament plus the
-    next 2 weekends — gives the slate a buffer when ESPN is unreliable.
+    Lookahead of 8 days means: only this week's tournament shows mid-week,
+    and the page rolls to next week's tournament on Monday once the prior
+    one ends. Matches the NASCAR pattern — one event at a time.
     """
     if now_utc is None:
         now_utc = datetime.now(timezone.utc)
