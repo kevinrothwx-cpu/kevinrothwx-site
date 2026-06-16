@@ -36,23 +36,46 @@ PLAY_END_HOUR   = 20
 
 
 def _all_hourly_for_course(course_meta):
-    """Fetch the full hourly-period list for a course (route NWS vs WeatherAPI)."""
+    """Fetch the full hourly-period list for a course.
+
+    Fallback layers when something fails:
+      1. NWS — with built-in 24h stale-cache inside mlb.nws.get_nws_periods,
+         so brief NWS outages don't blank out the page.
+      2. WeatherAPI — used when NWS is unrecoverable (no last-good or
+         last-good >24h old, e.g. Render restarted during an NWS outage).
+
+    Courses flagged `nws_unsupported` (e.g. international) skip straight
+    to WeatherAPI without trying NWS.
+    """
+    lat, lon = course_meta["lat"], course_meta["lon"]
+    course_name = course_meta.get("name", "?")
+
     if course_meta.get("nws_unsupported"):
         try:
-            periods = fetch_weatherapi_hourly(course_meta["lat"], course_meta["lon"])
+            periods = fetch_weatherapi_hourly(lat, lon)
             return periods, "weatherapi", None
         except Exception as e:
             return None, "weatherapi", str(e)
+
+    # Layer 1: NWS (with 24h stale-cache safety net inside get_nws_periods)
     try:
-        url = get_nws_hourly_url(course_meta["lat"], course_meta["lon"])
+        url = get_nws_hourly_url(lat, lon)
         raw = get_nws_periods(url)
         periods = [extract_forecast(p) for p in raw]
         # Merge in gusts from NWS gridpoint windGust series (separate fetch
         # since the hourly forecast endpoint doesn't include gust data).
-        attach_nws_gusts(periods, course_meta["lat"], course_meta["lon"])
+        attach_nws_gusts(periods, lat, lon)
         return periods, "nws", None
-    except Exception as e:
-        return None, "nws", str(e)
+    except Exception as nws_err:
+        print(f"[golf.slate] NWS failed for {course_name}: {nws_err} — trying WeatherAPI fallback", flush=True)
+
+    # Layer 2: WeatherAPI fallback (NWS unrecoverable after 24h grace window)
+    try:
+        periods = fetch_weatherapi_hourly(lat, lon)
+        print(f"[golf.slate] WeatherAPI fallback succeeded for {course_name}", flush=True)
+        return periods, "weatherapi-fallback", None
+    except Exception as wa_err:
+        return None, "all-sources-failed", f"NWS unrecoverable; WeatherAPI: {wa_err}"
 
 
 def _periods_for_round_day(periods, round_date, tz):

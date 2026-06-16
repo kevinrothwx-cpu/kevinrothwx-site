@@ -96,11 +96,20 @@ _nws_point_cache: dict[str, dict] = {}
 _nws_periods_cache: dict[str, list] = {}
 _nws_gusts_cache: dict[str, dict] = {}
 
+# Long-lived "last successful fetch" cache. Survives warmer cache clears so
+# that brief NWS outages don't blank out a page — we keep serving the most
+# recent good response for up to 24 hours while NWS recovers. Keyed by
+# hourly_url, value is (periods, datetime_utc). After 24h, callers (e.g.
+# golf.slate._all_hourly_for_course) should fall back to WeatherAPI.
+_nws_last_good_cache: dict[str, tuple[list, datetime]] = {}
+_NWS_LAST_GOOD_MAX_AGE = timedelta(hours=24)
+
 
 def clear_periods_cache() -> None:
     """Called by background warmers to force fresh forecasts.
     Clears both hourly period and gust caches so we get fresh data each cycle.
-    The /points endpoint cache is preserved — those URLs are stable per location."""
+    The /points endpoint cache is preserved — those URLs are stable per location.
+    The last-good cache is also preserved — it's the safety net for NWS outages."""
     _nws_periods_cache.clear()
     _nws_gusts_cache.clear()
 
@@ -134,15 +143,44 @@ def get_nws_gridpoint_url(lat: float, lon: float) -> str:
 
 
 def get_nws_periods(hourly_url: str) -> list:
-    """Fetch and cache the list of hourly forecast periods for a URL."""
-    if hourly_url not in _nws_periods_cache:
+    """Fetch and cache hourly forecast periods for a URL.
+
+    On fetch failure (NWS 5xx, network blip, timeout), falls back to the
+    last-good cached periods if they're less than 24h old. After 24h with
+    no fresh data, re-raises so the caller can route to a backup source
+    (e.g. WeatherAPI).
+    """
+    if hourly_url in _nws_periods_cache:
+        return _nws_periods_cache[hourly_url]
+
+    short = hourly_url.split("/gridpoints/")[-1] if "/gridpoints/" in hourly_url else hourly_url[-40:]
+    try:
         resp = requests.get(hourly_url, headers=NWS_HEADERS, timeout=15)
         resp.raise_for_status()
         data = resp.json()["properties"]
-        _nws_periods_cache[hourly_url] = data["periods"]
-        short = hourly_url.split("/gridpoints/")[-1] if "/gridpoints/" in hourly_url else hourly_url[-40:]
+        periods = data["periods"]
+        # Record success in BOTH caches: short-term (warmer-cleared) and
+        # long-term last-good (preserved across warmer cycles).
+        _nws_periods_cache[hourly_url] = periods
+        _nws_last_good_cache[hourly_url] = (periods, datetime.now(timezone.utc))
         print(f"[mlb.nws] fetched {short} updateTime={data.get('updateTime')}", flush=True)
-    return _nws_periods_cache[hourly_url]
+        return periods
+    except Exception as e:
+        last_good = _nws_last_good_cache.get(hourly_url)
+        if last_good is not None:
+            periods, ts = last_good
+            age = datetime.now(timezone.utc) - ts
+            age_hr = age.total_seconds() / 3600
+            if age < _NWS_LAST_GOOD_MAX_AGE:
+                print(f"[mlb.nws] fetch failed for {short}: {e} — serving stale cache (age={age_hr:.1f}h)", flush=True)
+                # Populate short-term cache too so we don't hammer NWS every
+                # request within this warmer cycle. Next cycle clears + retries.
+                _nws_periods_cache[hourly_url] = periods
+                return periods
+            print(f"[mlb.nws] fetch failed for {short}: {e} — last-good is {age_hr:.1f}h old (>24h), re-raising for caller fallback", flush=True)
+        else:
+            print(f"[mlb.nws] fetch failed for {short}: {e} — no last-good cache, re-raising", flush=True)
+        raise
 
 
 def _parse_iso_duration_hours(dur: str) -> int:
