@@ -154,13 +154,40 @@ def build_tournament(event: dict) -> dict:
 
 
 def build_pga_slate() -> list[dict]:
-    """Build the current PGA slate (typically 1-3 active/upcoming tournaments)."""
+    """Build the current PGA slate of active/upcoming tournaments.
+
+    Filters out tournaments that have already ended (end_iso before today
+    UTC) or whose ESPN status indicates FINAL/POST. ESPN's scoreboard
+    routinely keeps last week's just-finished tournament alongside the
+    upcoming one for a few days — without this filter, last week's event
+    keeps showing on /golf through midweek even though it's over.
+    """
     raw = get_pga_scoreboard()
+    today_utc_date = datetime.now(timezone.utc).date()
     out = []
     for event in raw:
         parsed = parse_pga_event(event)
         if not parsed:
             continue
+
+        # Drop ESPN-flagged final/completed events first (cheap status check)
+        status = (parsed.get("status") or "").upper()
+        if "FINAL" in status or "POST" in status:
+            continue
+
+        # Drop events whose end date is before today (UTC). Tournament-level
+        # granularity is fine: end_iso is the start of Sunday's final round,
+        # so any tournament finished by today UTC gets filtered. Catches the
+        # window where ESPN hasn't flipped status to FINAL yet.
+        end_iso = parsed.get("end_iso") or ""
+        if end_iso:
+            try:
+                end_date = datetime.fromisoformat(end_iso.replace("Z", "+00:00")).date()
+                if end_date < today_utc_date:
+                    continue
+            except Exception:
+                pass
+
         tournament = build_tournament(parsed)
         out.append(tournament)
     out.sort(key=lambda t: t.get("start_iso", ""))

@@ -170,6 +170,16 @@ NASCAR_TRACKS = {
         "track_type": "street_course", "length_miles": 2.2,
         "aliases": ["Chicago"],
     },
+    # New for 2026: NASCAR Cup race at Naval Air Station North Island in
+    # Coronado, San Diego. Temporary street circuit on the Navy base.
+    # Lat/lon approximate; layout/length subject to final confirmation.
+    "Coronado Street Course": {
+        "city": "Coronado, CA", "country": "US",
+        "lat": 32.6900, "lon": -117.2150,
+        "timezone": "America/Los_Angeles",
+        "track_type": "street_course", "length_miles": 2.0,
+        "aliases": ["Coronado", "San Diego", "Naval Base Coronado"],
+    },
 
     # ── OTHER OVALS ──────────────────────────────────────────
     "Indianapolis Motor Speedway": {

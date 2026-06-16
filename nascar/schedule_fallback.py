@@ -94,7 +94,7 @@ def _race_to_espn_dict(race: tuple) -> dict:
     }
 
 
-def get_fallback_events(now_utc: datetime | None = None, lookahead_days: int = 14) -> list[dict]:
+def get_fallback_events(now_utc: datetime | None = None, lookahead_days: int = 8) -> list[dict]:
     """
     Return upcoming races within the next `lookahead_days` window, formatted
     like ESPN's event dicts so parse_nascar_event handles them transparently.
@@ -102,6 +102,10 @@ def get_fallback_events(now_utc: datetime | None = None, lookahead_days: int = 1
     Empty list if the season hasn't started yet OR every remaining race is
     past `lookahead_days` away. Mirrors how ESPN's scoreboard naturally
     surfaces only "current" events.
+
+    Lookahead of 8 days means: only this weekend's race shows mid-week, and
+    the page rolls to next weekend's race on Monday once the prior one ends.
+    Avoids showing races whose date is beyond the NWS 7-day forecast window.
     """
     if now_utc is None:
         now_utc = datetime.now(timezone.utc)
