@@ -1,5 +1,12 @@
 """
-golf.schedule — ESPN's unofficial PGA Tour scoreboard.
+golf.schedule — ESPN's unofficial PGA Tour scoreboard + 2026 hand-curated
+fallback.
+
+ESPN's PGA scoreboard endpoint is unreliable: it often returns only the
+most-recently-completed tournament (which our slate filter then drops),
+leaving /golf empty. We merge ESPN's response with the hand-curated 2026
+schedule in schedule_fallback.py so the page always shows the upcoming
+tournament even when ESPN's data is stale.
 
 Endpoint:
     https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard
@@ -17,8 +24,10 @@ from __future__ import annotations
 
 import requests
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+
+from .schedule_fallback import get_fallback_events
 
 
 ESPN_PGA_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard"
@@ -29,7 +38,13 @@ REQUEST_HEADERS = {
 
 
 def get_pga_scoreboard() -> list[dict]:
-    """Fetch the current PGA scoreboard. Returns raw event dicts."""
+    """Fetch ESPN's PGA scoreboard, merged with the hand-curated 2026 fallback.
+
+    ESPN sometimes returns only the most-recently-completed tournament. By
+    always merging with the fallback (ESPN wins on name conflicts so its real
+    event_id is preferred), the slate stays populated with current/upcoming
+    tournaments regardless of ESPN's reliability."""
+    espn_events: list[dict] = []
     try:
         resp = requests.get(
             ESPN_PGA_SCOREBOARD_URL,
@@ -37,10 +52,31 @@ def get_pga_scoreboard() -> list[dict]:
             timeout=15,
         )
         resp.raise_for_status()
-        return resp.json().get("events", [])
+        espn_events = resp.json().get("events", []) or []
     except Exception as e:
         print(f"[golf.schedule] ESPN error: {e}", flush=True)
-        return []
+
+    # Merge in fallback events that ESPN didn't already surface, deduped by
+    # tournament name (case-insensitive). ESPN wins on duplicates so a live
+    # tournament keeps its canonical ESPN event_id.
+    fallback = get_fallback_events(datetime.now(timezone.utc))
+    espn_names_lower = {
+        (e.get("name", "") or "").strip().lower()
+        for e in espn_events
+    }
+    merged = list(espn_events)
+    added = 0
+    for fe in fallback:
+        fe_name_lower = (fe.get("name", "") or "").strip().lower()
+        if fe_name_lower and fe_name_lower not in espn_names_lower:
+            merged.append(fe)
+            added += 1
+    print(
+        f"[golf.schedule] ESPN={len(espn_events)} events, "
+        f"fallback added {added} of {len(fallback)}, merged={len(merged)}",
+        flush=True,
+    )
+    return merged
 
 
 def parse_pga_event(event: dict) -> Optional[dict]:
@@ -136,15 +172,16 @@ TOURNAMENT_NAME_TO_COURSE = {
     "the travelers championship": "TPC River Highlands",
     "travelers championship":    "TPC River Highlands",
     "rocket mortgage classic":   "Detroit Golf Club",
+    "rocket classic":            "Detroit Golf Club",
     "john deere classic":        "TPC Deere Run",
-    "genesis scottish open":     "Renaissance Club",
-    "scottish open":             "Renaissance Club",
+    "genesis scottish open":     "The Renaissance Club",
+    "scottish open":             "The Renaissance Club",
     "the 3m open":               "TPC Twin Cities",
     "3m open":                   "TPC Twin Cities",
     "wyndham championship":      "Sedgefield Country Club",
     "fedex st. jude championship": "TPC Southwind",
     "fedex st jude championship":  "TPC Southwind",
-    "bmw championship":          "Castle Pines Golf Club",
+    "bmw championship":          "Bellerive Country Club",
     "tour championship":         "East Lake Golf Club",
     "procore championship":      "Silverado Resort",
 
@@ -152,7 +189,7 @@ TOURNAMENT_NAME_TO_COURSE = {
     "rsm classic":               "Sea Island Resort (Seaside Course)",
     "the rsm classic":           "Sea Island Resort (Seaside Course)",
     "sanderson farms championship": "Country Club of Jackson",
-    "world wide technology championship": "El Camaleón Golf Club",
+    "world wide technology championship": "El Cardonal at Diamante",
 }
 
 
