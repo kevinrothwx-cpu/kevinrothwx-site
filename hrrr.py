@@ -15,7 +15,7 @@ DATA SOURCE:
 COVERAGE:
     - Domain: continental US only. Outside CONUS → returns None and the
       caller should fall back to NWS / WeatherAPI alone.
-    - Horizon: ~48 hours via the hrrr_conus model. Rounds / races more
+    - Horizon: ~48 hours via the gfs_hrrr model. Rounds / races more
       than ~48 h out will have no HRRR coverage and the toggle won't show.
 
 OUTPUT FORMAT:
@@ -109,7 +109,12 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         "hourly": "temperature_2m,relative_humidity_2m,dewpoint_2m,"
                   "precipitation_probability,wind_speed_10m,"
                   "wind_direction_10m,wind_gusts_10m",
-        "models": "hrrr_conus",
+        # Open-Meteo renamed their HRRR identifier from "hrrr_conus" to
+        # "gfs_hrrr" at some point. The latter is a blended product that
+        # uses HRRR for the first ~48 hours within CONUS and returns null
+        # values beyond that horizon (which our parser drops below where
+        # temps[i] is None).
+        "models": "gfs_hrrr",
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
         "forecast_days": 2,
