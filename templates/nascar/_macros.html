@@ -41,13 +41,12 @@
    so the same macro renders NWS (default: race.hourly) or HRRR
    (race.hrrr_hourly).
 
-   Row order: Precip, Temp, Wind, Wind dir, Gusts (fallback Dewpoint).
-   Same gust source as golf — HRRR's wind_gusts_10m or NWS gridpoint
-   windGust series. Falls back to Dewpoint when neither has data. #}
+   Row order: Precip, Temp, Wind, Dewpoint. Per Kevin, NASCAR drops
+   the Gusts and Wind dir rows that PGA shows — race weather impact
+   is dominated by raw wind speed and surface conditions. #}
 {% macro race_hourly_table(race, hours=None) %}
   {% if hours is none %}{% set hours = race.hourly or [] %}{% endif %}
   {% if hours %}
-    {% set has_gusts = hours|selectattr('gust', 'ne', none)|list|length > 0 %}
     <div class="hourly">
       <table class="hourly__table">
         <thead>
@@ -82,20 +81,7 @@
               <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
             {% endfor %}
           </tr>
-          <tr>
-            <td class="hourly__label">Wind dir</td>
-            {% for h in hours %}
-              <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">{{ (h.wind_deg|wind_compass) or "—" }}</td>
-            {% endfor %}
-          </tr>
-          {% if has_gusts %}
-          <tr>
-            <td class="hourly__label">Gusts</td>
-            {% for h in hours %}
-              <td class="hourly__cell {% if h.is_race_hour %}is-game-hour{% endif %}">{% if h.gust is not none %}{{ h.gust }} mph{% else %}—{% endif %}</td>
-            {% endfor %}
-          </tr>
-          {% elif hours[0].dew is not none %}
+          {% if hours[0].dew is not none %}
           <tr>
             <td class="hourly__label">Dewpoint</td>
             {% for h in hours %}

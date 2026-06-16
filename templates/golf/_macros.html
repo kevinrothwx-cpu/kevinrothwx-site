@@ -34,10 +34,11 @@
    optional `hours` param so the same macro can render NWS (default:
    round_data.hourly) or HRRR (round_data.hrrr_hourly).
 
-   Row order: Precip, Temp, Wind, Wind dir, Gusts (fallback Dewpoint).
+   Row order: Precip, Temp, Wind, Gusts (fallback Dewpoint), Wind dir.
    Gusts come from HRRR's wind_gusts_10m or NWS's gridpoint windGust
-   series — if neither populates a value, the row falls back to Dewpoint
-   so the table never looks empty. #}
+   series. When no gust data is available, Dewpoint takes that row's
+   slot so the table never collapses to four rows. Wind dir always
+   shows at the bottom. #}
 {% macro round_hourly_table(round_data, hours=None) %}
   {% if hours is none %}{% set hours = round_data.hourly or [] %}{% endif %}
   {% if hours %}
@@ -76,12 +77,6 @@
               <td class="hourly__cell">{{ h.wind_speed }} mph</td>
             {% endfor %}
           </tr>
-          <tr>
-            <td class="hourly__label">Wind dir</td>
-            {% for h in hours %}
-              <td class="hourly__cell">{{ (h.wind_deg|wind_compass) or "—" }}</td>
-            {% endfor %}
-          </tr>
           {% if has_gusts %}
           <tr>
             <td class="hourly__label">Gusts</td>
@@ -97,6 +92,12 @@
             {% endfor %}
           </tr>
           {% endif %}
+          <tr>
+            <td class="hourly__label">Wind dir</td>
+            {% for h in hours %}
+              <td class="hourly__cell">{{ (h.wind_deg|wind_compass) or "—" }}</td>
+            {% endfor %}
+          </tr>
         </tbody>
       </table>
     </div>
