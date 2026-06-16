@@ -91,15 +91,91 @@ start_nascar_warmer()
 start_cws_warmer()
 
 
+# ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
+#
+# The same Flask app serves both domains from one Render service. Hostname
+# detection swaps the brand (header, canonical, schema.org) per request,
+# and a before_request middleware 301-redirects sport sections from
+# kevinrothwx.com to mysportsweather.com so old links keep working and
+# link equity flows to the new product domain.
+
+KEVINROTHWX_HOSTS = {"kevinrothwx.com", "www.kevinrothwx.com"}
+MYSPORTSWEATHER_HOSTS = {"mysportsweather.com", "www.mysportsweather.com"}
+
+# Sport sections that live on mysportsweather.com going forward. Requests
+# for these on kevinrothwx.com get 301-redirected.
+SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/worldcup", "/golf", "/nascar", "/nfl", "/ncaaf")
+SPORT_PATH_EXACT = {"/mlb-weather", "/nfl-weather", "/pga-weather"}
+
+
+def _normalize_host(host):
+    """Strip port and lowercase a Host header value."""
+    return (host or "").lower().split(":", 1)[0]
+
+
+def get_site_brand(host):
+    """Return brand info for the request's hostname. Templates use the
+    returned values to render the correct header, canonical URL, OG tags,
+    and schema.org markup for each domain."""
+    h = _normalize_host(host)
+    if h in MYSPORTSWEATHER_HOSTS:
+        return {
+            "brand_id":         "mysportsweather",
+            "site_name":        "MySportsWeather",
+            "site_subtitle":    "By Kevin Roth, Sports Meteorologist",
+            "site_url":         "https://mysportsweather.com",
+            "is_personal_site": False,
+            "is_product_site":  True,
+        }
+    # Default: kevinrothwx.com (also covers dev/localhost).
+    return {
+        "brand_id":         "kevinrothwx",
+        "site_name":        "Kevin Roth",
+        "site_subtitle":    "Sports Meteorologist",
+        "site_url":         "https://kevinrothwx.com",
+        "is_personal_site": True,
+        "is_product_site":  False,
+    }
+
+
+def _is_sport_path(path):
+    """True if path belongs to a sport section that should live on
+    mysportsweather.com only."""
+    if path in SPORT_PATH_EXACT:
+        return True
+    return any(path == p or path.startswith(p + "/") for p in SPORT_PATH_PREFIXES)
+
+
+@app.before_request
+def redirect_sport_paths_to_product_site():
+    """When a sport-section URL hits kevinrothwx.com, 301-redirect to the
+    same path on mysportsweather.com. Personal pages (/, /about, /press,
+    /contact, /overcast) stay on kevinrothwx.com. Admin paths stay on
+    both for convenience.
+    """
+    h = _normalize_host(request.host)
+    if h not in KEVINROTHWX_HOSTS:
+        return None  # only redirect from kevinrothwx.com
+    if not _is_sport_path(request.path):
+        return None
+    # Preserve query string if present
+    suffix = request.path
+    if request.query_string:
+        suffix += "?" + request.query_string.decode("utf-8", errors="replace")
+    return redirect("https://mysportsweather.com" + suffix, code=301)
+
+
 @app.context_processor
 def inject_globals():
-    """Make a few values available in every template."""
+    """Make a few values available in every template, including the
+    hostname-aware brand info (site_name, site_url, is_personal_site, etc.)."""
+    brand = get_site_brand(request.host if request else None)
     return {
-        "current_year": datetime.utcnow().year,
-        "site_url": "https://kevinrothwx.com",
+        "current_year":     datetime.utcnow().year,
         # GA4 measurement ID from env var so the snippet renders only in
         # production. Local dev leaves it unset, no tracking.
         "ga_measurement_id": os.environ.get("GA_MEASUREMENT_ID", "").strip(),
+        **brand,
     }
 
 
@@ -729,58 +805,74 @@ def admin_cws():
 
 # ===== SEO files =====
 
+# Personal-site sitemap (kevinrothwx.com)
+KEVINROTHWX_STATIC_URLS = [
+    ("/", "1.0", "weekly"),
+    ("/about", "0.9", "monthly"),
+    ("/press", "0.8", "monthly"),
+    ("/overcast", "0.9", "monthly"),
+    ("/contact", "0.5", "yearly"),
+]
+
+# Product-site sitemap (mysportsweather.com)
+MYSPORTSWEATHER_STATIC_URLS = [
+    ("/", "1.0", "daily"),
+    ("/mlb", "0.95", "hourly"),
+    ("/mlb/tomorrow", "0.9", "hourly"),
+    ("/worldcup", "0.9", "hourly"),
+    ("/cws", "0.85", "hourly"),
+    ("/golf", "0.85", "daily"),
+    ("/nascar", "0.85", "daily"),
+    ("/mlb-weather", "0.8", "monthly"),
+    ("/nfl-weather", "0.8", "monthly"),
+    ("/pga-weather", "0.8", "monthly"),
+    ("/overcast", "0.9", "monthly"),
+    ("/about", "0.7", "monthly"),
+    ("/contact", "0.5", "yearly"),
+]
+
+
 @app.route("/sitemap.xml")
 def sitemap():
+    """Sitemap is per-hostname. kevinrothwx.com lists only personal pages;
+    mysportsweather.com lists sport pages plus the dynamic per-date hubs.
+    The same Flask service emits a different sitemap for each domain so
+    Google doesn't see duplicate content across the two.
     """
-    Sitemap lists the canonical hub URLs (/mlb, /cws, /worldcup, /golf,
-    /nascar) so Google indexes the stable landing pages, plus the static
-    evergreen pages and today's/tomorrow's date-specific MLB slate so
-    Google can pre-crawl. Older archives are discoverable by internal
-    link only, to keep the sitemap small.
-    """
-    static_urls = [
-        ("/", "1.0", "daily"),
-        ("/about", "0.9", "monthly"),
-        ("/press", "0.8", "monthly"),
-        ("/overcast", "0.9", "monthly"),
-        ("/mlb", "0.95", "hourly"),
-        ("/mlb/tomorrow", "0.9", "hourly"),
-        ("/worldcup", "0.9", "hourly"),
-        ("/cws", "0.85", "hourly"),
-        ("/golf", "0.85", "daily"),
-        ("/nascar", "0.85", "daily"),
-        ("/mlb-weather", "0.8", "monthly"),
-        ("/nfl-weather", "0.8", "monthly"),
-        ("/pga-weather", "0.8", "monthly"),
-        ("/contact", "0.5", "yearly"),
-    ]
+    brand = get_site_brand(request.host)
+    base_url = brand["site_url"]
 
-    dynamic_urls = []
-    for d in (_eastern_today(), _eastern_tomorrow()):
-        slate, _ = get_slate(d, allow_build=False)
-        if not slate:
-            continue
-        dynamic_urls.append((f"/mlb/{d}", "0.85", "hourly"))
-        for g in slate:
-            dynamic_urls.append((f"/mlb/{d}/{g['slug']}", "0.7", "hourly"))
+    if brand["is_product_site"]:
+        static_urls = list(MYSPORTSWEATHER_STATIC_URLS)
+        # Dynamic MLB date-specific URLs (today + tomorrow)
+        dynamic_urls = []
+        for d in (_eastern_today(), _eastern_tomorrow()):
+            slate, _ = get_slate(d, allow_build=False)
+            if not slate:
+                continue
+            dynamic_urls.append((f"/mlb/{d}", "0.85", "hourly"))
+            for g in slate:
+                dynamic_urls.append((f"/mlb/{d}/{g['slug']}", "0.7", "hourly"))
+        # World Cup matchday + per-match URLs (today + next 2 days)
+        for offset in (0, 1, 2):
+            d = (datetime.now(EASTERN_TZ) + timedelta(days=offset)).strftime("%Y-%m-%d")
+            wc_slate, _ = get_matchday(d, allow_build=False)
+            if not wc_slate:
+                continue
+            dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
+            for m in wc_slate:
+                dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
+        all_urls = static_urls + dynamic_urls
+    else:
+        # Personal site — no sport pages, no dynamic.
+        all_urls = list(KEVINROTHWX_STATIC_URLS)
 
-    # World Cup matchday + per-match URLs (today + next 2 days)
-    for offset in (0, 1, 2):
-        d = (datetime.now(EASTERN_TZ) + timedelta(days=offset)).strftime("%Y-%m-%d")
-        wc_slate, _ = get_matchday(d, allow_build=False)
-        if not wc_slate:
-            continue
-        dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
-        for m in wc_slate:
-            dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
-
-    all_urls = static_urls + dynamic_urls
     today_str = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d")
     xml = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, priority, changefreq in all_urls:
         xml.append("  <url>")
-        xml.append(f"    <loc>{SITE_URL}{path}</loc>")
+        xml.append(f"    <loc>{base_url}{path}</loc>")
         xml.append(f"    <lastmod>{today_str}</lastmod>")
         xml.append(f"    <changefreq>{changefreq}</changefreq>")
         xml.append(f"    <priority>{priority}</priority>")
@@ -791,13 +883,15 @@ def sitemap():
 
 @app.route("/robots.txt")
 def robots():
+    brand = get_site_brand(request.host)
+    base_url = brand["site_url"]
     body = (
         "User-agent: *\n"
         "Allow: /\n"
         "Disallow: /admin\n"
         "Disallow: /admin/\n"
         "\n"
-        f"Sitemap: {SITE_URL}/sitemap.xml\n"
+        f"Sitemap: {base_url}/sitemap.xml\n"
     )
     return Response(body, mimetype="text/plain")
 
