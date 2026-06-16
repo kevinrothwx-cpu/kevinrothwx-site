@@ -170,11 +170,17 @@ def inject_globals():
     """Make a few values available in every template, including the
     hostname-aware brand info (site_name, site_url, is_personal_site, etc.)."""
     brand = get_site_brand(request.host if request else None)
+    # GA4 measurement ID is per-hostname so each property gets its own data
+    # stream. kevinrothwx.com uses GA_MEASUREMENT_ID (existing KevinRothWx
+    # property); mysportsweather.com uses GA_MEASUREMENT_ID_MYSPORTSWEATHER
+    # (new MySportsWeather property). Local dev leaves both unset, no tracking.
+    if brand.get("brand_id") == "mysportsweather":
+        ga_id = os.environ.get("GA_MEASUREMENT_ID_MYSPORTSWEATHER", "").strip()
+    else:
+        ga_id = os.environ.get("GA_MEASUREMENT_ID", "").strip()
     return {
         "current_year":     datetime.utcnow().year,
-        # GA4 measurement ID from env var so the snippet renders only in
-        # production. Local dev leaves it unset, no tracking.
-        "ga_measurement_id": os.environ.get("GA_MEASUREMENT_ID", "").strip(),
+        "ga_measurement_id": ga_id,
         **brand,
     }
 
