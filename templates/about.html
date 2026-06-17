@@ -58,37 +58,113 @@
   ]
 }
 </script>
+<style>
+  /* About-page layout. Single-column hero centers the headshot above the
+     name so there's no dead whitespace beside the photo (the old layout
+     had a tall text column and a short photo column, which left a big
+     empty rectangle below the photo).
+     Photo slots use onerror to hide gracefully if the file isn't uploaded
+     yet — so Kevin can drop new photos into static/img later and they'll
+     appear without a template change. */
+  .about-hero { text-align: center; max-width: 720px; margin: 0 auto 2.5rem; }
+  .about-hero__photo {
+    width: 220px; height: 220px; border-radius: 50%; object-fit: cover;
+    margin: 0 auto 1.5rem; display: block;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .about-hero__name { margin: 0 0 0.5rem; }
+  .about-hero__creds {
+    font-family: var(--font-sans);
+    font-size: 0.78rem; font-weight: 500;
+    color: var(--fog); letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .about-hero__creds span + span::before { content: " · "; opacity: 0.5; }
+  .about-bio { max-width: 640px; margin: 0 auto; }
+  .about-bio p { font-size: 1.05rem; line-height: 1.7; margin: 0 0 1.25rem; }
+  .about-bio p:first-of-type::first-letter {
+    font-family: var(--font-serif); font-size: 1.15em; font-weight: 600;
+  }
+  /* Inline figure for a second photo placed naturally between bio
+     paragraphs. Aspect-ratio keeps the box stable even before the image
+     loads. Caption sits beneath in small ash text. */
+  .about-figure {
+    margin: 2rem 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .about-figure img {
+    width: 100%; height: auto; display: block;
+    border-radius: 4px;
+  }
+  .about-figure figcaption {
+    font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash);
+    margin-top: 0.5rem; text-align: center; font-style: italic;
+  }
+  .about-secondary { max-width: 720px; margin: 3rem auto 0; }
+</style>
 {% endblock %}
 
 {% block content %}
 <section class="section">
   <div class="container-tight">
-    <p class="kicker" style="margin-bottom: 0.75rem;">About</p>
-    <h1 class="display" style="margin-bottom: 2.5rem;">Kevin Roth</h1>
-    <div class="bio">
-      <img class="bio__photo" src="{{ url_for('static', filename='img/kevin-roth-headshot.jpg') }}" alt="Kevin Roth, sports meteorologist" onerror="this.style.display='none'">
-      <div class="bio__body">
-        <p>Kevin Roth is a sports meteorologist with more than a decade of experience translating forecasts into actionable analysis for fantasy players and bettors. He served as Chief Meteorologist at RotoGrinders.com from 2012 to 2026, where his daily MLB, NFL, and PGA weather coverage became required reading across the daily fantasy and sports-betting communities.</p>
-        <p>Today, Kevin writes the daily MLB Weather column for PropFinder, forecasts on X (@KevinRothWx) for all outdoor sports, and runs OVERcast, his subscription tool for weather-driven MLB analysis with NFL coverage in development. He is also a meteorologist at ABC13 (KTRK-TV) in Houston.</p>
-        <p>His sports-weather work has been featured by Fox Weather, Yahoo Sports, Sporting News, The Weather Channel, CBS Sports, Baseball America, Matthew Berry's Fantasy Life, and Lee Enterprises newspapers. He has also been cited on The Pat McAfee Show and the other major sports-betting podcasts. Kevin holds a master's degree in atmospheric science from Mississippi State University.</p>
-      </div>
+    <p class="kicker" style="margin-bottom: 0.75rem; text-align: center;">About</p>
+
+    <div class="about-hero">
+      <img class="about-hero__photo"
+           src="{{ url_for('static', filename='img/kevin-roth-headshot.jpg') }}"
+           alt="Kevin Roth, sports meteorologist"
+           onerror="this.style.display='none'">
+      <h1 class="display about-hero__name">Kevin Roth</h1>
+      <p class="about-hero__creds">
+        <span>ABC13 Houston</span><span>M.S. Mississippi State</span><span>15+ years</span>
+      </p>
     </div>
-    <hr class="rule">
-    <h2 class="h3" style="margin-bottom: 1.25rem;">Where to find Kevin</h2>
-    <ul class="linklist">
-      <li><a href="https://mysportsweather.com">MySportsWeather, Daily forecasts across every sport</a></li>
-      <li><a href="https://x.com/KevinRothWx">X (Twitter), @KevinRothWx</a></li>
-      <li><a href="https://app.kevinrothwx.com/">OVERcast</a></li>
-      <li><a href="https://propfinder.app/weather">PropFinder, Daily MLB Weather</a></li>
-      <li><a href="https://abc13.com/about/newsteam/kevin-roth/">ABC13 Houston</a></li>
-      <li><a href="https://www.sportingnews.com/us/author/kevin-roth-rotogrinders">Sporting News</a></li>
-      <li><a href="https://www.oddsshopper.com/experts/kevinrothwx/subscribe">OddsShopper</a></li>
-      <li><a href="https://muckrack.com/kevin-m-roth">Muck Rack</a></li>
-      <li><a href="https://www.linkedin.com/in/kevin-roth-70bb0295/">LinkedIn</a></li>
-    </ul>
-    <div class="hero__cta" style="margin-top: 3rem;">
-      <a href="/press" class="btn btn-secondary">Press citations →</a>
-      <a href="/contact" class="btn btn-primary">Media inquiries</a>
+
+    <div class="about-bio">
+      <p>Kevin Roth is a sports meteorologist with more than a decade of experience translating forecasts into actionable analysis for fantasy players and bettors. He served as Chief Meteorologist at RotoGrinders.com from 2012 to 2026, where his daily MLB, NFL, and PGA weather coverage became required reading across the daily fantasy and sports-betting communities.</p>
+
+      {# Optional inline figure. Drop kevin-roth-tv.jpg into static/img to
+         enable; it'll show up here. While the file doesn't exist, the
+         <figure> element hides via the inline onerror handler. #}
+      <figure class="about-figure" id="about-figure-tv">
+        <img src="{{ url_for('static', filename='img/kevin-roth-tv.jpg') }}"
+             alt="Kevin Roth on-air at ABC13 Houston"
+             onerror="document.getElementById('about-figure-tv').style.display='none'">
+        <figcaption>On-air at ABC13 Houston (KTRK-TV).</figcaption>
+      </figure>
+
+      <p>Today, Kevin writes the daily MLB Weather column for PropFinder, forecasts on X (<a href="https://x.com/KevinRothWx" target="_blank" rel="noopener">@KevinRothWx</a>) for all outdoor sports, and runs OVERcast, his subscription tool for weather-driven MLB analysis with NFL coverage in development. He is also a meteorologist at ABC13 (KTRK-TV) in Houston.</p>
+
+      {# Optional second inline figure. Drop kevin-roth-action.jpg into
+         static/img to enable. Hides itself if file missing. #}
+      <figure class="about-figure" id="about-figure-action">
+        <img src="{{ url_for('static', filename='img/kevin-roth-action.jpg') }}"
+             alt="Kevin Roth"
+             onerror="document.getElementById('about-figure-action').style.display='none'">
+        <figcaption>Out covering weather in the field.</figcaption>
+      </figure>
+
+      <p>His sports-weather work has been featured by Fox Weather, Yahoo Sports, Sporting News, The Weather Channel, CBS Sports, Baseball America, Matthew Berry's Fantasy Life, and Lee Enterprises newspapers. He has also been cited on The Pat McAfee Show and the other major sports-betting podcasts. Kevin holds a master's degree in atmospheric science from Mississippi State University.</p>
+    </div>
+
+    <div class="about-secondary">
+      <hr class="rule">
+      <h2 class="h3" style="margin-bottom: 1.25rem;">Where to find Kevin</h2>
+      <ul class="linklist">
+        <li><a href="https://mysportsweather.com">MySportsWeather, Daily forecasts across every sport</a></li>
+        <li><a href="https://x.com/KevinRothWx" target="_blank" rel="noopener">X (Twitter), @KevinRothWx</a></li>
+        <li><a href="https://app.kevinrothwx.com/" target="_blank" rel="noopener">OVERcast</a></li>
+        <li><a href="https://propfinder.app/weather" target="_blank" rel="noopener">PropFinder, Daily MLB Weather</a></li>
+        <li><a href="https://abc13.com/about/newsteam/kevin-roth/" target="_blank" rel="noopener">ABC13 Houston</a></li>
+        <li><a href="https://www.sportingnews.com/us/author/kevin-roth-rotogrinders" target="_blank" rel="noopener">Sporting News</a></li>
+        <li><a href="https://www.oddsshopper.com/experts/kevinrothwx/subscribe" target="_blank" rel="noopener">OddsShopper</a></li>
+        <li><a href="https://muckrack.com/kevin-m-roth" target="_blank" rel="noopener">Muck Rack</a></li>
+        <li><a href="https://www.linkedin.com/in/kevin-roth-70bb0295/" target="_blank" rel="noopener">LinkedIn</a></li>
+      </ul>
+      <div class="hero__cta" style="margin-top: 3rem;">
+        <a href="/press" class="btn btn-secondary">Press citations →</a>
+        <a href="/contact" class="btn btn-primary">Media inquiries</a>
+      </div>
     </div>
   </div>
 </section>

@@ -2,6 +2,11 @@
    `active_sport` is a string like "mlb", "worldcup", "nfl", "ncaaf", "pga", "nascar", "cws"
    `sport_counts` is an optional dict with the "today" indicator per sport.
    Example: {"mlb": "15", "worldcup": "4", "nfl": "Sun", "pga": "Round 3", "nascar": "Sun"}
+
+   Order: active sports left (MLB, World Cup, PGA, NASCAR, CWS), then a flex
+   gap, then dormant sports right (NFL, NCAAF). NFL/NCAAF are important —
+   they're not dimmed or shrunk — just positionally separated so the eye
+   lands on the sports currently producing forecasts first.
 #}
 <nav class="sport-nav" aria-label="Sport navigation">
   <div class="sport-nav__inner">
@@ -12,14 +17,6 @@
     <a href="/worldcup" class="sport-nav__item {% if active_sport == 'worldcup' %}is-active{% endif %}">
       World&nbsp;Cup
       {% if sport_counts and sport_counts.worldcup %}<span class="sport-nav__count">{{ sport_counts.worldcup }}</span>{% endif %}
-    </a>
-    <a href="/nfl" class="sport-nav__item {% if active_sport == 'nfl' %}is-active{% endif %}">
-      NFL
-      {% if sport_counts and sport_counts.nfl %}<span class="sport-nav__count">{{ sport_counts.nfl }}</span>{% endif %}
-    </a>
-    <a href="/ncaaf" class="sport-nav__item {% if active_sport == 'ncaaf' %}is-active{% endif %}">
-      NCAAF
-      {% if sport_counts and sport_counts.ncaaf %}<span class="sport-nav__count">{{ sport_counts.ncaaf }}</span>{% endif %}
     </a>
     <a href="/golf" class="sport-nav__item {% if active_sport == 'pga' %}is-active{% endif %}">
       PGA
@@ -35,5 +32,17 @@
       <span class="sport-nav__count">{{ sport_counts.cws }}</span>
     </a>
     {% endif %}
+    {# The margin-left:auto on NFL pushes it (and NCAAF) to the right edge
+       of the nav row, creating a visible gap between active and dormant
+       sports. They keep full styling — same color, same size — so they
+       still feel like first-class destinations, just positionally distinct. #}
+    <a href="/nfl" class="sport-nav__item {% if active_sport == 'nfl' %}is-active{% endif %}" style="margin-left:auto">
+      NFL
+      {% if sport_counts and sport_counts.nfl %}<span class="sport-nav__count">{{ sport_counts.nfl }}</span>{% endif %}
+    </a>
+    <a href="/ncaaf" class="sport-nav__item {% if active_sport == 'ncaaf' %}is-active{% endif %}">
+      NCAAF
+      {% if sport_counts and sport_counts.ncaaf %}<span class="sport-nav__count">{{ sport_counts.ncaaf }}</span>{% endif %}
+    </a>
   </div>
 </nav>
