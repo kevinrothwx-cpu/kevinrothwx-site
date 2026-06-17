@@ -104,7 +104,7 @@
           <div class="mlb-writeup__header">
             <span class="mlb-writeup__matchup">Kevin's note · {{ tournament.short_name }}</span>
           </div>
-          <div class="mlb-writeup__body">{{ tournament.writeup.text }}</div>
+          <div class="mlb-writeup__body">{{ tournament.writeup.text|md_bold }}</div>
         </div>
       {% endif %}
 

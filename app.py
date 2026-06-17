@@ -59,6 +59,32 @@ app.jinja_env.filters["precip_icon"]  = precip_icon
 app.jinja_env.filters["wind_compass"] = wind_compass
 
 
+def md_bold(text):
+    """Lightweight Markdown bold filter for writeup bodies.
+
+    Converts **double-asterisks** to <strong>...</strong>. HTML-escapes
+    everything else first so user-supplied text can never inject markup
+    (even though only Kevin writes these — defense in depth). Returns a
+    Markup so the asterisks-stripped HTML renders correctly.
+
+    Usage in template: {{ writeup.text|md_bold }}
+    No filter chaining with |safe needed — the return value is already safe.
+    """
+    if not text:
+        return ""
+    import re as _re
+    from markupsafe import Markup, escape
+    safe = str(escape(text))
+    # Match **bold** but only on a single line (no \n inside), and require
+    # at least one char between the asterisk pairs. Non-greedy so two
+    # separate **bold** **runs** on the same line both render correctly.
+    safe = _re.sub(r"\*\*([^\*\n]+?)\*\*", r"<strong>\1</strong>", safe)
+    return Markup(safe)
+
+
+app.jinja_env.filters["md_bold"] = md_bold
+
+
 def cws_impact_strip(forecast):
     """Render the OVERcast CWS weather-impact strip as safe HTML.
     Always returns a Markup string; on any error returns an empty Markup
