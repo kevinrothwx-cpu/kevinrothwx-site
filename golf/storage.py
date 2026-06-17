@@ -7,7 +7,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
-from persistence import load_json, save_json
+from persistence import load_json, save_json, parse_dt
 
 
 VALID_COLORS = {"green", "yellow", "orange", "red"}
@@ -18,10 +18,21 @@ _lock = threading.Lock()
 
 
 def _load_from_disk() -> None:
+    """Read writeups from disk JSON.
+
+    JSON serialization turns datetime objects into ISO strings, so on load
+    we rehydrate updated_at_utc back into a datetime. The admin template
+    calls .strftime() on it — strings don't have strftime, so without this
+    rehydration the admin page 500s after any Render restart that drops
+    the in-memory store but preserves the disk file. Mirrors the pattern
+    in worldcup/storage.py and cws/storage.py.
+    """
     raw = load_json(_DISK_FILE, default={})
     with _lock:
         _MEMORY_STORE.clear()
         for k, v in raw.items():
+            if isinstance(v, dict) and isinstance(v.get("updated_at_utc"), str):
+                v["updated_at_utc"] = parse_dt(v["updated_at_utc"])
             _MEMORY_STORE[str(k)] = v
 
 
