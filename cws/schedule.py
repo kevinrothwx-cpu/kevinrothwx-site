@@ -46,20 +46,51 @@ def get_cws_schedule(date_str: str) -> list[dict]:
         return []
 
 
+def _names_from_event_name(name: str) -> tuple[str, str]:
+    """Parse ESPN's event.name field which uses 'Away at Home' format.
+
+    Examples:
+      'Oklahoma Sooners at Georgia Bulldogs' -> ('Oklahoma Sooners', 'Georgia Bulldogs')
+      'North Carolina Tar Heels at West Virginia Mountaineers' -> ('North Carolina Tar Heels', 'West Virginia Mountaineers')
+
+    This is the most reliable source of the matchup. ESPN's per-competitor
+    displayName field sometimes lags behind and returns 'TBD' even after
+    the bracket resolves; the event.name field updates first.
+    """
+    if not name or " at " not in name:
+        return ("", "")
+    parts = name.split(" at ", 1)
+    if len(parts) != 2:
+        return ("", "")
+    return (parts[0].strip(), parts[1].strip())
+
+
 def parse_cws_event(event: dict) -> Optional[dict]:
-    """Normalize ESPN college baseball event."""
+    """Normalize ESPN college baseball event.
+
+    The matchup names come from event.name ('Away at Home' format) as the
+    primary source — ESPN's competitor.displayName sometimes returns 'TBD'
+    for bracket games even after the matchup is resolved, but event.name
+    updates first. We still use competitor data for logos, ranks, IDs,
+    abbreviations — anything other than the display name.
+    """
     try:
         comp = (event.get("competitions") or [{}])[0]
         status_name = (comp.get("status") or {}).get("type", {}).get("name", "")
         if "CANCELED" in status_name.upper() or "CANCELLED" in status_name.upper():
             return None
 
+        event_name = event.get("name", "")
+        away_name_from_event, home_name_from_event = _names_from_event_name(event_name)
+
         home = away = None
         for c in comp.get("competitors", []):
             team = c.get("team", {}) or {}
+            display_name = team.get("displayName") or team.get("name") or ""
+            short_name = team.get("shortDisplayName") or team.get("name") or ""
             entry = {
-                "name":         team.get("displayName", team.get("name", "")),
-                "short_name":   team.get("shortDisplayName", team.get("name", "")),
+                "name":         display_name,
+                "short_name":   short_name,
                 "abbreviation": team.get("abbreviation", ""),
                 "logo":         team.get("logo", ""),
                 "team_id":      team.get("id", ""),
@@ -71,12 +102,38 @@ def parse_cws_event(event: dict) -> Optional[dict]:
             else:
                 away = entry
 
+        # If competitors are missing or have TBD names, fall back to event.name parsing.
+        # This handles the bracket-pending → resolved transition where ESPN updates
+        # event.name first and the competitor displayNames lag.
+        def _is_tbd(n: str) -> bool:
+            return not n or n.strip().upper() in ("TBD", "TBA", "")
+
+        if home is None and home_name_from_event:
+            home = {"name": home_name_from_event, "short_name": home_name_from_event,
+                    "abbreviation": "", "logo": "", "team_id": "", "score": "", "rank": None}
+        if away is None and away_name_from_event:
+            away = {"name": away_name_from_event, "short_name": away_name_from_event,
+                    "abbreviation": "", "logo": "", "team_id": "", "score": "", "rank": None}
+
+        # Override TBD display names with event.name parsed values (keeps logos etc.)
+        if home and _is_tbd(home.get("name")) and home_name_from_event:
+            home["name"] = home_name_from_event
+            if _is_tbd(home.get("short_name")):
+                home["short_name"] = home_name_from_event
+        if away and _is_tbd(away.get("name")) and away_name_from_event:
+            away["name"] = away_name_from_event
+            if _is_tbd(away.get("short_name")):
+                away["short_name"] = away_name_from_event
+
         if not home or not away:
             return None
 
+        # Final TBD check — if AFTER all fallbacks both are still TBD, the matchup
+        # truly isn't set yet on ESPN's side. Render the game anyway with TBD so
+        # the time/venue slot is visible; consumers will see it update later.
         return {
             "event_id":   str(event.get("id", "")),
-            "name":       event.get("name", f"{away['name']} vs {home['name']}"),
+            "name":       event_name or f"{away['name']} vs {home['name']}",
             "first_pitch_utc": event.get("date", ""),
             "home":       home,
             "away":       away,

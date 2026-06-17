@@ -31,7 +31,13 @@ from .nws import clear_periods_cache
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
-REFRESH_SECONDS = 25 * 60   # 25 min — matches OVERcast cadence
+REFRESH_SECONDS = 5 * 60   # 5 min — was 25 min but caused visible divergence
+                            # from OVERcast when NWS pushed a forecast revision
+                            # between our cycle and theirs. Tighter polling
+                            # reduces the worst-case stale window from 25 min
+                            # to 5 min. Still architecturally possible to
+                            # diverge briefly during an NWS push — only a
+                            # direct OVERcast read fully eliminates that.
 
 # date_str → {"slate": list[dict], "built_at_utc": datetime, "build_err": str|None}
 _slate_cache: dict[str, dict] = {}

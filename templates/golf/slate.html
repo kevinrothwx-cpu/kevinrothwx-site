@@ -17,10 +17,18 @@
   .hrrr-section {
     background: rgba(30, 58, 138, 0.07) !important;
     border-left: 3px solid rgba(30, 58, 138, 0.35) !important;
-    padding: 0.35rem 0.55rem 0.65rem !important;
+    /* Zero horizontal padding so the HRRR table's column edges line up
+       with the NWS table sitting in the same parent. Top/bottom padding
+       still gives the section vertical breathing room. */
+    padding: 0.35rem 0 0.65rem !important;
     margin-top: 0.5rem !important;
   }
-  .hrrr-section .hourly__table { width: auto; max-width: 100%; }
+  /* Width 100% (matching the NWS table) makes columns align perfectly
+     when HRRR has the same hour count as NWS. When HRRR has fewer hours
+     (last bit of model horizon), the table still spans full width and
+     each column gets a touch wider — that's the desired alignment per
+     Kevin: same-day comparison should look visually consistent. */
+  .hrrr-section .hourly__table { width: 100%; }
   /* The "HRRR available" pill that now lives next to the toggle summary */
   .hrrr-summary-badge {
     display: inline-block;
