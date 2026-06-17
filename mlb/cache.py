@@ -31,13 +31,15 @@ from .nws import clear_periods_cache
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
-REFRESH_SECONDS = 5 * 60   # 5 min — was 25 min but caused visible divergence
-                            # from OVERcast when NWS pushed a forecast revision
-                            # between our cycle and theirs. Tighter polling
-                            # reduces the worst-case stale window from 25 min
-                            # to 5 min. Still architecturally possible to
-                            # diverge briefly during an NWS push — only a
-                            # direct OVERcast read fully eliminates that.
+REFRESH_SECONDS = 25 * 60   # 25 min. Briefly tried 5 min (2026-06-17) to
+                             # match OVERcast more tightly; reverted because
+                             # OVERcast started failing intermittently and
+                             # the timing matched our cycles strongly enough
+                             # to suspect we were tripping a shared-egress
+                             # NWS rate-limit on Render. Wind direction
+                             # divergence will need to be solved by direct
+                             # OVERcast integration (task #85), not by
+                             # polling NWS harder.
 
 # date_str → {"slate": list[dict], "built_at_utc": datetime, "build_err": str|None}
 _slate_cache: dict[str, dict] = {}
