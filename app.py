@@ -239,13 +239,10 @@ def inject_sport_nav():
     except Exception:
         pass
 
-    # PGA — active tournament count
-    try:
-        pga_slate, _ = get_pga_slate(allow_build=False)
-        if pga_slate:
-            counts["pga"] = str(len(pga_slate))
-    except Exception:
-        pass
+    # PGA — no badge by design (per Kevin). "2" tournaments was awkward; the
+    # tab itself signals the section. If we want to differentiate "in progress"
+    # later, "Live" during round days would be the move (mirrors CWS).
+    # Intentionally not setting counts["pga"].
 
     # NASCAR — show day-of-week for next race
     try:
@@ -570,36 +567,68 @@ def ncaaf_root():
 
 # ===== College World Series =====
 
-def _render_cws_slate(date_str, canonical_path):
-    """Render the CWS slate for date_str with an explicit canonical URL.
-    Used by /cws (today's hub) and /cws/<date> so /cws renders inline
-    instead of redirecting — Google flagged the old redirect as a
-    Search Console error on Jun 12, 2026."""
+def _build_cws_day(d, today):
+    """Build the data dict for a single CWS day. Used by both the single-day
+    /cws/<date> route and the multi-day /cws hub. Always returns a dict —
+    empty slate just means no games scheduled that day, which is normal
+    during bracket off-days."""
+    ds = d.strftime("%Y-%m-%d")
+    slate, meta = get_cws_slate(ds)
+    if slate is None:
+        slate = []
+    cws_attach_writeups(slate)
+    return {
+        "date_str":      ds,
+        "pretty_date":   d.strftime("%A, %B %-d"),
+        "is_today":      (d == today),
+        "is_tomorrow":   (d == today + timedelta(days=1)),
+        "is_past":       (d < today),
+        "slate":         slate,
+        "daily_writeup": cws_get_writeup(ds),
+        "game_count":    len(slate),
+        "meta":          meta or {},
+    }
+
+
+def _render_cws_slate(date_str, canonical_path, multi_day=False):
+    """Render the CWS slate with an explicit canonical URL.
+
+    When multi_day=True (the /cws hub), shows today + next 2 days so the
+    page is never empty during bracket off-days. When False (/cws/<date>),
+    shows a single specific date — same as before.
+
+    Used by /cws hub and /cws/<date> so /cws renders inline instead of
+    redirecting — Google flagged the old redirect as a Search Console
+    error on Jun 12, 2026.
+    """
     if not _valid_date_str(date_str):
         abort(404)
-    slate, meta = get_cws_slate(date_str)
-    if slate is None:
-        slate, meta = [], {"build_err": "Slate not yet built"}
-    cws_attach_writeups(slate)
-    # Daily note keyed by date_str. One writeup covers all games that day.
-    daily_writeup = cws_get_writeup(date_str)
-    d = datetime.strptime(date_str, "%Y-%m-%d").date()
-    pretty_date = d.strftime("%A, %B %-d")
     today = datetime.now(EASTERN_TZ).date()
+
+    if multi_day:
+        days_data = [_build_cws_day(today + timedelta(days=i), today) for i in range(3)]
+    else:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        days_data = [_build_cws_day(d, today)]
+
+    total_games = sum(day["game_count"] for day in days_data)
+
     return render_template(
         "cws/slate.html",
-        slate=slate, meta=meta, date_str=date_str, pretty_date=pretty_date,
-        daily_writeup=daily_writeup,
-        is_today=(d == today), is_tomorrow=(d == today + timedelta(days=1)),
-        is_past=(d < today),
+        days_data=days_data,
+        showing_multiple=multi_day,
+        total_games=total_games,
+        date_str=date_str,
         canonical_path=canonical_path,
     )
 
 
 @app.route("/cws")
 def cws_root():
-    """Render today's CWS slate inline. /cws is the canonical hub URL."""
-    return _render_cws_slate(_eastern_today(), canonical_path="/cws")
+    """Render the CWS hub — today + next 2 days. /cws is the canonical hub URL.
+    Multi-day view keeps the page useful on bracket off-days when today has
+    no scheduled games."""
+    return _render_cws_slate(_eastern_today(), canonical_path="/cws", multi_day=True)
 
 
 @app.route("/cws/<date_str>")

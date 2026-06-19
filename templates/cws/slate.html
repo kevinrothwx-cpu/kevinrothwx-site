@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% from "cws/_macros.html" import cws_cheat_card, cws_hourly_table, cws_summary_panel %}
 
-{% block title %}College World Series Weather, {{ pretty_date }} | Kevin Roth{% endblock %}
+{% block title %}College World Series Weather{% if not showing_multiple %}, {{ days_data[0].pretty_date }}{% endif %} | Kevin Roth{% endblock %}
 {% block description %}Free College World Series weather forecasts for every game at Charles Schwab Field in Omaha. By sports meteorologist Kevin Roth.{% endblock %}
 
-{% block og_title %}CWS Weather, {{ pretty_date }}{% endblock %}
-{% block og_description %}Every College World Series game today in Omaha. By Kevin Roth, sports meteorologist.{% endblock %}
+{% block og_title %}CWS Weather{% if not showing_multiple %}, {{ days_data[0].pretty_date }}{% endif %}{% endblock %}
+{% block og_description %}Every College World Series game in Omaha. By Kevin Roth, sports meteorologist.{% endblock %}
 
 {% block content %}
 <div class="mlb-page">
@@ -13,78 +13,110 @@
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">College World Series · Omaha</p>
-        <h1 class="mlb-page__title">{{ pretty_date }}</h1>
+        <h1 class="mlb-page__title">
+          {% if showing_multiple %}Upcoming games{% else %}{{ days_data[0].pretty_date }}{% endif %}
+        </h1>
         <p class="mlb-page__sub">
-          {% if is_today %}Today's games at Charles Schwab Field. {% elif is_tomorrow %}Tomorrow's games. {% elif is_past %}Archived. {% endif %}
+          {% if showing_multiple %}Today + next 2 days · {{ total_games }} {% if total_games == 1 %}game{% else %}games{% endif %} scheduled.
+          {% else %}
+            {% if days_data[0].is_today %}Today's games at Charles Schwab Field. {% elif days_data[0].is_tomorrow %}Tomorrow's games. {% elif days_data[0].is_past %}Archived. {% endif %}
+          {% endif %}
           All times Eastern.
         </p>
       </div>
     </div>
   </header>
 
-  {% if slate %}
+  {# Cheat-sheet row at top, combining all games across days (multi-day) or
+     just today's games (single-day). When zero games across the window
+     we skip the row entirely. #}
+  {% if total_games > 0 %}
     <div class="cheat-row">
-      {% for g in slate %}
-        {{ cws_cheat_card(g, date_str) }}
+      {% for day in days_data %}
+        {% for g in day.slate %}
+          {{ cws_cheat_card(g, day.date_str) }}
+        {% endfor %}
       {% endfor %}
     </div>
-  {% else %}
-    <div class="container">
-      <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
-        {% if meta and meta.build_err %}Slate is rebuilding. Refresh in a moment.
-        {% else %}No CWS games scheduled at Omaha for this date.{% endif %}
-      </p>
-    </div>
   {% endif %}
 
-  {# Daily note between cheat cards and per-game blocks #}
-  {% if daily_writeup %}
-    <section class="mlb-section">
-      <div class="mlb-writeup mlb-writeup--{{ daily_writeup.color or 'none' }}">
-        <div class="mlb-writeup__header">
-          <span class="mlb-writeup__matchup">Kevin's note for {{ pretty_date }}</span>
-        </div>
-        <div class="mlb-writeup__body">{{ daily_writeup.text }}</div>
-      </div>
-    </section>
-  {% endif %}
+  {# Per-day sections. Each day gets its own header (in multi-day mode),
+     its own Kevin's-note writeup, and its own per-game blocks below.
+     Empty days show a "No games" tag instead of collapsing — keeps the
+     page useful as a 3-day forecast view even on bracket off-days. #}
+  {% for day in days_data %}
+    <section class="cws-day" id="day-{{ day.date_str }}" style="margin-top: 1.5rem">
 
-  {% if slate %}
-    <div class="mlb-hourly-group">
-      {% for g in slate %}
-        <article class="mlb-game-block" id="game-{{ g.slug }}">
-          <header class="mlb-game-block__header">
-            <div>
-              <h2 class="mlb-game-block__matchup">
-                {% if g.away.logo %}<img class="matchup-logo" src="{{ g.away.logo }}" alt="" loading="lazy">{% endif %}
-                <span>{% if g.away.rank %}#{{ g.away.rank }} {% endif %}{{ g.away.name }}</span>
-                <span class="matchup-at">vs</span>
-                {% if g.home.logo %}<img class="matchup-logo" src="{{ g.home.logo }}" alt="" loading="lazy">{% endif %}
-                <span>{% if g.home.rank %}#{{ g.home.rank }} {% endif %}{{ g.home.name }}</span>
-              </h2>
-              <div class="mlb-game-block__venue">Charles Schwab Field Omaha · {{ g.round if g.round else "Bracket play" }}</div>
-            </div>
-            <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
-          </header>
-          <div class="mlb-game-block__body">
-            {{ cws_summary_panel(g) }}
-            <div class="mlb-game-block__hourly">
-              {{ cws_hourly_table(g) }}
-            </div>
+      {% if showing_multiple %}
+        <h2 class="wc-dayhed">
+          {{ day.pretty_date }}
+          {% if day.is_today %}<span class="wc-dayhed__tag">Today</span>{% endif %}
+          {% if day.is_tomorrow %}<span class="wc-dayhed__tag">Tomorrow</span>{% endif %}
+          <span class="wc-dayhed__count">
+            {% if day.game_count == 0 %}No games
+            {% elif day.game_count == 1 %}1 game
+            {% else %}{{ day.game_count }} games{% endif %}
+          </span>
+        </h2>
+      {% endif %}
+
+      {# Daily note between header and per-game blocks #}
+      {% if day.daily_writeup %}
+        <div class="mlb-writeup mlb-writeup--{{ day.daily_writeup.color or 'none' }}">
+          <div class="mlb-writeup__header">
+            <span class="mlb-writeup__matchup">Kevin's note for {{ day.pretty_date }}</span>
           </div>
-          {# OVERcast weather-impact strip, full width under the body, upcoming games only #}
-          {% if not is_past and g.forecast %}
-            <div class="cws-impact-strip">
-              {{ cws_impact_strip(g.forecast) }}
-            </div>
-          {% endif %}
-          <a class="mlb-game-block__deeplink" href="/cws/{{ date_str }}/{{ g.slug }}">
-            Full forecast for this game <span aria-hidden="true">→</span>
-          </a>
-        </article>
-      {% endfor %}
-    </div>
-  {% endif %}
+          <div class="mlb-writeup__body">{{ day.daily_writeup.text }}</div>
+        </div>
+      {% endif %}
+
+      {% if day.slate %}
+        <div class="mlb-hourly-group">
+          {% for g in day.slate %}
+            <article class="mlb-game-block" id="game-{{ g.slug }}">
+              <header class="mlb-game-block__header">
+                <div>
+                  <h2 class="mlb-game-block__matchup">
+                    {% if g.away.logo %}<img class="matchup-logo" src="{{ g.away.logo }}" alt="" loading="lazy">{% endif %}
+                    <span>{% if g.away.rank %}#{{ g.away.rank }} {% endif %}{{ g.away.name }}</span>
+                    <span class="matchup-at">vs</span>
+                    {% if g.home.logo %}<img class="matchup-logo" src="{{ g.home.logo }}" alt="" loading="lazy">{% endif %}
+                    <span>{% if g.home.rank %}#{{ g.home.rank }} {% endif %}{{ g.home.name }}</span>
+                  </h2>
+                  <div class="mlb-game-block__venue">Charles Schwab Field Omaha · {{ g.round if g.round else "Bracket play" }}</div>
+                </div>
+                <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
+              </header>
+              <div class="mlb-game-block__body">
+                {{ cws_summary_panel(g) }}
+                <div class="mlb-game-block__hourly">
+                  {{ cws_hourly_table(g) }}
+                </div>
+              </div>
+              {# OVERcast weather-impact strip, full width under the body, upcoming games only #}
+              {% if not day.is_past and g.forecast %}
+                <div class="cws-impact-strip">
+                  {{ cws_impact_strip(g.forecast) }}
+                </div>
+              {% endif %}
+              <a class="mlb-game-block__deeplink" href="/cws/{{ day.date_str }}/{{ g.slug }}">
+                Full forecast for this game <span aria-hidden="true">→</span>
+              </a>
+            </article>
+          {% endfor %}
+        </div>
+      {% elif not showing_multiple %}
+        {# Single-day view with no games — keep the legacy empty-state message #}
+        <div class="container">
+          <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
+            {% if day.meta and day.meta.build_err %}Slate is rebuilding. Refresh in a moment.
+            {% else %}No CWS games scheduled at Omaha for this date.{% endif %}
+          </p>
+        </div>
+      {% endif %}
+
+    </section>
+  {% endfor %}
 </div>
 
 <script>
