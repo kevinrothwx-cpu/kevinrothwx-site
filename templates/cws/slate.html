@@ -70,6 +70,16 @@
         </div>
       {% endif %}
 
+      {% if not day.slate and showing_multiple %}
+        {# Empty day in multi-day view. Without a placeholder the page
+           jumps straight from one date header to the next, which reads as
+           a glitch. A soft italic note fills the space and signals "this
+           is intentional, just an off-day in the bracket." #}
+        <div style="padding: 2rem 1.5rem; margin: 0.5rem 0 1.5rem; text-align: center; color: var(--ash); font-style: italic; font-size: 1.05rem; line-height: 1.5;">
+          No games scheduled today · bracket off-day at Omaha.
+        </div>
+      {% endif %}
+
       {% if day.slate %}
         <div class="mlb-hourly-group">
           {% for g in day.slate %}
