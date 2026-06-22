@@ -132,13 +132,41 @@ def build_race(event):
 
 
 def build_nascar_slate():
-    """Build current/upcoming NASCAR Cup races."""
+    """Build current/upcoming NASCAR Cup races.
+
+    Filters completed/past races so /nascar always shows the next upcoming
+    race, never lingers on last Sunday's. Mirrors the PGA filter pattern.
+    """
     raw = get_nascar_scoreboard()
     out = []
     for event in raw:
         parsed = parse_nascar_event(event)
         if not parsed:
             continue
+
+        # Drop ESPN-flagged completed races. ESPN's status name varies —
+        # STATUS_FINAL, STATUS_COMPLETED, STATUS_POST_GAME, etc.
+        status = (parsed.get("status") or "").upper()
+        DONE_KEYWORDS = ("FINAL", "POST", "COMPLETED", "ENDED")
+        if any(kw in status for kw in DONE_KEYWORDS):
+            print(f"[nascar.slate] filtered {parsed.get('name')!r} on status={status}", flush=True)
+            continue
+
+        # Drop races whose green flag was more than 12 hours ago. A 4-hour
+        # race that started Sunday at 3 PM ET (19:00 UTC) is over by 23:00 UTC
+        # Sunday. By Monday 7 AM UTC (12h later), the race is well past and
+        # next Sunday's race should take its place.
+        gf_iso = parsed.get("green_flag_utc") or ""
+        if gf_iso:
+            try:
+                gf = datetime.fromisoformat(gf_iso.replace("Z", "+00:00"))
+                age_hours = (datetime.now(timezone.utc) - gf).total_seconds() / 3600
+                if age_hours > 12:
+                    print(f"[nascar.slate] filtered {parsed.get('name')!r} (green flag {age_hours:.1f}h ago)", flush=True)
+                    continue
+            except (ValueError, TypeError) as e:
+                print(f"[nascar.slate] WARN green_flag_utc parse failed for {parsed.get('name')!r}: {gf_iso!r} ({e})", flush=True)
+
         out.append(build_race(parsed))
     out.sort(key=lambda r: r.get("green_flag_utc", ""))
     return out

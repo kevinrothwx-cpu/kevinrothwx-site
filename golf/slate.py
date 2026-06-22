@@ -198,23 +198,41 @@ def build_pga_slate() -> list[dict]:
         if not parsed:
             continue
 
-        # Drop ESPN-flagged final/completed events first (cheap status check)
+        # Drop ESPN-flagged final/completed events. Broader keyword list
+        # because ESPN status names vary: STATUS_FINAL, STATUS_COMPLETED,
+        # STATUS_POST_GAME, STATUS_END_PERIOD, etc.
         status = (parsed.get("status") or "").upper()
-        if "FINAL" in status or "POST" in status:
+        DONE_KEYWORDS = ("FINAL", "POST", "COMPLETED", "ENDED")
+        if any(kw in status for kw in DONE_KEYWORDS):
+            print(f"[golf.slate] filtered {parsed.get('name')!r} on status={status}", flush=True)
             continue
 
-        # Drop events whose end date is before today (UTC). Tournament-level
-        # granularity is fine: end_iso is the start of Sunday's final round,
-        # so any tournament finished by today UTC gets filtered. Catches the
-        # window where ESPN hasn't flipped status to FINAL yet.
+        # Drop events whose end date is before today (UTC).
         end_iso = parsed.get("end_iso") or ""
         if end_iso:
             try:
                 end_date = datetime.fromisoformat(end_iso.replace("Z", "+00:00")).date()
                 if end_date < today_utc_date:
+                    print(f"[golf.slate] filtered {parsed.get('name')!r} (ended {end_date}, today {today_utc_date})", flush=True)
                     continue
-            except Exception:
-                pass
+            except (ValueError, TypeError) as e:
+                print(f"[golf.slate] WARN end_iso parse failed for {parsed.get('name')!r}: {end_iso!r} ({e})", flush=True)
+
+        # Safety net: drop tournaments that started more than 8 days ago,
+        # regardless of status or end_iso. Catches any case where ESPN
+        # returns weird/stale data with bad status + bad end_iso. A normal
+        # PGA tournament starts Thursday and we view it through Sunday;
+        # nothing legitimate should still be showing 9+ days after start.
+        start_iso = parsed.get("start_iso") or ""
+        if start_iso:
+            try:
+                start_date = datetime.fromisoformat(start_iso.replace("Z", "+00:00")).date()
+                days_old = (today_utc_date - start_date).days
+                if days_old > 8:
+                    print(f"[golf.slate] filtered {parsed.get('name')!r} (started {days_old}d ago)", flush=True)
+                    continue
+            except (ValueError, TypeError) as e:
+                print(f"[golf.slate] WARN start_iso parse failed for {parsed.get('name')!r}: {start_iso!r} ({e})", flush=True)
 
         tournament = build_tournament(parsed)
         out.append(tournament)
