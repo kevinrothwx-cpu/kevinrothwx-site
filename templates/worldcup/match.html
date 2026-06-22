@@ -9,17 +9,30 @@
 {% block og_description %}{{ pretty_date }} · {{ match.venue }} · Kickoff {{ match.kickoff_eastern_str }}{% endblock %}
 
 {% block extra_head %}
+{# SportsEvent schema for AI/search discoverability. Mirrors mlb/game.html:
+   factual description (no editorial), endDate (kickoff + 2h covers 90-min
+   match + halftime + injury time), free offer, FIFA as organizer, weather
+   as additionalProperty. #}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
   "name": "{{ match.away.name }} vs {{ match.home.name }}",
+  "description": "Weather forecast for the {{ match.away.name }} vs {{ match.home.name }} 2026 FIFA World Cup match at {{ match.venue }}{% if match.venue_meta %} in {{ match.venue_meta.city }}{% endif %}. Kickoff {{ match.kickoff_eastern_str }}. Includes hourly forecast around match time.",
   "startDate": "{{ match.kickoff_utc_dt.isoformat() }}",
+  "endDate": "{{ (match.kickoff_utc_dt + timedelta(hours=2)).isoformat() }}",
   "sport": "Soccer",
+  "url": "{{ site_url }}/worldcup/{{ date_str }}/{{ match.slug }}",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
   "location": {
     "@type": "Place",
     "name": "{{ match.venue }}",
-    "address": "{{ match.venue_meta.city if match.venue_meta else '' }}"{% if match.venue_meta %},
+    "address": {
+      "@type": "PostalAddress"{% if match.venue_meta %},
+      "addressLocality": "{{ match.venue_meta.city }}"{% endif %}
+    }{% if match.venue_meta %},
     "geo": {
       "@type": "GeoCoordinates",
       "latitude": {{ match.venue_meta.lat }},
@@ -28,7 +41,28 @@
   },
   "homeTeam": { "@type": "SportsTeam", "name": "{{ match.home.name }}" },
   "awayTeam": { "@type": "SportsTeam", "name": "{{ match.away.name }}" },
-  "url": "https://kevinrothwx.com/worldcup/{{ date_str }}/{{ match.slug }}"
+  "performer": [
+    { "@type": "SportsTeam", "name": "{{ match.away.name }}" },
+    { "@type": "SportsTeam", "name": "{{ match.home.name }}" }
+  ],
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "FIFA",
+    "url": "https://www.fifa.com/"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ site_url }}/worldcup/{{ date_str }}/{{ match.slug }}",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "category": "Free weather forecast"
+  }{% if match.forecast %},
+  "additionalProperty": [
+    { "@type": "PropertyValue", "name": "Temperature at kickoff", "value": "{{ match.forecast.temp }}°F" },
+    { "@type": "PropertyValue", "name": "Wind speed", "value": "{{ match.forecast.wind_speed }} mph" },
+    { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ match.forecast.precip_pct }}%" }
+  ]{% endif %}
 }
 </script>
 {% endblock %}

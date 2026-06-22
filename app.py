@@ -85,6 +85,15 @@ def md_bold(text):
 app.jinja_env.filters["md_bold"] = md_bold
 
 
+# Expose timedelta to Jinja templates so per-sport detail pages can compute
+# schema.org endDate from startDate + duration (e.g. first_pitch_utc + 3h).
+# Used inside <script type="application/ld+json"> blocks in game/match/race
+# detail templates. Keeps the schema fully template-side without needing
+# Python pre-computation of every event's end time.
+from datetime import timedelta as _timedelta
+app.jinja_env.globals["timedelta"] = _timedelta
+
+
 def cws_impact_strip(forecast):
     """Render the OVERcast CWS weather-impact strip as safe HTML.
     Always returns a Markup string; on any error returns an empty Markup

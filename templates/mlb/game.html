@@ -8,17 +8,33 @@
 {% block og_description %}{{ pretty_date }} · {{ game.venue }} · First pitch {{ game.first_pitch_eastern_str }}{% endblock %}
 
 {% block extra_head %}
+{# Schema.org SportsEvent. Fills every field Google Search Console asks for:
+   endDate, offers, description, performer, organizer. Weather data is
+   exposed as additionalProperty so AI crawlers can extract structured
+   facts ("Yankees at Fenway, 7:05 PM ET, 76°F, 8 mph SW wind") with
+   mysportsweather.com as the source. Description is factual / structural,
+   not editorial — we don't compete with Kevin's PropFinder analysis. #}
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
   "name": "{{ game.away_name }} at {{ game.home_name }}",
+  "description": "Weather forecast for the {{ game.away_name }} at {{ game.home_name }} MLB game at {{ game.venue }} in {{ game.park.city }} on {{ pretty_date }}. First pitch {{ game.first_pitch_eastern_str }}. Includes hourly forecast through game time and ballpark microclimate context by sports meteorologist Kevin Roth.",
   "startDate": "{{ game.first_pitch_utc.isoformat() }}",
+  "endDate": "{{ (game.first_pitch_utc + timedelta(hours=3)).isoformat() }}",
   "sport": "Baseball",
+  "url": "{{ site_url }}/mlb/{{ date_str }}/{{ game.slug }}",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
   "location": {
     "@type": "Place",
     "name": "{{ game.venue }}",
-    "address": "{{ game.park.city }}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "{{ game.park.city }}",
+      "addressCountry": "US"
+    },
     "geo": {
       "@type": "GeoCoordinates",
       "latitude": {{ game.park.lat }},
@@ -27,7 +43,30 @@
   },
   "homeTeam": { "@type": "SportsTeam", "name": "{{ game.home_name }}" },
   "awayTeam": { "@type": "SportsTeam", "name": "{{ game.away_name }}" },
-  "url": "https://kevinrothwx.com/mlb/{{ date_str }}/{{ game.slug }}"
+  "performer": [
+    { "@type": "SportsTeam", "name": "{{ game.away_name }}" },
+    { "@type": "SportsTeam", "name": "{{ game.home_name }}" }
+  ],
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "Major League Baseball",
+    "url": "https://www.mlb.com/"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ site_url }}/mlb/{{ date_str }}/{{ game.slug }}",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "category": "Free weather forecast"
+  }{% if game.forecast %},
+  "additionalProperty": [
+    { "@type": "PropertyValue", "name": "Temperature at first pitch", "value": "{{ game.forecast.temp }}°F" },
+    { "@type": "PropertyValue", "name": "Wind speed", "value": "{{ game.forecast.wind_speed }} mph" },
+    { "@type": "PropertyValue", "name": "Wind direction", "value": "{{ game.forecast.wind_deg|wind_compass }}" },
+    { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ game.forecast.precip_pct }}%" }{% if game.forecast.dew is not none %},
+    { "@type": "PropertyValue", "name": "Dewpoint", "value": "{{ game.forecast.dew }}°F" }{% endif %}
+  ]{% endif %}
 }
 </script>
 {% endblock %}
