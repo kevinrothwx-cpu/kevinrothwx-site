@@ -90,7 +90,11 @@
   <section class="home-hero">
     <div class="container">
       <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
-      <h1 class="home-hero__title">Weather for every game, match, race, and round.</h1>
+      {# text-wrap: balance distributes the headline across lines evenly so
+         it doesn't end with a single orphan word ("round.") on its own line.
+         Modern browsers (Chrome 114+, Firefox 121+, Safari 17.5+) handle it
+         natively; older browsers fall back to the default wrap with no harm. #}
+      <h1 class="home-hero__title" style="text-wrap: balance">Weather for every game, match, race, and round.</h1>
       <p class="home-hero__lead">
         Live forecasts across every sport, built by a meteorologist.
       </p>

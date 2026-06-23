@@ -235,14 +235,24 @@ def inject_sport_nav():
     except Exception:
         pass
 
-    # World Cup — count matches today + next 2 days
+    # World Cup — count matches whose Eastern-Time date is today. Late-night
+    # ET kickoffs (e.g. midnight ET) are technically the NEXT UTC day, so we
+    # check today + tomorrow UTC slates and filter to ET-today. Previously
+    # we showed a 3-day rolling total ("16") which was misleading on days
+    # when only a few matches were actually scheduled for today.
     try:
         total_wc = 0
-        for offset in (0, 1, 2):
+        for offset in (0, 1):
             d = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
             wc_slate, _ = get_matchday(d, allow_build=False)
-            if wc_slate:
-                total_wc += len(wc_slate)
+            if not wc_slate:
+                continue
+            for m in wc_slate:
+                ko_dt = m.get("kickoff_utc_dt")
+                if ko_dt is None:
+                    continue
+                if ko_dt.astimezone(EASTERN_TZ).date() == today:
+                    total_wc += 1
         if total_wc > 0:
             counts["worldcup"] = str(total_wc)
     except Exception:
@@ -253,21 +263,13 @@ def inject_sport_nav():
     # later, "Live" during round days would be the move (mirrors CWS).
     # Intentionally not setting counts["pga"].
 
-    # NASCAR — show day-of-week for next race
-    try:
-        nas_slate, _ = get_nascar_slate(allow_build=False)
-        if nas_slate:
-            from datetime import datetime as _dt
-            try:
-                gf = _dt.fromisoformat(nas_slate[0]["green_flag_utc"].replace("Z", "+00:00"))
-                gf_eastern = gf.astimezone(EASTERN_TZ)
-                counts["nascar"] = gf_eastern.strftime("%a")
-            except Exception:
-                counts["nascar"] = "Soon"
-    except Exception:
-        pass
+    # NASCAR — no badge by design (per Kevin). "Sun" day-of-week was treated
+    # as redundant; people know NASCAR races are on Sunday. Intentionally
+    # not setting counts["nascar"].
 
-    # CWS — live during 10-day window
+    # CWS — live during 10-day window. Window is controlled by CWS_2026_END
+    # in cws/venue.py; once that date passes, cws_in_window returns False
+    # and the badge auto-hides for the rest of the off-season.
     if cws_in_window():
         counts["cws"] = "Live"
 

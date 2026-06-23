@@ -12,6 +12,11 @@ CHARLES_SCHWAB_FIELD = {
     "aliases":           ["Charles Schwab Field", "TD Ameritrade Park", "Omaha"],
 }
 
-# Calendar window: hard-coded for 2026
-CWS_2026_START = "2026-06-12"  # one day buffer before opening
-CWS_2026_END   = "2026-06-24"
+# Calendar window: hard-coded for 2026. Originally Jun 12-24 but the
+# tournament wrapped on Jun 21 (Kevin updated Jun 22). is_in_window
+# returns False outside this range, which auto-hides the CWS sport-nav
+# badge. Architecture (route, template, data) stays in place for next
+# year's tournament — just update these dates when CWS 2027 schedule
+# is announced.
+CWS_2026_START = "2026-06-12"
+CWS_2026_END   = "2026-06-21"
