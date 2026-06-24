@@ -22,14 +22,41 @@ _warmer_thread = None
 _warmer_stop = threading.Event()
 
 
+# Safety net for the "warmer thread silently dies" symptom Kevin keeps
+# hitting. If the background warmer stops updating, the cache returns
+# stale data indefinitely until a manual redeploy. By checking the cache
+# age on every read, the first user request after the warmer stalls will
+# force a synchronous rebuild and self-heal. Trade-off: that user gets a
+# slow page load (5-15s for all the NWS/HRRR calls), but subsequent
+# requests are fast again and the data is fresh.
+STALE_CACHE_THRESHOLD_SEC = 30 * 60   # 30 min — slightly more than the
+                                       # 25-min warmer cycle, so a healthy
+                                       # warmer never trips this threshold.
+
+
 def get_pga_slate(allow_build: bool = True):
-    """Return (slate, meta_or_None)."""
+    """Return (slate, meta_or_None).
+
+    Auto-rebuilds if the cache is missing OR older than STALE_CACHE_THRESHOLD_SEC
+    (and allow_build=True). The stale-rebuild path is the recovery mechanism
+    for the "warmer thread silently stopped updating" failure mode.
+    """
     with _cache_lock:
         entry = dict(_pga_cache) if _pga_cache.get("slate") is not None else None
-    if entry is None and allow_build:
+
+    needs_rebuild = entry is None
+    if entry is not None and allow_build:
+        age_sec = (datetime.now(timezone.utc) - entry["built_at_utc"]).total_seconds()
+        if age_sec > STALE_CACHE_THRESHOLD_SEC:
+            print(f"[golf.cache] cache is {age_sec/60:.1f}min old (>30min) "
+                  f"— forcing synchronous rebuild (warmer may be stuck)", flush=True)
+            needs_rebuild = True
+
+    if needs_rebuild and allow_build:
         _rebuild()
         with _cache_lock:
             entry = dict(_pga_cache) if _pga_cache.get("slate") is not None else None
+
     if entry is None:
         return None, None
     age = int((datetime.now(timezone.utc) - entry["built_at_utc"]).total_seconds())

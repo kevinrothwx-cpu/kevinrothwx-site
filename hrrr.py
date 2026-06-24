@@ -125,32 +125,62 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         # before the round and we'd never have HRRR for it.
         "forecast_days": 3,
     }
-    # Use paid endpoint with API key when available, free endpoint otherwise.
+    # Try paid endpoint first if an API key is configured. If it returns ANY
+    # error (auth, quota, server error, network), fall back to the free
+    # endpoint instead of failing outright. This protects against the
+    # situation Kevin hit on 2026-06-24 where HRRR went site-wide dark
+    # because the paid endpoint had some kind of issue our code couldn't
+    # see (no error logged) and the slate cache got stuck with no HRRR
+    # data even though the warmer was still running.
     api_key = (os.environ.get("OPEN_METEO_API_KEY") or "").strip()
-    url = OPEN_METEO_PAID_URL if api_key else OPEN_METEO_FREE_URL
-    if api_key:
-        params["apikey"] = api_key
+    headers = {"User-Agent": HRRR_USER_AGENT}
+
+    def _fetch(use_paid):
+        endpoint = OPEN_METEO_PAID_URL if use_paid else OPEN_METEO_FREE_URL
+        p = dict(params)
+        if use_paid and api_key:
+            p["apikey"] = api_key
+        return requests.get(endpoint, params=p, headers=headers, timeout=15)
+
+    resp = None
+    endpoint_used = None
     try:
-        resp = requests.get(
-            url,
-            params=params,
-            headers={"User-Agent": HRRR_USER_AGENT},
-            timeout=15,
-        )
+        if api_key:
+            try:
+                resp = _fetch(use_paid=True)
+                endpoint_used = "paid"
+                if resp.status_code != 200:
+                    # Non-2xx from paid — log and fall through to free
+                    print(f"[hrrr] paid endpoint returned {resp.status_code} for "
+                          f"{lat},{lon}: {resp.text[:120]!r} — trying free fallback",
+                          flush=True)
+                    resp = None
+                    endpoint_used = None
+            except Exception as paid_err:
+                print(f"[hrrr] paid endpoint failed for {lat},{lon}: {paid_err} "
+                      f"— trying free fallback", flush=True)
+                resp = None
+                endpoint_used = None
+        if resp is None:
+            resp = _fetch(use_paid=False)
+            endpoint_used = "free"
+
         # Detect rate-limit explicitly so we can apply a longer backoff
         # than other transient errors.
         if resp.status_code == 429:
             _backoff_until[key] = now + _BACKOFF_429
-            print(f"[hrrr] 429 rate-limited for {lat},{lon} — backing off "
-                  f"until {_backoff_until[key].isoformat()}", flush=True)
+            print(f"[hrrr] 429 rate-limited for {lat},{lon} on {endpoint_used} "
+                  f"endpoint — backing off until {_backoff_until[key].isoformat()}",
+                  flush=True)
             _hrrr_cache[key] = []
             return None
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:
         _backoff_until[key] = now + _BACKOFF_OTHER
-        print(f"[hrrr] fetch failed for {lat},{lon}: {e} — short backoff "
-              f"until {_backoff_until[key].isoformat()}", flush=True)
+        print(f"[hrrr] fetch failed for {lat},{lon} on {endpoint_used or 'unknown'} "
+              f"endpoint: {e} — short backoff until {_backoff_until[key].isoformat()}",
+              flush=True)
         _hrrr_cache[key] = []
         return None
 
@@ -192,5 +222,5 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
     # Success — clear any leftover backoff so future cycles run normally
     _backoff_until.pop(key, None)
     _hrrr_cache[key] = periods
-    print(f"[hrrr] fetched {len(periods)} periods for {lat},{lon}", flush=True)
+    print(f"[hrrr] fetched {len(periods)} periods for {lat},{lon} via {endpoint_used} endpoint", flush=True)
     return periods
