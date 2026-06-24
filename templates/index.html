@@ -115,7 +115,7 @@
           Stadium-specific notes on altitude, humidity, roof status, and storm risk. 16 venues across the US, Mexico, and Canada. Built by a meteorologist, not AI.
         </p>
         <span class="home-featured__cta">
-          {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;matches this week{% else %}See all matches{% endif %}
+          {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;{% if sport_counts.worldcup == '1' %}match today{% else %}matches today{% endif %}{% else %}See all matches{% endif %}
           <span class="home-featured__arrow">→</span>
         </span>
       </a>
