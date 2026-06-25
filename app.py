@@ -716,9 +716,40 @@ def golf_tournament(slug):
     if not tournament:
         abort(404)
     tournament["writeup"] = golf_get_writeup(tournament["event_id"])
+
+    # Hide rounds whose day has fully passed in course-local time. Once it's
+    # Friday at the course, Round 1's Thursday hourly forecast is no longer
+    # useful — drop it so the page leads with the next upcoming round.
+    # Cutoff is midnight course-local: at 12:01 AM Friday, Round 1 disappears;
+    # at 12:01 AM Saturday, Round 2 disappears; etc. (Kevin's manual writeup
+    # is rendered separately above and is not affected.)
+    #
+    # Filter at REQUEST time (not in the cached slate) so the midnight cutoff
+    # is exact — building the filter into the cache would lag by up to a
+    # full 25-min warmer cycle. Shallow-copy the tournament dict and replace
+    # only the rounds list so the cached slate is left intact for other
+    # requests.
+    visible_rounds = tournament.get("rounds") or []
+    course_meta = tournament.get("course_meta")
+    if course_meta and visible_rounds:
+        try:
+            tz = ZoneInfo(course_meta["timezone"])
+            today_local = datetime.now(tz).date()
+            visible_rounds = [
+                r for r in visible_rounds
+                if r.get("date_local") and r["date_local"] >= today_local
+            ]
+        except Exception as e:
+            # If timezone lookup or date math ever fails, fall back to
+            # showing all rounds rather than blanking the page.
+            print(f"[golf] past-round filter failed for {slug}: {e}", flush=True)
+
+    tournament_view = dict(tournament)
+    tournament_view["rounds"] = visible_rounds
+
     return render_template(
         "golf/tournament.html",
-        tournament=tournament, meta=meta,
+        tournament=tournament_view, meta=meta,
     )
 
 
