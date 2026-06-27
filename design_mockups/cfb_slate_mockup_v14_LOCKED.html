@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CFB Slate Mockup v14 - MySportsWeather</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0a0a0a; --slate: #1f1f1f; --ash: #525252; --fog: #737373;
+      --smoke: #d4d4d4; --mist: #e5e5e5; --paper: #fafafa; --white: #ffffff;
+      --storm: #1e3a8a; --storm-hover: #1e40af; --sky: #3b82f6;
+      --font-serif: 'Newsreader', 'Source Serif Pro', Georgia, serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: var(--font-sans); color: var(--ink); background: var(--white); font-size: 16px; line-height: 1.6; margin: 0; }
+    a { color: var(--ink); text-decoration: none; }
+    a:hover { color: var(--storm); }
+
+    .mockup-banner { background: #fef3c7; color: #78350f; padding: 8px 16px; text-align: center; font-size: 12px; font-weight: 600; }
+
+    .site-header { border-bottom: 1px solid var(--mist); background: var(--white); }
+    .site-header__inner { max-width: 1100px; margin: 0 auto; padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .brand { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; color: var(--ink); display: inline-flex; align-items: baseline; gap: 0.6rem; }
+    .brand__divider { color: var(--smoke); }
+    .brand__role { font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fog); font-weight: 500; }
+    .nav { display: flex; align-items: center; gap: 1.75rem; }
+    .nav a { color: var(--slate); font-size: 0.9rem; font-weight: 500; }
+    .nav__cta { background: var(--ink); color: var(--white) !important; padding: 0.5rem 1rem; border-radius: 4px; }
+
+    .sport-nav { border-bottom: 1px solid var(--mist); background: var(--white); }
+    .sport-nav__inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; }
+    .sport-nav__item { padding: 0.95rem 1.2rem; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .sport-nav__item.is-active { color: var(--ink); border-bottom-color: var(--storm); }
+    .sport-nav__count { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem; background: var(--mist); color: var(--slate); border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+    .sport-nav__item.is-active .sport-nav__count { background: var(--ink); color: var(--white); }
+
+    .cfb-page { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+    .cfb-page__header { padding-bottom: 0.5rem; margin-bottom: 1rem; }
+    .kicker { font-family: var(--font-sans); font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+    .kicker-storm { color: var(--storm); }
+    .cfb-page__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.4rem, 1.8vw + 0.5rem, 1.85rem); letter-spacing: -0.015em; line-height: 1.1; margin: 0.3rem 0 0; }
+
+    .top-blocks { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin-bottom: 1.25rem; }
+    @media (min-width: 860px) { .top-blocks { grid-template-columns: 1.1fr 1fr; gap: 1rem; } }
+    .top-block { background: var(--white); border: 1px solid var(--mist); padding: 1rem 1.15rem; display: flex; flex-direction: column; gap: 0.55rem; }
+    .top-block__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
+    .top-block__title { font-family: var(--font-serif); font-size: 1.22rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.22; margin: 0; }
+    .top-block__body { font-family: var(--font-serif); font-size: 0.97rem; line-height: 1.5; color: var(--slate); margin: 0; }
+    .top-block__body strong { color: var(--ink); font-weight: 600; }
+    .gotd-meta { font-family: var(--font-sans); font-size: 0.76rem; color: var(--ash); letter-spacing: 0.03em; }
+    .gotd-stats { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.55rem; border-top: 1px solid var(--mist); margin-top: auto; }
+    .gotd-temp { font-family: var(--font-serif); font-size: 2.1rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+    .gotd-side { display: flex; flex-direction: column; gap: 0.18rem; font-family: var(--font-sans); font-size: 0.8rem; color: var(--slate); }
+    .gotd-side strong { color: var(--ink); font-weight: 600; }
+
+    .filter-bar { display: flex; gap: 0.5rem; padding: 0.65rem 0 0.9rem; flex-wrap: wrap; border-top: 1px solid var(--mist); border-bottom: 1px solid var(--mist); margin-bottom: 1.5rem; }
+    .chip { background: var(--white); border: 1px solid var(--smoke); padding: 0.35rem 0.9rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--slate); }
+    .chip:hover { border-color: var(--ink); color: var(--ink); }
+    .chip.is-active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+    .chip-count { opacity: 0.6; margin-left: 0.3rem; font-weight: 500; }
+
+    .date-section { margin-bottom: 1.75rem; }
+    .date-header { display: flex; align-items: baseline; gap: 0.65rem; padding-bottom: 0.6rem; margin-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
+    .date-header__title { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+    .date-header__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); font-weight: 500; }
+
+    /* ============================================================
+       v8 cheat-sheet card: three-column stat block (v7 locked)
+       PLUS elegant stadium-shape icon with wind direction overlay
+       in the wind column secondary slot.
+       ============================================================ */
+    .cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; align-items: start; }
+
+    .cheat-card {
+      display: flex; flex-direction: column;
+      background: var(--white); border: 1px solid var(--mist);
+      padding: 0.7rem 0.85rem 0.8rem;
+      color: var(--ink);
+      transition: border-color 0.15s ease;
+      cursor: pointer;
+    }
+    .cheat-card:hover { border-color: var(--ink); }
+    .cheat-card:hover .cheat-card__time { color: var(--storm); }
+
+    .cheat-card__rule {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 0.4rem; margin-bottom: 0.4rem;
+    }
+    .cheat-card__time {
+      font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate);
+    }
+    .cheat-card__rule-right {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      min-width: 0; overflow: hidden;
+    }
+    .cheat-card__location {
+      font-family: var(--font-sans); font-size: 0.62rem; font-weight: 500;
+      color: var(--fog); letter-spacing: 0.02em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .cheat-card__badge {
+      font-family: var(--font-sans); font-size: 0.56rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog);
+      padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); border-radius: 2px;
+      white-space: nowrap;
+    }
+    .cheat-card__badge--neutral { color: var(--storm); border-color: var(--storm); }
+    .cheat-card__badge--mix     { color: #5b21b6; border-color: #5b21b6; }
+    .cheat-card__badge--dome    { color: var(--slate); border-color: var(--slate); }
+    .cheat-card__badge--roof    { color: var(--storm); border-color: var(--storm); }
+
+    .cheat-card__teams {
+      display: flex; align-items: center; gap: 0.55rem;
+      padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist);
+      margin-bottom: 0.65rem;
+    }
+    .cheat-card__team { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
+    .cheat-card__team--right { justify-content: flex-end; }
+    .cheat-card__logo { width: 24px; height: 24px; flex-shrink: 0; object-fit: contain; }
+    .cheat-card__abbr {
+      font-family: var(--font-serif); font-size: 1.08rem; font-weight: 600;
+      letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap;
+    }
+    .cheat-card__rank { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 600; color: var(--fog); margin-right: 0.15rem; vertical-align: super; }
+    .cheat-card__at { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0; }
+
+    .cheat-card__wx {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.4rem;
+      margin-top: auto;
+    }
+    .wx-stat {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      min-width: 0;
+    }
+    .wx-stat__primary {
+      font-family: var(--font-serif);
+      font-size: 1.45rem; font-weight: 600;
+      letter-spacing: -0.025em; line-height: 1;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .wx-stat__primary--cold   { color: #1e40af; }
+    .wx-stat__primary--hot    { color: #b91c1c; }
+    .wx-stat__primary--severe { color: #b91c1c; }
+    .wx-stat__primary--high   { color: #b45309; }
+    .wx-stat__primary--precip-low  { color: #15803d; }
+    .wx-stat__primary--precip-mid  { color: #b45309; }
+    .wx-stat__primary--precip-high { color: #b91c1c; }
+    .wx-stat__secondary {
+      font-family: var(--font-sans); font-size: 0.72rem;
+      color: var(--fog); font-weight: 500;
+      line-height: 1.25; margin-top: 0.35rem;
+      min-height: 1.7rem;
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    .wx-stat__secondary strong { color: var(--slate); font-weight: 600; }
+    .wx-stat__icon {
+      width: 26px; height: 26px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+    }
+    .wx-stat__icon svg { width: 26px; height: 26px; }
+
+    /* ============================================================
+       v9: Football field icon with wind direction overlay.
+       Rectangular (subtle rounded corners), no grass color, subtle
+       endzone fills at each end so it reads as a football field.
+       Wind arrow inside rotates based on wind direction. Color tier
+       (green/orange/red) matches wind severity.
+       ============================================================ */
+    .wx-stadium {
+      width: 34px; height: 20px;
+      flex-shrink: 0;
+      display: inline-flex;
+      vertical-align: middle;
+    }
+    .wx-stadium svg { width: 34px; height: 20px; }
+    .wx-stadium__bowl { fill: none; stroke: #9aa0a6; stroke-width: 1; }
+    .wx-stadium__endzone-fill { fill: #f1f3f5; }
+    .wx-stadium__endzone-line { stroke: #b8bcc0; stroke-width: 0.8; }
+    .wx-stadium__midline { stroke: #d4d4d4; stroke-width: 0.5; stroke-dasharray: 1.5 1; }
+    .wx-stadium__arrow line { stroke: #15803d; stroke-width: 2.4; stroke-linecap: round; }
+    .wx-stadium__arrow polygon { fill: #15803d; }
+    .wx-stadium--high .wx-stadium__arrow line   { stroke: #b45309; }
+    .wx-stadium--high .wx-stadium__arrow polygon { fill: #b45309; }
+    .wx-stadium--severe .wx-stadium__arrow line   { stroke: #b91c1c; }
+    .wx-stadium--severe .wx-stadium__arrow polygon { fill: #b91c1c; }
+
+    .premium-banner {
+      margin: 1.5rem 0; padding: 1.1rem 1.35rem;
+      background: var(--ink); color: var(--white);
+      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1.3rem;
+    }
+    @media (max-width: 640px) { .premium-banner { grid-template-columns: 1fr; } }
+    .premium-banner__kicker { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #fde68a; }
+    .premium-banner__title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; line-height: 1.2; margin: 0.3rem 0 0.3rem; }
+    .premium-banner__sub { font-size: 0.83rem; color: rgba(255,255,255,0.72); margin: 0; }
+    .premium-banner__btn { background: var(--white); color: var(--ink) !important; padding: 0.6rem 1.1rem; border-radius: 4px; font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<div class="mockup-banner">MOCKUP v14 - Phosphor Regular weather icons - Not live data</div>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="/" class="brand">MySportsWeather <span class="brand__divider">/</span> <span class="brand__role">By Kevin Roth, Sports Meteorologist</span></a>
+    <nav class="nav">
+      <a href="#">𝕏 @KevinRothWx</a>
+      <a href="#">About Kevin</a>
+      <a href="#" class="nav__cta">OVERcast</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="sport-nav">
+  <div class="sport-nav__inner">
+    <a href="#" class="sport-nav__item">MLB <span class="sport-nav__count">12</span></a>
+    <a href="#" class="sport-nav__item">PGA</a>
+    <a href="#" class="sport-nav__item">NASCAR</a>
+    <a href="#" class="sport-nav__item is-active">NCAAF <span class="sport-nav__count">56</span></a>
+    <a href="#" class="sport-nav__item">NFL</a>
+  </div>
+</nav>
+
+<div class="cfb-page">
+  <div class="cfb-page__header">
+    <span class="kicker kicker-storm">NCAAF Weather</span>
+    <h1 class="cfb-page__title">Week of Oct 22 to Oct 25, 2026</h1>
+  </div>
+
+  <div class="top-blocks">
+    <div class="top-block">
+      <span class="top-block__kicker">Today's Weather Story</span>
+      <p class="top-block__body">
+        <strong>Snow at three games Saturday:</strong> Michigan at Northwestern (28°F, 2 to 4 inches accumulating), Wisconsin at Iowa (32°F with 25 mph wind), and Ohio State at Penn State (rain transitioning to snow late).
+        <strong>Severe wind at Kansas State vs TCU,</strong> sustained 28 mph with gusts to 45. Defensive game likely.
+        <strong>Heat advisory in Dallas</strong> for Texas vs Oklahoma at the Cotton Bowl (92°F at kickoff, feels-like 98°).
+        <strong>Thunderstorm risk 65% in Miami</strong> for the Florida State night game.
+        Most of the rest of the slate is clear and mild.
+      </p>
+    </div>
+    <div class="top-block">
+      <span class="top-block__kicker">Game of the Day - Weather Impact</span>
+      <h2 class="top-block__title"><span class="cheat-card__rank">6</span>Michigan at Northwestern</h2>
+      <div class="gotd-meta">Ryan Field, Evanston IL · Sat 12:00 PM ET</div>
+      <p class="top-block__body">
+        Snow through the entire game, accumulating 2 to 4 inches. Sustained 20 mph wind from the north, lake-effect setup off Lake Michigan. Temperature 28°F at kickoff, falling to 24°F by the fourth quarter. Feels-like near 15°F throughout.
+      </p>
+      <div class="gotd-stats">
+        <span class="gotd-temp">28°</span>
+        <div class="gotd-side">
+          <span><strong>Snow 85%</strong> · accumulating</span>
+          <span><strong>Wind 20 mph N</strong> · gusts to 30</span>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" style="width:42px;height:42px" aria-hidden="true">
+          <path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#1e40af" stroke-width="1.6" fill="#dbeafe" stroke-linecap="round" stroke-linejoin="round"/>
+          <g stroke="#1e40af" stroke-width="1.4" stroke-linecap="round"><line x1="9" y1="19.5" x2="9" y2="22"/><line x1="8" y1="20.5" x2="10" y2="20.5"/><line x1="13" y1="19.5" x2="13" y2="22.5"/><line x1="12" y1="20.8" x2="14" y2="20.8"/><line x1="17" y1="19.5" x2="17" y2="22"/><line x1="16" y1="20.5" x2="18" y2="20.5"/></g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="chip is-active">All FBS<span class="chip-count">56</span></button>
+    <button class="chip">Top 25<span class="chip-count">14</span></button>
+    <button class="chip">Power 4<span class="chip-count">42</span></button>
+  </div>
+  <div class="date-section">
+    <div class="date-header">
+      <h2 class="date-header__title">Thursday, Oct 22</h2>
+      <span class="date-header__count">1 game</span>
+    </div>
+    <div class="cheat-row">
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">7:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Blacksburg, VA</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png" alt=""><span class="cheat-card__abbr">MIA</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">VT</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/259.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">62°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">8 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(45 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">10%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+    </div>
+  </div>
+  <div class="date-section">
+    <div class="date-header">
+      <h2 class="date-header__title">Friday, Oct 23</h2>
+      <span class="date-header__count">2 games</span>
+    </div>
+    <div class="cheat-row">
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">7:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Memphis, TN</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2655.png" alt=""><span class="cheat-card__abbr">TUL</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">MEM</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/235.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">76°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">7 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(0 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">8:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Houston, TX</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/252.png" alt=""><span class="cheat-card__abbr">BYU</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">HOU</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/248.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">79°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">6 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(270 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">15%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud.svg?color=%23525252&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+    </div>
+  </div>
+  <div class="date-section">
+    <div class="date-header">
+      <h2 class="date-header__title">Saturday, Oct 24</h2>
+      <span class="date-header__count">52 games · 16 shown in mockup</span>
+    </div>
+    <div class="cheat-row">
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">12:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Evanston, IL</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/130.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">6</span>MICH</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">NW</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/77.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">28°</div>
+          <div class="wx-stat__secondary">Feels 16°</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--high">20 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium wx-stadium--high"><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(180 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span> <strong>G30</strong></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-high">85%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-snow.svg?color=%231e40af&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">12:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Iowa City, IA</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/275.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">14</span>WIS</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr"><span class="cheat-card__rank">22</span>IOWA</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">32°</div>
+          <div class="wx-stat__secondary">Feels 19°</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--high">25 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium wx-stadium--high"><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(135 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-high">70%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-snow.svg?color=%231e40af&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">12:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Fort Worth, TX</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">16</span>KSU</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr"><span class="cheat-card__rank">18</span>TCU</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2628.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">88°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--severe">28 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium wx-stadium--severe"><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(0 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span> <strong>G45</strong></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">5%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">12:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Dallas, TX</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/251.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">3</span>TEX</span></div>
+        <span class="cheat-card__at">vs</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr"><span class="cheat-card__rank">15</span>OU</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/201.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--hot">92°</div>
+          <div class="wx-stat__secondary">Feels 98°</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">8 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(0 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">3:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Knoxville, TN</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/61.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">1</span>UGA</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr"><span class="cheat-card__rank">5</span>TENN</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">68°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">6 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(270 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">5%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">3:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Auburn, AL</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/333.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">4</span>BAMA</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr"><span class="cheat-card__rank">10</span>AUB</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">78°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">7 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(45 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">10%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">3:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">East Lansing, MI</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/84.png" alt=""><span class="cheat-card__abbr">IND</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">MSU</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/127.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">35°</div>
+          <div class="wx-stat__secondary">Feels 28°</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">14 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(225 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-high">80%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">4:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Seattle, WA</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">11</span>ORE</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">UW</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/264.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">52°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--high">18 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium wx-stadium--high"><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(45 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span> <strong>G28</strong></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-high">80%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+    </div>
+  </div>
+  <div class="premium-banner">
+    <div>
+      <span class="premium-banner__kicker">OVERcast CFB · Premium</span>
+      <h3 class="premium-banner__title">Win probabilities, total adjustments, ATS impact for every game</h3>
+      <p class="premium-banner__sub">$99 for the season. Weather-tuned scoring projections, kicker FG by venue, wind impact on passing.</p>
+    </div>
+    <a href="#" class="premium-banner__btn">See sample week →</a>
+  </div>
+  <div class="date-section">
+    <div class="date-header">
+      <h2 class="date-header__title">Saturday, Oct 24 continued</h2>
+      <span class="date-header__count">night and late-window games</span>
+    </div>
+    <div class="cheat-row">
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">7:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Oxford, MS</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/99.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">12</span>LSU</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">MISS</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/145.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">75°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">5 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(0 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">7:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">State College, PA</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/194.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">2</span>OSU</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr"><span class="cheat-card__rank">7</span>PSU</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/213.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">38°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">14 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(225 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-high">75%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-snow.svg?color=%235b21b6&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">7:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Stanford, CA</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/87.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">8</span>ND</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">STAN</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/24.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">62°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">4 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(180 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">7:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Miami Gardens, FL</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/52.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">13</span>FSU</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">MIA</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--hot">86°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">12 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(45 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-high">65%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-lightning.svg?color=%23ca8a04&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">8:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Pasadena, CA</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/30.png" alt=""><span class="cheat-card__abbr"><span class="cheat-card__rank">9</span>USC</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">UCLA</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/26.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">68°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">6 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(90 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">12:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Champaign, IL</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/135.png" alt=""><span class="cheat-card__abbr">MINN</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">ILL</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/356.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">41°</div>
+          <div class="wx-stat__secondary">Feels 34°</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">10 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(180 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">5%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">3:30 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Salt Lake City, UT</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/38.png" alt=""><span class="cheat-card__abbr">COLO</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">UTAH</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/254.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--cold">48°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">9 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(90 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">10:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">Tucson, AZ</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/9.png" alt=""><span class="cheat-card__abbr">ASU</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">UA</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/12.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--hot">88°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">5 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(315 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+    </div>
+  </div>
+  <div class="date-section">
+    <div class="date-header">
+      <h2 class="date-header__title">Sunday, Oct 25</h2>
+      <span class="date-header__count">1 game</span>
+    </div>
+    <div class="cheat-row">
+
+    <a href="#" class="cheat-card">
+      <div class="cheat-card__rule">
+        <span class="cheat-card__time">3:00 PM ET</span>
+        <span class="cheat-card__rule-right"><span class="cheat-card__location">San Antonio, TX</span></span>
+      </div>
+      <div class="cheat-card__teams">
+        <div class="cheat-card__team"><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/249.png" alt=""><span class="cheat-card__abbr">UNT</span></div>
+        <span class="cheat-card__at">@</span>
+        <div class="cheat-card__team cheat-card__team--right"><span class="cheat-card__abbr">UTSA</span><img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2636.png" alt=""></div>
+      </div>
+      <div class="cheat-card__wx">
+        <div class="wx-stat">
+          <div class="wx-stat__primary">82°</div>
+          <div class="wx-stat__secondary">&nbsp;</div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary">9 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+          <div class="wx-stat__secondary"><span class="wx-stadium "><svg viewBox="0 0 40 24" aria-hidden="true">
+  <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+  <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+  <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+  <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+  <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+  <g class="wx-stadium__arrow" transform="rotate(315 20 12)">
+    <line x1="20" y1="18" x2="20" y2="7"/>
+    <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+  </g>
+</svg></span></div>
+        </div>
+        <div class="wx-stat">
+          <div class="wx-stat__primary wx-stat__primary--precip-low">20%</div>
+          <div class="wx-stat__secondary"><span class="wx-stat__icon"><img src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=26&height=26" alt="" style="width:26px;height:26px"></span></div>
+        </div>
+      </div>
+    </a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

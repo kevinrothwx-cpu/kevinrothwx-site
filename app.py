@@ -50,6 +50,14 @@ from cws.storage import (
 )
 from cws.overcast_impact import render_impact_strip as _cws_render_impact_strip
 
+from tennis.cache import (
+    get_active_slam_slate, get_slam_slate_by_id,
+    start_warmer as start_tennis_warmer,
+)
+from tennis.schedule import (
+    active_slam, next_slam, is_any_slam_active, get_slam_by_id,
+)
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
@@ -124,6 +132,7 @@ start_wc_warmer()
 start_golf_warmer()
 start_nascar_warmer()
 start_cws_warmer()
+start_tennis_warmer()
 
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====

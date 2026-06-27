@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weather Icon Comparison - Current vs Phosphor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0a0a0a; --slate: #1f1f1f; --ash: #525252; --fog: #737373;
+      --smoke: #d4d4d4; --mist: #e5e5e5; --paper: #fafafa; --white: #ffffff;
+      --storm: #1e3a8a;
+      --font-serif: 'Newsreader', Georgia, serif;
+      --font-sans: 'Inter', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: var(--font-sans); color: var(--ink); background: var(--paper); margin: 0; padding: 2rem; line-height: 1.5; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { font-family: var(--font-serif); font-weight: 600; font-size: 2rem; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+    .kicker { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
+    .lead { font-size: 0.95rem; color: var(--slate); max-width: 700px; margin: 0.5rem 0 2rem; }
+    .lead strong { color: var(--ink); }
+
+    /* Comparison table */
+    .compare {
+      background: var(--white); border: 1px solid var(--mist);
+      margin-bottom: 2rem;
+    }
+    .compare__header {
+      display: grid;
+      grid-template-columns: 130px repeat(5, 1fr);
+      gap: 0;
+      padding: 0.75rem 1rem;
+      border-bottom: 2px solid var(--ink);
+      background: var(--paper);
+    }
+    .compare__header > div {
+      font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate);
+      text-align: center;
+    }
+    .compare__header > div:first-child { text-align: left; }
+    .compare__row {
+      display: grid;
+      grid-template-columns: 130px repeat(5, 1fr);
+      gap: 0;
+      padding: 1rem;
+      border-bottom: 1px solid var(--mist);
+      align-items: center;
+    }
+    .compare__row:last-child { border-bottom: 0; }
+    .compare__name {
+      font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600;
+      color: var(--ink);
+    }
+    .compare__name small {
+      display: block; font-size: 0.7rem; font-weight: 500;
+      color: var(--fog); margin-top: 0.15rem;
+    }
+    .compare__cell {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .compare__cell-large { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+    .compare__cell-small { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+    .compare__cell-large svg, .compare__cell-large img { max-width: 40px; max-height: 40px; }
+    .compare__cell-small svg, .compare__cell-small img { max-width: 26px; max-height: 26px; }
+
+    /* Sample card preview */
+    .preview-row {
+      background: var(--white); border: 1px solid var(--mist);
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+    .preview-row h3 {
+      font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate);
+      margin: 0 0 0.75rem;
+    }
+    .preview-cards {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.7rem;
+    }
+    .preview-card {
+      background: var(--white); border: 1px solid var(--mist);
+      padding: 0.7rem 0.85rem 0.8rem;
+      display: flex; flex-direction: column;
+    }
+    .preview-card__rule { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); margin-bottom: 0.5rem; }
+    .preview-card__teams {
+      font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600;
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.55rem;
+    }
+    .preview-card__wx {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; align-items: center;
+    }
+    .preview-card__col { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+    .preview-card__primary { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; line-height: 1; }
+    .preview-card__sub { font-size: 0.7rem; color: var(--fog); display: flex; align-items: center; gap: 0.25rem; }
+
+    .section-title {
+      font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600;
+      margin: 2.5rem 0 1rem; letter-spacing: -0.01em;
+    }
+    .note {
+      background: #fef3c7; color: #78350f; padding: 0.85rem 1.15rem;
+      border-radius: 3px; font-size: 0.85rem; margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <span class="kicker">Icon Comparison · v13 design system</span>
+  <h1>Current weather icons vs Phosphor</h1>
+  <p class="lead">
+    Each row shows your <strong>current site icon</strong> alongside <strong>Phosphor</strong> in four weights (Regular, Bold, Fill, Duotone). Top size is 40px (detail page reference), bottom is 26px (cheat card size). Phosphor is free under MIT, already loaded via iconify on your site for sport icons.
+  </p>
+
+  <div class="note">
+    <strong>How to read this:</strong> pick a column (Regular / Bold / Fill / Duotone) that feels right for your brand. Or rule out Phosphor entirely and we'll try refining the current set instead.
+  </div>
+
+  <div class="compare">
+    <div class="compare__header">
+      <div>Icon</div>
+      <div>Current site</div>
+      <div>Phosphor Regular</div>
+      <div>Phosphor Bold</div>
+      <div>Phosphor Fill</div>
+      <div>Phosphor Duotone</div>
+    </div>
+
+    <!-- SUN -->
+    <div class="compare__row">
+      <div class="compare__name">Clear / Sun<small>day games, low PoP</small></div>
+      <!-- Current site sun SVG -->
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><circle cx="12" cy="12" r="4.5" fill="#fef3c7" stroke="#ca8a04" stroke-width="1.8"/><g stroke="#ca8a04" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="2.5" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="21.5" y2="12"/><line x1="5.3" y1="5.3" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="18.7" y2="18.7"/><line x1="5.3" y1="18.7" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="18.7" y2="5.3"/></g></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><circle cx="12" cy="12" r="4.5" fill="#fef3c7" stroke="#ca8a04" stroke-width="1.8"/><g stroke="#ca8a04" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="2.5" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="21.5" y2="12"/></g></svg>
+        </div>
+      </div>
+      <!-- Phosphor Regular sun -->
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+      <!-- Phosphor Bold sun -->
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:sun-bold.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:sun-bold.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+      <!-- Phosphor Fill sun -->
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:sun-fill.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:sun-fill.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+      <!-- Phosphor Duotone sun -->
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:sun-duotone.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:sun-duotone.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- PARTLY CLOUDY -->
+    <div class="compare__row">
+      <div class="compare__name">Partly cloudy<small>mixed conditions</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><g stroke="#ca8a04" stroke-width="1.8"><circle cx="9" cy="9" r="3" fill="#fef3c7"/></g><path d="M 7 18 A 3 3 0 0 1 10 15 A 4 4 0 0 1 18 16 A 2.5 2.5 0 0 1 17 21 L 9 21 A 3 3 0 0 1 7 18 Z" fill="white" stroke="#525252" stroke-width="1.6"/></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><g stroke="#ca8a04" stroke-width="1.8"><circle cx="9" cy="9" r="3" fill="#fef3c7"/></g><path d="M 7 18 A 3 3 0 0 1 10 15 A 4 4 0 0 1 18 16 A 2.5 2.5 0 0 1 17 21 L 9 21 A 3 3 0 0 1 7 18 Z" fill="white" stroke="#525252" stroke-width="1.6"/></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-sun-bold.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-sun-bold.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-sun-fill.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-sun-fill.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-sun-duotone.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-sun-duotone.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- CLOUD -->
+    <div class="compare__row">
+      <div class="compare__name">Cloudy<small>overcast, no precip</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#f0f0f0"/></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#f0f0f0"/></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-bold.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-bold.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-fill.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-fill.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-duotone.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-duotone.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- RAIN -->
+    <div class="compare__row">
+      <div class="compare__name">Rain<small>precipitation</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#e5e7eb"/><line x1="9" y1="19" x2="9" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/><line x1="13" y1="19" x2="13" y2="22.5" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/><line x1="17" y1="19" x2="17" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#e5e7eb"/><line x1="9" y1="19" x2="9" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/><line x1="13" y1="19" x2="13" y2="22.5" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/><line x1="17" y1="19" x2="17" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-rain-bold.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-rain-bold.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-rain-fill.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-rain-fill.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-rain-duotone.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-rain-duotone.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- SNOW -->
+    <div class="compare__row">
+      <div class="compare__name">Snow<small>cold precip</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#1e40af" stroke-width="1.8" fill="#dbeafe"/><g stroke="#1e40af" stroke-width="1.6" stroke-linecap="round"><line x1="9" y1="19" x2="9" y2="22"/><line x1="13" y1="19" x2="13" y2="22.5"/><line x1="17" y1="19" x2="17" y2="22"/></g></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#1e40af" stroke-width="1.8" fill="#dbeafe"/><g stroke="#1e40af" stroke-width="1.6" stroke-linecap="round"><line x1="9" y1="19" x2="9" y2="22"/><line x1="13" y1="19" x2="13" y2="22.5"/><line x1="17" y1="19" x2="17" y2="22"/></g></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-snow.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-snow.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-snow-bold.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-snow-bold.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-snow-fill.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-snow-fill.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-snow-duotone.svg?color=%231e40af&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-snow-duotone.svg?color=%231e40af&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- MIX -->
+    <div class="compare__row">
+      <div class="compare__name">Mix<small>rain-to-snow transition</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#e5e7eb"/><line x1="9" y1="19" x2="9" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/><line x1="17" y1="19" x2="17" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M5 13a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 17H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#e5e7eb"/><line x1="9" y1="19" x2="9" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/><line x1="17" y1="19" x2="17" y2="22" stroke="#1e40af" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-fog.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-fog.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-fog-bold.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-fog-bold.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-fog-fill.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-fog-fill.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-fog-duotone.svg?color=%23525252&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-fog-duotone.svg?color=%23525252&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- STORM -->
+    <div class="compare__row">
+      <div class="compare__name">Storm<small>thunder, lightning</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><path d="M5 11a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 15H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#d1d5db"/><polyline points="13,15 10,20 13,20 11,24" stroke="#ca8a04" stroke-width="1.8" fill="#fef3c7" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M5 11a4 4 0 014-4 5 5 0 019.5 1.5A3.5 3.5 0 0118 15H8a4 4 0 01-3-4z" stroke="#525252" stroke-width="1.8" fill="#d1d5db"/><polyline points="13,15 10,20 13,20 11,24" stroke="#ca8a04" stroke-width="1.8" fill="#fef3c7" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-lightning.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-lightning.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-lightning-bold.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-lightning-bold.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-lightning-fill.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-lightning-fill.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:cloud-lightning-duotone.svg?color=%23ca8a04&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:cloud-lightning-duotone.svg?color=%23ca8a04&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+    <!-- NIGHT (clear) -->
+    <div class="compare__row">
+      <div class="compare__name">Clear night<small>night games, clear sky</small></div>
+      <div class="compare__cell">
+        <div class="compare__cell-large">
+          <svg viewBox="0 0 24 24" fill="none" width="40" height="40"><circle cx="12" cy="12" r="4.5" fill="#e0e7ff" stroke="#1e3a8a" stroke-width="1.8"/></svg>
+        </div>
+        <div class="compare__cell-small">
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><circle cx="12" cy="12" r="4.5" fill="#e0e7ff" stroke="#1e3a8a" stroke-width="1.8"/></svg>
+        </div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:moon-bold.svg?color=%231e3a8a&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:moon-bold.svg?color=%231e3a8a&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:moon-fill.svg?color=%231e3a8a&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:moon-fill.svg?color=%231e3a8a&width=26&height=26" alt=""></div>
+      </div>
+      <div class="compare__cell">
+        <div class="compare__cell-large"><img src="https://api.iconify.design/ph:moon-duotone.svg?color=%231e3a8a&width=40&height=40" alt=""></div>
+        <div class="compare__cell-small"><img src="https://api.iconify.design/ph:moon-duotone.svg?color=%231e3a8a&width=26&height=26" alt=""></div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2 class="section-title">Preview: cheat cards using each weight</h2>
+  <p class="lead">Same 4 games (Michigan @ Northwestern snow, Kansas State @ TCU clear, Indiana @ Michigan State rain, Florida State @ Miami storm) rendered with each Phosphor weight, so you can see them in context at actual card size.</p>
+
+  <!-- REGULAR weight preview -->
+  <div class="preview-row">
+    <h3>Phosphor Regular</h3>
+    <div class="preview-cards">
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">6</sup>MICH @ NW</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">28°</span><span class="preview-card__sub">Feels 16°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b45309">20<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">N</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">85%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-snow.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">16</sup>KSU @ <sup style="font-size:0.55em;color:#737373">18</sup>TCU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary">88°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">28<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">S · G45</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#15803d">5%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">3:30 PM ET</div>
+        <div class="preview-card__teams">IND @ MSU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">35°</span><span class="preview-card__sub">Feels 28°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">14<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">NE</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">80%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">7:30 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">13</sup>FSU @ MIA</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">86°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">12<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">SW</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">65%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-lightning.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOLD weight preview -->
+  <div class="preview-row">
+    <h3>Phosphor Bold</h3>
+    <div class="preview-cards">
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">6</sup>MICH @ NW</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">28°</span><span class="preview-card__sub">Feels 16°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b45309">20<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">N</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">85%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-snow-bold.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">16</sup>KSU @ <sup style="font-size:0.55em;color:#737373">18</sup>TCU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary">88°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">28<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">S · G45</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#15803d">5%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:sun-bold.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">3:30 PM ET</div>
+        <div class="preview-card__teams">IND @ MSU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">35°</span><span class="preview-card__sub">Feels 28°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">14<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">NE</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">80%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-rain-bold.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">7:30 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">13</sup>FSU @ MIA</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">86°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">12<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">SW</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">65%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-lightning-bold.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILL weight preview -->
+  <div class="preview-row">
+    <h3>Phosphor Fill</h3>
+    <div class="preview-cards">
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">6</sup>MICH @ NW</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">28°</span><span class="preview-card__sub">Feels 16°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b45309">20<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">N</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">85%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-snow-fill.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">16</sup>KSU @ <sup style="font-size:0.55em;color:#737373">18</sup>TCU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary">88°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">28<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">S · G45</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#15803d">5%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:sun-fill.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">3:30 PM ET</div>
+        <div class="preview-card__teams">IND @ MSU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">35°</span><span class="preview-card__sub">Feels 28°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">14<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">NE</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">80%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-rain-fill.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">7:30 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">13</sup>FSU @ MIA</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">86°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">12<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">SW</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">65%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-lightning-fill.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUOTONE weight preview -->
+  <div class="preview-row">
+    <h3>Phosphor Duotone</h3>
+    <div class="preview-cards">
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">6</sup>MICH @ NW</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">28°</span><span class="preview-card__sub">Feels 16°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b45309">20<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">N</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">85%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-snow-duotone.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">12:00 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">16</sup>KSU @ <sup style="font-size:0.55em;color:#737373">18</sup>TCU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary">88°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">28<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">S · G45</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#15803d">5%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:sun-duotone.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">3:30 PM ET</div>
+        <div class="preview-card__teams">IND @ MSU</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#1e40af">35°</span><span class="preview-card__sub">Feels 28°</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">14<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">NE</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">80%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-rain-duotone.svg?color=%231e40af&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card__rule">7:30 PM ET</div>
+        <div class="preview-card__teams"><sup style="font-size:0.55em;color:#737373">13</sup>FSU @ MIA</div>
+        <div class="preview-card__wx">
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">86°</span><span class="preview-card__sub">&nbsp;</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary">12<span style="font-size:0.55em;color:#525252;font-weight:500"> mph</span></span><span class="preview-card__sub">SW</span></div>
+          <div class="preview-card__col"><span class="preview-card__primary" style="color:#b91c1c">65%</span><span class="preview-card__sub"><img src="https://api.iconify.design/ph:cloud-lightning-duotone.svg?color=%23ca8a04&width=26&height=26" alt=""></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
