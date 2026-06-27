@@ -1,12 +1,15 @@
 {# Sport-tab strip, below site header on /sport/* pages.
-   `active_sport` is a string like "mlb", "worldcup", "nfl", "ncaaf", "pga", "nascar", "cws"
+   `active_sport` is a string like "mlb", "worldcup", "nfl", "ncaaf", "pga", "nascar", "cws", "tennis"
    `sport_counts` is an optional dict with the "today" indicator per sport.
    Example: {"mlb": "15", "worldcup": "4", "nfl": "Sun", "pga": "Round 3", "nascar": "Sun"}
 
-   Order: active sports left (MLB, World Cup, PGA, NASCAR, CWS), then a flex
+   Order: active sports left (MLB, World Cup, PGA, NASCAR, CWS, Tennis), then a flex
    gap, then dormant sports right (NFL, NCAAF). NFL/NCAAF are important —
    they're not dimmed or shrunk — just positionally separated so the eye
    lands on the sports currently producing forecasts first.
+
+   CWS and Tennis are conditional: they only render when their sport_counts
+   key is set (which the context_processor sets only when in window).
 #}
 <nav class="sport-nav" aria-label="Sport navigation">
   <div class="sport-nav__inner">
@@ -30,6 +33,12 @@
     <a href="/cws" class="sport-nav__item {% if active_sport == 'cws' %}is-active{% endif %}">
       CWS
       <span class="sport-nav__count">{{ sport_counts.cws }}</span>
+    </a>
+    {% endif %}
+    {% if sport_counts and sport_counts.tennis %}
+    <a href="/tennis" class="sport-nav__item {% if active_sport == 'tennis' %}is-active{% endif %}">
+      Tennis
+      <span class="sport-nav__count">{{ sport_counts.tennis }}</span>
     </a>
     {% endif %}
     {# The margin-left:auto on NFL pushes it (and NCAAF) to the right edge
