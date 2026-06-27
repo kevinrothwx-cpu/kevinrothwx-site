@@ -1,0 +1,155 @@
+{# templates/ncaaf/_macros.html
+
+  Reusable components for CFB pages. Implements the v14 mockup design:
+  - cfb_cheat_card(game): three-column TEMP/WIND/PoP card with stadium
+    icon + rotated wind arrow
+  - cfb_weather_icon(short_forecast, pop, hour_of_day): Phosphor SVG via
+    Iconify, color-tiered. Maps NWS/WeatherAPI text to an icon name.
+  - cfb_stadium_icon(wind_deg, wind_class): rectangular football field
+    silhouette with rotated wind arrow inside. Color tier matches wind.
+
+  Data shape consumed: cfb/slate.py game dict (schedule + forecast attached).
+#}
+
+
+{# ── Stadium icon with rotated wind arrow ──────────────────────────────── #}
+{% macro cfb_stadium_icon(wind_deg, wind_class='') %}
+  {# wind_deg is "from" direction in degrees (0=N, 90=E, 180=S, 270=W).
+     The arrow shows where wind blows TOWARD, which is +180 from "from". #}
+  {% set rotation = ((wind_deg or 0) + 180) % 360 %}
+  {% set svg_class = 'wx-stadium' %}
+  {% if wind_class == 'severe' %}{% set svg_class = svg_class + ' wx-stadium--severe' %}
+  {% elif wind_class == 'high' %}{% set svg_class = svg_class + ' wx-stadium--high' %}
+  {% endif %}
+  <span class="{{ svg_class }}" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate({{ rotation }} 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+{% endmacro %}
+
+
+{# ── Phosphor weather icon (locked baseline from v14 mockup) ──────────── #}
+{% macro cfb_weather_icon(short_forecast, pop, is_night=false) %}
+  {# Map free-text forecast description to a Phosphor icon name + color.
+     Mapping is intentionally simple at v1; can refine later. #}
+  {% set sf = (short_forecast or '')|lower %}
+  {% set name = 'sun' %}
+  {% set color = '%23ca8a04' %}
+  {% if 'thunder' in sf or 'storm' in sf %}
+    {% set name = 'cloud-lightning' %}
+    {% set color = '%23ca8a04' %}
+  {% elif 'snow' in sf and ('rain' in sf or 'mix' in sf or 'sleet' in sf) %}
+    {% set name = 'cloud-snow' %}
+    {% set color = '%235b21b6' %}  {# purple for mix #}
+  {% elif 'snow' in sf %}
+    {% set name = 'cloud-snow' %}
+    {% set color = '%231e40af' %}
+  {% elif 'rain' in sf or 'shower' in sf or 'drizzle' in sf %}
+    {% set name = 'cloud-rain' %}
+    {% set color = '%231e40af' %}
+  {% elif 'cloud' in sf and ('partly' in sf or 'mostly' in sf or 'few' in sf) %}
+    {% set name = 'cloud-sun' if not is_night else 'cloud-moon' %}
+    {% set color = '%23525252' %}
+  {% elif 'cloud' in sf or 'overcast' in sf %}
+    {% set name = 'cloud' %}
+    {% set color = '%23525252' %}
+  {% elif is_night %}
+    {% set name = 'moon' %}
+    {% set color = '%231e3a8a' %}
+  {% endif %}
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:{{ name }}.svg?color={{ color }}&width=26&height=26"
+       width="26" height="26" loading="lazy">
+{% endmacro %}
+
+
+{# ── Three-column cheat card (v14 design as Jinja) ──────────────────── #}
+{% macro cfb_cheat_card(game) %}
+  {% set f = game.forecast %}
+  {% set v = game.venue %}
+  {% set away = game.away %}
+  {% set home = game.home %}
+  {% set neutral = v and v.is_neutral %}
+  {# Wind severity class for color-tiering temp and stadium arrow #}
+  {% set wind_class = '' %}
+  {% if f and f.wind_speed %}
+    {% if f.wind_speed >= 25 %}{% set wind_class = 'severe' %}
+    {% elif f.wind_speed >= 18 %}{% set wind_class = 'high' %}
+    {% endif %}
+  {% endif %}
+  {# Temp severity class #}
+  {% set temp_class = '' %}
+  {% if f and f.temp is not none %}
+    {% if f.temp <= 32 %}{% set temp_class = 'cold' %}
+    {% elif f.temp >= 88 %}{% set temp_class = 'hot' %}
+    {% endif %}
+  {% endif %}
+  {# Precip severity class #}
+  {% set precip_class = 'low' %}
+  {% if f and f.precip_pct is not none %}
+    {% if f.precip_pct >= 60 %}{% set precip_class = 'high' %}
+    {% elif f.precip_pct >= 30 %}{% set precip_class = 'mid' %}
+    {% endif %}
+  {% endif %}
+  {# Night detection from kickoff hour (6 PM - 6 AM ET = night) #}
+  {% set kh = game.kickoff_eastern.hour if game.kickoff_eastern else 12 %}
+  {% set is_night = (kh >= 18 or kh < 6) %}
+  <a href="{{ game.url_path }}" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">{{ game.kickoff_eastern_str }}</span>
+      <span class="cheat-card__rule-right">
+        {% if v and v.roof == 'fixed_dome' %}<span class="cheat-card__badge cheat-card__badge--dome">Dome</span>{% endif %}
+        {% if v and v.roof == 'retractable' %}<span class="cheat-card__badge cheat-card__badge--roof">Roof</span>{% endif %}
+        {% if v %}<span class="cheat-card__location">{{ v.city }}</span>{% endif %}
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="{{ away.logo_url }}" alt="" loading="lazy">
+        <span class="cheat-card__abbr">{% if away.rank %}<span class="cheat-card__rank">{{ away.rank }}</span>{% endif %}{{ away.abbrev }}</span>
+      </div>
+      <span class="cheat-card__at">{% if neutral %}vs{% else %}@{% endif %}</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">{% if home.rank %}<span class="cheat-card__rank">{{ home.rank }}</span>{% endif %}{{ home.abbrev }}</span>
+        <img class="cheat-card__logo" src="{{ home.logo_url }}" alt="" loading="lazy">
+      </div>
+    </div>
+    {% if f %}
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{{ f.temp|int }}°</div>
+        <div class="wx-stat__secondary">{% if f.feels_like and (f.feels_like|int) != (f.temp|int) %}Feels {{ f.feels_like|int }}°{% endif %}&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{{ f.wind_speed|int }} <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">{{ cfb_stadium_icon(f.wind_deg, wind_class) }}{% if f.gust %} <strong>G{{ f.gust|int }}</strong>{% endif %}</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-{{ precip_class }}">{{ f.precip_pct|int }}%</div>
+        <div class="wx-stat__secondary">{{ cfb_weather_icon(f.short_forecast, f.precip_pct, is_night) }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="cheat-card__wx-missing">Forecast pending</div>
+    {% endif %}
+  </a>
+{% endmacro %}
+
+
+{# ── Date section header (Thursday Oct 22 · N games) ─────────────────── #}
+{% macro cfb_date_header(date_label, count) %}
+  <div class="date-header">
+    <h2 class="date-header__title">{{ date_label }}</h2>
+    <span class="date-header__count">{{ count }} {{ "game" if count == 1 else "games" }}</span>
+  </div>
+{% endmacro %}

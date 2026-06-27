@@ -58,6 +58,8 @@ from tennis.schedule import (
     active_slam, next_slam, is_any_slam_active, get_slam_by_id,
 )
 
+from cfb.cache import get_cfb_slate, start_warmer as start_cfb_warmer
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
@@ -133,6 +135,7 @@ start_golf_warmer()
 start_nascar_warmer()
 start_cws_warmer()
 start_tennis_warmer()
+start_cfb_warmer()
 
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
@@ -288,7 +291,17 @@ def inject_sport_nav():
     if is_any_slam_active():
         counts["tennis"] = "Live"
 
-    # NFL / NCAAF — no badge during off-season (cleaner header).
+    # NCAAF — during the season, show the game count for the upcoming/active
+    # window. Off-season this returns 0 games and the badge stays hidden,
+    # mirroring the NFL pattern.
+    try:
+        cfb_games, _ = get_cfb_slate(allow_build=False)
+        if cfb_games:
+            counts["ncaaf"] = str(len(cfb_games))
+    except Exception:
+        pass
+
+    # NFL — no badge during off-season (cleaner header).
     # The sport tab still shows; just no countdown number next to it.
 
     return {"sport_counts": counts}
@@ -630,11 +643,31 @@ def nfl_root():
 
 @app.route("/ncaaf")
 def ncaaf_root():
+    """CFB slate for the current week. During the off-season (kickoff > 7 days
+    away) falls back to the coming-soon page since the cache will be empty."""
     today = datetime.now(EASTERN_TZ).date()
     days_until = max(0, (NCAAF_KICKOFF_2026 - today).days)
-    return render_template("ncaaf/coming-soon.html",
-                           sport_name="NCAAF", days_until=days_until,
-                           kickoff_date=NCAAF_KICKOFF_2026.strftime("%B %-d"))
+
+    # Try to fetch the slate. If we get games, render the live page.
+    games, meta = get_cfb_slate(allow_build=True)
+    if games:
+        return render_template(
+            "ncaaf/slate.html",
+            games=games, meta=meta,
+            canonical_path="/ncaaf",
+        )
+
+    # No games in the window. Fall back to the coming-soon page if the season
+    # hasn't started yet; otherwise show the empty slate with a friendly message.
+    if days_until > 7:
+        return render_template("ncaaf/coming-soon.html",
+                               sport_name="NCAAF", days_until=days_until,
+                               kickoff_date=NCAAF_KICKOFF_2026.strftime("%B %-d"))
+    return render_template(
+        "ncaaf/slate.html",
+        games=[], meta=meta,
+        canonical_path="/ncaaf",
+    )
 
 
 # ===== College World Series =====
@@ -987,6 +1020,7 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/cws", "0.85", "hourly"),
     ("/golf", "0.85", "daily"),
     ("/nascar", "0.85", "daily"),
+    ("/ncaaf", "0.85", "daily"),
     ("/mlb-weather", "0.8", "monthly"),
     ("/nfl-weather", "0.8", "monthly"),
     ("/pga-weather", "0.8", "monthly"),
