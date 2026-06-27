@@ -282,6 +282,12 @@ def inject_sport_nav():
     if cws_in_window():
         counts["cws"] = "Live"
 
+    # Tennis — live during active Slam window. Same pattern as CWS:
+    # is_any_slam_active() reflects the 4 hard-coded Slam date windows in
+    # tennis/schedule.py. Auto-shows during Slams, hides between.
+    if is_any_slam_active():
+        counts["tennis"] = "Live"
+
     # NFL / NCAAF — no badge during off-season (cleaner header).
     # The sport tab still shows; just no countdown number next to it.
 
@@ -559,6 +565,52 @@ def _render_worldcup_matchday(start_date_str, days=3):
     )
 
 
+
+
+# ===== Tennis Grand Slams =====
+#
+# Tennis is a SEO-focused, automated-only product. Card auto-shows during
+# Slams (~14 days each) and hides between. No manual writeups by design
+# per Kevin's scoping: this is a coverage play, not a commentary play.
+
+@app.route("/tennis")
+def tennis_root():
+    """Active Grand Slam slate. Shows whichever Slam is in window now.
+    If no Slam active, render an upcoming-Slam placeholder so the URL
+    still resolves cleanly (helpful for SEO and any sport-nav links)."""
+    slam_meta = active_slam()
+    if slam_meta is None:
+        upcoming = next_slam()
+        return render_template(
+            "tennis/slate.html",
+            slam=None, upcoming=upcoming, meta=None,
+            canonical_path="/tennis",
+        )
+    slam, meta = get_active_slam_slate()
+    return render_template(
+        "tennis/slate.html",
+        slam=slam or slam_meta, upcoming=None, meta=meta,
+        canonical_path="/tennis",
+    )
+
+
+@app.route("/tennis/<slam_id>")
+def tennis_slam(slam_id):
+    """Per-Slam permanent URL (e.g. /tennis/wimbledon). Always resolves,
+    even when the Slam isn't currently active. Google can index these as
+    evergreen SEO pages year-round; users land on a forecast during the
+    tournament and a 'starts <date>' page in the off-window."""
+    slam_meta = get_slam_by_id(slam_id)
+    if slam_meta is None:
+        abort(404)
+    slam, meta = get_slam_slate_by_id(slam_id)
+    return render_template(
+        "tennis/slate.html",
+        slam=slam or slam_meta,
+        upcoming=None if slam else slam_meta,
+        meta=meta,
+        canonical_path=f"/tennis/{slam_id}",
+    )
 
 
 # ===== NFL + NCAAF stubs (live forecasts coming when season starts) =====
@@ -974,6 +1026,14 @@ def sitemap():
             dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
             for m in wc_slate:
                 dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
+        # Tennis Grand Slam URLs — only when a Slam is active. Per-Slam
+        # permanent URLs (e.g. /tennis/wimbledon) are listed in the static
+        # block below since they're evergreen SEO targets.
+        if is_any_slam_active():
+            dynamic_urls.append(("/tennis", "0.9", "hourly"))
+            slam = active_slam()
+            if slam:
+                dynamic_urls.append((f"/tennis/{slam['slam_id']}", "0.85", "hourly"))
         all_urls = static_urls + dynamic_urls
     else:
         # Personal site — no sport pages, no dynamic.

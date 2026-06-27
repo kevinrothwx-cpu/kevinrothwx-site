@@ -149,14 +149,19 @@
           </span>
         </a>
 
-        <a href="/cws" class="home-sport-card home-sport-card--cws">
-          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">College World Series</span><h2 class="home-sport-card__title">CWS Omaha</h2></div></div>
-          <p class="home-sport-card__body">Hourly forecasts for every game at Charles Schwab Field during the tournament window.</p>
+        {# Tennis card auto-shows during Grand Slam windows, hides between.
+           Driven by sport_counts.tennis which is set to "Live" by the
+           inject_sport_nav context_processor when is_any_slam_active(). #}
+        {% if sport_counts.tennis %}
+        <a href="/tennis" class="home-sport-card home-sport-card--tennis">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:tennis-ball.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Grand Slam</span><h2 class="home-sport-card__title">Tennis Weather</h2></div></div>
+          <p class="home-sport-card__body">Daily weather for every tournament day. Court and roof context for each venue.</p>
           <span class="home-sport-card__indicator">
-            {% if sport_counts.cws %}<strong>Live</strong>&nbsp;through June 24{% else %}Tournament June 13&ndash;23{% endif %}
+            <strong>Live</strong>&nbsp;Grand Slam coverage
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>
+        {% endif %}
 
         <a href="/nfl" class="home-sport-card home-sport-card--nfl">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
@@ -215,7 +220,6 @@
           </div>
           <div class="home-product">
             <a href="https://x.com/KevinRothWx" class="home-product__link" rel="noopener">
-              <span class="home-product__name">@KevinRothWx on X</span>
               <span class="home-product__desc">Live pregame radar and alerts across every sport</span>
               <span class="home-product__arrow">→</span>
             </a>
