@@ -8,25 +8,31 @@ to produce a normalized list of games each carrying:
   - Hourly forecast strip around kickoff (for detail pages)
   - Weather source tag + error if any
 
-Weather strategy (per design decision with Kevin):
-    PRIMARY: WeatherAPI (paid tier we already use, higher rate limits)
-    FALLBACK: NWS (free, when WeatherAPI fails for a venue)
+Weather strategy (per design decision with Kevin, revised 2026-06-28):
+    PRIMARY: NWS via cfb/nws_client (distinct UA, sequential pacing,
+             circuit breaker on 429/503, permanent gridpoint cache)
+    FALLBACK: WeatherAPI (paid tier, when NWS fails or circuit is open)
 
-This intentionally OFF-loads CFB from NWS. NWS keeps serving MLB, PGA,
-NASCAR, CWS, World Cup. CFB hits WeatherAPI. No single provider gets
-overloaded on a CFB Saturday with 50+ stadiums in play.
+This matches the MLB and golf pattern. NWS gives more stable forecast
+values between updates (curated human edits + ensemble averaging), which
+matters because users mentally bookmark the cheat-sheet numbers and we
+don't want them to oscillate on every page load. WeatherAPI is the
+safety net so the site never breaks if NWS throttles us.
+
+The cfb/nws_client wrapper exists specifically to keep CFB traffic
+distinguishable from OVERcast and MLB traffic at the NWS server side,
+with pacing + circuit breaker so a CFB Saturday burst can never compound
+into an OVERcast incident.
 
 Caching: per-venue (lat/lon) weather is cached for the duration of a
-slate build, so games at the same stadium share a single fetch. Combined
-with the 25-min warmer cycle in cfb/cache.py, daily WeatherAPI volume is
-~50 stadiums × ~48 cycles/day = ~2400 calls per CFB Saturday. WeatherAPI
-free tier is 100K/month; even at peak we're under 50% of cap.
+slate build, so games at the same stadium share a single fetch. Gridpoint
+resolutions inside cfb/nws_client are cached permanently per venue.
 
 Game shape (extends schedule.py's parse_cfb_event output):
     All schedule fields, plus:
     - "forecast":         kickoff snapshot dict (or None on failure)
     - "hourly":           list of period dicts around kickoff (or [])
-    - "weather_source":   "weatherapi" | "nws-fallback" | "all-failed"
+    - "weather_source":   "nws" | "weatherapi-fallback" | "all-failed"
     - "weather_error":    None | str (last-source error message)
 """
 
@@ -36,12 +42,10 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from .schedule import get_cfb_week_games
+from .nws_client import fetch_cfb_hourly
 
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
-from mlb.nws import (
-    get_nws_hourly_url, get_nws_periods, extract_forecast,
-    find_period_for_time,
-)
+from mlb.nws import extract_forecast, find_period_for_time
 
 
 # ── Tuning constants ──────────────────────────────────────────────────────
@@ -125,11 +129,13 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
         game["weather_error"] = err
         return
 
-    # Kickoff snapshot
-    if source == "nws-fallback":
-        snapshot_raw = find_period_for_time(periods, kickoff_utc)
-        snapshot = extract_forecast(snapshot_raw) if snapshot_raw else None
-    else:  # weatherapi (default)
+    # Kickoff snapshot.
+    # NWS periods are already normalized via extract_forecast inside
+    # cfb/nws_client; find_period_for_time picks the right one by time.
+    # WeatherAPI uses its own period finder.
+    if source == "nws":
+        snapshot = find_period_for_time(periods, kickoff_utc)
+    else:  # weatherapi-fallback
         snapshot = find_weatherapi_period(periods, kickoff_utc)
 
     # Hourly window: 1h before kickoff through 4h after
@@ -144,39 +150,48 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
 # ── Provider fetch with fallback ──────────────────────────────────────────
 
 def _fetch_weather_with_fallback(lat: float, lon: float) -> tuple[list[dict], str, Optional[str]]:
-    """Try WeatherAPI first (primary for CFB), fall back to NWS on failure.
+    """Try NWS first (primary for CFB), fall back to WeatherAPI on failure.
+
+    NWS goes through cfb/nws_client which adds pacing, circuit breaker,
+    and distinct User-Agent to keep CFB traffic distinguishable from
+    OVERcast at the NWS server side. fetch_cfb_hourly returns None on
+    any failure (rate limit, timeout, bad response, circuit open) — the
+    caller falls back to WeatherAPI in any of those cases.
 
     Returns (periods, source_label, error_msg).
     Empty periods list means BOTH sources failed.
     """
-    # Layer 1: WeatherAPI primary
+    # Layer 1: NWS primary via the paced/circuit-broken client
+    try:
+        periods = fetch_cfb_hourly(lat, lon)
+        if periods:
+            return periods, "nws", None
+        nws_err = "NWS returned None (circuit open, rate-limited, or empty)"
+    except Exception as e:
+        nws_err = str(e)
+        print(f"[cfb.slate] NWS client raised for {lat},{lon}: {e} — falling back to WeatherAPI",
+              flush=True)
+
+    # Layer 2: WeatherAPI fallback
     try:
         periods = fetch_weatherapi_hourly(lat, lon)
         if periods:
-            return periods, "weatherapi", None
-        # Empty list = WeatherAPI returned but had no data — fall through
-        wa_err = "WeatherAPI returned empty period list"
-    except Exception as e:
-        wa_err = str(e)
-        print(f"[cfb.slate] WeatherAPI failed for {lat},{lon}: {e} — falling back to NWS",
-              flush=True)
-
-    # Layer 2: NWS fallback (free, last-resort for CFB)
-    try:
-        url = get_nws_hourly_url(lat, lon)
-        raw = get_nws_periods(url)
-        periods = [extract_forecast(p) for p in raw]
-        if periods:
-            print(f"[cfb.slate] NWS fallback ok for {lat},{lon}", flush=True)
-            return periods, "nws-fallback", None
-        return [], "all-failed", f"WeatherAPI: {wa_err}; NWS returned empty"
-    except Exception as nws_err:
-        return [], "all-failed", f"WeatherAPI: {wa_err}; NWS: {nws_err}"
+            print(f"[cfb.slate] WeatherAPI fallback ok for {lat},{lon}", flush=True)
+            return periods, "weatherapi-fallback", None
+        return [], "all-failed", f"NWS: {nws_err}; WeatherAPI returned empty"
+    except Exception as wa_err:
+        return [], "all-failed", f"NWS: {nws_err}; WeatherAPI: {wa_err}"
 
 
 # ── Hourly window extraction ──────────────────────────────────────────────
 
 def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
+    """Extract the hourly forecast for the game window around kickoff.
+
+    Returns 1h before kickoff through 4h after (5-6 entries typical).
+    Each entry is a period dict matching the provider's hourly shape.
+    Game-time entries are flagged with is_game_hour=True for template use.
+    """
     """Extract the hourly forecast for the game window around kickoff.
 
     Returns 1h before kickoff through 4h after (5-6 entries typical).

@@ -6,6 +6,7 @@ Phase 3 (later): admin UI for manual write-ups (storage hook is ready).
 """
 
 import os
+import time
 import functools
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -58,9 +59,16 @@ from tennis.schedule import (
     active_slam, next_slam, is_any_slam_active, get_slam_by_id,
 )
 
-from cfb.cache import get_cfb_slate, start_warmer as start_cfb_warmer
+from cfb.cache import (
+    get_cfb_slate, start_warmer as start_cfb_warmer,
+    find_game_in_slate as find_cfb_game,
+    frozen_count as cfb_frozen_count,
+)
+from cfb.analysis import generate_analysis as cfb_generate_analysis
+from cfb.nws_client import circuit_status as cfb_nws_circuit_status, gridpoint_cache_size as cfb_gridpoint_cache_size
 
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
+from nws_health import snapshot as nws_health_snapshot
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
@@ -672,6 +680,53 @@ def ncaaf_root():
     )
 
 
+@app.route("/ncaaf/<date_str>/<slug>")
+def ncaaf_game(date_str, slug):
+    """Per-game CFB detail page.
+
+    AI-SEO money page: schema.org SportsEvent + WeatherForecast, embedded
+    meteorologist analysis paragraph from cfb/analysis.py, NWS cheat-sheet
+    hourly table. Every FBS game gets a unique indexable URL with
+    structured weather data attributed to mysportsweather.com.
+    """
+    if not _valid_date_str(date_str):
+        abort(404)
+    game = find_cfb_game(date_str, slug)
+    if not game:
+        abort(404)
+
+    # End time for schema.org: kickoff + ~3.5h game window
+    kickoff = game.get("kickoff_utc")
+    if kickoff:
+        game["kickoff_end_utc"] = kickoff + timedelta(hours=4)
+
+    # Pretty date for templates / titles
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        pretty_date = d.strftime("%A, %B %-d")
+    except ValueError:
+        pretty_date = date_str
+
+    # Meteorologist analysis (deterministic, rule-based — preserves
+    # "built by a meteorologist, not AI" brand)
+    try:
+        analysis = cfb_generate_analysis(game)
+    except Exception as e:
+        print(f"[ncaaf.game] analysis failed for {date_str}/{slug}: {e}", flush=True)
+        analysis = None
+
+    brand = get_site_brand(request.host)
+    return render_template(
+        "ncaaf/game.html",
+        game=game,
+        analysis=analysis,
+        date_str=date_str,
+        pretty_date=pretty_date,
+        site_url=brand["site_url"],
+        canonical_path=f"/ncaaf/{date_str}/{slug}",
+    )
+
+
 # ===== College World Series =====
 
 def _build_cws_day(d, today):
@@ -1193,11 +1248,99 @@ def llms_txt():
     return Response(body, mimetype="text/markdown; charset=utf-8")
 
 
+@app.route("/admin/nws-health")
+@_admin_required
+def admin_nws_health():
+    """NWS API health dashboard — rolling counts + circuit breaker state."""
+    health = nws_health_snapshot()
+    circuit = cfb_nws_circuit_status()
+
+    rows = []
+    for ev in reversed(health.get("sample_recent") or []):
+        ts = ev["epoch"]
+        ago_sec = int(time.time() - ts) if ts else 0
+        rows.append({
+            "outcome": ev["outcome"],
+            "info": ev["info"],
+            "ago": f"{ago_sec // 60}m {ago_sec % 60}s ago" if ago_sec > 60 else f"{ago_sec}s ago",
+        })
+
+    counts = health.get("counts") or {}
+    recent_5min = health.get("recent_rate_limits_5min", 0)
+    threshold = health.get("alert_threshold", 5)
+    over_threshold = recent_5min >= threshold
+
+    alert_banner = (
+        '<div class="alert"><strong>Over threshold:</strong> '
+        f'{recent_5min} rate-limit events in the last 5 minutes (threshold '
+        f'{threshold}). Email alert was sent (or suppressed by cooldown).</div>'
+    ) if over_threshold else (
+        '<div class="ok"><strong>Healthy:</strong> '
+        f'{recent_5min}/{threshold} rate-limit events in the last 5 minutes. '
+        'No alerts pending.</div>'
+    )
+
+    style = (
+        "body{font-family:-apple-system,system-ui,sans-serif;max-width:900px;"
+        "margin:2rem auto;padding:0 1rem;color:#1a1a1a}"
+        "h1{margin-top:0}"
+        ".alert{background:#fee;border-left:4px solid #c33;padding:1rem;margin:1rem 0}"
+        ".ok{background:#efe;border-left:4px solid #393;padding:1rem;margin:1rem 0}"
+        ".grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:1rem 0}"
+        ".stat{background:#f8f8f8;padding:1rem;border-radius:4px}"
+        ".stat-label{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:.05em}"
+        ".stat-value{font-size:2rem;font-weight:600;margin-top:.25rem}"
+        ".stat-value.warn{color:#c33}"
+        "table{width:100%;border-collapse:collapse;margin-top:1rem}"
+        "th,td{text-align:left;padding:.5rem;border-bottom:1px solid #eee;font-size:.9rem}"
+        "th{background:#f0f0f0}"
+        ".outcome-ok{color:#393}"
+        ".outcome-rate_limit{color:#c33;font-weight:600}"
+        ".outcome-timeout,.outcome-server_error,.outcome-other_error{color:#c80}"
+        "code{background:#f0f0f0;padding:.1rem .3rem;border-radius:2px;font-size:.85rem}"
+    )
+
+    stats_html = (
+        '<div class="grid">'
+        f'<div class="stat"><div class="stat-label">OK responses (1h)</div><div class="stat-value">{counts.get("ok", 0)}</div></div>'
+        f'<div class="stat"><div class="stat-label">Rate limits (1h)</div><div class="stat-value{" warn" if counts.get("rate_limit", 0) > 0 else ""}">{counts.get("rate_limit", 0)}</div></div>'
+        f'<div class="stat"><div class="stat-label">Server errors (1h)</div><div class="stat-value">{counts.get("server_error", 0)}</div></div>'
+        f'<div class="stat"><div class="stat-label">Timeouts (1h)</div><div class="stat-value">{counts.get("timeout", 0)}</div></div>'
+        f'<div class="stat"><div class="stat-label">CFB circuit breaker</div><div class="stat-value{" warn" if circuit["open"] else ""}">{"OPEN" if circuit["open"] else "closed"}</div></div>'
+        f'<div class="stat"><div class="stat-label">CFB gridpoint cache</div><div class="stat-value">{cfb_gridpoint_cache_size()}</div></div>'
+        f'<div class="stat"><div class="stat-label">Frozen CFB snapshots</div><div class="stat-value">{cfb_frozen_count()}</div></div>'
+        '</div>'
+    )
+
+    rows_html = ""
+    if rows:
+        for r in rows:
+            rows_html += (
+                f'<tr><td>{r["ago"]}</td>'
+                f'<td class="outcome-{r["outcome"]}">{r["outcome"]}</td>'
+                f'<td><code>{r["info"]}</code></td></tr>'
+            )
+    else:
+        rows_html = '<tr><td colspan="3" style="color:#888">No NWS calls recorded yet.</td></tr>'
+
+    body = (
+        f'<!DOCTYPE html><html><head><title>NWS health</title><style>{style}</style></head>'
+        f'<body><h1>NWS API health</h1>{alert_banner}{stats_html}'
+        f'<h2>Recent events (last 20)</h2>'
+        f'<table><thead><tr><th>When</th><th>Outcome</th><th>Detail</th></tr></thead>'
+        f'<tbody>{rows_html}</tbody></table>'
+        f'<p style="color:#888;font-size:.85rem;margin-top:2rem">'
+        f'Counters reset on server restart. Email alerts go to ALERTS_TO_EMAIL '
+        f'when rate-limit count crosses threshold, with a 1-hour cooldown.</p>'
+        f'</body></html>'
+    )
+    return Response(body, mimetype="text/html")
+
+
 @app.route("/admin/indexnow", methods=["GET", "POST"])
 @_admin_required
 def admin_indexnow_push():
-    """Manual IndexNow push of current sitemap URLs to Bing/Yandex/ChatGPT-search.
-    Hit this after big content changes or on first deploy to seed the index."""
+    """Manual IndexNow push of current sitemap URLs to Bing/Yandex/ChatGPT-search."""
     brand = get_site_brand(request.host)
     if not brand["is_product_site"]:
         return Response("IndexNow only configured for mysportsweather.com.", 400)

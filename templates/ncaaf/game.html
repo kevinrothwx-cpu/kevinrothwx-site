@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% from "ncaaf/_macros.html" import cfb_stadium_icon, cfb_weather_icon %}
+
+{% block title %}{{ game.away.short }} at {{ game.home.short }}, {{ pretty_date }} Weather Forecast | Kevin Roth{% endblock %}
+{% block description %}{{ game.away.name }} at {{ game.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at kickoff, {{ game.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}{{ game.away.short }} at {{ game.home.short }}, Weather Forecast{% endblock %}
+{% block og_description %}{{ pretty_date }} · {{ game.venue.name }} · Kickoff {{ game.kickoff_eastern_str }}{% endblock %}
+
+{% block extra_head %}
+{# Schema.org SportsEvent + WeatherForecast.
+   Fully populated so AI Overview / ChatGPT-search / Perplexity can
+   extract structured weather facts attributed to mysportsweather.com.
+   Weather data exposed as additionalProperty (Google's recommended way
+   to expose secondary structured data on a SportsEvent). #}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ game.away.name }} at {{ game.home.name }}",
+  "description": "Weather forecast for the {{ game.away.name }} at {{ game.home.name }} college football game at {{ game.venue.name }} in {{ game.venue.city }} on {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}. Includes hourly forecast through game time and stadium microclimate context by sports meteorologist Kevin Roth.",
+  "startDate": "{{ game.kickoff_utc.isoformat() }}",
+  "endDate": "{{ game.kickoff_end_utc.isoformat() }}",
+  "sport": "American football",
+  "url": "{{ site_url }}/ncaaf/{{ date_str }}/{{ game.slug }}",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@type": "Place",
+    "name": "{{ game.venue.name }}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "{{ game.venue.city }}",
+      "addressCountry": "US"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": {{ game.venue.lat }},
+      "longitude": {{ game.venue.lon }}
+    }
+  },
+  "homeTeam": { "@type": "SportsTeam", "name": "{{ game.home.name }}" },
+  "awayTeam": { "@type": "SportsTeam", "name": "{{ game.away.name }}" },
+  "performer": [
+    { "@type": "SportsTeam", "name": "{{ game.away.name }}" },
+    { "@type": "SportsTeam", "name": "{{ game.home.name }}" }
+  ],
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "NCAA Division I FBS",
+    "url": "https://www.ncaa.com/sports/football/fbs"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ site_url }}/ncaaf/{{ date_str }}/{{ game.slug }}",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "category": "Free weather forecast"
+  }{% if game.forecast %},
+  "additionalProperty": [
+    { "@type": "PropertyValue", "name": "Temperature at kickoff", "value": "{{ game.forecast.temp }}°F" },
+    { "@type": "PropertyValue", "name": "Wind speed", "value": "{{ game.forecast.wind_speed }} mph" },
+    { "@type": "PropertyValue", "name": "Wind direction", "value": "{{ game.forecast.wind_deg|wind_compass }}" },
+    { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ game.forecast.precip_pct }}%" }{% if game.forecast.dew is not none %},
+    { "@type": "PropertyValue", "name": "Dewpoint", "value": "{{ game.forecast.dew }}°F" }{% endif %}
+  ]{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="game-page">
+  <p class="game-page__kicker">NCAAF Weather · {{ pretty_date }}</p>
+  <h1 class="game-page__title">
+    <span>{{ game.away.name }}</span>
+    <span class="matchup-at">at</span>
+    <span>{{ game.home.name }}</span>
+  </h1>
+  <p class="game-page__meta">
+    {{ game.venue.name }}, {{ game.venue.city }} · Kickoff {{ game.kickoff_eastern_str }}
+    {% if game.venue.roof_type == "retractable" %} · Retractable roof{% endif %}
+    {% if game.venue.roof_type == "fixed_dome" %} · Domed venue{% endif %}
+    {% if game.is_frozen %} · <span class="game-page__frozen">Forecast locked at kickoff</span>{% endif %}
+  </p>
+
+  {# ── Cheat-sheet hero: temp big, wind + precip flanking ─────── #}
+  {% if game.forecast %}
+    {% set f = game.forecast %}
+    <div class="game-hero">
+      <div class="game-hero__metric game-hero__metric--primary">
+        <div class="game-hero__icon">{{ cfb_weather_icon(f.short_forecast or "", f.precip_pct, false) }}</div>
+        <div class="game-hero__value">{{ f.temp }}<span class="game-hero__value-unit">°F</span></div>
+        <div class="game-hero__label">At kickoff</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon">{{ cfb_stadium_icon(f.wind_deg) }}</div>
+        <div class="game-hero__value">{{ f.wind_speed }}<span class="game-hero__value-unit">mph</span></div>
+        <div class="game-hero__label">{{ f.wind_deg|wind_compass }} wind</div>
+      </div>
+      <div class="game-hero__metric">
+        <div class="game-hero__icon"><span class="{{ f.precip_pct|precip_color }}" style="font-family:var(--font-serif);font-size:2rem;font-weight:600">{{ f.precip_pct }}%</span></div>
+        <div class="game-hero__value" style="font-size:1.6rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">Rain chance</div>
+        {% if f.dew is not none %}<div class="game-hero__label">Dewpoint {{ f.dew }}°</div>{% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# ── Meteorologist analysis paragraph (templated, AI-SEO friendly) ─── #}
+  {% if analysis and analysis.paragraph %}
+    <div class="game-analysis">
+      <div class="game-analysis__label">Kevin's forecast</div>
+      <h2 class="game-analysis__headline">{{ analysis.headline }}</h2>
+      <p class="game-analysis__body">{{ analysis.paragraph }}</p>
+    </div>
+  {% endif %}
+
+  {# ── Hourly forecast table around kickoff ──────────────────── #}
+  <h2 class="game-section-h2">Hourly forecast</h2>
+  {% if game.hourly %}
+    <div class="hourly-table">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            {% for p in game.hourly %}
+              <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">
+                {{ p.local_hour_label or p.start_time[11:16] }}
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th>Precip</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %} {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</td>{% endfor %}</tr>
+          <tr><th>Temp</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>{% endfor %}</tr>
+          <tr><th>Wind</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+          <tr><th>Wind dir</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>{% endfor %}</tr>
+          {% if game.hourly[0].dew is not none %}
+          <tr><th>Dewpoint</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.dew }}°</td>{% endfor %}</tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="game-no-data">No hourly forecast available. Source: {{ game.weather_source }}{% if game.weather_error %} ({{ game.weather_error }}){% endif %}.</p>
+  {% endif %}
+
+  {# ── Source attribution + freeze note ──────────────────── #}
+  <p class="game-page__source-note">
+    Forecast source: <strong>
+      {% if game.weather_source == "nws" %}NOAA NWS
+      {% elif game.weather_source == "weatherapi-fallback" %}WeatherAPI (NWS fallback)
+      {% else %}{{ game.weather_source }}{% endif %}
+    </strong>.
+    {% if game.is_frozen %}
+      Kickoff-window forecast is locked — values displayed above were captured one hour before kickoff and will not change during the game.
+    {% else %}
+      Updates every 25 minutes until one hour before kickoff.
+    {% endif %}
+  </p>
+
+  <a href="/ncaaf" class="game-page__back">← All NCAAF games</a>
+</article>
+{% endblock %}
