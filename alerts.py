@@ -30,9 +30,15 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
-GMAIL_USER = "kevinrothwx@gmail.com"
 GMAIL_SMTP_HOST = "smtp.gmail.com"
 GMAIL_SMTP_PORT = 587
+
+# The Gmail account that SENDS alerts. Configured via GMAIL_USER env var so
+# Kevin can use his personal Google account (e.g. kjrfsu@gmail.com) for
+# generating the app password, separately from the kevinrothwx@gmail.com
+# brand inbox that receives them.
+def _gmail_user() -> str:
+    return os.environ.get("GMAIL_USER", "").strip() or "kevinrothwx@gmail.com"
 
 COOLDOWN_SEC = 60 * 60   # 1 hour per condition
 
@@ -76,15 +82,16 @@ def send_alert(condition: str,
                  or os.environ.get("ALERTS_TO_EMAIL", "").strip()
                  or "kevinrothwx@gmail.com")
 
+    sender = _gmail_user()
     msg = MIMEText(body)
     msg["Subject"] = f"[mysportsweather] {subject}"
-    msg["From"] = GMAIL_USER
+    msg["From"] = sender
     msg["To"] = recipient
 
     try:
         with smtplib.SMTP(GMAIL_SMTP_HOST, GMAIL_SMTP_PORT, timeout=15) as smtp:
             smtp.starttls()
-            smtp.login(GMAIL_USER, app_password)
+            smtp.login(sender, app_password)
             smtp.send_message(msg)
         _last_sent[condition] = now
         log.info(f"alerts: sent {condition} to {recipient}")
@@ -92,6 +99,8 @@ def send_alert(condition: str,
     except Exception as e:
         log.warning(f"alerts: SMTP send failed for {condition}: {e}")
         return False
+
+
 
 
 def is_configured() -> bool:
