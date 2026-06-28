@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}NFL Weather Forecasts, Coming Fall 2026 | Kevin Roth{% endblock %}
-{% block description %}NFL game-day weather forecasts launching with the 2026 season. Until then, follow @KevinRothWx on X for live pregame radar and forecasts.{% endblock %}
+{% block title %}NFL Weather Forecasts, Coming September 10, 2026 | Kevin Roth{% endblock %}
+{% block description %}NFL game-day weather forecasts launching with the 2026 Thursday night opener on September 10. Stadium-specific wind, dome toggles, and December playoff-implication weather. Until then, follow @KevinRothWx on X.{% endblock %}
 
 {% block content %}
 <div class="mlb-page">
@@ -9,22 +9,25 @@
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">NFL · 2026 Season</p>
-        <h1 class="mlb-page__title">{{ sport_name }} Weather is coming.</h1>
-        <p class="mlb-page__sub">{{ days_until }} days until kickoff{% if days_until > 0 %} on {{ kickoff_date }}{% endif %}. All times Eastern.</p>
+        <h1 class="mlb-page__title">NFL weather is coming.</h1>
+        <p class="mlb-page__sub">{{ days_until }} days until the Thursday night opener{% if days_until > 0 %} on {{ kickoff_date }}{% endif %}. All times Eastern.</p>
       </div>
     </div>
   </header>
 
   <section class="comingsoon">
     <div class="comingsoon__copy">
-      <h2 class="comingsoon__h2">Per-game NFL forecasts for every Thursday, Sunday, and Monday, built when the season starts.</h2>
+      <h2 class="comingsoon__h2">Every Thursday, Sunday, and Monday — built around the NFL's marquee weather venues.</h2>
       <p class="comingsoon__lead">
-        Each game gets the same treatment our MLB and World Cup pages do, kickoff hourly weather,
-        stadium-specific wind context, retractable roof toggles for the indoor venues,
-        and Kevin's written notes when weather actually matters.
+        Sixteen games a week, every one of them a standalone broadcast: Lambeau in
+        December, Highmark in January, the Steelers and Browns in a lake-effect band,
+        plus the nine indoor venues where the dome status changes how every metric
+        gets read. Each kickoff gets its own hourly forecast tied to that stadium's
+        orientation, with Kevin's written notes when wind, precip, or a temperature
+        swing actually shifts how the game gets played.
       </p>
       <p class="comingsoon__lead">
-        In the meantime, follow live pregame radar and forecasts on X.
+        Until the opener, live pregame radar and forecasts run on X.
       </p>
       <div class="hero__cta" style="margin-top: 1.5rem;">
         <a href="https://x.com/KevinRothWx" class="btn btn-primary" rel="noopener">Follow @KevinRothWx →</a>
@@ -37,7 +40,8 @@
       <ul class="comingsoon__list">
         <li>Hourly forecast for every game window</li>
         <li>Wind direction relative to each stadium's orientation</li>
-        <li>Retractable-roof toggles for the indoor venues</li>
+        <li>Retractable-roof and dome toggles for the indoor venues</li>
+        <li>Late-season cold-weather context for playoff implications</li>
         <li>Permalinks for every game so the data persists in archives</li>
       </ul>
     </div>

@@ -1,30 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}NFL Weather Forecasts, Coming Fall 2026 | Kevin Roth{% endblock %}
-{% block description %}NFL game-day weather forecasts launching with the 2026 season. Until then, follow @KevinRothWx on X for live pregame radar and forecasts.{% endblock %}
+{% block title %}College Football Weather Forecasts, Coming Aug 29, 2026 | Kevin Roth{% endblock %}
+{% block description %}FBS college football weather forecasts launching Week 1 on August 29, 2026 — all 134 programs, every Saturday slate, conference-by-conference. Until then, follow @KevinRothWx on X for live pregame radar and forecasts.{% endblock %}
 
 {% block content %}
 <div class="mlb-page">
   <header class="mlb-page__header">
     <div class="mlb-page__hed">
       <div>
-        <p class="kicker kicker-storm">NFL · 2026 Season</p>
-        <h1 class="mlb-page__title">{{ sport_name }} Weather is coming.</h1>
-        <p class="mlb-page__sub">{{ days_until }} days until kickoff{% if days_until > 0 %} on {{ kickoff_date }}{% endif %}. All times Eastern.</p>
+        <p class="kicker kicker-storm">NCAAF · 2026 Season</p>
+        <h1 class="mlb-page__title">College football weather is coming.</h1>
+        <p class="mlb-page__sub">{{ days_until }} days until Week 1{% if days_until > 0 %} on {{ kickoff_date }}{% endif %}. All times Eastern.</p>
       </div>
     </div>
   </header>
 
   <section class="comingsoon">
     <div class="comingsoon__copy">
-      <h2 class="comingsoon__h2">Per-game NFL forecasts for every Thursday, Sunday, and Monday, built when the season starts.</h2>
+      <h2 class="comingsoon__h2">Every FBS Saturday — all 134 programs, every conference, every kickoff window.</h2>
       <p class="comingsoon__lead">
-        Each game gets the same treatment our MLB and World Cup pages do, kickoff hourly weather,
-        stadium-specific wind context, retractable roof toggles for the indoor venues,
-        and Kevin's written notes when weather actually matters.
+        College football has 70+ games on a normal Saturday and they span four time zones, the
+        Gulf coast to the high plains, August heat to late-November snow. Each kickoff gets its
+        own hourly forecast tied to that stadium's orientation, with conference context for the
+        weeks that actually matter — early-season Southern heat, Mountain West altitude,
+        Big Ten cold games in November when the CFP is on the line.
       </p>
       <p class="comingsoon__lead">
-        In the meantime, follow live pregame radar and forecasts on X.
+        Neutral-site openers (Dublin, Atlanta, Las Vegas, the Aer Lingus Classic and Kickoff games)
+        get the same treatment as the on-campus slate. Until Week 1, live pregame radar and
+        forecasts run on X.
       </p>
       <div class="hero__cta" style="margin-top: 1.5rem;">
         <a href="https://x.com/KevinRothWx" class="btn btn-primary" rel="noopener">Follow @KevinRothWx →</a>
@@ -35,9 +39,10 @@
     <div class="comingsoon__sidebar">
       <p class="kicker" style="margin-bottom: 0.75rem;">What you'll get</p>
       <ul class="comingsoon__list">
-        <li>Hourly forecast for every game window</li>
+        <li>Hourly kickoff forecast for every FBS game</li>
         <li>Wind direction relative to each stadium's orientation</li>
-        <li>Retractable-roof toggles for the indoor venues</li>
+        <li>Heat index for early-season SEC and Sun Belt slates</li>
+        <li>Cold-weather context for late-season Big Ten and Mountain West games</li>
         <li>Permalinks for every game so the data persists in archives</li>
       </ul>
     </div>
