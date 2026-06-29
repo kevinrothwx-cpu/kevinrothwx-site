@@ -10,6 +10,61 @@
 <style>
   /* Tennis-specific tweaks layered on base.html. Goal: compact above-fold
      so the cheat-sheet + first hourly are visible without scrolling. */
+
+  /* Header polish: thin colored accent bar under the H1 + tighter spacing
+     so the page doesn't look so plain on load. */
+  .tennis-page-header .mlb-page__title {
+    position: relative;
+    padding-bottom: 0.55rem;
+  }
+  .tennis-page-header .mlb-page__title::after {
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 48px;
+    height: 3px;
+    background: var(--storm);
+    border-radius: 2px;
+  }
+  .tennis-page-header .mlb-page__sub { margin-top: 1rem; }
+
+  /* Shrink cheat-sheet cards a touch (Kevin: "maybe too big") */
+  .tennis-page .cheat-row {
+    gap: 0.55rem;
+    margin-bottom: 1.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  }
+  .tennis-page .cheat-card { padding: 0.65rem 0.8rem 0.7rem; }
+  .tennis-page .cheat-card__rule { padding-bottom: 0.4rem; margin-bottom: 0.4rem; }
+  .tennis-page .cheat-card .cheat-card__wx > div > span:first-child {
+    font-size: 1.05rem !important;
+  }
+  .tennis-page .cheat-card .cheat-card__wx > div > span:last-child {
+    font-size: 0.62rem !important;
+  }
+
+  /* "Daily hourly breakdown" section needs the same horizontal container
+     as cheat-row + header (1100px max, 1.5rem side padding). Without this
+     the h2 + day sections hug the viewport edge. */
+  .tennis-daily-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  .tennis-daily-section__h2 {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    margin: 0 0 0.85rem;
+    color: var(--ink);
+  }
+  .tennis-daily-section__h2 small {
+    font-family: var(--font-sans); font-size: 0.82rem;
+    color: var(--fog); font-style: italic; font-weight: 400;
+    margin-left: 0.5rem;
+  }
+
   .tennis-court-line {
     font-family: var(--font-sans);
     font-size: 0.85rem;
@@ -111,9 +166,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="mlb-page">
+<div class="mlb-page tennis-page">
 
-  <header class="mlb-page__header">
+  <header class="mlb-page__header tennis-page-header">
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">
@@ -180,20 +235,22 @@
       {% endfor %}
     </div>
 
-    {# Per-day hourly forecast sections. Today (or first upcoming day if
-       today is past) auto-expanded; other days collapsed. Hourly data
-       IS right below the cheat-sheet, one click away for any day. #}
-    <section style="margin-top: 2rem;">
-      <h2 style="font-family: var(--font-serif); font-size: 1.35rem; margin: 0 0 0.8rem; color: var(--ink);">
+    {# Per-day hourly forecast sections. Today + next 2 days auto-expanded
+       (Kevin requested first 3); older/farther days collapsed but
+       discoverable. Wrapped in tennis-daily-section so the h2 + day cards
+       inherit the 1100px centered container — without that wrapper they
+       hug the viewport edge. #}
+    <section class="tennis-daily-section" style="margin-top: 2rem;">
+      <h2 class="tennis-daily-section__h2">
         Daily hourly breakdown
-        <span style="font-family: var(--font-sans); font-size: 0.82rem; color: var(--fog); font-style: italic; font-weight: 400; margin-left: 0.5rem;">venue local time</span>
+        <small>venue local time</small>
       </h2>
-      {% set ns = namespace(first_open_used=false) %}
+      {% set ns = namespace(opens_remaining=3) %}
       {% for day in slam.days %}
         {% if day.hourly %}
           {% set is_today_or_future = day.date_local >= today_local %}
-          {% set should_open = is_today_or_future and not ns.first_open_used %}
-          {% if should_open %}{% set ns.first_open_used = true %}{% endif %}
+          {% set should_open = is_today_or_future and ns.opens_remaining > 0 %}
+          {% if should_open %}{% set ns.opens_remaining = ns.opens_remaining - 1 %}{% endif %}
           <details class="tennis-day-section" {% if should_open %}open{% endif %}>
             <summary>
               <span class="tennis-day-section__label">{{ day.day_label }}</span>
