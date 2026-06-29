@@ -79,11 +79,8 @@ def clear_all():
 
 def delete_orphaned(live_event_ids) -> int:
     """Delete writeups whose event_id is no longer in the live slate.
-
-    Called from the warmer cycle after a healthy rebuild. If the supplied
-    set is empty (slate likely failed to build), skips cleanup so a
-    transient ESPN outage can't wipe Kevin's notes.
-    """
+    If the supplied set is empty (slate likely failed to build), skips
+    cleanup so a transient ESPN outage can't wipe Kevin's notes."""
     live = {str(eid) for eid in (live_event_ids or [])}
     if not live:
         return 0
@@ -94,8 +91,5 @@ def delete_orphaned(live_event_ids) -> int:
                 del _MEMORY_STORE[k]
                 removed += 1
     if removed:
-        _persist()
-    return removed
-  if removed:
         _persist()
     return removed

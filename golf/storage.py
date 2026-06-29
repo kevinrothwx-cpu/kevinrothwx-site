@@ -1,4 +1,4 @@
-"""golf.storage — write-up storage for PGA tournaments (mirror of MLB).
+"""golf.storage — PGA write-up storage with color tag.
 Disk-backed via persistence module, survives Render restarts."""
 
 from __future__ import annotations
@@ -18,20 +18,14 @@ _lock = threading.Lock()
 
 
 def _load_from_disk() -> None:
-    """Read writeups from disk JSON.
-
-    JSON serialization turns datetime objects into ISO strings, so on load
-    we rehydrate updated_at_utc back into a datetime. The admin template
-    calls .strftime() on it — strings don't have strftime, so without this
-    rehydration the admin page 500s after any Render restart that drops
-    the in-memory store but preserves the disk file. Mirrors the pattern
-    in worldcup/storage.py and cws/storage.py.
-    """
+    """Read writeups from disk. JSON datetime strings come back as strings;
+    convert ``updated_at_utc`` back to datetime so admin templates can
+    format it without crashing on string.strftime calls."""
     raw = load_json(_DISK_FILE, default={})
     with _lock:
         _MEMORY_STORE.clear()
         for k, v in raw.items():
-            if isinstance(v, dict) and isinstance(v.get("updated_at_utc"), str):
+            if isinstance(v, dict) and "updated_at_utc" in v:
                 v["updated_at_utc"] = parse_dt(v["updated_at_utc"])
             _MEMORY_STORE[str(k)] = v
 
@@ -61,11 +55,8 @@ def save_writeup(event_id: str, text: str, color: Optional[str] = None) -> None:
         if not text:
             _MEMORY_STORE.pop(eid, None)
         else:
-            _MEMORY_STORE[eid] = {
-                "text":           text,
-                "color":          color,
-                "updated_at_utc": datetime.now(timezone.utc),
-            }
+            _MEMORY_STORE[eid] = {"text": text, "color": color,
+                                  "updated_at_utc": datetime.now(timezone.utc)}
     _persist()
 
 
@@ -93,11 +84,8 @@ def clear_all():
 
 def delete_orphaned(live_event_ids) -> int:
     """Delete writeups whose event_id is no longer in the live slate.
-
-    Called from the warmer cycle after a healthy rebuild. If the supplied
-    set is empty (slate likely failed to build), skips cleanup so a
-    transient ESPN outage can't wipe Kevin's notes.
-    """
+    If the supplied set is empty (slate likely failed to build), skips
+    cleanup so a transient ESPN outage can't wipe Kevin's notes."""
     live = {str(eid) for eid in (live_event_ids or [])}
     if not live:
         return 0
@@ -109,6 +97,4 @@ def delete_orphaned(live_event_ids) -> int:
                 removed += 1
     if removed:
         _persist()
-    return removed
-ersist()
     return removed
