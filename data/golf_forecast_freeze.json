@@ -1,0 +1,14 @@
+{
+  "tournament-Y_2026-06-28": {
+    "summary": {
+      "high_temp": 82
+    },
+    "hourly": [
+      {
+        "temp": 80
+      }
+    ],
+    "hrrr_hourly": [],
+    "frozen_at_utc": "2026-06-29T17:41:36.221169+00:00"
+  }
+}

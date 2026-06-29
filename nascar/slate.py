@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 
 from .tracks import lookup_track
 from .schedule import get_nascar_scoreboard, parse_nascar_event, race_slug
+from . import forecast_freeze
 
 from mlb.nws import (
     get_nws_hourly_url, get_nws_periods,
@@ -83,10 +84,18 @@ def _hourly_window(periods, green_flag_utc):
 
 
 def build_race(event):
-    """Build a fully-loaded race dict ready for the template."""
+    """Build a fully-loaded race dict ready for the template.
+
+    FREEZE pattern: if the race has already had its green flag AND we have
+    a frozen snapshot from before green flag, use it. Otherwise refresh
+    from NWS and (while race is still future) save the snapshot. This
+    keeps the displayed hourly stable through the race instead of
+    shrinking as NWS rolls off past hours.
+    """
     track = lookup_track(event["track"])
     forecast = None
     hourly = []
+    hrrr_hourly = []
     source = None
     err = None
     gf_utc = gf_local = gf_eastern = None
@@ -96,23 +105,43 @@ def build_race(event):
     except Exception:
         pass
 
-    hrrr_hourly = []
+    event_id = str(event.get("event_id") or event.get("id") or "")
+    now_utc = datetime.now(timezone.utc)
+
     if track and gf_utc:
-        forecast, periods, source, err = _forecast_for_track(track, gf_utc)
-        hourly = _hourly_window(periods or [], gf_utc)
         tz = ZoneInfo(track["timezone"])
         gf_local = gf_utc.astimezone(tz)
         gf_eastern = gf_utc.astimezone(EASTERN_TZ)
 
-        # HRRR (CONUS only, ~48 h horizon). Bounding-box check inside
-        # get_hrrr_periods decides coverage — independent of NWS. Silent
-        # on failure; toggle just won't render.
-        try:
-            hrrr_periods = get_hrrr_periods(track["lat"], track["lon"])
-            if hrrr_periods:
-                hrrr_hourly = _hourly_window(hrrr_periods, gf_utc)
-        except Exception as e:
-            print(f"[nascar.slate] HRRR fetch error for {track.get('name','?')}: {e}", flush=True)
+        # FREEZE: race has started AND we snapshotted before — serve the
+        # frozen view.
+        if gf_utc <= now_utc and event_id and forecast_freeze.has(event_id):
+            frozen = forecast_freeze.get(event_id) or {}
+            forecast    = frozen.get("forecast")
+            hourly      = frozen.get("hourly") or []
+            hrrr_hourly = frozen.get("hrrr_hourly") or []
+            source      = (frozen.get("weather_source") or "nws") + "-frozen"
+            err         = frozen.get("weather_error")
+        else:
+            # Race is upcoming OR we never froze it — refresh from NWS
+            forecast, periods, source, err = _forecast_for_track(track, gf_utc)
+            hourly = _hourly_window(periods or [], gf_utc)
+
+            # HRRR (CONUS only, ~48 h horizon). Silent on failure.
+            try:
+                hrrr_periods = get_hrrr_periods(track["lat"], track["lon"])
+                if hrrr_periods:
+                    hrrr_hourly = _hourly_window(hrrr_periods, gf_utc)
+            except Exception as e:
+                print(f"[nascar.slate] HRRR fetch error for {track.get('name','?')}: {e}", flush=True)
+
+            # Snapshot while race is still upcoming so we have it locked
+            # in once green flag passes.
+            if event_id and gf_utc > now_utc and forecast and hourly:
+                forecast_freeze.freeze(
+                    event_id, forecast, hourly, hrrr_hourly,
+                    source, err,
+                )
 
     return {
         **event,
@@ -143,8 +172,6 @@ def build_nascar_slate():
         parsed = parse_nascar_event(event)
         if not parsed:
             continue
-
-        # Drop ESPN-flagged completed races. ESPN's status name varies —
         # STATUS_FINAL, STATUS_COMPLETED, STATUS_POST_GAME, etc.
         status = (parsed.get("status") or "").upper()
         DONE_KEYWORDS = ("FINAL", "POST", "COMPLETED", "ENDED")

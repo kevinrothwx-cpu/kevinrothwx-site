@@ -9,12 +9,21 @@ import time
 import traceback
 from datetime import datetime, timezone
 
+from datetime import timedelta
+
 from .slate import build_pga_slate
+from .storage import delete_orphaned as delete_orphaned_writeups
+from . import forecast_freeze
 from mlb.nws import clear_periods_cache as clear_nws_periods
 from hrrr import clear_periods_cache as clear_hrrr_periods
 
 
 REFRESH_SECONDS = 25 * 60
+
+# Freeze cleanup: drop snapshots older than this. A typical tournament
+# is Thursday-Sunday; 14 days is a generous cushion that survives bowl
+# weeks and major championships with extra rounds.
+FREEZE_RETENTION_DAYS = 14
 
 _pga_cache: dict = {"slate": None, "built_at_utc": None, "build_err": None}
 _cache_lock = threading.Lock()
@@ -83,6 +92,28 @@ def _rebuild():
         _pga_cache["build_err"] = err
 
 
+def _cleanup_after_rebuild():
+    """Orphaned-writeup + stale-freeze cleanup. Runs from the warmer thread
+    after a successful rebuild. Safe-guarded so any failure here never
+    breaks the warmer cycle."""
+    try:
+        with _cache_lock:
+            slate = list(_pga_cache.get("slate") or [])
+        live_ids = {str(t.get("event_id") or "") for t in slate if t.get("event_id")}
+        live_ids.discard("")
+        live_ids = {str(t.get("event_id") or "") for t in slate if t.get("event_id")}
+        live_ids.discard("")
+        n = delete_orphaned_writeups(live_ids)
+        if n:
+            print(f"[golf.cache] cleaned up {n} orphaned writeups", flush=True)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=FREEZE_RETENTION_DAYS)
+        m = forecast_freeze.clear_old(cutoff)
+        if m:
+            print(f"[golf.cache] cleaned up {m} stale freeze entries", flush=True)
+    except Exception as e:
+        print(f"[golf.cache] cleanup error (ignored): {e}", flush=True)
+
+
 def warmer_loop():
     print("[golf.cache] warmer thread started", flush=True)
     while not _warmer_stop.is_set():
@@ -92,6 +123,7 @@ def warmer_loop():
                 n = len(_pga_cache.get("slate") or [])
                 err = _pga_cache.get("build_err")
             print(f"[golf.cache] rebuilt: {n} tournaments (err={err})", flush=True)
+            _cleanup_after_rebuild()
         except Exception:
             traceback.print_exc()
         for _ in range(REFRESH_SECONDS):

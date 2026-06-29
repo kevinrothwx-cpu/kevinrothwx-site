@@ -89,3 +89,26 @@ def attach_writeups_to_slate(slate):
 def clear_all():
     with _lock:
         _MEMORY_STORE.clear()
+
+
+def delete_orphaned(live_event_ids) -> int:
+    """Delete writeups whose event_id is no longer in the live slate.
+
+    Called from the warmer cycle after a healthy rebuild. If the supplied
+    set is empty (slate likely failed to build), skips cleanup so a
+    transient ESPN outage can't wipe Kevin's notes.
+    """
+    live = {str(eid) for eid in (live_event_ids or [])}
+    if not live:
+        return 0
+    removed = 0
+    with _lock:
+        for k in list(_MEMORY_STORE.keys()):
+            if k not in live:
+                del _MEMORY_STORE[k]
+                removed += 1
+    if removed:
+        _persist()
+    return removed
+ersist()
+    return removed

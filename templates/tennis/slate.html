@@ -6,6 +6,110 @@
 {% block og_title %}{% if slam %}{{ slam.display_name }} Weather Forecast{% else %}Grand Slam Tennis Weather{% endif %}{% endblock %}
 {% block og_description %}{% if slam %}Daily forecasts for every day of {{ slam.display_name }}. By Kevin Roth, sports meteorologist.{% else %}Real meteorologist forecasts for the four tennis Grand Slams.{% endif %}{% endblock %}
 
+{% block extra_head %}
+<style>
+  /* Tennis-specific tweaks layered on base.html. Goal: compact above-fold
+     so the cheat-sheet + first hourly are visible without scrolling. */
+  .tennis-court-line {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--slate);
+    text-align: center;
+    margin: 0 auto 1.5rem;
+    padding: 0.4rem 1rem;
+    max-width: 56rem;
+    line-height: 1.45;
+  }
+  .tennis-court-line__label {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: var(--storm);
+    margin-right: 0.4rem;
+  }
+  .tennis-day-section {
+    margin: 0 0 1.5rem;
+  }
+  .tennis-day-section > summary {
+    cursor: pointer;
+    padding: 0.7rem 1rem;
+    background: #f8f8f8;
+    border: 1px solid var(--mist);
+    border-radius: 6px;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    user-select: none;
+    font-family: var(--font-sans);
+  }
+  .tennis-day-section > summary::-webkit-details-marker { display: none; }
+  .tennis-day-section > summary::before {
+    content: "\25B8";
+    color: var(--fog);
+    font-size: 0.8rem;
+    transition: transform 0.15s;
+    display: inline-block;
+  }
+  .tennis-day-section[open] > summary::before { transform: rotate(90deg); }
+  .tennis-day-section__label {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .tennis-day-section__date {
+    color: var(--fog);
+    font-size: 0.85rem;
+    margin-left: auto;
+  }
+  .tennis-day-hourly {
+    margin: 0.85rem 0 0;
+    overflow-x: auto;
+  }
+  .tennis-day-hourly table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .tennis-day-hourly th, .tennis-day-hourly td {
+    padding: 0.55rem 0.4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--mist);
+  }
+  .tennis-day-hourly thead th {
+    background: #f4f4f4;
+    color: var(--fog);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-family: var(--font-sans);
+  }
+  .tennis-day-hourly tbody th {
+    text-align: left;
+    color: var(--fog);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #fafafa;
+    padding-left: 0.85rem;
+    font-weight: 600;
+    width: 70px;
+  }
+  .tennis-day-hourly .precip-high { color: #b91c1c; font-weight: 600; }
+  .tennis-day-hourly .precip-mid  { color: #b45309; font-weight: 600; }
+  .tennis-day-hourly .precip-low  { color: #6b7280; }
+  .tennis-no-hourly {
+    color: var(--fog);
+    font-style: italic;
+    font-size: 0.85rem;
+    margin: 0.85rem 0 0;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mlb-page">
 
@@ -35,19 +139,18 @@
     </div>
   </header>
 
-  {# Roof context note — meteorologist-edge content most weather sites skip. #}
+  {# Court coverage — compact single line so it doesn't push hourly below
+     the fold. The meteorologist-edge info matters but doesn't need a
+     full callout box. #}
   {% set v = slam.venue if slam else (upcoming.venue if upcoming else None) %}
   {% if v and v.roof_note %}
-    <section class="container-tight" style="margin: 0 auto 2rem;">
-      <p style="font-family: var(--font-serif); font-size: 1rem; line-height: 1.55; color: var(--slate); padding: 1rem 1.15rem; background: var(--paper); border-left: 3px solid var(--storm);">
-        <strong style="font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); display: block; margin-bottom: 0.35rem;">Court coverage</strong>
-        {{ v.roof_note }}
-      </p>
-    </section>
+    <p class="tennis-court-line">
+      <span class="tennis-court-line__label">Court coverage</span>{{ v.roof_note }}
+    </p>
   {% endif %}
 
   {% if slam and slam.days %}
-    {# Day-by-day cheat-sheet cards. Uses existing site .cheat-row / .cheat-card classes. #}
+    {# Day-by-day cheat-sheet cards (top of page, visible at a glance). #}
     <div class="cheat-row">
       {% for day in slam.days %}
         <div class="cheat-card">
@@ -76,6 +179,53 @@
         </div>
       {% endfor %}
     </div>
+
+    {# Per-day hourly forecast sections. Today (or first upcoming day if
+       today is past) auto-expanded; other days collapsed. Hourly data
+       IS right below the cheat-sheet, one click away for any day. #}
+    <section style="margin-top: 2rem;">
+      <h2 style="font-family: var(--font-serif); font-size: 1.35rem; margin: 0 0 0.8rem; color: var(--ink);">
+        Daily hourly breakdown
+        <span style="font-family: var(--font-sans); font-size: 0.82rem; color: var(--fog); font-style: italic; font-weight: 400; margin-left: 0.5rem;">venue local time</span>
+      </h2>
+      {% set ns = namespace(first_open_used=false) %}
+      {% for day in slam.days %}
+        {% if day.hourly %}
+          {% set is_today_or_future = day.date_local >= today_local %}
+          {% set should_open = is_today_or_future and not ns.first_open_used %}
+          {% if should_open %}{% set ns.first_open_used = true %}{% endif %}
+          <details class="tennis-day-section" {% if should_open %}open{% endif %}>
+            <summary>
+              <span class="tennis-day-section__label">{{ day.day_label }}</span>
+              <span class="tennis-day-section__date">{{ day.date_label }}</span>
+            </summary>
+            <p style="margin: 0.6rem 0 0; font-family: var(--font-sans); font-size: 0.85rem;">
+              <a href="/tennis/{{ slam.slam_id }}/{{ day.date_local.isoformat() }}" style="color: var(--storm); text-decoration: none;">View match schedule and full daily forecast →</a>
+            </p>
+            <div class="tennis-day-hourly">
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    {% for p in day.hourly %}<th>{{ p.hour_local }}</th>{% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><th>Precip</th>
+                    {% for p in day.hourly %}
+                      {% set pct = p.precip_pct or 0 %}
+                      <td class="{% if pct >= 60 %}precip-high{% elif pct >= 30 %}precip-mid{% else %}precip-low{% endif %}">{{ pct }}%</td>
+                    {% endfor %}
+                  </tr>
+                  <tr><th>Temp</th>{% for p in day.hourly %}<td>{{ p.temp }}°</td>{% endfor %}</tr>
+                  <tr><th>Wind</th>{% for p in day.hourly %}<td>{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        {% endif %}
+      {% endfor %}
+    </section>
 
     {% if meta and meta.build_err %}
       <p style="font-family: var(--font-sans); font-size: 0.78rem; color: var(--fog); text-align: center; margin-top: 2rem;">Forecast source: {{ slam.weather_source or "unavailable" }} · {{ meta.build_err }}</p>

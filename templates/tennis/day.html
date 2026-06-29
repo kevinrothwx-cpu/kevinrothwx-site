@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}{{ slam.display_name }} {{ day.date_label }} Weather — Match Forecast | Kevin Roth{% endblock %}
+{% block description %}Weather forecast for {{ slam.display_name }} on {{ day.date_label }} at {{ slam.venue.name }}, {{ slam.venue.city }}. {% if summary %}{{ summary.paragraph[:140] }}{% else %}Hourly forecast with match schedule for outdoor and roofed courts.{% endif %}{% endblock %}
+
+{% block og_title %}{{ slam.display_name }} {{ day.date_label }} Weather{% endblock %}
+{% block og_description %}{{ slam.display_name }} · {{ day.date_label }} · Hourly forecast and day's matchups.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ slam.display_name }} — {{ day.date_label }}",
+  "description": "Day {{ day.day_num }} of {{ slam.display_name }} at {{ slam.venue.name }} in {{ slam.venue.city }}. {% if summary %}{{ summary.paragraph }}{% else %}Daily weather forecast for the tournament.{% endif %}",
+  "startDate": "{{ day.date_local.isoformat() }}",
+  "endDate": "{{ day.date_local.isoformat() }}",
+  "sport": "Tennis",
+  "url": "{{ site_url }}/tennis/{{ slam.slam_id }}/{{ day.date_local.isoformat() }}",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@type": "Place",
+    "name": "{{ slam.venue.name }}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "{{ slam.venue.city }}"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": {{ slam.venue.lat }},
+      "longitude": {{ slam.venue.lon }}
+    }
+  },
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "{{ slam.display_name|replace(' 2026', '') }}"
+  }{% if day.summary %},
+  "additionalProperty": [
+    { "@type": "PropertyValue", "name": "High temperature", "value": "{{ day.summary.high_temp }}°F" },
+    { "@type": "PropertyValue", "name": "Low temperature", "value": "{{ day.summary.low_temp }}°F" },
+    { "@type": "PropertyValue", "name": "Average wind", "value": "{{ day.summary.avg_wind }} mph" },
+    { "@type": "PropertyValue", "name": "Maximum precipitation chance", "value": "{{ day.summary.max_precip }}%" }
+  ]{% endif %}
+}
+</script>
+<style>
+  .day-page__back {
+    display: inline-block;
+    color: var(--storm);
+    text-decoration: none;
+    font-size: 0.88rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-sans);
+  }
+  .day-page__back:hover { text-decoration: underline; }
+  .day-page__title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 0 0 0.4rem;
+  }
+  .day-page__meta {
+    color: var(--fog);
+    font-size: 0.95rem;
+    margin: 0 0 2rem;
+  }
+  .day-section-h2 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    margin: 2rem 0 0.85rem;
+    color: var(--ink);
+  }
+  .day-section-h2__source {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--fog);
+    font-style: italic;
+    font-weight: 400;
+    margin-left: 0.5rem;
+  }
+  .day-hourly {
+    background: #fff;
+    border: 1px solid var(--mist);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .day-hourly table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .day-hourly th, .day-hourly td {
+    padding: 0.55rem 0.4rem;
+    text-align: center;
+    border-bottom: 1px solid var(--mist);
+  }
+  .day-hourly tr:last-child td,
+  .day-hourly tr:last-child th { border-bottom: none; }
+  .day-hourly thead th {
+    background: #f4f4f4;
+    color: var(--fog);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-family: var(--font-sans);
+  }
+  .day-hourly tbody th {
+    text-align: left;
+    color: var(--fog);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #fafafa;
+    padding-left: 0.85rem;
+    font-weight: 600;
+    width: 70px;
+  }
+  .day-hourly .precip-high { color: #b91c1c; font-weight: 600; }
+  .day-hourly .precip-mid  { color: #b45309; font-weight: 600; }
+  .day-hourly .precip-low  { color: #6b7280; }
+  .day-summary {
+    margin: 1.25rem 0 0;
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .day-summary p { margin: 0; }
+  .day-matches {
+    margin-top: 0.5rem;
+  }
+  .day-match {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--mist);
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+  }
+  .day-match:last-child { border-bottom: none; }
+  .day-match__tour {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: white;
+    background: var(--storm);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+  }
+  .day-match__tour.wta { background: #b45309; }
+  .day-match__players {
+    font-weight: 600;
+    color: var(--ink);
+    flex: 1;
+  }
+  .day-match__round {
+    font-size: 0.78rem;
+    color: var(--fog);
+  }
+  .day-match__time {
+    font-size: 0.78rem;
+    color: var(--fog);
+    font-variant-numeric: tabular-nums;
+  }
+  .day-matches__empty {
+    color: var(--fog);
+    font-style: italic;
+    font-size: 0.88rem;
+    padding: 0.85rem;
+  }
+  .day-source-note {
+    margin: 2rem 0 1rem;
+    font-size: 0.83rem;
+    color: var(--fog);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<article style="max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem;">
+  <a href="/tennis/{{ slam.slam_id }}" class="day-page__back">← {{ slam.display_name }} overview</a>
+
+  <h1 class="day-page__title">{{ slam.display_name }} · {{ day.date_label }}</h1>
+  <p class="day-page__meta">
+    {{ slam.venue.name }}, {{ slam.venue.city }} · Day {{ day.day_num }} of {{ slam.days|length }}
+  </p>
+
+  {# ── Hourly forecast ───────────────────────────── #}
+  <h2 class="day-section-h2">
+    Hourly forecast
+    <span class="day-section-h2__source">venue local time</span>
+  </h2>
+  {% if day.hourly %}
+    <div class="day-hourly">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            {% for p in day.hourly %}<th>{{ p.hour_local }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th>Precip</th>
+            {% for p in day.hourly %}
+              {% set pct = p.precip_pct or 0 %}
+              <td class="{% if pct >= 60 %}precip-high{% elif pct >= 30 %}precip-mid{% else %}precip-low{% endif %}">{{ pct }}%</td>
+            {% endfor %}
+          </tr>
+          <tr><th>Temp</th>{% for p in day.hourly %}<td>{{ p.temp }}°</td>{% endfor %}</tr>
+          <tr><th>Wind</th>{% for p in day.hourly %}<td>{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p style="color: var(--fog); font-style: italic;">No hourly data yet for this day.</p>
+  {% endif %}
+
+  {# ── Weather summary ──────────────────────────── #}
+  {% if summary and summary.paragraph %}
+    <div class="day-summary"><p>{{ summary.paragraph }}</p></div>
+  {% endif %}
+
+  {# ── Match schedule ──────────────────────────── #}
+  <h2 class="day-section-h2">
+    Match schedule
+    <span class="day-section-h2__source">via ESPN</span>
+  </h2>
+  <div class="day-matches">
+    {% if matches %}
+      {% for m in matches %}
+        <div class="day-match">
+          <span class="day-match__tour {% if m.tour == 'WTA' %}wta{% endif %}">{{ m.tour }}</span>
+          <span class="day-match__players">{{ m.player_a }} vs {{ m.player_b }}</span>
+          {% if m.round %}<span class="day-match__round">{{ m.round }}</span>{% endif %}
+          {% if m.local_time %}<span class="day-match__time">{{ m.local_time }}</span>{% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="day-matches__empty">Match schedule not yet posted by ESPN for this day. Check back closer to start.</p>
+    {% endif %}
+  </div>
+
+  <p class="day-source-note">
+    Forecast source: <strong>{{ slam.weather_source or "WeatherAPI" }}</strong>. Match data via ESPN.
+  </p>
+</article>
+{% endblock %}

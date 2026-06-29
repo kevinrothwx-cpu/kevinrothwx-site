@@ -58,6 +58,8 @@ from tennis.cache import (
 from tennis.schedule import (
     active_slam, next_slam, is_any_slam_active, get_slam_by_id,
 )
+from tennis.matches import get_matches_for_day as tennis_matches_for_day, format_local_time as tennis_local_time
+from tennis.daily_summary import generate_daily_summary as tennis_daily_summary
 
 from cfb.cache import (
     get_cfb_slate, start_warmer as start_cfb_warmer,
@@ -598,6 +600,17 @@ def _render_worldcup_matchday(start_date_str, days=3):
 # Slams (~14 days each) and hides between. No manual writeups by design
 # per Kevin's scoping: this is a coverage play, not a commentary play.
 
+def _today_local_for_venue(venue_meta):
+    """Compute today's date in the venue's local timezone. Used by the
+    tennis template to decide which day's hourly to auto-expand. Falls
+    back to UTC date if venue/timezone missing."""
+    try:
+        tz = ZoneInfo((venue_meta or {}).get("timezone") or "UTC")
+    except Exception:
+        tz = ZoneInfo("UTC")
+    return datetime.now(tz).date()
+
+
 @app.route("/tennis")
 def tennis_root():
     """Active Grand Slam slate. Shows whichever Slam is in window now.
@@ -609,13 +622,61 @@ def tennis_root():
         return render_template(
             "tennis/slate.html",
             slam=None, upcoming=upcoming, meta=None,
+            today_local=_today_local_for_venue((upcoming or {}).get("venue")),
             canonical_path="/tennis",
         )
     slam, meta = get_active_slam_slate()
+    display_slam = slam or slam_meta
     return render_template(
         "tennis/slate.html",
-        slam=slam or slam_meta, upcoming=None, meta=meta,
+        slam=display_slam, upcoming=None, meta=meta,
+        today_local=_today_local_for_venue(display_slam.get("venue")),
         canonical_path="/tennis",
+    )
+
+
+@app.route("/tennis/<slam_id>/<date_str>")
+def tennis_slam_day(slam_id, date_str):
+    """Per-day Slam detail page. SEO long-tail target — each Slam has ~14
+    days × 4 Slams/year = ~56 indexable URLs annually for queries like
+    'wimbledon weather july 4' or 'us open weather day 5'."""
+    if not _valid_date_str(date_str):
+        abort(404)
+    slam_meta = get_slam_by_id(slam_id)
+    if slam_meta is None:
+        abort(404)
+
+    # Pull the live slam (with weather attached) and find the requested day
+    slam, meta = get_slam_slate_by_id(slam_id)
+    display_slam = slam or slam_meta
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+    day = None
+    for d in (display_slam.get("days") or []):
+        if d.get("date_local") == target_date:
+            day = d
+            break
+    if day is None:
+        abort(404)
+
+    # ESPN match schedule for this day. Never raises; empty on failure.
+    raw_matches = tennis_matches_for_day(slam_id, target_date)
+    tz = display_slam["venue"]["timezone"]
+    matches = [{**m, "local_time": tennis_local_time(m.get("start_iso", ""), tz)} for m in raw_matches]
+
+    # Pure-weather summary (no game-impact speculation — tennis brand
+    # discipline mirrors cfb/analysis.py)
+    summary = tennis_daily_summary(day, display_slam["venue"])
+
+    brand = get_site_brand(request.host)
+    return render_template(
+        "tennis/day.html",
+        slam=display_slam,
+        day=day,
+        matches=matches,
+        summary=summary,
+        site_url=brand["site_url"],
+        canonical_path=f"/tennis/{slam_id}/{date_str}",
     )
 
 
@@ -629,11 +690,13 @@ def tennis_slam(slam_id):
     if slam_meta is None:
         abort(404)
     slam, meta = get_slam_slate_by_id(slam_id)
+    display_slam = slam or slam_meta
     return render_template(
         "tennis/slate.html",
-        slam=slam or slam_meta,
+        slam=display_slam,
         upcoming=None if slam else slam_meta,
         meta=meta,
+        today_local=_today_local_for_venue(display_slam.get("venue")),
         canonical_path=f"/tennis/{slam_id}",
     )
 
@@ -1138,12 +1201,22 @@ def sitemap():
                 dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
         # Tennis Grand Slam URLs — only when a Slam is active. Per-Slam
         # permanent URLs (e.g. /tennis/wimbledon) are listed in the static
-        # block below since they're evergreen SEO targets.
+        # block below since they're evergreen SEO targets. Per-day URLs
+        # (e.g. /tennis/wimbledon/2026-07-04) are added dynamically while
+        # the slam is in window so each day is independently indexable.
         if is_any_slam_active():
             dynamic_urls.append(("/tennis", "0.9", "hourly"))
             slam = active_slam()
             if slam:
                 dynamic_urls.append((f"/tennis/{slam['slam_id']}", "0.85", "hourly"))
+                # Add per-day URLs for the active slam window
+                slam_slate, _ = get_slam_slate_by_id(slam["slam_id"])
+                if slam_slate and slam_slate.get("days"):
+                    for day in slam_slate["days"]:
+                        d_iso = day["date_local"].isoformat()
+                        dynamic_urls.append(
+                            (f"/tennis/{slam['slam_id']}/{d_iso}", "0.7", "daily")
+                        )
         all_urls = static_urls + dynamic_urls
     else:
         # Personal site — no sport pages, no dynamic.
