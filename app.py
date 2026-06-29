@@ -66,6 +66,8 @@ from cfb.cache import (
 )
 from cfb.analysis import generate_analysis as cfb_generate_analysis
 from cfb.nws_client import circuit_status as cfb_nws_circuit_status, gridpoint_cache_size as cfb_gridpoint_cache_size
+from cfb.slate import _hourly_window as cfb_hourly_window
+from hrrr import get_hrrr_periods
 
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
@@ -715,11 +717,28 @@ def ncaaf_game(date_str, slug):
         print(f"[ncaaf.game] analysis failed for {date_str}/{slug}: {e}", flush=True)
         analysis = None
 
+    # HRRR high-resolution overlay. Open-Meteo paid endpoint; CONUS-only.
+    # Fail soft — if HRRR unavailable (outside CONUS, API down, beyond
+    # the ~48h HRRR horizon), the template's `{% if hrrr_hourly %}` just
+    # hides the toggle. No user-facing error.
+    hrrr_hourly = []
+    venue = game.get("venue") or {}
+    lat, lon = venue.get("lat"), venue.get("lon")
+    kickoff = game.get("kickoff_utc")
+    if lat is not None and lon is not None and kickoff is not None:
+        try:
+            hrrr_periods = get_hrrr_periods(lat, lon)
+            if hrrr_periods:
+                hrrr_hourly = cfb_hourly_window(hrrr_periods, kickoff)
+        except Exception as e:
+            print(f"[ncaaf.game] HRRR fetch failed for {date_str}/{slug}: {e}", flush=True)
+
     brand = get_site_brand(request.host)
     return render_template(
         "ncaaf/game.html",
         game=game,
         analysis=analysis,
+        hrrr_hourly=hrrr_hourly,
         date_str=date_str,
         pretty_date=pretty_date,
         site_url=brand["site_url"],
