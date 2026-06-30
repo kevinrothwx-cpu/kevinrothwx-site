@@ -65,19 +65,24 @@ def get_matches_for_day(slam_id: str, day: date) -> list[dict]:
     date_str = day.strftime("%Y%m%d")
     day_iso_prefix = day.strftime("%Y-%m-%d")  # competition.date starts with this
     out: list[dict] = []
+    # During a Slam, ESPN's ATP and WTA scoreboard endpoints BOTH return the
+    # entire Wimbledon event with every grouping (Men's/Women's/Doubles/etc.),
+    # so the same match shows up twice if we don't dedup. Key by ESPN
+    # competition.id which is unique per match across tours.
+    seen_ids: set[str] = set()
 
-    for tour, url in (("ATP", ESPN_ATP_URL), ("WTA", ESPN_WTA_URL)):
+    for endpoint_tour, url in (("ATP", ESPN_ATP_URL), ("WTA", ESPN_WTA_URL)):
         try:
             resp = requests.get(
                 url, params={"dates": date_str},
                 headers=REQUEST_HEADERS, timeout=REQUEST_TIMEOUT_SEC,
             )
             if resp.status_code != 200:
-                log.warning(f"[tennis.matches] {tour} fetch returned {resp.status_code}")
+                log.warning(f"[tennis.matches] {endpoint_tour} fetch returned {resp.status_code}")
                 continue
             data = resp.json()
         except Exception as e:
-            log.warning(f"[tennis.matches] {tour} fetch failed: {e}")
+            log.warning(f"[tennis.matches] {endpoint_tour} fetch failed: {e}")
             continue
 
         for event in (data.get("events") or []):
@@ -90,9 +95,22 @@ def get_matches_for_day(slam_id: str, day: date) -> list[dict]:
             # Drill into groupings -> competitions to find individual matches
             for grouping in (event.get("groupings") or []):
                 division = ((grouping.get("grouping") or {}).get("displayName") or "")
+                # Map division → actual tour. Don't trust the endpoint label:
+                # ATP endpoint returns women's matches too during Slams, so
+                # tagging them "ATP" would mislabel WTA singles as ATP.
+                div_low = division.lower()
+                if "women" in div_low:
+                    tour = "WTA"
+                elif "men" in div_low:
+                    tour = "ATP"
+                else:
+                    # Mixed Doubles / Wheelchair / Juniors / etc. — fall back
+                    # to endpoint label (better than nothing)
+                    tour = endpoint_tour
                 for comp in (grouping.get("competitions") or []):
                     parsed = _parse_competition(comp, tour, division, day_iso_prefix)
-                    if parsed:
+                    if parsed and parsed["match_id"] not in seen_ids:
+                        seen_ids.add(parsed["match_id"])
                         out.append(parsed)
 
     out.sort(key=lambda m: m.get("start_epoch") or 0)
@@ -149,7 +167,7 @@ def _parse_competition(comp: dict, tour: str, division: str,
         "round":       round_name,
         "player_a":    p_a,
         "player_b":    p_b,
-        "court":       "",  # ESPN rarely populates court at this level
+        "court":       "",
         "start_iso":   comp_date,
         "start_epoch": start_epoch,
         "status":      status,
@@ -158,9 +176,6 @@ def _parse_competition(comp: dict, tour: str, division: str,
 
 
 def _athlete_name(competitor: dict) -> str:
-    """Get the display name for a competitor. ESPN populates athlete data
-    nested inside the competitor; some doubles matches use displayName at
-    the competitor level instead."""
     athlete = competitor.get("athlete") or {}
     name = (athlete.get("shortName")
             or athlete.get("displayName")
@@ -171,8 +186,7 @@ def _athlete_name(competitor: dict) -> str:
 
 
 def format_local_time(start_iso: str, tz_name: str) -> str:
-    """Format an ISO UTC start time as venue-local hh:mm AM/PM. Returns
-    empty string on parse failure."""
+    """Format an ISO UTC start time as venue-local hh:mm AM/PM. Empty on failure."""
     if not start_iso:
         return ""
     try:

@@ -211,6 +211,7 @@
           </tr>
           <tr><th>Temp</th>{% for p in day.hourly %}<td>{{ p.temp }}°</td>{% endfor %}</tr>
           <tr><th>Wind</th>{% for p in day.hourly %}<td>{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+          <tr><th>Wind dir</th>{% for p in day.hourly %}<td>{{ p.wind_deg|wind_compass if p.wind_deg is not none else '—' }}</td>{% endfor %}</tr>
         </tbody>
       </table>
     </div>
@@ -241,7 +242,6 @@
     {% else %}
       <p class="day-matches__empty">Match schedule not yet posted by ESPN for this day. Check back closer to start.</p>
     {% endif %}
-  </div>
 
   <p class="day-source-note">
     Forecast source: <strong>{{ slam.weather_source or "WeatherAPI" }}</strong>. Match data via ESPN.

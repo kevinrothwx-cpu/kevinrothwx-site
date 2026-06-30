@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- MySportsWeather / Kevin Roth favicon.
-       Filled yellow lightning bolt on black. Maximum contrast for tiny
-       sizes — yellow on black is one of the most legible pairings at
-       16x16 (Google search results) and stays clean all the way up. -->
-  <rect width="64" height="64" rx="12" fill="#000000"/>
+  <!-- MySportsWeather / Kevin Roth favicon — just the bolt, transparent
+       background. Color is brand navy (#1e3a8a) so it stays legible on
+       light browser tab backgrounds (default Chrome/Safari/Firefox);
+       enough saturation that it also reads on darker tab themes. -->
   <path d="M 38 6 L 18 34 L 30 34 L 26 58 L 46 30 L 34 30 Z"
-        fill="#fbbf24"/>
+        fill="#1e3a8a"/>
 </svg>
