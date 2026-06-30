@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}MLS Write-up Admin{% endblock %}
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<style>
+  .admin-page { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .admin-page__h1 { font-family: var(--font-serif); font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
+  .admin-page__sub { color: var(--ash); font-size: 0.9rem; margin-bottom: 2rem; }
+  .admin-form { display: flex; flex-direction: column; gap: 1.1rem; padding: 1.5rem; border: 1px solid var(--mist); background: var(--paper); }
+  .admin-form label { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); }
+  .admin-form select, .admin-form textarea { padding: 0.7rem 0.85rem; border: 1px solid var(--mist); font-size: 1rem; font-family: inherit; width: 100%; background: var(--white); }
+  .admin-form textarea { min-height: 200px; font-family: var(--font-serif); line-height: 1.55; resize: vertical; }
+  .color-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .color-radio { position: relative; cursor: pointer; }
+  .color-radio input { position: absolute; opacity: 0; }
+  .color-radio span { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.85rem; border: 2px solid var(--mist); font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ash); }
+  .color-radio span::before { content: ''; width: 14px; height: 14px; border-radius: 2px; }
+  .color-radio[data-color="none"]   span::before { background: var(--smoke); border: 1px solid var(--ash); }
+  .color-radio[data-color="green"]  span::before { background: #15803d; }
+  .color-radio[data-color="yellow"] span::before { background: #ca8a04; }
+  .color-radio[data-color="orange"] span::before { background: #ea580c; }
+  .color-radio[data-color="red"]    span::before { background: #b91c1c; }
+  .color-radio input:checked + span { border-color: var(--ink); color: var(--ink); background: var(--white); }
+  .admin-form button { padding: 0.85rem 1.5rem; background: var(--ink); color: var(--white); border: 0; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; align-self: flex-start; }
+  .admin-form button:hover { background: var(--storm); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="admin-page">
+  <h1 class="admin-page__h1">MLS Write-up Admin</h1>
+  <p class="admin-page__sub">{{ slate|length }} matches loaded. Notes auto-delete when matches drop off the slate.</p>
+  <form class="admin-form" method="POST" action="/admin/mls">
+    <div>
+      <label for="event_id">Match</label>
+      <select id="event_id" name="event_id" required>
+        <option value="">- pick a match -</option>
+        {% for m in slate %}
+          <option value="{{ m.event_id }}">{{ m.date_local }} · {{ m.away.short }} at {{ m.home.short }} ({{ m.kickoff_eastern_str }}){% if m.writeup %} · has write-up{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Color tag</label>
+      <div class="color-row">
+        <label class="color-radio" data-color="none"><input type="radio" name="color" value="" checked><span>None</span></label>
+        <label class="color-radio" data-color="green"><input type="radio" name="color" value="green"><span>Green</span></label>
+        <label class="color-radio" data-color="yellow"><input type="radio" name="color" value="yellow"><span>Yellow</span></label>
+        <label class="color-radio" data-color="orange"><input type="radio" name="color" value="orange"><span>Orange</span></label>
+        <label class="color-radio" data-color="red"><input type="radio" name="color" value="red"><span>Red</span></label>
+      </div>
+    </div>
+    <div>
+      <label for="text">Write-up</label>
+      <textarea id="text" name="text" placeholder="Severe thunderstorms moving through the metro around kickoff. Likely lightning delay first half..."></textarea>
+    </div>
+    <button type="submit">Save write-up</button>
+  </form>
+</div>
+{% endblock %}

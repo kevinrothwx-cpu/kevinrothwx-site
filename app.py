@@ -71,6 +71,18 @@ from cfb.nws_client import circuit_status as cfb_nws_circuit_status, gridpoint_c
 from cfb.slate import _hourly_window as cfb_hourly_window
 from hrrr import get_hrrr_periods
 
+from mls.cache import (
+    get_mls_slate, start_warmer as start_mls_warmer,
+    find_match_in_slate as find_mls_match,
+    frozen_count as mls_frozen_count,
+)
+from mls.analysis import generate_analysis as mls_generate_analysis
+from mls.storage import (
+    save_writeup as mls_save_writeup,
+    get_writeup as mls_get_writeup,
+    attach_writeups_to_slate as mls_attach_writeups,
+)
+
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
 
@@ -150,6 +162,7 @@ start_nascar_warmer()
 start_cws_warmer()
 start_tennis_warmer()
 start_cfb_warmer()
+start_mls_warmer()
 
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
@@ -165,7 +178,7 @@ MYSPORTSWEATHER_HOSTS = {"mysportsweather.com", "www.mysportsweather.com"}
 
 # Sport sections that live on mysportsweather.com going forward. Requests
 # for these on kevinrothwx.com get 301-redirected.
-SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/worldcup", "/golf", "/nascar", "/nfl", "/ncaaf")
+SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/worldcup", "/golf", "/nascar", "/nfl", "/ncaaf", "/mls")
 SPORT_PATH_EXACT = {"/mlb-weather", "/nfl-weather", "/pga-weather"}
 
 
@@ -312,6 +325,23 @@ def inject_sport_nav():
         cfb_games, _ = get_cfb_slate(allow_build=False)
         if cfb_games:
             counts["ncaaf"] = str(len(cfb_games))
+    except Exception:
+        pass
+
+    # MLS — count today's matches (Eastern). Late-night PT kickoffs roll
+    # into the next UTC day, so we walk the full window and filter to
+    # today-ET. Off-season (between MLS Cup and February preseason) this
+    # naturally returns 0 and the badge stays hidden.
+    try:
+        mls_matches, _ = get_mls_slate(allow_build=False)
+        if mls_matches:
+            today_mls = 0
+            for m in mls_matches:
+                ko = m.get("kickoff_utc")
+                if ko and ko.astimezone(EASTERN_TZ).date() == today:
+                    today_mls += 1
+            if today_mls > 0:
+                counts["mls"] = str(today_mls)
     except Exception:
         pass
 
@@ -809,6 +839,98 @@ def ncaaf_game(date_str, slug):
     )
 
 
+# ===== MLS weather forecasts =====
+#
+# Slate is built by mls/cache.py warmer (25-min cycle, 30-min stale self-heal,
+# kickoff freeze for in-match stability). NWS-primary via cfb/nws_client,
+# WeatherAPI fallback. Three Canadian venues (Toronto/Montreal/Vancouver)
+# route directly to WeatherAPI since NWS doesn't cover Canada.
+#
+# URL shape mirrors World Cup: /mls (slate hub) + /mls/<date>/<slug> per match.
+
+@app.route("/mls")
+def mls_root():
+    """MLS slate hub. Groups matches by venue-local date, shows cheat cards
+    + writeups + per-day blocks. Off-season returns an empty slate; we
+    render the same template with no matches rather than a coming-soon
+    page since MLS is a long season (Feb–Nov) and the off-season window
+    is short."""
+    matches, meta = get_mls_slate(allow_build=True)
+    mls_attach_writeups(matches)
+
+    # Group matches by their venue-local date (date_local field already
+    # YYYY-MM-DD). Build a days_data list the template iterates.
+    today_et = datetime.now(EASTERN_TZ).date()
+    grouped: dict[str, list[dict]] = {}
+    for m in matches:
+        d = m.get("date_local")
+        if not d:
+            continue
+        grouped.setdefault(d, []).append(m)
+
+    days_data = []
+    for date_str in sorted(grouped.keys()):
+        try:
+            d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        days_data.append({
+            "date_str":     date_str,
+            "pretty_date":  d.strftime("%A, %B %-d"),
+            "is_today":     (d == today_et),
+            "is_tomorrow":  (d == today_et + timedelta(days=1)),
+            "matches":      grouped[date_str],
+        })
+
+    return render_template(
+        "mls/slate.html",
+        days_data=days_data,
+        total_matches=len(matches),
+        meta=meta,
+        canonical_path="/mls",
+    )
+
+
+@app.route("/mls/<date_str>/<slug>")
+def mls_match(date_str, slug):
+    """Per-match MLS detail page with schema.org SportsEvent + hourly
+    forecast + meteorologist analysis paragraph."""
+    if not _valid_date_str(date_str):
+        abort(404)
+    match = find_mls_match(date_str, slug)
+    if not match:
+        abort(404)
+
+    # End time for schema.org: kickoff + 2.5h covers 90-min match +
+    # halftime + injury time + (rare) extra time
+    kickoff = match.get("kickoff_utc")
+    if kickoff:
+        match["kickoff_end_utc"] = kickoff + timedelta(hours=3)
+
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        pretty_date = d.strftime("%A, %B %-d")
+    except ValueError:
+        pretty_date = date_str
+
+    try:
+        analysis = mls_generate_analysis(match)
+    except Exception as e:
+        print(f"[mls.match] analysis failed for {date_str}/{slug}: {e}", flush=True)
+        analysis = None
+
+    brand = get_site_brand(request.host)
+    return render_template(
+        "mls/match.html",
+        match=match,
+        analysis=analysis,
+        date_str=date_str,
+        pretty_date=pretty_date,
+        site_url=brand["site_url"],
+        canonical_path=f"/mls/{date_str}/{slug}",
+    )
+
+
 # ===== College World Series =====
 
 def _build_cws_day(d, today):
@@ -1084,6 +1206,28 @@ def admin_golf():
     return render_template("golf/admin.html", slate=slate)
 
 
+@app.route("/admin/mls", methods=["GET", "POST"])
+@_admin_required
+def admin_mls():
+    """MLS write-up admin. One note per match keyed by ESPN event_id.
+    Notes auto-expire when the match drops off the slate (mls/cache.py
+    calls mls.storage.delete_orphaned at the end of each rebuild)."""
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            mls_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_mls"))
+
+    matches, _ = get_mls_slate()
+    if matches is None:
+        matches = []
+    mls_attach_writeups(matches)
+    return render_template("mls/admin.html", slate=matches)
+
+
 @app.route("/admin/nascar", methods=["GET", "POST"])
 @_admin_required
 def admin_nascar():
@@ -1160,6 +1304,7 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/golf", "0.85", "daily"),
     ("/nascar", "0.85", "daily"),
     ("/ncaaf", "0.85", "daily"),
+    ("/mls", "0.85", "hourly"),
     ("/mlb-weather", "0.8", "monthly"),
     ("/nfl-weather", "0.8", "monthly"),
     ("/pga-weather", "0.8", "monthly"),
@@ -1199,6 +1344,24 @@ def sitemap():
             dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
             for m in wc_slate:
                 dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
+        # MLS per-match URLs. Slate covers ~7 days; emit a /mls/<date>/<slug>
+        # URL for every match so each is independently indexable. The
+        # /mls hub itself is already in the static block.
+        try:
+            mls_slate, _ = get_mls_slate(allow_build=False)
+            if mls_slate:
+                emitted_dates = set()
+                for m in mls_slate:
+                    d_iso = m.get("date_local")
+                    slug = m.get("slug")
+                    if not d_iso or not slug:
+                        continue
+                    if d_iso not in emitted_dates:
+                        emitted_dates.add(d_iso)
+                    dynamic_urls.append((f"/mls/{d_iso}/{slug}", "0.7", "hourly"))
+        except Exception as e:
+            print(f"[sitemap] MLS dynamic URLs failed: {e}", flush=True)
+
         # Tennis Grand Slam URLs — only when a Slam is active. Per-Slam
         # permanent URLs (e.g. /tennis/wimbledon) are listed in the static
         # block below since they're evergreen SEO targets. Per-day URLs
@@ -1322,6 +1485,7 @@ def llms_txt():
         f"- [World Cup 2026]({base}/worldcup): Match weather across all 16 host cities in the US, Canada, and Mexico.\n"
         f"- [PGA Tour]({base}/golf): Round-by-round tournament forecasts with HRRR high-resolution model overlay.\n"
         f"- [NASCAR Cup Series]({base}/nascar): Race-day forecasts for every Cup round.\n"
+        f"- [MLS]({base}/mls): Major League Soccer match weather for all 29 venues, with retractable-roof flags for Atlanta and Vancouver.\n"
         f"- [Grand Slam Tennis]({base}/tennis): Wimbledon, US Open, Australian Open, Roland-Garros — only active during Slam weeks.\n"
         f"- [College Football]({base}/ncaaf): FBS coverage launching August 29, 2026 (Week 1).\n"
         f"- [NFL]({base}/nfl): Game-day forecasts launching September 10, 2026 (Thursday night opener).\n\n"
@@ -1401,6 +1565,7 @@ def admin_nws_health():
         f'<div class="stat"><div class="stat-label">CFB circuit breaker</div><div class="stat-value{" warn" if circuit["open"] else ""}">{"OPEN" if circuit["open"] else "closed"}</div></div>'
         f'<div class="stat"><div class="stat-label">CFB gridpoint cache</div><div class="stat-value">{cfb_gridpoint_cache_size()}</div></div>'
         f'<div class="stat"><div class="stat-label">Frozen CFB snapshots</div><div class="stat-value">{cfb_frozen_count()}</div></div>'
+        f'<div class="stat"><div class="stat-label">Frozen MLS snapshots</div><div class="stat-value">{mls_frozen_count()}</div></div>'
         '</div>'
     )
 

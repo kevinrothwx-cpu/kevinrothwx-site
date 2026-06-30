@@ -2,6 +2,8 @@
 
 Read this at the start of every session before doing any code work.
 
+**Also read `SESSION_NOTES.md`** alongside this file. CLAUDE.md is workflow rules (OneDrive recovery, GitHub Desktop discipline, mandatory sweep). SESSION_NOTES.md is project state — what's built, brand decisions, sport-by-sport status, outstanding work.
+
 ## The OneDrive truncation problem (CRITICAL)
 
 This repo lives in `C:\Users\kjrfs\OneDrive\Documents\GitHub\kevinrothwx-site`, which is OneDrive-synced. The Linux sandbox mounts it via cloud sync, which creates a three-way file state:

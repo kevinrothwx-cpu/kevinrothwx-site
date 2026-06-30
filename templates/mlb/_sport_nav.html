@@ -29,6 +29,10 @@
       NASCAR
       {% if sport_counts and sport_counts.nascar %}<span class="sport-nav__count">{{ sport_counts.nascar }}</span>{% endif %}
     </a>
+    <a href="/mls" class="sport-nav__item {% if active_sport == 'mls' %}is-active{% endif %}">
+      MLS
+      {% if sport_counts and sport_counts.mls %}<span class="sport-nav__count">{{ sport_counts.mls }}</span>{% endif %}
+    </a>
     {% if sport_counts and sport_counts.cws %}
     <a href="/cws" class="sport-nav__item {% if active_sport == 'cws' %}is-active{% endif %}">
       CWS

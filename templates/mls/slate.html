@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}MLS Weather, Match Forecasts for Every Team | Kevin Roth{% endblock %}
+{% block description %}Free live weather forecasts for every Major League Soccer match. Today and upcoming matchdays. Stadium-specific temp, wind, precipitation by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}MLS Weather Forecasts{% endblock %}
+{% block og_description %}Real meteorologist weather for every MLS match this week. By Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<style>
+  .mls-page { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .mls-page__header { padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .mls-page__title {
+    font-family: var(--font-serif); font-weight: 600;
+    font-size: clamp(1.4rem, 1.8vw + 0.5rem, 1.85rem);
+    letter-spacing: -0.015em; line-height: 1.1; margin: 0.3rem 0 0;
+  }
+
+  /* Day grouping */
+  .mls-date-section { margin-bottom: 2rem; }
+  .mls-date-header {
+    display: flex; align-items: baseline; gap: 0.65rem;
+    padding-bottom: 0.6rem; margin-bottom: 0.9rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .mls-date-header__title {
+    font-family: var(--font-serif); font-size: 1.3rem;
+    font-weight: 600; letter-spacing: -0.01em; margin: 0;
+  }
+  .mls-date-header__count {
+    font-family: var(--font-sans); font-size: 0.78rem;
+    color: var(--ash); font-weight: 500;
+  }
+  .mls-date-header__tag {
+    font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: #00538f; color: white;
+    padding: 0.15rem 0.5rem; border-radius: 2px;
+  }
+
+  /* Cheat-card grid */
+  .mls-cheat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.7rem; align-items: stretch;
+  }
+  .mls-card {
+    display: flex; flex-direction: column;
+    background: var(--white); border: 1px solid var(--mist);
+    padding: 0.7rem 0.85rem 0.85rem;
+    color: var(--ink); transition: border-color 0.15s ease;
+    text-decoration: none; cursor: pointer;
+  }
+  .mls-card:hover { border-color: var(--ink); }
+  .mls-card.is-frozen { border-left: 3px solid #00538f; }
+  .mls-card__top {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 0.4rem; margin-bottom: 0.55rem;
+  }
+  .mls-card__time {
+    font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate);
+  }
+  .mls-card__badge {
+    font-family: var(--font-sans); font-size: 0.56rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog);
+    padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); border-radius: 2px;
+    white-space: nowrap;
+  }
+  .mls-card__badge--roof { color: var(--storm); border-color: var(--storm); }
+  .mls-card__badge--canada { color: #b91c1c; border-color: #b91c1c; }
+
+  .mls-card__teams {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist);
+    margin-bottom: 0.7rem;
+  }
+  .mls-card__team {
+    display: flex; align-items: center; gap: 0.4rem;
+    flex: 1; min-width: 0;
+  }
+  .mls-card__team--home { justify-content: flex-end; }
+  .mls-card__logo { width: 26px; height: 26px; flex-shrink: 0; object-fit: contain; }
+  .mls-card__abbr {
+    font-family: var(--font-serif); font-size: 1.08rem; font-weight: 600;
+    letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap;
+  }
+  .mls-card__at {
+    font-family: var(--font-sans); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0;
+  }
+
+  .mls-card__wx {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4rem; margin-top: auto;
+  }
+  .mls-card__wx-missing {
+    font-size: 0.78rem; color: var(--fog); text-align: center;
+    padding-top: 0.5rem; margin-top: auto;
+  }
+  .mls-stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .mls-stat__primary {
+    font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600;
+    letter-spacing: -0.025em; line-height: 1; color: var(--ink); white-space: nowrap;
+  }
+  .mls-stat__primary--cold   { color: #1e40af; }
+  .mls-stat__primary--hot    { color: #b91c1c; }
+  .mls-stat__primary--severe { color: #b91c1c; }
+  .mls-stat__primary--precip-low  { color: #15803d; }
+  .mls-stat__primary--precip-mid  { color: #b45309; }
+  .mls-stat__primary--precip-high { color: #b91c1c; }
+  .mls-stat__label {
+    font-family: var(--font-sans); font-size: 0.65rem; font-weight: 500;
+    color: var(--fog); margin-top: 0.3rem; letter-spacing: 0.04em;
+    text-transform: uppercase; line-height: 1.2;
+  }
+  .mls-card__venue {
+    font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog);
+    margin-top: 0.55rem; padding-top: 0.55rem;
+    border-top: 1px solid var(--mist);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set active_sport = 'mls' %}
+<div class="mls-page">
+
+  <header class="mls-page__header">
+    <p class="kicker kicker-storm">MLS Weather · Live Coverage</p>
+    <h1 class="mls-page__title">
+      {% if days_data and days_data|length > 0 %}
+        {% if days_data|length == 1 %}{{ days_data[0].pretty_date }}{% else %}Upcoming matches{% endif %}
+      {% else %}
+        Major League Soccer weather
+      {% endif %}
+    </h1>
+    <p style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--fog); margin: 0.4rem 0 0;">
+      {{ total_matches or 0 }} {{ "match" if total_matches == 1 else "matches" }} in the window. All kickoff times Eastern.
+    </p>
+  </header>
+
+  {% if days_data %}
+    {% for day in days_data %}
+      {% if day.matches %}
+        <section class="mls-date-section">
+          <div class="mls-date-header">
+            <h2 class="mls-date-header__title">{{ day.pretty_date }}</h2>
+            {% if day.is_today %}<span class="mls-date-header__tag">Today</span>{% endif %}
+            {% if day.is_tomorrow %}<span class="mls-date-header__tag">Tomorrow</span>{% endif %}
+            <span class="mls-date-header__count">
+              · {{ day.matches|length }} {{ "match" if day.matches|length == 1 else "matches" }}
+            </span>
+          </div>
+          <div class="mls-cheat-row">
+            {% for m in day.matches %}
+              <a href="/mls/{{ day.date_str }}/{{ m.slug }}" class="mls-card {% if m.is_frozen %}is-frozen{% endif %}">
+                <div class="mls-card__top">
+                  <span class="mls-card__time">{{ m.kickoff_eastern_str }}</span>
+                  {% if m.venue.roof_type == "retractable" %}
+                    <span class="mls-card__badge mls-card__badge--roof">Retractable</span>
+                  {% elif m.venue.nws_unsupported %}
+                    <span class="mls-card__badge mls-card__badge--canada">Canada</span>
+                  {% endif %}
+                </div>
+                <div class="mls-card__teams">
+                  <div class="mls-card__team">
+                    <img class="mls-card__logo" src="{{ m.away.logo_url }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                    <span class="mls-card__abbr">{{ m.away.abbrev }}</span>
+                  </div>
+                  <span class="mls-card__at">at</span>
+                  <div class="mls-card__team mls-card__team--home">
+                    <span class="mls-card__abbr">{{ m.home.abbrev }}</span>
+                    <img class="mls-card__logo" src="{{ m.home.logo_url }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                  </div>
+                </div>
+                {% if m.forecast %}
+                  {% set f = m.forecast %}
+                  <div class="mls-card__wx">
+                    <div class="mls-stat">
+                      <span class="mls-stat__primary {% if f.temp and f.temp <= 40 %}mls-stat__primary--cold{% elif f.temp and f.temp >= 88 %}mls-stat__primary--hot{% endif %}">{{ f.temp }}°</span>
+                      <span class="mls-stat__label">Temp</span>
+                    </div>
+                    <div class="mls-stat">
+                      <span class="mls-stat__primary {% if f.wind_speed and f.wind_speed >= 18 %}mls-stat__primary--severe{% endif %}">{{ f.wind_speed }}</span>
+                      <span class="mls-stat__label">mph wind</span>
+                    </div>
+                    <div class="mls-stat">
+                      <span class="mls-stat__primary {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
+                      <span class="mls-stat__label">Rain</span>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="mls-card__wx-missing">Forecast unavailable</div>
+                {% endif %}
+                <div class="mls-card__venue">
+                  {{ m.venue.name }} · {{ m.venue.city }}
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <section class="container-tight" style="text-align: center; padding: 3rem 1.5rem;">
+      <p style="font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.55; color: var(--slate);">
+        No MLS matches scheduled in this window.
+      </p>
+    </section>
+  {% endif %}
+
+  {# Writeups inline below the cheat cards #}
+  {% set any_writeups = [] %}
+  {% for day in days_data %}
+    {% for m in day.matches %}
+      {% if m.writeup %}{% set _ = any_writeups.append(m) %}{% endif %}
+    {% endfor %}
+  {% endfor %}
+  {% if any_writeups %}
+    <section style="max-width: 800px; margin: 2.5rem auto 0;">
+      <h2 class="mls-date-header__title" style="border-bottom: 2px solid var(--ink); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+        Kevin's notes
+      </h2>
+      {% for m in any_writeups %}
+        <div class="mlb-writeup mlb-writeup--{{ m.writeup.color or 'none' }}">
+          <div class="mlb-writeup__header">
+            <span class="mlb-writeup__matchup">{{ m.away.short }} at {{ m.home.short }}</span>
+            <span class="mlb-writeup__time">{{ m.kickoff_eastern_str }}</span>
+          </div>
+          <div class="mlb-writeup__body">{{ m.writeup.text }}</div>
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+</div>
+{% endblock %}

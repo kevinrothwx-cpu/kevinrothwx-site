@@ -149,6 +149,15 @@
           </span>
         </a>
 
+        <a href="/mls" class="home-sport-card home-sport-card--mls">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Major League Soccer</span><h2 class="home-sport-card__title">MLS Weather</h2></div></div>
+          <p class="home-sport-card__body">Stadium-specific hourly weather around kickoff. Retractable-roof context for Atlanta and Vancouver; Canadian-venue coverage built in.</p>
+          <span class="home-sport-card__indicator">
+            {% if sport_counts.mls %}<strong>{{ sport_counts.mls }}</strong>&nbsp;{{ "match" if sport_counts.mls == "1" else "matches" }} today{% else %}See upcoming matches{% endif %}
+            <span class="home-sport-card__arrow">→</span>
+          </span>
+        </a>
+
         {# Tennis card auto-shows during Grand Slam windows, hides between.
            Driven by sport_counts.tennis which is set to "Live" by the
            inject_sport_nav context_processor when is_any_slam_active(). #}

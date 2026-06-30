@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}{{ match.away.short }} at {{ match.home.short }}, {{ pretty_date }} Weather Forecast | MLS | Kevin Roth{% endblock %}
+{% block description %}{{ match.away.name }} at {{ match.home.name }} MLS weather forecast for {{ pretty_date }}. Kickoff {{ match.kickoff_eastern_str }}{% if match.forecast %}, {{ match.forecast.temp }}°F at kickoff, {{ match.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}{{ match.away.short }} at {{ match.home.short }} Weather Forecast{% endblock %}
+{% block og_description %}{{ pretty_date }} · {{ match.venue.name }} · Kickoff {{ match.kickoff_eastern_str }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ match.away.name }} at {{ match.home.name }}",
+  "description": "Weather forecast for the {{ match.away.name }} at {{ match.home.name }} MLS match at {{ match.venue.name }} in {{ match.venue.city }} on {{ pretty_date }}. Kickoff {{ match.kickoff_eastern_str }}. Hourly forecast by sports meteorologist Kevin Roth.",
+  "startDate": "{{ match.kickoff_utc.isoformat() }}",
+  "endDate": "{{ match.kickoff_end_utc.isoformat() }}",
+  "sport": "Soccer",
+  "url": "{{ site_url }}/mls/{{ date_str }}/{{ match.slug }}",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@type": "Place",
+    "name": "{{ match.venue.name }}",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "{{ match.venue.city }}"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": {{ match.venue.lat }},
+      "longitude": {{ match.venue.lon }}
+    }
+  },
+  "homeTeam": { "@type": "SportsTeam", "name": "{{ match.home.name }}" },
+  "awayTeam": { "@type": "SportsTeam", "name": "{{ match.away.name }}" },
+  "performer": [
+    { "@type": "SportsTeam", "name": "{{ match.away.name }}" },
+    { "@type": "SportsTeam", "name": "{{ match.home.name }}" }
+  ],
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "Major League Soccer",
+    "url": "https://www.mlssoccer.com/"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ site_url }}/mls/{{ date_str }}/{{ match.slug }}",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "category": "Free weather forecast"
+  }{% if match.forecast %},
+  "additionalProperty": [
+    { "@type": "PropertyValue", "name": "Temperature at kickoff", "value": "{{ match.forecast.temp }}°F" },
+    { "@type": "PropertyValue", "name": "Wind speed", "value": "{{ match.forecast.wind_speed }} mph" },
+    { "@type": "PropertyValue", "name": "Wind direction", "value": "{{ match.forecast.wind_deg|wind_compass }}" },
+    { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ match.forecast.precip_pct }}%" }
+  ]{% endif %}
+}
+</script>
+<style>
+  .game-page__title .matchup-logo {
+    height: 48px; width: 48px; object-fit: contain; flex-shrink: 0;
+  }
+  .game-section-h2-row {
+    display: flex; align-items: baseline; gap: 0.75rem;
+    margin: 0 0 0.9rem;
+  }
+  .game-section-h2-row .game-section-h2 { margin: 0; }
+  .game-section-h2-row .game-section-source {
+    font-size: 0.82rem; color: #777; font-style: italic;
+  }
+  .game-summary {
+    margin: 0 0 1.75rem; color: #1a1a1a;
+    font-size: 1.02rem; line-height: 1.7;
+  }
+  .game-summary p { margin: 0; }
+  .source-note {
+    margin: 0 0 1rem; font-size: 0.85rem; color: #777; line-height: 1.6;
+  }
+  .source-note strong { color: #555; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="game-page">
+  <p class="game-page__kicker">MLS Weather · {{ pretty_date }}</p>
+  <h1 class="game-page__title">
+    {% if match.away.logo_url %}<img class="matchup-logo" src="{{ match.away.logo_url }}" alt="" loading="lazy">{% endif %}
+    <span>{{ match.away.short }}</span>
+    <span class="matchup-at">at</span>
+    {% if match.home.logo_url %}<img class="matchup-logo" src="{{ match.home.logo_url }}" alt="" loading="lazy">{% endif %}
+    <span>{{ match.home.short }}</span>
+  </h1>
+  <p class="game-page__meta">
+    {{ match.venue.name }}, {{ match.venue.city }} · Kickoff {{ match.kickoff_eastern_str }}
+    {% if match.venue.roof_type == "retractable" %} · Retractable roof{% endif %}
+  </p>
+
+  <div class="game-section-h2-row">
+    <h2 class="game-section-h2">Hourly forecast</h2>
+    <span class="game-section-source">
+      {% if match.weather_source == "nws" %}from the National Weather Service
+      {% elif match.weather_source == "weatherapi-canadian" %}from WeatherAPI (Canadian venue)
+      {% else %}from {{ match.weather_source }}{% endif %}
+    </span>
+  </div>
+
+  {% if match.hourly %}
+    <div class="hourly-table">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            {% for p in match.hourly %}
+              <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">
+                {{ p.local_hour_label or p.start_time[11:16] }}
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th>Precip</th>{% for p in match.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %} {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</td>{% endfor %}</tr>
+          <tr><th>Temp</th>{% for p in match.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>{% endfor %}</tr>
+          <tr><th>Wind</th>{% for p in match.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+          <tr><th>Wind dir</th>{% for p in match.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>{% endfor %}</tr>
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="game-no-data">No hourly forecast available. Source: {{ match.weather_source }}{% if match.weather_error %} ({{ match.weather_error }}){% endif %}.</p>
+  {% endif %}
+
+  {% if analysis and analysis.paragraph %}
+    <div class="game-summary" style="margin-top: 1.5rem;"><p>{{ analysis.paragraph }}</p></div>
+  {% endif %}
+
+  <p class="source-note">
+    Forecast source:
+    {% if match.weather_source == "nws" %}<strong>NOAA NWS</strong>
+    {% elif match.weather_source == "weatherapi-fallback" %}<strong>WeatherAPI (NWS fallback)</strong>
+    {% elif match.weather_source == "weatherapi-canadian" %}<strong>WeatherAPI</strong>
+    {% else %}<strong>{{ match.weather_source }}</strong>{% endif %}.
+    Updates every 25 minutes until one hour before kickoff.
+  </p>
+
+  <a href="/mls" class="game-page__back">← All MLS matches</a>
+</article>
+{% endblock %}
