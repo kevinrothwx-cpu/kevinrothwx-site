@@ -848,6 +848,51 @@ def ncaaf_game(date_str, slug):
 #
 # URL shape mirrors World Cup: /mls (slate hub) + /mls/<date>/<slug> per match.
 
+def _mls_to_wc_shape(m: dict) -> dict:
+    """Alias MLS match fields to match worldcup's expected shape so we can
+    reuse the wc_cheat_card / wc_summary_panel / wc_hourly_table macros
+    and inherit all of style.css's polished card/summary/hourly styling.
+
+    World Cup expects:
+      - match.away.logo, .abbreviation, .short_name (we have logo_url, abbrev, short)
+      - match.venue (str) and match.venue_meta (dict) — we have only venue (dict)
+      - match.kickoff_eastern (datetime) — we have only kickoff_utc + str
+      - match.kickoff_utc_dt — alias of kickoff_utc
+      - hourly[i].hour_eastern — we have local_hour_label
+
+    Mutation-free: returns a shallow copy with the aliased keys layered on top.
+    """
+    out = dict(m)
+    venue = m.get("venue") or {}
+    # Stash dict under venue_meta, then replace venue with the string name
+    out["venue_meta"] = venue
+    out["venue"] = venue.get("name", "")
+    # Kickoff datetimes
+    ko = m.get("kickoff_utc")
+    if ko is not None:
+        out["kickoff_utc_dt"] = ko
+        out["kickoff_eastern"] = ko.astimezone(EASTERN_TZ)
+    # Team aliases — wc macros read .logo / .abbreviation / .short_name
+    for side in ("home", "away"):
+        t = dict(m.get(side) or {})
+        if "logo_url" in t and "logo" not in t:
+            t["logo"] = t["logo_url"]
+        if "abbrev" in t and "abbreviation" not in t:
+            t["abbreviation"] = t["abbrev"]
+        if "short" in t and "short_name" not in t:
+            t["short_name"] = t["short"]
+        out[side] = t
+    # Hourly aliases — wc table reads .hour_eastern
+    hourly_out = []
+    for h in (m.get("hourly") or []):
+        h2 = dict(h)
+        if "hour_eastern" not in h2:
+            h2["hour_eastern"] = h.get("local_hour_label") or (h.get("start_time", "")[11:16])
+        hourly_out.append(h2)
+    out["hourly"] = hourly_out
+    return out
+
+
 @app.route("/mls")
 def mls_root():
     """MLS slate hub. Groups matches by venue-local date, shows cheat cards
@@ -866,7 +911,7 @@ def mls_root():
         d = m.get("date_local")
         if not d:
             continue
-        grouped.setdefault(d, []).append(m)
+        grouped.setdefault(d, []).append(_mls_to_wc_shape(m))
 
     days_data = []
     for date_str in sorted(grouped.keys()):
@@ -879,12 +924,15 @@ def mls_root():
             "pretty_date":  d.strftime("%A, %B %-d"),
             "is_today":     (d == today_et),
             "is_tomorrow":  (d == today_et + timedelta(days=1)),
-            "matches":      grouped[date_str],
+            "slate":        grouped[date_str],   # wc template iterates day.slate
+            "matches":      grouped[date_str],   # keep both keys for safety
+            "match_count":  len(grouped[date_str]),
         })
 
     return render_template(
         "mls/slate.html",
         days_data=days_data,
+        showing_multiple=(len(days_data) > 1),
         total_matches=len(matches),
         meta=meta,
         canonical_path="/mls",
@@ -897,9 +945,10 @@ def mls_match(date_str, slug):
     forecast + meteorologist analysis paragraph."""
     if not _valid_date_str(date_str):
         abort(404)
-    match = find_mls_match(date_str, slug)
-    if not match:
+    match_raw = find_mls_match(date_str, slug)
+    if not match_raw:
         abort(404)
+    match = _mls_to_wc_shape(match_raw)
 
     # End time for schema.org: kickoff + 2.5h covers 90-min match +
     # halftime + injury time + (rare) extra time
