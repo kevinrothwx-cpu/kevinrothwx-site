@@ -105,17 +105,27 @@ def _periods_for_day(periods, day_date, tz):
 
 
 def _summarize_day(day_periods):
-    """High/low temp, max precip%, avg wind for a tournament day's play hours."""
+    """High/low temp, max precip%, avg wind, dominant wind direction for
+    a tournament day's play hours."""
     if not day_periods:
         return None
     temps = [p["temp"] for p in day_periods if p.get("temp") is not None]
     precips = [p.get("precip_pct", 0) or 0 for p in day_periods]
     winds = [p["wind_speed"] for p in day_periods if p.get("wind_speed") is not None]
+    # Wind direction: use the mid-day period's wind_deg as the representative
+    # direction for the day. Averaging compass degrees is ambiguous (0=360),
+    # so picking a single anchor avoids the wraparound problem.
+    wind_deg = None
+    if day_periods:
+        mid = day_periods[len(day_periods) // 2]
+        if mid.get("wind_deg") is not None:
+            wind_deg = mid["wind_deg"]
     return {
         "high_temp":           max(temps) if temps else None,
         "low_temp":            min(temps) if temps else None,
         "max_precip":          max(precips) if precips else 0,
         "avg_wind":            round(sum(winds) / len(winds)) if winds else 0,
+        "wind_deg":            wind_deg,
         "dominant_precip_pct": max(precips) if precips else 0,
     }
 

@@ -843,6 +843,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .home-sport-card--cws    { border-top: 3px solid #ca8a04; }
 .home-sport-card--nfl    { border-top: 3px solid var(--ash); }
 .home-sport-card--ncaaf  { border-top: 3px solid var(--ash); }
+.home-sport-card--tennis { border-top: 3px solid #7c3aed; }
 
 /* Secondary section: Kevin bio + products */
 .home-secondary { display: grid; grid-template-columns: 1fr; gap: 2.5rem; }

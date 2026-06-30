@@ -209,9 +209,10 @@
     <div class="cheat-row">
       {% for day in slam.days %}
         <div class="cheat-card">
-          <div class="cheat-card__rule">
-            <span class="cheat-card__time">{{ day.day_label }}</span>
-            <span style="font-family: var(--font-sans); font-size: 0.62rem; font-weight: 500; color: var(--fog); letter-spacing: 0.02em;">{{ day.date_label }}</span>
+          {# Just the date at the top — "Day X" labels live in the hourly
+             breakdown section below, no need to double up here. #}
+          <div class="cheat-card__rule" style="justify-content: center;">
+            <span class="cheat-card__time">{{ day.date_label }}</span>
           </div>
           {% if day.summary %}
             <div class="cheat-card__wx" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: 0.5rem;">
@@ -221,15 +222,13 @@
               </div>
               <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 <span style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; line-height: 1;">{{ day.summary.avg_wind }}</span>
-                <span style="font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); margin-top: 0.3rem;">mph wind</span>
+                <span style="font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); margin-top: 0.3rem;">mph{% if day.summary.wind_deg is not none %} {{ day.summary.wind_deg|wind_compass }}{% endif %}</span>
               </div>
               <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
                 <span style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; line-height: 1; {% if day.summary.max_precip >= 60 %}color: #b91c1c{% elif day.summary.max_precip >= 30 %}color: #b45309{% else %}color: #15803d{% endif %};">{{ day.summary.max_precip }}%</span>
                 <span style="font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); margin-top: 0.3rem;">Rain</span>
               </div>
             </div>
-          {% else %}
-            <p style="font-size: 0.8rem; color: var(--fog); margin: 0.5rem 0 0; font-style: italic;">Forecast pending</p>
           {% endif %}
         </div>
       {% endfor %}
@@ -276,6 +275,7 @@
                   </tr>
                   <tr><th>Temp</th>{% for p in day.hourly %}<td>{{ p.temp }}°</td>{% endfor %}</tr>
                   <tr><th>Wind</th>{% for p in day.hourly %}<td>{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+                  <tr><th>Wind dir</th>{% for p in day.hourly %}<td>{{ p.wind_deg|wind_compass if p.wind_deg is not none else '—' }}</td>{% endfor %}</tr>
                 </tbody>
               </table>
             </div>
