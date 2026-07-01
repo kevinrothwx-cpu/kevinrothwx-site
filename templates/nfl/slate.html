@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% from "worldcup/_macros.html" import wc_cheat_card %}
+{% from "nfl/_macros.html" import nfl_summary_panel, nfl_hourly_table %}
+
+{% block title %}NFL Weather, Game Forecasts for Every Stadium | Kevin Roth{% endblock %}
+{% block description %}Free live weather forecasts for every NFL game. Stadium-specific hourly temperature, wind, precipitation by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}NFL Weather Forecasts{% endblock %}
+{% block og_description %}Real meteorologist weather for every NFL game. By Kevin Roth.{% endblock %}
+
+{% block content %}
+{% set active_sport = 'nfl' %}
+<div class="mlb-page">
+  <header class="mlb-page__header">
+    <div class="mlb-page__hed">
+      <div>
+        <p class="kicker kicker-storm">NFL · Weather</p>
+        <h1 class="mlb-page__title">
+          {% if games and games[0].kickoff_eastern and games[-1].kickoff_eastern %}
+            {% if games[0].kickoff_eastern.strftime("%-m/%-d") == games[-1].kickoff_eastern.strftime("%-m/%-d") %}
+              {{ games[0].kickoff_eastern.strftime("%A, %B %-d") }}
+            {% else %}
+              Week of {{ games[0].kickoff_eastern.strftime("%b %-d") }} to {{ games[-1].kickoff_eastern.strftime("%b %-d, %Y") }}
+            {% endif %}
+          {% else %}
+            National Football League weather
+          {% endif %}
+        </h1>
+        <p class="mlb-page__sub">
+          {% if total_games %}{{ total_games }} {{ "game" if total_games == 1 else "games" }} in the window. {% endif %}
+          All kickoff times Eastern.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  {# ── Cheat-sheet row (top, above the fold) ─────────────────── #}
+  {% if games %}
+    <div class="cheat-row">
+      {% for g in games %}
+        {{ wc_cheat_card(g, link_to_detail=True) }}
+      {% endfor %}
+    </div>
+  {% else %}
+    <section style="max-width:640px;margin:4rem auto;text-align:center;padding:2rem 1.5rem">
+      <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:600;margin:0 0 0.6rem;color:var(--ink)">Preseason begins August 7</h2>
+      <p style="color:var(--ash);font-size:1rem;line-height:1.55;margin:0">
+        Stadium-specific NFL weather forecasts return with the Hall of Fame Game on Thursday, August 7, 2026. Check back closer to kickoff for hourly forecasts at every venue.
+      </p>
+    </section>
+  {% endif %}
+
+  {# ── Section 2: writeups + OVERcast tease, OR CTAs when no writeups ─── #}
+  {% if games %}
+    <section class="mlb-section">
+      {% set any_writeups = games | selectattr("writeup") | list %}
+      {% if any_writeups %}
+        {% for g in any_writeups %}
+          <div class="mlb-writeup mlb-writeup--{{ g.writeup.color or 'none' }}">
+            <div class="mlb-writeup__header">
+              <span class="mlb-writeup__matchup">Kevin's note · {{ g.away.name }} at {{ g.home.name }}</span>
+              <span class="mlb-writeup__time">{{ g.kickoff_eastern_str }}</span>
+            </div>
+            <div class="mlb-writeup__body">{{ g.writeup.text }}</div>
+          </div>
+        {% endfor %}
+        {% include "nfl/_ctas.html" %}
+      {% else %}
+        {% include "nfl/_ctas.html" %}
+      {% endif %}
+    </section>
+
+    {# ── Section 3: per-game blocks (summary panel + hourly side-by-side) ─── #}
+    <div class="mlb-hourly-group">
+      {% for g in games %}
+        {% set has_toggle = g.venue_meta and (g.venue_meta.roof_type == "retractable" or g.venue_meta.roof_type == "fixed_dome") %}
+        <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="game-{{ g.slug }}">
+          <header class="mlb-game-block__header">
+            <div>
+              <h2 class="mlb-game-block__matchup">
+                <img class="matchup-logo" src="{{ g.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                <span>{{ g.away.name }}</span>
+                <span class="matchup-at">at</span>
+                <img class="matchup-logo" src="{{ g.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                <span>{{ g.home.name }}</span>
+              </h2>
+              <div class="mlb-game-block__venue">
+                {{ g.venue }} · {{ g.venue_meta.city if g.venue_meta else "" }}
+                {% if g.venue_meta and g.venue_meta.roof_type == "fixed_dome" %}
+                  <span class="venue-roof-flag venue-roof-flag--likely-closed">Indoor venue</span>
+                {% elif g.venue_meta and g.venue_meta.roof_type == "retractable" %}
+                  <span class="venue-roof-flag venue-roof-flag--retractable">Retractable roof</span>
+                {% elif g.venue_meta and g.venue_meta.roof_type == "fixed_canopy" %}
+                  <span class="venue-roof-flag venue-roof-flag--canopy">Fixed canopy open-air</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if has_toggle %}
+              <div class="roof-toggle" role="group" aria-label="Roof status">
+                <button class="roof-toggle__option is-active" data-roof="closed">Closed</button>
+                <button class="roof-toggle__option" data-roof="open">Open</button>
+              </div>
+            {% else %}
+              <div class="mlb-game-block__time">Kickoff · {{ g.kickoff_eastern_str }}</div>
+            {% endif %}
+          </header>
+          {% if has_toggle %}
+            <div class="roof-closed-message">
+              <strong>{% if g.venue_meta.roof_type == "fixed_dome" %}Fixed dome{% else %}Retractable roof{% endif %}</strong>, weather has no impact when closed. Toggle <strong>Open</strong> above to see the outdoor forecast for {{ g.kickoff_eastern_str }}.
+            </div>
+          {% endif %}
+          <div class="mlb-game-block__body">
+            {{ nfl_summary_panel(g) }}
+            <div class="mlb-game-block__hourly">
+              {{ nfl_hourly_table(g) }}
+              {% if g.hrrr_hourly %}
+                <details class="hrrr-toggle" style="margin:0.75rem 0 0">
+                  <summary style="cursor:pointer;padding:0.6rem 0.9rem;list-style:none;display:flex;align-items:center;gap:0.7rem;user-select:none;background:#f6f8fa;border:1px solid #e5e5e5;border-radius:4px">
+                    <span style="font-weight:600;color:#1a1a1a;font-size:0.88rem">Higher-resolution data available</span>
+                    <span style="background:#1e40af;color:#fff;font-size:0.62rem;padding:0.15rem 0.5rem;border-radius:3px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600">HRRR</span>
+                    <span style="color:#777;font-size:0.78rem;margin-left:auto">3 km · hourly</span>
+                  </summary>
+                  <div style="border:1px solid #e5e5e5;border-top:0;padding:0.5rem">
+                    <div class="hourly">
+                      <table class="hourly__table" style="font-size:0.82rem">
+                        <thead>
+                          <tr>
+                            <th class="hourly__label-col"></th>
+                            {% for p in g.hrrr_hourly %}
+                              <th class="hourly__hour-col {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.hour_eastern or p.start_time[11:16] }}</th>
+                            {% endfor %}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr><td class="hourly__label">Precip</td>{% for p in g.hrrr_hourly %}<td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}"><span class="{{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</span></td>{% endfor %}</tr>
+                          <tr><td class="hourly__label">Temp</td>{% for p in g.hrrr_hourly %}<td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>{% endfor %}</tr>
+                          <tr><td class="hourly__label">Wind</td>{% for p in g.hrrr_hourly %}<td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+                          {% if g.hrrr_hourly[0].gust is defined and g.hrrr_hourly[0].gust is not none %}
+                          <tr><td class="hourly__label">Gusts</td>{% for p in g.hrrr_hourly %}<td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.gust }} mph</td>{% endfor %}</tr>
+                          {% endif %}
+                          <tr><td class="hourly__label">Wind dir</td>{% for p in g.hrrr_hourly %}<td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>{% endfor %}</tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </details>
+              {% endif %}
+            </div>
+          </div>
+          <a class="mlb-game-block__deeplink" href="/nfl/{{ g.kickoff_date_eastern }}/{{ g.slug }}">
+            Full forecast for this game <span aria-hidden="true">→</span>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  // Anchor-scroll for cheat cards linking to #game-slug
+    var card = e.target.closest('.cheat-card');
+    if (!card) return;
+    var href = card.getAttribute('href');
+    if (href && href.charAt(0) === '#') {
+      e.preventDefault();
+      var target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        history.replaceState(null, '', href);
+      }
+    }
+  });
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.roof-toggle__option');
+    if (!btn) return;
+    var toggle = btn.closest('.roof-toggle');
+    var block = btn.closest('.has-roof-toggle');
+    if (!toggle || !block) return;
+    toggle.querySelectorAll('.roof-toggle__option').forEach(function(o) { o.classList.remove('is-active'); });
+    btn.classList.add('is-active');
+    if (btn.dataset.roof === 'open') {
+      block.classList.remove('is-roof-closed');
+    } else {
+      block.classList.add('is-roof-closed');
+    }
+</script>
+{% endblock %}

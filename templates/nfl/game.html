@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% from "nfl/_macros.html" import nfl_hourly_table, nfl_football_field %}
+{% from "mlb/_macros.html" import weather_icon %}
+
+{% block title %}{{ game.away.short }} at {{ game.home.short }}, {{ pretty_date }} Weather Forecast | NFL | Kevin Roth{% endblock %}
+{% block description %}{{ game.away.name }} at {{ game.home.name }} NFL weather forecast for {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at kickoff, {{ game.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}{{ game.away.short }} at {{ game.home.short }}, NFL Weather Forecast{% endblock %}
+{% block og_description %}{{ pretty_date }} · {{ game.venue }} · Kickoff {{ game.kickoff_eastern_str }}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ game.away.name }} at {{ game.home.name }}",
+  "description": "Weather forecast for the {{ game.away.name }} at {{ game.home.name }} NFL game at {{ game.venue }} in {{ game.venue_meta.city if game.venue_meta else '' }} on {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}.",
+  "startDate": "{{ game.kickoff_utc.isoformat() }}",
+  "endDate": "{{ game.kickoff_end_utc.isoformat() }}",
+  "sport": "American football",
+  "url": "{{ site_url }}/nfl/{{ date_str }}/{{ game.slug }}",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@type": "Place",
+    "name": "{{ game.venue }}",
+    "address": {
+      "@type": "PostalAddress"{% if game.venue_meta %},
+      "addressLocality": "{{ game.venue_meta.city }}",
+      "addressCountry": "US"{% endif %}
+    }{% if game.venue_meta %},
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": {{ game.venue_meta.lat }},
+      "longitude": {{ game.venue_meta.lon }}
+    }{% endif %}
+  },
+  "homeTeam": { "@type": "SportsTeam", "name": "{{ game.home.name }}" },
+  "awayTeam": { "@type": "SportsTeam", "name": "{{ game.away.name }}" },
+  "performer": [
+    { "@type": "SportsTeam", "name": "{{ game.away.name }}" },
+    { "@type": "SportsTeam", "name": "{{ game.home.name }}" }
+  ],
+  "organizer": {
+    "@type": "SportsOrganization",
+    "name": "National Football League",
+    "url": "https://www.nfl.com/"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ site_url }}/nfl/{{ date_str }}/{{ game.slug }}",
+    "price": "0", "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock",
+    "category": "Free weather forecast"
+  }{% if game.forecast %},
+  "additionalProperty": [
+    { "@type": "PropertyValue", "name": "Temperature at kickoff", "value": "{{ game.forecast.temp }}°F" },
+    { "@type": "PropertyValue", "name": "Wind speed", "value": "{{ game.forecast.wind_speed }} mph" },
+    { "@type": "PropertyValue", "name": "Wind direction", "value": "{{ game.forecast.wind_deg|wind_compass }}" },
+    { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ game.forecast.precip_pct }}%" }
+  ]{% endif %}
+}
+</script>
+<style>
+  .game-page__title .matchup-logo { height: 48px; width: 48px; object-fit: contain; flex-shrink: 0; }
+  .game-section-h2-row { display: flex; align-items: baseline; gap: 0.75rem; margin: 0 0 0.9rem; }
+  .game-section-h2-row .game-section-h2 { margin: 0; }
+  .game-section-h2-row .game-section-source { font-size: 0.82rem; color: #777; font-style: italic; }
+  .game-summary-para { margin: 0 0 1.75rem; color: #1a1a1a; font-size: 1.02rem; line-height: 1.7; }
+  .game-summary-para p { margin: 0; }
+  .source-note { margin: 0 0 1rem; font-size: 0.85rem; color: #777; line-height: 1.6; }
+  .source-note strong { color: #555; font-weight: 600; }
+  /* HRRR toggle (matches NCAAF/PGA styling) */
+  .hrrr-toggle { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 0; margin: 1.5rem 0 2rem; }
+  .hrrr-toggle summary { cursor: pointer; padding: 0.85rem 1.2rem; list-style: none; display: flex; align-items: center; gap: 0.8rem; user-select: none; }
+  .hrrr-toggle summary::-webkit-details-marker { display: none; }
+  .hrrr-toggle summary::before { content: "\25B8"; color: #777; font-size: 0.8rem; transition: transform 0.15s; }
+  .hrrr-toggle[open] summary::before { transform: rotate(90deg); }
+  .hrrr-toggle__label { font-weight: 600; color: #1a1a1a; font-size: 0.97rem; }
+  .hrrr-summary-badge { display: inline-block; background: #1e40af; color: white; font-size: 0.68rem; padding: 0.18rem 0.55rem; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .hrrr-toggle__meta { color: #777; font-size: 0.82rem; margin-left: auto; }
+  .hrrr-section { border-top: 1px solid #e5e5e5; padding: 0.5rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set is_dome = game.venue_meta and game.venue_meta.roof_type == "fixed_dome" %}
+{% set is_retractable = game.venue_meta and game.venue_meta.roof_type == "retractable" %}
+<article class="game-page">
+  <p class="game-page__kicker">NFL Weather · {{ pretty_date }}</p>
+  <h1 class="game-page__title">
+    {% if game.away.logo %}<img class="matchup-logo" src="{{ game.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
+    <span>{{ game.away.short }}</span>
+    <span class="matchup-at">at</span>
+    {% if game.home.logo %}<img class="matchup-logo" src="{{ game.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
+    <span>{{ game.home.short }}</span>
+  </h1>
+  <p class="game-page__meta">
+    {{ game.venue }}, {{ game.venue_meta.city if game.venue_meta else "" }} · Kickoff {{ game.kickoff_eastern_str }}
+    {% if is_retractable %} · Retractable roof{% endif %}
+    {% if is_dome %} · Indoor venue{% endif %}
+  </p>
+
+  {% if is_dome %}
+    <section class="stadium-notes">
+      <p class="stadium-notes__body">
+        <strong>Indoor game.</strong> {{ game.venue }} is a fixed-roof venue. Outdoor weather has no effect on play.
+      </p>
+    </section>
+  {% else %}
+    {% if game.forecast %}
+      {% set f = game.forecast %}
+      <div class="game-hero">
+        <div class="game-hero__metric game-hero__metric--primary">
+          <div class="game-hero__icon">{{ weather_icon(f.precip_pct|precip_icon, 48) }}</div>
+          <div class="game-hero__value">{{ f.temp }}<span class="game-hero__value-unit">°F</span></div>
+          <div class="game-hero__label">At kickoff</div>
+        </div>
+        <div class="game-hero__metric">
+          <div class="game-hero__icon" style="font-size:1.8rem;font-weight:600;font-family:var(--font-serif)">{{ f.wind_speed }}</div>
+          <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">mph wind</div>
+          <div class="game-hero__label">{{ f.wind_deg|wind_compass }}{% if f.gust %} · Gusts {{ f.gust }}{% endif %}</div>
+        </div>
+        <div class="game-hero__metric">
+          <div class="game-hero__icon"><span class="{{ f.precip_pct|precip_color }}" style="font-family:var(--font-serif);font-size:2rem;font-weight:600">{{ f.precip_pct }}%</span></div>
+          <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">Rain chance</div>
+          <div class="game-hero__label">Feels like {{ f.feels_like or f.temp }}°</div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if is_retractable %}
+      <section class="stadium-notes">
+        <p class="stadium-notes__body">
+          <strong>Retractable roof.</strong> Conditions above assume the roof stays open at kickoff.
+        </p>
+      </section>
+    {% endif %}
+
+    {% if analysis and analysis.paragraph %}
+      <section class="stadium-notes">
+        <h2 class="game-section-h2">Weather summary</h2>
+        <p class="stadium-notes__body">{{ analysis.paragraph }}</p>
+      </section>
+    {% endif %}
+
+    <div class="game-section-h2-row">
+      <h2 class="game-section-h2">Hourly forecast</h2>
+      <span class="game-section-source">from the National Weather Service</span>
+    </div>
+    {{ nfl_hourly_table(game) }}
+
+    {# HRRR high-res toggle — 3 km CONUS model with wind gusts. Collapsed by
+       default to keep the primary NWS forecast the main visual. #}
+    {% if hrrr_hourly %}
+      <details class="hrrr-toggle">
+        <summary>
+          <span class="hrrr-toggle__label">Higher-resolution data available</span>
+          <span class="hrrr-summary-badge">HRRR</span>
+          <span class="hrrr-toggle__meta">3 km · hourly updates</span>
+        </summary>
+        <div class="hrrr-section">
+          <div class="hourly-table" style="margin:0;border:none;border-radius:0">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  {% for p in hrrr_hourly %}
+                    <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.start_time[11:16] }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th>Precip</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %} {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</td>{% endfor %}</tr>
+                <tr><th>Temp</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>{% endfor %}</tr>
+                <tr><th>Wind</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+                {% if hrrr_hourly[0].gust is defined and hrrr_hourly[0].gust is not none %}
+                <tr><th>Gusts</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.gust }} mph</td>{% endfor %}</tr>
+                {% endif %}
+                <tr><th>Wind dir</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>{% endfor %}</tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+    {% endif %}
+
+    <p class="source-note">
+      Forecast source:
+      {% if game.weather_source == "nws" %}<strong>NOAA NWS</strong>
+      {% elif game.weather_source == "weatherapi-fallback" %}<strong>WeatherAPI (NWS fallback)</strong>
+      {% else %}<strong>{{ game.weather_source }}</strong>{% endif %}.
+      Updates every 25 minutes until one hour before kickoff.
+    </p>
+  {% endif %}
+
+  <a href="/nfl" class="game-page__back">← All NFL games</a>
+</article>
+{% endblock %}

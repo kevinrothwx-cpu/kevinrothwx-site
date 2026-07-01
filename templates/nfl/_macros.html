@@ -1,0 +1,165 @@
+{# templates/nfl/_macros.html
+   NFL-specific summary panel + hourly table.
+
+   Design choices per Kevin:
+   - Field diagram uses the same wx-stadium shape as CFB cheat cards
+     (bowl, endzones, midline, wind arrow), just sized up for the summary
+     panel. Wind arrow rotates in real compass space (north = up).
+   - Weather icons are Phosphor via Iconify (matching CFB), NOT the MLB
+     inline sun/cloud set.
+#}
+
+{# ── Phosphor weather icon at any size ───────────────────────────── #}
+{% macro nfl_phosphor_icon(short_forecast, size=32, is_night=false) %}
+  {% set sf = (short_forecast or '')|lower %}
+  {% set name = 'sun' %}
+  {% set color = '%23ca8a04' %}
+  {% if 'thunder' in sf or 'storm' in sf %}
+    {% set name = 'cloud-lightning' %}{% set color = '%23ca8a04' %}
+  {% elif 'snow' in sf and ('rain' in sf or 'mix' in sf or 'sleet' in sf) %}
+    {% set name = 'cloud-snow' %}{% set color = '%235b21b6' %}
+  {% elif 'snow' in sf %}
+    {% set name = 'cloud-snow' %}{% set color = '%231e40af' %}
+  {% elif 'rain' in sf or 'shower' in sf or 'drizzle' in sf %}
+    {% set name = 'cloud-rain' %}{% set color = '%231e40af' %}
+  {% elif 'cloud' in sf and ('partly' in sf or 'mostly' in sf or 'few' in sf) %}
+    {% set name = 'cloud-sun' %}{% set color = '%231e40af' %}
+  {% elif 'cloud' in sf or 'overcast' in sf %}
+    {% set name = 'cloud' %}{% set color = '%23475569' %}
+  {% elif 'fog' in sf or 'mist' in sf %}
+    {% set name = 'cloud-fog' %}{% set color = '%23475569' %}
+  {% elif is_night %}
+    {% set name = 'moon' %}{% set color = '%231e40af' %}
+  {% endif %}
+  <img src="https://api.iconify.design/ph/{{ name }}.svg?color={{ color }}" alt="" loading="lazy" style="width:{{ size }}px;height:{{ size }}px;display:inline-block;vertical-align:middle">
+{% endmacro %}
+
+
+{# ── Football-field diagram — reuses the wx-stadium classes already
+      styled in production CSS (via ncaaf). Wind arrow in real compass. ── #}
+{% macro nfl_football_field(forecast) %}
+  {% if forecast %}
+    {% set wind_to = (forecast.wind_deg + 180) % 360 %}
+    {% set rot = wind_to %}
+    {% set svg_class = 'wx-stadium' %}
+    {% if forecast.wind_speed >= 25 %}{% set svg_class = svg_class + ' wx-stadium--severe' %}
+    {% elif forecast.wind_speed >= 18 %}{% set svg_class = svg_class + ' wx-stadium--high' %}
+    {% endif %}
+    {% set arrow_color = '#15803d' %}
+    {% if forecast.wind_speed >= 25 %}{% set arrow_color = '#b91c1c' %}
+    {% elif forecast.wind_speed >= 18 %}{% set arrow_color = '#b45309' %}
+    {% endif %}
+    <span style="width:100px;height:60px;display:inline-flex;align-items:center;justify-content:center" aria-hidden="true">
+      <svg viewBox="0 0 40 24" style="width:100px;height:60px">
+        <rect x="2" y="2" width="36" height="20" rx="0.6" ry="0.6" fill="#f4f7f2" stroke="#9aa0a6" stroke-width="0.7"/>
+        <rect x="2.5" y="2.5" width="5.5" height="19" fill="#dfe5d8"/>
+        <rect x="32" y="2.5" width="5.5" height="19" fill="#dfe5d8"/>
+        <line x1="8" y1="2" x2="8" y2="22" stroke="#94a190" stroke-width="0.6"/>
+        <line x1="32" y1="2" x2="32" y2="22" stroke="#94a190" stroke-width="0.6"/>
+        <line x1="20" y1="2.5" x2="20" y2="21.5" stroke="#c8ccc0" stroke-width="0.5" stroke-dasharray="1.2 0.8"/>
+        <g transform="rotate({{ rot }} 20 12)">
+          <line x1="20" y1="18" x2="20" y2="7" stroke="{{ arrow_color }}" stroke-width="1.6" stroke-linecap="round"/>
+          <polygon points="20,5 16.5,9.5 23.5,9.5" fill="{{ arrow_color }}"/>
+        </g>
+      </svg>
+    </span>
+  {% else %}
+    <span style="color:var(--smoke);font-size:0.75rem">—</span>
+  {% endif %}
+{% endmacro %}
+
+
+{# ── Summary panel (2x2: temp / field / rain / wind).
+   `align-self:start` keeps this panel from stretching vertically when the
+   sibling hourly column grows (e.g. when the HRRR toggle expands below
+   the hourly table). Rain + Wind numbers use `--primary-value` size to
+   match the Temp visual weight, per Kevin. ── #}
+{% macro nfl_summary_panel(game) %}
+  {% set f = game.forecast %}
+  <div class="game-summary" style="align-self:start">
+    {% if f %}
+      <div class="game-summary__cell">
+        <div class="game-summary__sky">{{ nfl_phosphor_icon(f.short_forecast, 34) }}</div>
+        <span class="game-summary__primary-value">{{ f.temp }}°</span>
+        <span class="game-summary__primary-label">At kickoff</span>
+      </div>
+      <div class="game-summary__cell game-summary__cell--field">
+        {{ nfl_football_field(f) }}
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__primary-value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
+        <span class="game-summary__primary-label">Rain</span>
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__primary-value">{{ f.wind_speed }} <span style="font-size:0.55em;font-weight:500;color:var(--ash)">mph</span></span>
+        <span class="game-summary__primary-label">{% if f.gust %}Gusts {{ f.gust }}{% else %}Wind{% endif %}</span>
+      </div>
+    {% else %}
+      <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
+        <span class="game-summary__cell-label">Indoor · no forecast</span>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{# ── Hourly table with Phosphor icons + Gusts (conditional) ─────── #}
+{% macro nfl_hourly_table(game, source_label='') %}
+  {% set hours = game.hourly or [] %}
+  {% if hours %}
+    {% set any_gust = hours|selectattr('gust')|list|length > 0 %}
+    <div class="hourly">
+      <table class="hourly__table">
+        <thead>
+          <tr>
+            <th class="hourly__label-col"></th>
+            {% for h in hours %}
+              <th class="hourly__hour-col {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <div class="hourly__sky">{{ nfl_phosphor_icon(h.short_forecast, 30) }}</div>
+                <div class="hourly__time">{{ h.hour_eastern }}</div>
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">
+                <span class="hourly__precip {{ h.precip_pct|precip_color }}">{{ h.precip_pct }}%</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.temp }}°</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{{ h.wind_speed }} mph</td>
+            {% endfor %}
+          </tr>
+          {% if any_gust %}
+          <tr>
+            <td class="hourly__label">Gusts</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{% if h.gust %}{{ h.gust }} mph{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+          <tr>
+            <td class="hourly__label">Wind dir</td>
+            {% for h in hours %}
+              <td class="hourly__cell {% if h.is_game_hour %}is-game-hour{% endif %}">{% if h.wind_deg is not none %}{{ h.wind_deg|wind_compass }}{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="hourly__missing">Hourly forecast not available for this game.</p>
+  {% endif %}
+{% endmacro %}

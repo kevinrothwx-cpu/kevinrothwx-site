@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CFB Game Page Preview — Ohio State at Michigan, Nov 28 2026</title>
+<style>
+  /* Approximations of the live site's CSS variables so the preview looks
+     close to what it'll render as. Real CSS would inherit from base.html. */
+  :root {
+    --ink: #1a1a1a;
+    --ash: #555;
+    --rule: #e5e5e5;
+    --bg: #fafafa;
+    --panel: #fff;
+    --accent: #1e40af;
+    --accent-soft: #eff6ff;
+    --precip-low: #888;
+    --precip-mid: #c80;
+    --precip-high: #c33;
+    --frozen: #c80;
+    --font-serif: Georgia, 'Times New Roman', serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.5;
+  }
+  .preview-banner {
+    background: #fef3c7;
+    color: #92400e;
+    text-align: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #fcd34d;
+  }
+  .preview-banner code { background: rgba(0,0,0,0.05); padding: 0.1rem 0.3rem; border-radius: 2px; }
+  /* Site header stand-in */
+  .site-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    padding: 1rem 0;
+  }
+  .site-header__inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .site-header__brand {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .site-header__subtitle {
+    color: var(--ash);
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+  }
+  /* Main article container */
+  .game-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  .game-page__kicker {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .game-page__title {
+    font-family: var(--font-serif);
+    font-size: 2.3rem;
+    line-height: 1.15;
+    margin: 0 0 0.5rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .matchup-at {
+    color: var(--ash);
+    font-size: 1.5rem;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .game-page__meta {
+    color: var(--ash);
+    font-size: 0.95rem;
+    margin: 0 0 2rem;
+  }
+  .game-page__frozen {
+    color: var(--frozen);
+    font-weight: 600;
+  }
+  /* Hero cheat sheet */
+  .game-hero {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 1.5rem;
+    padding: 2rem 1.5rem;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    align-items: center;
+  }
+  .game-hero__metric {
+    text-align: center;
+  }
+  .game-hero__metric--primary {
+    border-right: 1px solid var(--rule);
+    padding-right: 1rem;
+  }
+  .game-hero__icon {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.4rem;
+  }
+  .game-hero__value {
+    font-family: var(--font-serif);
+    font-size: 3.2rem;
+    line-height: 1;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .game-hero__metric:not(.game-hero__metric--primary) .game-hero__value {
+    font-size: 2.4rem;
+  }
+  .game-hero__value-unit {
+    font-size: 1rem;
+    color: var(--ash);
+    font-weight: 400;
+    margin-left: 0.15rem;
+  }
+  .game-hero__label {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--ash);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .precip-high { color: var(--precip-high); font-weight: 600; }
+  .precip-mid { color: var(--precip-mid); font-weight: 600; }
+  .precip-low { color: var(--precip-low); }
+  /* Analysis paragraph (AI-SEO money block) */
+  .game-analysis {
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    margin: 0 0 2.5rem;
+    border-radius: 0 4px 4px 0;
+  }
+  .game-analysis__label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .game-analysis__headline {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    line-height: 1.3;
+    margin: 0 0 0.5rem;
+    color: var(--ink);
+  }
+  .game-analysis__body {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink);
+    margin: 0;
+  }
+  /* Section heads + hourly table */
+  .game-section-h2 {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    margin: 0 0 1rem;
+    color: var(--ink);
+  }
+  .hourly-table {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .hourly-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .hourly-table th, .hourly-table td {
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hourly-table thead th {
+    background: #f4f4f4;
+    color: var(--ash);
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .hourly-table tbody th {
+    text-align: left;
+    color: var(--ash);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #fafafa;
+    padding-left: 1rem;
+    width: 95px;
+  }
+  .hourly-table .is-game-hour {
+    background: var(--accent-soft);
+  }
+  .hourly-table tbody th.is-game-hour-label {
+    background: var(--accent-soft);
+  }
+  /* HRRR toggle pattern (mirrors PGA) */
+  .hrrr-toggle {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0;
+    margin-bottom: 1.5rem;
+  }
+  .hrrr-toggle summary {
+    cursor: pointer;
+    padding: 0.85rem 1.2rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    user-select: none;
+  }
+  .hrrr-toggle summary::-webkit-details-marker { display: none; }
+  .hrrr-toggle summary::before {
+    content: "▸";
+    color: var(--ash);
+    font-size: 0.8rem;
+    transition: transform 0.15s;
+  }
+  .hrrr-toggle[open] summary::before { transform: rotate(90deg); }
+  .hrrr-toggle__label {
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .hrrr-summary-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .hrrr-toggle__meta {
+    color: var(--ash);
+    font-size: 0.82rem;
+    margin-left: auto;
+  }
+  .hrrr-section {
+    border-top: 1px solid var(--rule);
+    padding: 1rem 0 0;
+  }
+  /* Source attribution */
+  .game-page__source-note {
+    margin: 2rem 0;
+    padding: 1rem 1.25rem;
+    background: #f4f4f4;
+    border-radius: 4px;
+    font-size: 0.88rem;
+    color: var(--ash);
+    line-height: 1.6;
+  }
+  .game-page__back {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+  }
+  .game-page__back:hover { text-decoration: underline; }
+
+  /* Caption labels for the preview annotations */
+  .annotation {
+    background: #fff7ed;
+    border: 1px dashed #fb923c;
+    color: #9a3412;
+    padding: 0.5rem 0.85rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin: 0.5rem 0 1.5rem;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="preview-banner">
+  PREVIEW MOCKUP — what <code>/ncaaf/2026-11-28/osu-at-mich</code> will render with NWS + HRRR data wired. Sample uses realistic late-Nov "The Game" conditions.
+</div>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a href="#" class="site-header__brand">MySportsWeather</a>
+    <span class="site-header__subtitle">By Kevin Roth, Sports Meteorologist</span>
+  </div>
+</header>
+
+<article class="game-page">
+  <p class="game-page__kicker">NCAAF Weather · Saturday, November 28</p>
+  <h1 class="game-page__title">
+    <span>Ohio State Buckeyes</span>
+    <span class="matchup-at">at</span>
+    <span>Michigan Wolverines</span>
+  </h1>
+  <p class="game-page__meta">
+    Michigan Stadium, Ann Arbor, MI · Kickoff 12:00 PM ET
+    · <span class="game-page__frozen">Forecast locked at kickoff</span>
+  </p>
+
+  <div class="annotation">
+    Header: kicker (NCAAF + pretty date), H1 matchup, venue + kickoff line.
+    "Forecast locked" badge only shows when kickoff is within 1h (or game is in progress).
+  </div>
+
+  <!-- ── Cheat-sheet hero ────────────────────────────────── -->
+  <div class="game-hero">
+    <div class="game-hero__metric game-hero__metric--primary">
+      <div class="game-hero__icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 256 256" fill="none"><path d="M76 156a52 52 0 0 1 0-104h.93a64 64 0 0 1 122.66 18.16A48 48 0 1 1 188 156" stroke="#1e40af" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><path d="M128 196l-12 24M88 196l-12 24M168 196l-12 24" stroke="#1e40af" stroke-width="16" stroke-linecap="round"/></svg>
+      </div>
+      <div class="game-hero__value">28<span class="game-hero__value-unit">°F</span></div>
+      <div class="game-hero__label">At kickoff</div>
+    </div>
+    <div class="game-hero__metric">
+      <div class="game-hero__icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 100 100" style="transform: rotate(295deg)"><rect x="35" y="20" width="30" height="60" rx="3" fill="none" stroke="#1e40af" stroke-width="3"/><line x1="50" y1="20" x2="50" y2="80" stroke="#1e40af" stroke-width="2"/><path d="M50 35 L42 45 L48 45 L48 65 L52 65 L52 45 L58 45 Z" fill="#c33"/></svg>
+      </div>
+      <div class="game-hero__value">19<span class="game-hero__value-unit">mph</span></div>
+      <div class="game-hero__label">WNW wind</div>
+    </div>
+    <div class="game-hero__metric">
+      <div class="game-hero__icon">
+        <span class="precip-high" style="font-family:var(--font-serif);font-size:2rem;font-weight:600">65%</span>
+      </div>
+      <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">Snow chance</div>
+      <div class="game-hero__label">Dewpoint 22°</div>
+    </div>
+  </div>
+
+  <div class="annotation">
+    Three-metric cheat sheet: primary (temp + weather icon), wind (with stadium icon rotated to wind direction relative to field), and precip (color-tiered by severity).
+  </div>
+
+  <!-- ── Meteorologist analysis (AI-SEO money block) ────── -->
+  <div class="game-analysis">
+    <div class="game-analysis__label">Kevin's forecast</div>
+    <h2 class="game-analysis__headline">Weather notes: cold 28°F, wind 19 mph, snow.</h2>
+    <p class="game-analysis__body">Temperature near freezing at 28°F. Cold-weather kicking historically less accurate at extended ranges. Sustained 19 mph wind introduces a notable effect on deep passing routes and long field-goal attempts. Likely snow expected, probability 65%. Accumulation may affect footing and ball handling; expect run-heavy gameplan.</p>
+  </div>
+
+  <div class="annotation">
+    Templated meteorologist analysis from <code>cfb/analysis.py</code> — deterministic rule-based output, not AI-generated.
+    This is the AI-SEO money block: cited factual claims attributed to mysportsweather.com via schema.org JSON-LD in the page head.
+    Mild-weather games get a shorter "routine conditions" version.
+  </div>
+
+  <!-- ── NWS hourly forecast ───────────────────────────── -->
+  <h2 class="game-section-h2">Hourly forecast</h2>
+  <div class="hourly-table">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>11 AM</th>
+          <th class="is-game-hour-label">12 PM</th>
+          <th class="is-game-hour-label">1 PM</th>
+          <th class="is-game-hour-label">2 PM</th>
+          <th class="is-game-hour-label">3 PM</th>
+          <th>4 PM</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th>Precip</th><td class="precip-mid">45%</td><td class="is-game-hour precip-high">65%</td><td class="is-game-hour precip-high">70%</td><td class="is-game-hour precip-mid">55%</td><td class="is-game-hour precip-mid">40%</td><td class="precip-low">25%</td></tr>
+        <tr><th>Temp</th><td>30°</td><td class="is-game-hour">28°</td><td class="is-game-hour">27°</td><td class="is-game-hour">26°</td><td class="is-game-hour">26°</td><td>25°</td></tr>
+        <tr><th>Wind</th><td>15 mph</td><td class="is-game-hour">19 mph</td><td class="is-game-hour">22 mph</td><td class="is-game-hour">21 mph</td><td class="is-game-hour">18 mph</td><td>16 mph</td></tr>
+        <tr><th>Wind dir</th><td>WNW</td><td class="is-game-hour">WNW</td><td class="is-game-hour">NW</td><td class="is-game-hour">NW</td><td class="is-game-hour">NW</td><td>NW</td></tr>
+        <tr><th>Dewpoint</th><td>23°</td><td class="is-game-hour">22°</td><td class="is-game-hour">21°</td><td class="is-game-hour">20°</td><td class="is-game-hour">19°</td><td>19°</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="annotation">
+    NWS hourly strip: 1 hr before kickoff through end of game window. Game-hour columns shaded blue. Same row order as MLB pattern (precip / temp / wind / wind dir / dewpoint).
+  </div>
+
+  <!-- ── HRRR toggle (collapsed by default, mirrors PGA) ── -->
+  <details class="hrrr-toggle">
+    <summary>
+      <span class="hrrr-toggle__label">Higher-resolution data available</span>
+      <span class="hrrr-summary-badge">HRRR</span>
+      <span class="hrrr-toggle__meta">3 km · hourly updates</span>
+    </summary>
+    <div class="hrrr-section">
+      <div class="hourly-table" style="margin:0;border:none;border-radius:0">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>11 AM</th>
+              <th class="is-game-hour-label">12 PM</th>
+              <th class="is-game-hour-label">1 PM</th>
+              <th class="is-game-hour-label">2 PM</th>
+              <th class="is-game-hour-label">3 PM</th>
+              <th>4 PM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th>Precip</th><td class="precip-mid">52%</td><td class="is-game-hour precip-high">72%</td><td class="is-game-hour precip-high">78%</td><td class="is-game-hour precip-high">62%</td><td class="is-game-hour precip-mid">38%</td><td class="precip-low">18%</td></tr>
+            <tr><th>Temp</th><td>30°</td><td class="is-game-hour">28°</td><td class="is-game-hour">27°</td><td class="is-game-hour">25°</td><td class="is-game-hour">25°</td><td>24°</td></tr>
+            <tr><th>Wind</th><td>17 mph</td><td class="is-game-hour">21 mph</td><td class="is-game-hour">24 mph</td><td class="is-game-hour">22 mph</td><td class="is-game-hour">19 mph</td><td>16 mph</td></tr>
+            <tr><th>Gusts</th><td>26 mph</td><td class="is-game-hour">32 mph</td><td class="is-game-hour">35 mph</td><td class="is-game-hour">31 mph</td><td class="is-game-hour">27 mph</td><td>22 mph</td></tr>
+            <tr><th>Wind dir</th><td>WNW</td><td class="is-game-hour">WNW</td><td class="is-game-hour">NW</td><td class="is-game-hour">NW</td><td class="is-game-hour">NW</td><td>NW</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <div class="annotation">
+    HRRR toggle: collapsed by default. Click the badge row to expand. 3-km NOAA model, refreshes every hour. Same row layout as NWS table but adds Gusts (HRRR resolves wind gusts that the NWS hourly forecast smooths out). Useful comparison: HRRR's 78% peak precip vs NWS's 70% — the slight model disagreement is the whole point of showing both.
+  </div>
+
+  <!-- ── Source attribution ─────────────────────────────── -->
+  <p class="game-page__source-note">
+    Forecast source: <strong>NOAA NWS</strong>. Kickoff-window forecast is locked — values displayed above were captured one hour before kickoff and will not change during the game.
+  </p>
+
+  <div class="annotation">
+    Source attribution + freeze notice. Source flips to "WeatherAPI (NWS fallback)" if NWS fails. Freeze text changes to "Updates every 25 minutes until one hour before kickoff" when the game is more than 1h out.
+  </div>
+
+  <a href="#" class="game-page__back">← All NCAAF games</a>
+
+  <div class="annotation" style="margin-top:2.5rem">
+    <strong>Not visible here, but in the page <code>&lt;head&gt;</code>:</strong> schema.org SportsEvent + WeatherForecast JSON-LD with every weather metric tagged as a PropertyValue. This is what makes the page citable by AI Overview, ChatGPT search, Perplexity, Claude — they extract "Ohio State at Michigan, 28°F, 19 mph wind, 65% snow" with mysportsweather.com as the source.
+  </div>
+</article>
+</body>
+</html>

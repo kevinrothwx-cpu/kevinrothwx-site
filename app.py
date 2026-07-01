@@ -83,6 +83,19 @@ from mls.storage import (
     attach_writeups_to_slate as mls_attach_writeups,
 )
 
+from nfl.cache import (
+    get_nfl_slate, start_warmer as start_nfl_warmer,
+    find_game_in_slate as find_nfl_game,
+    frozen_count as nfl_frozen_count,
+)
+from nfl.analysis import generate_analysis as nfl_generate_analysis
+from nfl.slate import _hourly_window as nfl_hourly_window
+from nfl.storage import (
+    save_writeup as nfl_save_writeup,
+    get_writeup as nfl_get_writeup,
+    attach_writeups_to_slate as nfl_attach_writeups,
+)
+
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
 
@@ -163,6 +176,7 @@ start_cws_warmer()
 start_tennis_warmer()
 start_cfb_warmer()
 start_mls_warmer()
+start_nfl_warmer()
 
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
@@ -325,6 +339,18 @@ def inject_sport_nav():
         cfb_games, _ = get_cfb_slate(allow_build=False)
         if cfb_games:
             counts["ncaaf"] = str(len(cfb_games))
+    except Exception:
+        pass
+
+    # NFL — count games whose Eastern date is today. Off-season returns 0
+    # naturally and the badge stays hidden.
+    try:
+        nfl_games, _ = get_nfl_slate(allow_build=False)
+        if nfl_games:
+            today_nfl = sum(1 for g in nfl_games
+                            if g.get("kickoff_date_eastern") == today_str)
+            if today_nfl > 0:
+                counts["nfl"] = str(today_nfl)
     except Exception:
         pass
 
@@ -737,13 +763,138 @@ NFL_KICKOFF_2026   = datetime(2026, 9, 10).date()   # Thursday night opener
 NCAAF_KICKOFF_2026 = datetime(2026, 8, 29).date()    # Week 1 Saturday
 
 
+def _nfl_to_wc_shape(g: dict) -> dict:
+    """Alias NFL game fields to match worldcup's expected shape so we can
+    reuse the wc_cheat_card / wc_summary_panel / wc_hourly_table macros —
+    the same MLB-style visual treatment Kevin approved for MLS.
+
+    Wc macros read: away.logo, away.abbreviation, away.short_name,
+    venue (str), venue_meta (dict), kickoff_eastern (datetime),
+    kickoff_utc_dt, hourly[i].hour_eastern.
+    """
+    out = dict(g)
+    venue = g.get("venue") or {}
+    out["venue_meta"] = venue
+    out["venue"] = venue.get("name", "")
+    ko = g.get("kickoff_utc")
+    if ko is not None:
+        out["kickoff_utc_dt"] = ko
+        out["kickoff_eastern"] = ko.astimezone(EASTERN_TZ)
+    for side in ("home", "away"):
+        t = dict(g.get(side) or {})
+        if "logo_url" in t and "logo" not in t:
+            t["logo"] = t["logo_url"]
+        if "abbrev" in t and "abbreviation" not in t:
+            t["abbreviation"] = t["abbrev"]
+        if "short" in t and "short_name" not in t:
+            t["short_name"] = t["short"]
+        out[side] = t
+    def _enrich_periods(periods):
+        result = []
+        for h in (periods or []):
+            h2 = dict(h)
+            if "hour_eastern" not in h2 or not h2["hour_eastern"]:
+                # Prefer pre-computed label; else format ISO start_time as 12-hr ET
+                label = h.get("local_hour_label")
+                if not label and h.get("start_time"):
+                    try:
+                        from datetime import datetime as _dt
+                        dt = _dt.fromisoformat(h["start_time"].replace("Z", "+00:00"))
+                        label = dt.astimezone(EASTERN_TZ).strftime("%-I %p").lstrip("0")
+                    except Exception:
+                        label = (h.get("start_time") or "")[11:16]
+                h2["hour_eastern"] = label
+            result.append(h2)
+        return result
+
+    out["hourly"] = _enrich_periods(g.get("hourly"))
+    # Also enrich HRRR periods so the slate HRRR toggle shows 12-hr ET times
+    if g.get("hrrr_hourly"):
+        out["hrrr_hourly"] = _enrich_periods(g.get("hrrr_hourly"))
+    return out
+
+
 @app.route("/nfl")
 def nfl_root():
-    today = datetime.now(EASTERN_TZ).date()
-    days_until = max(0, (NFL_KICKOFF_2026 - today).days)
-    return render_template("nfl/coming-soon.html",
-                           sport_name="NFL", days_until=days_until,
-                           kickoff_date=NFL_KICKOFF_2026.strftime("%B %-d"))
+    """NFL slate — preseason through Super Bowl. Empty state shows
+    "Preseason begins August 7" copy until games appear in the window.
+    Uses MLB-style layout: cheat cards → writeup section → per-game blocks
+    with summary panel + hourly table side-by-side."""
+    games, meta = get_nfl_slate(allow_build=True)
+    shaped = []
+    if games:
+        nfl_attach_writeups(games)
+        for g in games:
+            wc = _nfl_to_wc_shape(g)
+            wc["url_path"] = f"/nfl/{g.get('kickoff_date_eastern')}/{g.get('slug')}"
+            shaped.append(wc)
+
+    return render_template(
+        "nfl/slate.html",
+        games=shaped,
+        total_games=len(shaped),
+        meta=meta,
+        canonical_path="/nfl",
+    )
+
+
+@app.route("/nfl/<date_str>/<slug>")
+def nfl_game(date_str, slug):
+    """Per-game NFL detail page with schema.org SportsEvent + hourly forecast
+    + meteorologist analysis. Dome venues render an indoor notice instead
+    of a forecast. Retractable venues default to Closed with a toggle to Open."""
+    if not _valid_date_str(date_str):
+        abort(404)
+    game_raw = find_nfl_game(date_str, slug)
+    if not game_raw:
+        abort(404)
+    game = _nfl_to_wc_shape(game_raw)
+
+    kickoff = game.get("kickoff_utc")
+    if kickoff:
+        game["kickoff_end_utc"] = kickoff + timedelta(hours=4)
+
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        pretty_date = d.strftime("%A, %B %-d")
+    except ValueError:
+        pretty_date = date_str
+
+    try:
+        analysis = nfl_generate_analysis(game)
+    except Exception as e:
+        print(f"[nfl.game] analysis failed for {date_str}/{slug}: {e}", flush=True)
+        analysis = None
+
+    # HRRR high-res overlay — 3 km CONUS, includes wind gusts NWS smooths out.
+    # Fail-soft: if HRRR is unavailable (dome venue skips lat/lon, API down,
+    # beyond the ~48h HRRR horizon) the template's `{% if hrrr_hourly %}`
+    # simply hides the toggle. Skipped entirely for dome venues.
+    hrrr_hourly = []
+    venue = game.get("venue_meta") or {}
+    roof = (venue.get("roof_type") or "").lower()
+    if roof != "fixed_dome":
+        lat, lon = venue.get("lat"), venue.get("lon")
+        kickoff = game.get("kickoff_utc")
+        if lat is not None and lon is not None and kickoff is not None:
+            try:
+                hrrr_periods = get_hrrr_periods(lat, lon)
+                if hrrr_periods:
+                    hrrr_hourly = nfl_hourly_window(hrrr_periods, kickoff)
+            except Exception as e:
+                print(f"[nfl.game] HRRR fetch failed for {date_str}/{slug}: {e}", flush=True)
+
+    brand = get_site_brand(request.host)
+    return render_template(
+        "nfl/game.html",
+        game=game,
+        analysis=analysis,
+        hrrr_hourly=hrrr_hourly,
+        date_str=date_str,
+        pretty_date=pretty_date,
+        site_url=brand["site_url"],
+        canonical_path=f"/nfl/{date_str}/{slug}",
+    )
 
 
 @app.route("/ncaaf")
@@ -1255,6 +1406,26 @@ def admin_golf():
     return render_template("golf/admin.html", slate=slate)
 
 
+@app.route("/admin/nfl", methods=["GET", "POST"])
+@_admin_required
+def admin_nfl():
+    """NFL write-up admin. One note per game keyed by ESPN event_id."""
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            nfl_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_nfl"))
+
+    games, _ = get_nfl_slate()
+    if games is None:
+        games = []
+    nfl_attach_writeups(games)
+    return render_template("nfl/admin.html", slate=games)
+
+
 @app.route("/admin/mls", methods=["GET", "POST"])
 @_admin_required
 def admin_mls():
@@ -1353,6 +1524,7 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/golf", "0.85", "daily"),
     ("/nascar", "0.85", "daily"),
     ("/ncaaf", "0.85", "daily"),
+    ("/nfl", "0.9", "hourly"),
     ("/mls", "0.85", "hourly"),
     ("/mlb-weather", "0.8", "monthly"),
     ("/nfl-weather", "0.8", "monthly"),
@@ -1393,6 +1565,18 @@ def sitemap():
             dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
             for m in wc_slate:
                 dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
+        # NFL per-game URLs across the 8-day cache window.
+        try:
+            nfl_games, _ = get_nfl_slate(allow_build=False)
+            if nfl_games:
+                for g in nfl_games:
+                    d_iso = g.get("kickoff_date_eastern")
+                    slug = g.get("slug")
+                    if d_iso and slug:
+                        dynamic_urls.append((f"/nfl/{d_iso}/{slug}", "0.75", "hourly"))
+        except Exception as e:
+            print(f"[sitemap] NFL dynamic URLs failed: {e}", flush=True)
+
         # MLS per-match URLs. Slate covers ~7 days; emit a /mls/<date>/<slug>
         # URL for every match so each is independently indexable. The
         # /mls hub itself is already in the static block.
@@ -1537,7 +1721,7 @@ def llms_txt():
         f"- [MLS]({base}/mls): Major League Soccer match weather for all 29 venues, with retractable-roof flags for Atlanta and Vancouver.\n"
         f"- [Grand Slam Tennis]({base}/tennis): Wimbledon, US Open, Australian Open, Roland-Garros — only active during Slam weeks.\n"
         f"- [College Football]({base}/ncaaf): FBS coverage launching August 29, 2026 (Week 1).\n"
-        f"- [NFL]({base}/nfl): Game-day forecasts launching September 10, 2026 (Thursday night opener).\n\n"
+        f"- [NFL]({base}/nfl): Game-day forecasts for every preseason, regular-season, and playoff game across all 32 stadiums. Indoor venues flagged; retractable-roof toggles for Atlanta, Dallas, Houston, Indianapolis, Arizona.\n\n"
         "## About\n\n"
         f"- [About Kevin Roth]({base}/about): Background, credentials, press citations.\n"
         f"- [OVERcast]({base}/overcast): Kevin's professional sports betting app with park-tuned weather impact scoring.\n\n"
@@ -1615,6 +1799,7 @@ def admin_nws_health():
         f'<div class="stat"><div class="stat-label">CFB gridpoint cache</div><div class="stat-value">{cfb_gridpoint_cache_size()}</div></div>'
         f'<div class="stat"><div class="stat-label">Frozen CFB snapshots</div><div class="stat-value">{cfb_frozen_count()}</div></div>'
         f'<div class="stat"><div class="stat-label">Frozen MLS snapshots</div><div class="stat-value">{mls_frozen_count()}</div></div>'
+        f'<div class="stat"><div class="stat-label">Frozen NFL snapshots</div><div class="stat-value">{nfl_frozen_count()}</div></div>'
         '</div>'
     )
 
@@ -1662,7 +1847,6 @@ def admin_indexnow_push():
             for g in slate:
                 urls.append(f"{base_url}/mlb/{d}/{g['slug']}")
         ok = indexnow_notify(urls, host="mysportsweather.com")
-        msg = f"Pushed {len(urls)} URLs to IndexNow. Result: {'OK' if ok else 'FAILED (check logs)'}"
         return Response(
             f"<html><body><p>{msg}</p><p><a href='/admin/indexnow'>Back</a></p></body></html>",
             mimetype="text/html"
