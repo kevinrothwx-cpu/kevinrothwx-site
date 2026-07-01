@@ -128,9 +128,15 @@ def build_tournament(event: dict) -> dict:
 
     if course and start:
         tz = ZoneInfo(course["timezone"])
-        first_round_local = start.astimezone(tz).date()
-        if end:
-            last_round_local = end.astimezone(tz).date()
+        # ESPN's start_iso is tagged UTC (e.g. "2026-07-02T04:00Z") but
+        # semantically represents the tournament's start CALENDAR date.
+        # Doing .astimezone(tz).date() shifts the date back a day for any
+        # US timezone west of Eastern (Round 1 Thu Jul 2 was rendering as
+        # Round 1 Wed Jul 1 for Central/Mountain/Pacific courses). Fix:
+        # parse the YYYY-MM-DD portion directly, no timezone conversion.
+        first_round_local = datetime.strptime(event["start_iso"][:10], "%Y-%m-%d").date()
+        if event.get("end_iso"):
+            last_round_local = datetime.strptime(event["end_iso"][:10], "%Y-%m-%d").date()
         else:
             last_round_local = first_round_local + timedelta(days=3)
         max_round_date = first_round_local + timedelta(days=6)
