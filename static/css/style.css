@@ -810,6 +810,14 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .home-hero .kicker { margin-bottom: 0.85rem; }
 .home-hero__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.85rem, 3.5vw + 0.5rem, 3.25rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1rem; max-width: 32ch; }
 .home-hero__lead { font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.55; color: var(--slate); max-width: 50rem; margin: 0; }
+/* Two-column hero row: title/lead on the left, compact WC card on the
+   right. Sport-card grid follows below. Under 900px the WC card drops
+   below the title on its own row so it stays legible on mobile. */
+.home-hero__row { display: grid; gap: 1.75rem; grid-template-columns: 1fr; align-items: start; }
+.home-hero__intro { min-width: 0; }
+@media (min-width: 900px) {
+  .home-hero__row { grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr); gap: 2.5rem; }
+}
 
 .home-section { padding: 2.5rem 0; }
 .home-section--secondary { padding: 3rem 0 4rem; background: var(--paper); border-top: 1px solid var(--mist); }
@@ -831,6 +839,18 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .home-featured__arrow { transition: transform 0.15s ease; }
 .home-featured:hover .home-featured__arrow { transform: translateX(3px); }
 
+/* Compact variant used when the featured card sits next to the hero
+   title in the two-column hero row. Tighter padding, smaller title,
+   removes margin-bottom (the hero row handles spacing). */
+.home-featured--compact { padding: 1.4rem 1.35rem 1.25rem; margin-bottom: 0; height: 100%; display: flex; flex-direction: column; }
+.home-featured--compact .home-featured__top { margin-bottom: 0.75rem; }
+/* Soccer ball icon anchored right in the top row so the WC card reads
+   visually as "the soccer card" at a glance. */
+.home-featured__icon { width: 36px; height: 36px; margin-left: auto; flex-shrink: 0; }
+.home-featured--compact .home-featured__title { font-size: clamp(1.15rem, 1.4vw + 0.6rem, 1.4rem); margin: 0 0 0.6rem; max-width: none; line-height: 1.22; }
+.home-featured--compact .home-featured__body { font-size: 0.92rem; line-height: 1.5; margin: 0 0 1rem; max-width: none; }
+.home-featured--compact .home-featured__cta { padding-top: 0.75rem; margin-top: auto; }
+
 /* Live pulse pill */
 .live-badge { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: white; background: #c41e3a; padding: 0.32rem 0.7rem 0.34rem; border-radius: 999px; display: inline-flex; align-items: center; gap: 0.45rem; line-height: 1; }
 .live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse-live 1.6s ease-in-out infinite; }
@@ -838,6 +858,9 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 
 .home-sport-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem 1.3rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; position: relative; min-height: 180px; }
 .home-sport-card:hover { border-color: var(--ink); transform: translateY(-2px); }
+.home-sport-card__head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.15rem; }
+.home-sport-card__icon { width: 40px; height: 40px; flex-shrink: 0; }
+.home-sport-card__heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .home-sport-card__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
 .home-sport-card__title { font-family: var(--font-serif); font-size: 1.55rem; font-weight: 600; letter-spacing: -0.015em; margin: 0; line-height: 1.15; }
 .home-sport-card__body { font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5; color: var(--slate); margin: 0; flex: 1; }
@@ -873,22 +896,13 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .home-product__arrow { position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); color: var(--ash); font-size: 1.05rem; transition: transform 0.2s ease, color 0.2s ease; }
 .home-product__link:hover .home-product__arrow { transform: translateY(-50%) translateX(4px); color: var(--ink); }
 
-/* Inline compass label next to wind speed in hourly cells */
 .hourly__windcompass { display: inline-block; margin-left: 0.3rem; padding: 0.05rem 0.4rem; background: var(--paper); border: 1px solid var(--mist); border-radius: 3px; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; color: var(--slate); vertical-align: 1px; }
 
-/* Homepage sport-card icon + heading layout */
-.home-sport-card__head { display: flex; align-items: flex-start; gap: 0.9rem; }
-.home-sport-card__icon { width: 40px; height: 40px; flex-shrink: 0; margin-top: 0.05rem; }
-.home-sport-card__heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.home-sport-card__heading .home-sport-card__title { margin-top: 0.1rem; }
-
-/* v8 polish: tighten page header so the cheat-sheet starts above the fold */
 .mlb-page { padding-top: 0.75rem; }
 .mlb-page__header { padding: 0 1.5rem 0.4rem; margin: 0 auto 1rem; border-bottom: 0; }
 .mlb-page__title { font-size: clamp(1.45rem, 2vw + 0.5rem, 2rem); margin-top: 0.15rem; margin-bottom: 0; line-height: 1.1; }
 .mlb-page__sub { display: none; }
 .mlb-page__datenav a { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
 
-/* Make the kicker sit inline-ish with the title to save more vertical */
 .mlb-page__hed { gap: 0.75rem 1.5rem; align-items: center; }
 .mlb-page__hed > div .kicker { margin-bottom: 0.1rem; }

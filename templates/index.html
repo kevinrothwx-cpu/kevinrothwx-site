@@ -86,39 +86,48 @@
   </section>
 
 {% else %}
-  {# ───── mysportsweather.com homepage: sports-first product page ───── #}
+  {# ───── mysportsweather.com homepage: sports-first product page ─────
+       Layout: hero title (left) + compact World Cup card (right) share
+       one row so the WC card doesn't push all the sport cards below the
+       fold. Sport grid follows immediately. Two-column above 900px;
+       stacks on mobile. #}
   <section class="home-hero">
     <div class="container">
-      <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
-      {# text-wrap: balance distributes the headline across lines evenly so
-         it doesn't end with a single orphan word ("round.") on its own line.
-         Modern browsers (Chrome 114+, Firefox 121+, Safari 17.5+) handle it
-         natively; older browsers fall back to the default wrap with no harm. #}
-      <h1 class="home-hero__title" style="text-wrap: balance">Weather for every game, match, race, and round.</h1>
-      <p class="home-hero__lead">
-        Live forecasts across every sport, built by a meteorologist.
-      </p>
+      <div class="home-hero__row">
+        <div class="home-hero__intro">
+          <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
+          {# text-wrap: balance distributes the headline across lines evenly so
+             it doesn't end with a single orphan word ("round.") on its own line. #}
+          <h1 class="home-hero__title" style="text-wrap: balance">Weather for every game, match, race, and round.</h1>
+          <p class="home-hero__lead">
+            Live forecasts across every sport, built by a meteorologist.
+          </p>
+        </div>
+
+        {# Featured World Cup card — compact sidebar variant. Keeps the
+           tournament in a premium above-fold spot without eating a full
+           row of vertical real estate. #}
+        <a href="/worldcup" class="home-featured home-featured--wc home-featured--compact">
+          <div class="home-featured__top">
+            <span class="live-badge">Live · Matchday</span>
+            <span class="home-featured__kicker">World Cup 2026</span>
+            <img class="home-featured__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="" loading="lazy">
+          </div>
+          <h2 class="home-featured__title">Meteorologist breakdowns for every World Cup match.</h2>
+          <p class="home-featured__body">
+            16 venues across the US, Mexico, and Canada. Roof status, altitude, storm risk.
+          </p>
+          <span class="home-featured__cta">
+            {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;{% if sport_counts.worldcup == '1' %}match today{% else %}matches today{% endif %}{% else %}See all matches{% endif %}
+            <span class="home-featured__arrow">→</span>
+          </span>
+        </a>
+      </div>
     </div>
   </section>
 
   <section class="home-section">
     <div class="container">
-
-      {# Featured World Cup banner — pin to top through the tournament window (June 11 to July 19, 2026) #}
-      <a href="/worldcup" class="home-featured home-featured--wc">
-        <div class="home-featured__top">
-          <span class="live-badge">Live · Matchday</span>
-          <span class="home-featured__kicker">World Cup 2026</span>
-        </div>
-        <h2 class="home-featured__title">Real meteorologist breakdowns for every World Cup match.</h2>
-        <p class="home-featured__body">
-          Stadium-specific notes on altitude, humidity, roof status, and storm risk. 16 venues across the US, Mexico, and Canada. Built by a meteorologist, not AI.
-        </p>
-        <span class="home-featured__cta">
-          {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;{% if sport_counts.worldcup == '1' %}match today{% else %}matches today{% endif %}{% else %}See all matches{% endif %}
-          <span class="home-featured__arrow">→</span>
-        </span>
-      </a>
 
       <div class="home-grid">
 
@@ -229,9 +238,11 @@
           </div>
           <div class="home-product">
             <a href="https://x.com/KevinRothWx" class="home-product__link" rel="noopener">
+              <span class="home-product__name">Follow Kevin on X</span>
               <span class="home-product__desc">Live pregame radar and alerts across every sport</span>
               <span class="home-product__arrow">→</span>
             </a>
+          </div>
         </div>
       </div>
     </div>
