@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Wind and Baseball: What DFS Players Get Half Right | Kevin Roth{% endblock %}
+{% block description %}How wind actually affects baseball, from a working sports meteorologist. Direction, height, ballpark quirks, and the DFS-relevant rules that broadcasters oversimplify.{% endblock %}
+
+{% block og_title %}Wind and Baseball: What DFS Players Get Half Right{% endblock %}
+{% block og_description %}A meteorologist's guide to wind and baseball for DFS and betting.{% endblock %}
+
+{% block extra_head %}
+<link rel="canonical" href="https://mysportsweather.com/mlb-weather/wind-rules">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Baseball and Wind: What DFS Players Get Half Right","author":{"@type":"Person","@id":"https://mysportsweather.com/about#kevin-roth","name":"Kevin Roth","jobTitle":"Sports Meteorologist"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://mysportsweather.com/"},"mainEntityOfPage":"https://mysportsweather.com/mlb-weather/wind-rules","about":["MLB weather","Wind and baseball","DFS strategy","Sports meteorology"],"datePublished":"2026-07-02","inLanguage":"en-US"}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="section">
+  <div class="container-tight">
+    <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">MLB Weather · Deep Dive</p>
+    <h1 class="display" style="margin-bottom: 1rem;">Baseball and Wind: What DFS Players Get Half Right</h1>
+    <p class="kicker" style="margin-bottom: 3rem;">By <a href="/about" style="color:inherit">Kevin Roth</a>, Sports Meteorologist</p>
+    <div class="prose">
+      <p>The wind reading on your DFS research page shows 12 mph out to right field. You bump your power hitters up a few slots and move on. Some nights that works. Other nights you watch three of them go 0-for-4 and the runs come from a pair of ground-ball singles. If you have played DFS for more than a season, you have seen this happen enough that the surface-level "wind blowing out means offense" rule stops feeling like a lock.</p>
+
+      <p>That rule is not wrong. It is just wildly incomplete. The people making money on weather in baseball are working with a version of it that includes maybe ten more variables. Here is what actually goes into a useful wind read.</p>
+
+      <h2>Wind is not one number</h2>
+
+      <p>The wind speed you see is a measurement from somewhere. That somewhere is almost always the nearest airport, which might be five miles from the ballpark, at a different elevation, in a different microclimate. The reading is honest. It just is not the wind at the field.</p>
+
+      <p>The bigger issue is height. The reported wind is measured about ten meters above the ground. A fly ball at Wrigley Field reaches roughly 100 to 130 feet at peak. Wind speed at that height can be 30 to 50 percent higher than what the surface reading shows. So when a broadcaster says "10 mph wind blowing out," what the ball is actually feeling above the fence might be 15 or 16.</p>
+
+      <p>This gap widens on the days you care about most. Gusty conditions typically mean the vertical wind profile is unstable, which means the wind at height gets significantly stronger than the surface reading. On a calm, uniform day the numbers match closely. On a windy day they diverge.</p>
+
+      <p>The practical version of this: a 10 mph tailwind at the surface is a nuisance for a fly ball. A 20 mph tailwind is meaningful. A 30 mph tailwind changes the math of the whole game. The steps are not linear, and the surface reading understates it.</p>
+
+      <h2>Direction matters more than speed</h2>
+
+      <p>The direction of the wind, measured in degrees, tells you where the ball is being pushed. In baseball terms, wind blowing out to center field helps home runs across all fields. Wind blowing out to right helps left-handed power. Wind blowing across the field from foul line to foul line mostly moves fly balls sideways and can turn homers into loud outs down the line.</p>
+
+      <p>Broadcasters tend to lump anything blowing away from home plate into "blowing out." That is not useful. A 15 mph wind out to left field at Yankee Stadium does very different things than a 15 mph wind out to right. Yankee Stadium has short-porch home runs to right that are already borderline. Blow it out to right, and you get a few extra homers. Blow it out to left, and you push routine fly balls into home run territory in a park where left field is not usually a launching pad.</p>
+
+      <p>Direction relative to the batter matters too. A right-handed pull hitter facing a strong wind out to left picks up help that a lefty pull hitter does not. If the wind is pushing balls to right, the DFS boost belongs to lefty power, not to the team average.</p>
+
+      <h2>Cross winds are the underrated factor</h2>
+
+      <p>Wind coming across the field, from first base line to third base line or vice versa, gets ignored more than it should. It does two things.</p>
+
+      <p>First, it pushes fly balls foul. On a night with 15 mph out of left field, a lot of pull-side fly balls from a righty are going to hook toward the foul line. Some end up over the wall. Some end up in the seats down the line as foul. Some fall into the corner for extra bases that would have been outs on a calm night.</p>
+
+      <p>Second, it makes fielders' lives miserable. Cross winds are the hardest for outfielders to judge because the ball moves laterally through their peripheral vision. Errors and misplayed balls increase. That does not show up in the wind speed number. It shows up in the box score as extra hits.</p>
+
+      <p>Great American Ball Park and Yankee Stadium both get significant cross-wind days. Watch how outfield defense holds up on those nights. It is not always subtle.</p>
+
+      <h2>Air density, which is where humidity gets misunderstood</h2>
+
+      <p>Density altitude is the number nobody wants to explain because it feels academic. It matters because it dictates how far a fly ball actually carries.</p>
+
+      <p>Cold, dry, high-pressure air is dense. Balls do not carry in it. That is why April games in Cleveland and Detroit are pitchers' games even without much wind. It is also why September in Denver plays more like a normal park than July does. The air has thickened up.</p>
+
+      <p>Warm, humid, low-pressure air is less dense. Balls carry. This is where the broadcast take goes wrong on humidity. "It is really humid tonight, the ball is not going anywhere" is backwards. Water vapor is less dense than dry air. Adding moisture to warm air makes it less dense, not more. The ball carries better in humid conditions than in dry conditions at the same temperature.</p>
+
+      <p>Now, humid air also correlates with cloud cover, storms, and heavy soaking of the ball itself, all of which reduce distance. So the broadcast take is often right in outcome but wrong in mechanism. If a game is played in warm, humid, clear conditions, the ball flies. Miami and Houston in July with the roof open. That environment gets more homers per fly ball than most people expect, and DFS players who avoid those games are giving up ground.</p>
+
+      <p>Coors Field is the extreme case. Altitude reduces air density by about 15 percent versus sea level. A fly ball that dies at the warning track at Petco travels roughly ten feet farther at Coors. The humidor was installed to blunt this effect, and it works to a point. Coors is still the most weather-influenced park in baseball.</p>
+
+      <h2>The specific parks that punish you if you play the average</h2>
+
+      <p>Every park has quirks. A few that matter.</p>
+
+      <p><strong>Wrigley Field:</strong> no park in baseball is more susceptible to wind than Wrigley. When the wind blows out, the effect on offense is massive, more than you would guess from the wind speed number alone. When it blows in, the same effect works in reverse and it kills fly ball damage. Games at Wrigley are usually one of the biggest weather-driven edges on any given slate, and totals move accordingly. If you play DFS, the Wrigley wind check is not optional.</p>
+
+      <p><strong>Fenway Park:</strong> the Monster is huge but the wind story at Fenway is about right field. Prevailing wind is out of the west, which means it pushes fly balls out to right. Left-handed hitters at Fenway get more help from wind than the Monster narrative suggests. The Monster helps flat line drives to left that would be caught at other parks. Wind helps balls in the air to right.</p>
+
+      <p><strong>Oracle Park:</strong> the marine layer is real. Fog and moist cold air from the bay press in from right field. Left-handed power at Oracle already gets punished by the dimensions. Add a marine layer and it is close to a dead zone. On days when the wind is offshore and pushing the marine layer away, the park suddenly plays more neutral.</p>
+
+      <p><strong>Camden Yards:</strong> the warehouse behind right field creates a wind eddy that most weather apps do not model. On days with a strong westerly wind, air spills over the warehouse and creates a small downdraft near the right field wall. Fly balls that look like homers off the bat sometimes die at the track. This is subtle enough that you cannot predict it precisely, but knowing it exists helps you not lock in Orioles right-handed hitters on those specific days.</p>
+
+      <h2>What DFS players and bettors should actually do</h2>
+
+      <p>Some rules of thumb from years of forecasting this.</p>
+
+      <p>Under 5 mph of wind, treat the game as calm. Ignore wind entirely. Focus on temperature and park factors.</p>
+
+      <p>5 to 10 mph, the wind is background noise unless it is pointed directly out to a specific field with a matchup that benefits from it (lefty power with a right field tailwind, for example).</p>
+
+      <p>10 to 15 mph out to any outfield direction, the wind is meaningful. Bump the appropriate side of the platoon that benefits. Do not bump everybody.</p>
+
+      <p>15 to 20 mph out is a significant tailwind for fly balls. This is where totals should move. If sportsbook totals have not moved by a run or two before first pitch, there is edge.</p>
+
+      <p>20 plus mph is a major factor. Also a check on it: wind that strong at the surface is often a mixed bag. Ground level wind of 25 mph at Wrigley can be gusty enough that fielders struggle, but it also means pop-ups become adventures and some drives are getting cut down by a swirling pattern in the outfield. It is not linear help.</p>
+    </div>
+
+    <div class="callout" style="margin-top: 4rem;">
+      <p class="callout__title">See today's MLB weather forecast</p>
+      <p class="callout__body">Hourly weather at every ballpark for every game on the board.</p>
+      <a href="/mlb/today" class="btn btn-storm">Today's MLB slate →</a>
+    </div>
+  </div>
+</article>
+{% endblock %}

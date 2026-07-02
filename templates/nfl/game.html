@@ -2,7 +2,7 @@
 {% from "nfl/_macros.html" import nfl_hourly_table, nfl_football_field %}
 {% from "mlb/_macros.html" import weather_icon %}
 
-{% block title %}{{ game.away.short }} at {{ game.home.short }}, {{ pretty_date }} Weather Forecast | NFL | Kevin Roth{% endblock %}
+{% block title %}{{ game.away.short }} at {{ game.home.short }} Weather, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}{{ game.away.name }} at {{ game.home.name }} NFL weather forecast for {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at kickoff, {{ game.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block og_title %}{{ game.away.short }} at {{ game.home.short }}, NFL Weather Forecast{% endblock %}
@@ -61,6 +61,13 @@
     { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ game.forecast.precip_pct }}%" }
   ]{% endif %}
 }
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"NFL Weather","item":"{{ site_url }}/nfl"},
+  {"@type":"ListItem","position":3,"name":"{{ game.away.name }} at {{ game.home.name }}"}
+]}
 </script>
 <style>
   .game-page__title .matchup-logo { height: 48px; width: 48px; object-fit: contain; flex-shrink: 0; }

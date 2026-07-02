@@ -5,6 +5,16 @@
 {% block title %}{{ race.name }}, Weather Forecast | Kevin Roth{% endblock %}
 {% block description %}{{ race.name }} weather forecast. {{ race.track }}. Green flag {{ race.green_flag_eastern_str }}. By sports meteorologist Kevin Roth.{% endblock %}
 
+{% block extra_head %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"NASCAR Weather","item":"{{ site_url }}/nascar"},
+  {"@type":"ListItem","position":3,"name":"{{ race.name }}"}
+]}
+</script>
+{% endblock %}
+
 {% block content %}
 <article class="game-page">
   <p class="game-page__kicker">NASCAR Cup Series</p>

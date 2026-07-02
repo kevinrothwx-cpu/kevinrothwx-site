@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ game.away.short }} at {{ game.home.short }}, {{ pretty_date }} Weather Forecast | Kevin Roth{% endblock %}
+{% block title %}{{ game.away.short }} at {{ game.home.short }} Weather, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}{{ game.away.name }} at {{ game.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at kickoff, {{ game.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block og_title %}{{ game.away.short }} at {{ game.home.short }}, Weather Forecast{% endblock %}
@@ -63,6 +63,13 @@
     { "@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ game.forecast.precip_pct }}%" }
   ]{% endif %}
 }
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"College Football Weather","item":"{{ site_url }}/ncaaf"},
+  {"@type":"ListItem","position":3,"name":"{{ game.away.name }} at {{ game.home.name }}"}
+]}
 </script>
 <style>
   /* CFB-specific tweaks on top of base.html styling */

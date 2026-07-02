@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}How Each MLB Retractable Roof Actually Gets Used | Kevin Roth{% endblock %}
+{% block description %}Analysis of 5,117 games at MLB's seven retractable roof stadiums. Roof usage philosophy, dewpoint triggers, and what DFS players need to know.{% endblock %}
+
+{% block og_title %}How Each MLB Retractable Roof Actually Gets Used{% endblock %}
+{% block og_description %}A data-driven breakdown of MLB retractable roof usage patterns.{% endblock %}
+
+{% block extra_head %}
+<link rel="canonical" href="https://mysportsweather.com/mlb-weather/retractable-roofs">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"How Each MLB Retractable Roof Actually Gets Used","author":{"@type":"Person","@id":"https://mysportsweather.com/about#kevin-roth","name":"Kevin Roth","jobTitle":"Sports Meteorologist"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://mysportsweather.com/"},"mainEntityOfPage":"https://mysportsweather.com/mlb-weather/retractable-roofs","about":["MLB weather","Retractable roofs","Sports meteorology","DFS strategy"],"datePublished":"2026-07-02","inLanguage":"en-US"}
+</script>
+{% endblock %}
+
+{% block content %}
+<article class="section">
+  <div class="container-tight">
+    <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">MLB Weather · Deep Dive</p>
+    <h1 class="display" style="margin-bottom: 1rem;">How Each MLB Retractable Roof Actually Gets Used</h1>
+    <p class="kicker" style="margin-bottom: 3rem;">By <a href="/about" style="color:inherit">Kevin Roth</a>, Sports Meteorologist · Data compiled by <a href="https://app.kevinrothwx.com" style="color:inherit">OVERcast</a></p>
+    <div class="prose">
+      <p>If you looked at the official records, T-Mobile Park in Seattle has never opened its retractable roof for a game. Not once. Not in the ten-year window from 2015 to 2025, which covers 817 home games. That statistic is technically correct and also somewhat misleading, which is a good introduction to how MLB's retractable roofs actually work.</p>
+
+      <p>The seven retractable ballparks in MLB operate on wildly different philosophies, and none of them are what the casual fan assumes. Some parks open their roof more than they close it. Some are functionally indoor stadiums that only open under very specific conditions. One of them has a unique design where "closed" does not mean what it means at the others. Understanding these differences is one of the higher-value edges in weather-focused DFS, because the roof status determines whether outside conditions matter at all.</p>
+
+      <p>Here is what the data on 5,117 games actually shows.</p>
+
+      <h2>Four operating philosophies</h2>
+
+      <p>The seven retractable parks cluster into four groups based on how they use the roof.</p>
+
+      <p><strong>Open by default.</strong> Toronto and Milwaukee open the roof for the majority of their games. Rogers Centre is open 63 percent of the time overall, American Family Field 58 percent. Both parks show a strong summer bias, opening for more than 80 percent of games in July and August.</p>
+
+      <p><strong>Closed by default, opens only for mild weather.</strong> Miami, Houston, and Texas keep the roof closed almost all the time. Their open rates are 11 percent, 9 percent, and 14 percent respectively across the full season. When they do open, the conditions are notably specific.</p>
+
+      <p><strong>Seasonal swing.</strong> Arizona is the only desert-climate retractable park, and the roof usage tracks the heat curve. Chase Field opens 71 percent of games in April, drops to zero percent in July when the average first-pitch temperature is 97 degrees, then reopens in the fall.</p>
+
+      <p><strong>Uniquely designed.</strong> T-Mobile Park is officially recorded as closed for every game in the dataset, but the ballpark's roof does not create indoor conditions the way the others do. More on this below.</p>
+
+      <h2>Toronto and Milwaukee: open unless cold</h2>
+
+      <p>Rogers Centre and American Family Field share a philosophy that most fans of open-air ballparks would recognize. Play outside when the weather is nice. Close up when it is cold or wet.</p>
+
+      <p>Rogers Centre opens for 84 percent of July and August games, when the average first-pitch temperature is 74 to 75 degrees. In April, when the Toronto average is 52 degrees, only 5 percent of games have the roof open. May is a transitional month at 38 percent. The pattern is direct temperature response.</p>
+
+      <p>Milwaukee looks almost identical. American Family Field opens for 83 percent of July games and 80 percent of August games. In April, when temperatures average 53 degrees, the roof is open for only 6 percent of games. The Brewers close early and often in spring, then live outdoors from June through September.</p>
+
+      <p>For DFS purposes, both parks in June through August effectively play as outdoor stadiums. Weather matters at Rogers Centre and American Family Field the same way it matters at Wrigley or Fenway during the summer months. Wind, humidity, and temperature at first pitch drive the same downstream effects on offense. In April, both parks should be treated as indoor stadiums by default.</p>
+
+      <h2>Miami, Houston, Texas: mostly closed, but the exceptions are interesting</h2>
+
+      <p>loanDepot park, Minute Maid Park, and Globe Life Field are essentially indoor stadiums that occasionally open. The DFS-relevant question is not whether the roof opens on any given day, because usually it does not. The question is what conditions push these teams to open, and what happens when they do.</p>
+
+      <p>loanDepot park is the most interesting case in the data. When the roof opens in Miami, the average wind is 8.8 mph and the average dewpoint drops from 73.7 degrees closed to 64.7 degrees open. That is not a small difference. The Marlins open the roof specifically on breezy Miami evenings with lower humidity, which are relatively rare in South Florida. Any DFS player who sees "loanDepot roof open" in the game notes should note that the ballpark is being played in genuinely uncommon conditions for Miami, and probably has more offensive upside than a typical closed-roof night there.</p>
+
+      <p>Houston shows a similar mild-weather signal. When Minute Maid Park opens, the average temperature is 77.7 degrees and wind is 10.2 mph. When it stays closed, the average is 82 degrees and 0 mph indoor conditions. Houston opens for pleasant Houston evenings, which occur in April and May and rarely between June and September.</p>
+
+      <p>Globe Life Field in Texas is the same story with a fall twist. Open 14 percent overall but 86 percent in October, when temperatures cool into the mid-70s. Between June and August the roof is essentially never open, because Texas is essentially never comfortable in daylight during those months.</p>
+
+      <p>The practical rule: if any of these three parks reports the roof open, treat the game like an outdoor game in a specifically mild-weather profile. The team only opens the roof when conditions are favorable to open-air baseball.</p>
+
+      <h2>Arizona: the desert seasonality</h2>
+
+      <p>Chase Field is the only MLB retractable in a desert climate, and the usage pattern shows why the retractable design matters more there than anywhere else. The Diamondbacks open the roof for 71 percent of April games, when Phoenix averages 81 degrees at first pitch. That drops to 56 percent in May, 19 percent in June, and zero percent in July and August. July's average first-pitch temperature at Chase Field is 97 degrees. August is 98.</p>
+
+      <p>Then fall reverses the pattern. September rebounds to 25 percent open, and October climbs to 50 percent as evenings cool into the 80s.</p>
+
+      <p>For DFS, Chase Field is one of the more predictable retractables in terms of roof status. April and October are outdoor games. June through August are indoor games. May and September are variable and worth checking on the day.</p>
+
+      <p>The weather impact at Chase Field is unusual. When closed, the park plays as a neutral dome. When open in April and October, the desert dryness (28 to 45 degree dewpoints) creates the driest air in MLB. That air is thin and less dense than humid air at the same temperature, which helps the ball carry, but Chase Field's ground reading of 2.1 mph average wind is low even for a retractable park. The overall HR impact at Chase Field is minus 4.6 percent, below league average despite the theoretical carry benefit of dry air. The park's dimensions and the humidor policy pull HR down more than the atmospheric conditions push it up.</p>
+
+      <h2>Seattle: where the data is wrong and "closed" is different anyway</h2>
+
+      <p>T-Mobile Park is the outlier in this analysis, and the reason is that the data itself is questionable. The dataset shows the roof officially closed for every game in the ten-year window. The Mariners' actual policy is essentially the opposite. The team keeps the roof open as often as possible, targeting fan comfort, and closes it only when there is a high confidence of rain within an hour of first pitch. Public estimates put it at around 17 to 18 closed games per season out of 81 home games, roughly 22 percent, which is very different from the 100 percent closed the data reports.</p>
+
+      <p>What is likely happening is that game logs default to "closed" for Seattle or do not consistently record the roof status. The other retractable parks have cleaner tracking because their roof status is more consequential to game conditions. At T-Mobile the roof matters less either way, which is the second point.</p>
+
+      <p>T-Mobile Park's roof design is unlike the other six retractables. The structure sits over the field and seating bowl, but the sides of the stadium are open. It is not a sealed enclosure. Wind still flows through the ballpark, temperature exchanges with outside air, and Puget Sound marine influence is a real factor even when the roof is technically closed. The Mariners themselves describe the roof primarily as a giant umbrella, not a climate control system.</p>
+
+      <p>Practically for DFS, treat T-Mobile Park as an outdoor stadium regardless of roof status. Wind and cool marine conditions push T-Mobile toward being a pitcher-friendly park, which the numbers show. HR impact at T-Mobile is plus 2.8 percent, essentially league average, and average first-pitch temperature is 66.6 degrees. Do not treat it like Minute Maid Park or loanDepot regardless of what the roof status reports say, because it does not play like those parks under any conditions.</p>
+
+      <h2>The single most useful rule of thumb</h2>
+
+      <p>Retractable roof status is essentially a binary weather switch, and DFS players who ignore it are giving up meaningful edge. On roof-open games at Toronto and Milwaukee in summer, evaluate weather the same way you would at any outdoor park. On roof-open games at Miami, Houston, or Texas, note that the team only opens when conditions are mild, and the game plays more offense than closed-roof games there. On roof-closed games at any park except T-Mobile, ignore outside weather entirely because it does not affect play. On roof-closed games at T-Mobile, still check the wind and temperature because the park is semi-outdoor by design.</p>
+
+      <p>Miss any of these, and you leave money on the table on roof-status days.</p>
+    </div>
+
+    <div class="callout" style="margin-top: 4rem;">
+      <p class="callout__title">Live retractable roof status</p>
+      <p class="callout__body">Every MLB game's current forecast, with roof-toggle notes for retractable venues.</p>
+      <a href="/mlb/today" class="btn btn-storm">Today's MLB slate →</a>
+    </div>
+  </div>
+</article>
+{% endblock %}

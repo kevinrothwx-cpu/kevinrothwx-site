@@ -45,6 +45,14 @@
   ]{% endif %}
 }
 </script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"Tennis Weather","item":"{{ site_url }}/tennis"},
+  {"@type":"ListItem","position":3,"name":"{{ slam.display_name }}","item":"{{ site_url }}/tennis/{{ slam.slam_id }}"},
+  {"@type":"ListItem","position":4,"name":"{{ day.date_label }}"}
+]}
+</script>
 <style>
   .day-page__back {
     display: inline-block;
@@ -242,6 +250,7 @@
     {% else %}
       <p class="day-matches__empty">Match schedule not yet posted by ESPN for this day. Check back closer to start.</p>
     {% endif %}
+  </div>
 
   <p class="day-source-note">
     Forecast source: <strong>{{ slam.weather_source or "WeatherAPI" }}</strong>. Match data via ESPN.

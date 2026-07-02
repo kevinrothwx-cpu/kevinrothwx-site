@@ -99,6 +99,18 @@
       {% endfor %}
     </div>
   {% endif %}
+
+  {# Subtle "Deep dives" section — links to long-form articles for topical
+     authority. Sits below the day's slate so users focused on today's
+     forecast can ignore it, but Google crawls the internal links. #}
+  <section style="max-width:1100px;margin:3rem auto 0;padding:1.5rem;border-top:1px solid var(--mist);">
+    <p class="kicker kicker-storm" style="margin-bottom:0.4rem;">Deep dives by Kevin Roth</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0.7rem;margin-top:0.6rem;">
+      <a href="/mlb-weather/wind-rules" style="font-family:var(--font-sans);font-size:0.88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;border-bottom:1px solid transparent;">Baseball and Wind: What DFS Players Get Half Right →</a>
+      <a href="/mlb-weather/retractable-roofs" style="font-family:var(--font-sans);font-size:0.88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;">How Each MLB Retractable Roof Actually Gets Used →</a>
+      <a href="/mlb-weather/stadium-rankings" style="font-family:var(--font-sans);font-size:0.88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;">Ranking Every MLB Ballpark by Weather Impact →</a>
+    </div>
+  </section>
 </div>
 
 <script>

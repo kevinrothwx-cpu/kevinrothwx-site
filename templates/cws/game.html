@@ -5,6 +5,16 @@
 {% block title %}{{ game.away.name }} vs {{ game.home.name }}, CWS {{ pretty_date }} Weather | Kevin Roth{% endblock %}
 {% block description %}{{ game.away.name }} vs {{ game.home.name }} College World Series weather forecast for {{ pretty_date }}. By sports meteorologist Kevin Roth.{% endblock %}
 
+{% block extra_head %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"College World Series Weather","item":"{{ site_url }}/cws"},
+  {"@type":"ListItem","position":3,"name":"{{ game.away.name }} vs {{ game.home.name }}"}
+]}
+</script>
+{% endblock %}
+
 {% block content %}
 <article class="game-page">
   <p class="game-page__kicker">College World Series · {{ pretty_date }}</p>

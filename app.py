@@ -409,6 +409,26 @@ def mlb_weather():
     return render_template("mlb_weather.html")
 
 
+# ===== MLB Weather deep-dive articles (long-form SEO content) =====
+# Each article is nested under /mlb-weather/* to cluster topically and lift
+# the whole /mlb-weather/* subpath in Google's topical authority scoring.
+# Linked from the /mlb-weather evergreen page and /mlb hub, not homepage.
+
+@app.route("/mlb-weather/wind-rules")
+def mlb_weather_wind_rules():
+    return render_template("mlb-weather/wind-rules.html", canonical_path="/mlb-weather/wind-rules")
+
+
+@app.route("/mlb-weather/retractable-roofs")
+def mlb_weather_retractable_roofs():
+    return render_template("mlb-weather/retractable-roofs.html", canonical_path="/mlb-weather/retractable-roofs")
+
+
+@app.route("/mlb-weather/stadium-rankings")
+def mlb_weather_stadium_rankings():
+    return render_template("mlb-weather/stadium-rankings.html", canonical_path="/mlb-weather/stadium-rankings")
+
+
 @app.route("/nfl-weather")
 def nfl_weather():
     return render_template("nfl_weather.html")
@@ -1506,32 +1526,42 @@ def admin_cws():
 # ===== SEO files =====
 
 # Personal-site sitemap (kevinrothwx.com)
+# Format: (path, priority, changefreq, lastmod). If lastmod is None the
+# sitemap route substitutes today's date. Explicit lastmod dates should
+# reflect the last meaningful edit — this is what Google actually uses
+# as a freshness signal.
 KEVINROTHWX_STATIC_URLS = [
-    ("/", "1.0", "weekly"),
-    ("/about", "0.9", "monthly"),
-    ("/press", "0.8", "monthly"),
-    ("/overcast", "0.9", "monthly"),
-    ("/contact", "0.5", "yearly"),
+    ("/",         "1.0", "weekly",  "2026-06-15"),
+    ("/about",    "0.9", "monthly", "2026-06-15"),
+    ("/press",    "0.8", "monthly", "2026-06-15"),
+    ("/overcast", "0.9", "monthly", "2026-06-15"),
+    ("/contact",  "0.5", "yearly",  "2026-06-01"),
 ]
 
 # Product-site sitemap (mysportsweather.com)
+# Sport hubs are refreshed continually — use today. Evergreen content
+# (articles, about, contact) gets a fixed lastmod tied to publication or
+# last edit, so Google doesn't treat every URL as freshly modified daily.
 MYSPORTSWEATHER_STATIC_URLS = [
-    ("/", "1.0", "daily"),
-    ("/mlb", "0.95", "hourly"),
-    ("/mlb/tomorrow", "0.9", "hourly"),
-    ("/worldcup", "0.9", "hourly"),
-    ("/cws", "0.85", "hourly"),
-    ("/golf", "0.85", "daily"),
-    ("/nascar", "0.85", "daily"),
-    ("/ncaaf", "0.85", "daily"),
-    ("/nfl", "0.9", "hourly"),
-    ("/mls", "0.85", "hourly"),
-    ("/mlb-weather", "0.8", "monthly"),
-    ("/nfl-weather", "0.8", "monthly"),
-    ("/pga-weather", "0.8", "monthly"),
-    ("/overcast", "0.9", "monthly"),
-    ("/about", "0.7", "monthly"),
-    ("/contact", "0.5", "yearly"),
+    ("/",                                 "1.0",  "daily",   None),
+    ("/mlb",                              "0.95", "hourly",  None),
+    ("/mlb/tomorrow",                     "0.9",  "hourly",  None),
+    ("/worldcup",                         "0.9",  "hourly",  None),
+    ("/cws",                              "0.85", "hourly",  None),
+    ("/golf",                             "0.85", "daily",   None),
+    ("/nascar",                           "0.85", "daily",   None),
+    ("/ncaaf",                            "0.85", "daily",   None),
+    ("/nfl",                              "0.9",  "hourly",  None),
+    ("/mls",                              "0.85", "hourly",  None),
+    ("/mlb-weather",                      "0.8",  "monthly", "2026-06-27"),
+    ("/mlb-weather/wind-rules",           "0.8",  "monthly", "2026-06-27"),
+    ("/mlb-weather/retractable-roofs",    "0.8",  "monthly", "2026-06-27"),
+    ("/mlb-weather/stadium-rankings",     "0.8",  "monthly", "2026-06-27"),
+    ("/nfl-weather",                      "0.8",  "monthly", "2026-06-15"),
+    ("/pga-weather",                      "0.8",  "monthly", "2026-06-15"),
+    ("/overcast",                         "0.9",  "monthly", "2026-06-15"),
+    ("/about",                            "0.7",  "monthly", "2026-06-15"),
+    ("/contact",                          "0.5",  "yearly",  "2026-06-01"),
 ]
 
 
@@ -1621,10 +1651,19 @@ def sitemap():
     today_str = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d")
     xml = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for path, priority, changefreq in all_urls:
+    for entry in all_urls:
+        # Entries are either (path, priority, changefreq) — legacy 3-tuple
+        # from the dynamic builders — or (path, priority, changefreq, lastmod)
+        # from the static tables. lastmod=None means "use today's date."
+        if len(entry) == 4:
+            path, priority, changefreq, lastmod = entry
+        else:
+            path, priority, changefreq = entry
+            lastmod = None
+        lastmod_str = lastmod or today_str
         xml.append("  <url>")
         xml.append(f"    <loc>{base_url}{path}</loc>")
-        xml.append(f"    <lastmod>{today_str}</lastmod>")
+        xml.append(f"    <lastmod>{lastmod_str}</lastmod>")
         xml.append(f"    <changefreq>{changefreq}</changefreq>")
         xml.append(f"    <priority>{priority}</priority>")
         xml.append("  </url>")
@@ -1839,7 +1878,9 @@ def admin_indexnow_push():
     base_url = brand["site_url"]
 
     if request.method == "POST":
-        urls = [f"{base_url}{path}" for (path, _, _) in MYSPORTSWEATHER_STATIC_URLS]
+        # MYSPORTSWEATHER_STATIC_URLS entries are 4-tuples
+        # (path, priority, changefreq, lastmod). Only path is needed here.
+        urls = [f"{base_url}{path}" for (path, _, _, _) in MYSPORTSWEATHER_STATIC_URLS]
         d = _eastern_today()
         slate, _ = get_slate(d, allow_build=False)
         if slate:
@@ -1847,6 +1888,7 @@ def admin_indexnow_push():
             for g in slate:
                 urls.append(f"{base_url}/mlb/{d}/{g['slug']}")
         ok = indexnow_notify(urls, host="mysportsweather.com")
+        msg = f"Pushed {len(urls)} URLs to IndexNow. Result: {'OK' if ok else 'FAILED (check logs)'}"
         return Response(
             f"<html><body><p>{msg}</p><p><a href='/admin/indexnow'>Back</a></p></body></html>",
             mimetype="text/html"

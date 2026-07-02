@@ -2,7 +2,7 @@
 {% from "worldcup/_macros.html" import wc_hourly_table %}
 {% from "mlb/_macros.html" import weather_icon %}
 
-{% block title %}{{ match.away.name }} vs {{ match.home.name }}, {{ pretty_date }} Weather | MLS | Kevin Roth{% endblock %}
+{% block title %}{{ match.away.short }} vs {{ match.home.short }} Weather, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}{{ match.away.name }} vs {{ match.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ match.kickoff_eastern_str }} at {{ match.venue }}. By sports meteorologist Kevin Roth.{% endblock %}
 
 {% block og_title %}{{ match.away.name }} vs {{ match.home.name }}, MLS Weather Forecast{% endblock %}
@@ -61,6 +61,13 @@
   ]{% endif %}
 }
 </script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"MLS Weather","item":"{{ site_url }}/mls"},
+  {"@type":"ListItem","position":3,"name":"{{ match.away.name }} vs {{ match.home.name }}"}
+]}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -98,6 +105,7 @@
       </div>
     </div>
   {% endif %}
+
 
   {% if analysis and analysis.paragraph %}
     <section class="stadium-notes">

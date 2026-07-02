@@ -4,6 +4,16 @@
 {% block title %}{{ tournament.name }}, Weather Forecast | Kevin Roth{% endblock %}
 {% block description %}{{ tournament.name }} weather forecast for every round. {{ tournament.course }} in {{ tournament.location }}. By sports meteorologist Kevin Roth.{% endblock %}
 
+{% block extra_head %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"PGA Tour Weather","item":"{{ site_url }}/golf"},
+  {"@type":"ListItem","position":3,"name":"{{ tournament.name }}"}
+]}
+</script>
+{% endblock %}
+
 {% block content %}
 <article class="game-page">
   <p class="game-page__kicker">PGA Tour</p>

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Ranking Every MLB Ballpark by Weather Impact | Kevin Roth{% endblock %}
+{% block description %}All 30 MLB ballparks ranked by weather-driven offensive impact. Data from 22,610 games. Full rankings, monthly breakdowns, and DFS-relevant weather extremes.{% endblock %}
+
+{% block og_title %}Ranking Every MLB Ballpark by Weather Impact{% endblock %}
+{% block og_description %}22,610 games of data ranking every MLB park by weather impact.{% endblock %}
+
+{% block extra_head %}
+<link rel="canonical" href="https://mysportsweather.com/mlb-weather/stadium-rankings">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"Ranking Every MLB Ballpark by Weather Impact","author":{"@type":"Person","@id":"https://mysportsweather.com/about#kevin-roth","name":"Kevin Roth","jobTitle":"Sports Meteorologist"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://mysportsweather.com/"},"mainEntityOfPage":"https://mysportsweather.com/mlb-weather/stadium-rankings","about":["MLB weather","Ballpark rankings","Sports meteorology","DFS strategy"],"datePublished":"2026-07-02","inLanguage":"en-US"}
+</script>
+<style>
+  .rank-table { width: 100%; border-collapse: collapse; font-family: var(--font-sans); font-size: 0.82rem; margin: 1.5rem 0 2.5rem; }
+  .rank-table th, .rank-table td { padding: 0.45rem 0.5rem; text-align: right; border-bottom: 1px solid var(--mist); white-space: nowrap; }
+  .rank-table th { background: var(--paper); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.68rem; color: var(--slate); }
+  .rank-table td.park, .rank-table th.park { text-align: left; }
+  .rank-table td.rank, .rank-table th.rank { text-align: center; color: var(--fog); }
+  .rank-table td.hr-pos { color: #15803d; font-weight: 600; }
+  .rank-table td.hr-neg { color: #b91c1c; font-weight: 600; }
+  .rank-table td.hr-mid { color: var(--slate); }
+  .rank-scroll { overflow-x: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="section">
+  <div class="container-tight">
+    <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">MLB Weather · Deep Dive</p>
+    <h1 class="display" style="margin-bottom: 1rem;">Ranking Every MLB Ballpark by Weather Impact</h1>
+    <p class="kicker" style="margin-bottom: 3rem;">By <a href="/about" style="color:inherit">Kevin Roth</a>, Sports Meteorologist · Data compiled by <a href="https://app.kevinrothwx.com" style="color:inherit">OVERcast</a></p>
+    <div class="prose">
+      <p>The gap between the most home-run-friendly ballpark in baseball and the most home-run-suppressing one is 47 percentage points. Yankee Stadium plays 20.1 percent above the MLB average for home runs. Oracle Park plays 26.6 percent below. If you are playing DFS and treating every park like an average environment, you are losing edge on almost every slate.</p>
+
+      <p>Weather is a big part of why. Not the whole story, because park dimensions and short porches matter too, but weather explains most of the extremes and almost all of the month-to-month variance within any single park. Here is a full ranking of MLB ballparks by weather-driven offensive impact, based on 22,610 regular-season games from 2015 through 2025.</p>
+    </div>
+
+    <div class="rank-scroll">
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th class="rank">#</th>
+            <th class="park">Park</th>
+            <th>Avg Temp</th>
+            <th>Avg Wind</th>
+            <th>HR vs Lg</th>
+            <th>R vs Lg</th>
+            <th>95°F+</th>
+            <th>Under 45°F</th>
+            <th>20+ mph</th>
+            <th>Delay %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="rank">1</td><td class="park">Yankee Stadium</td><td>73.1°</td><td>7.9</td><td class="hr-pos">+20.1%</td><td class="hr-mid">+0.1%</td><td>0.8%</td><td>1.9%</td><td>2.0%</td><td>8.9%</td></tr>
+          <tr><td class="rank">2</td><td class="park">Sutter Health Park</td><td>75.9°</td><td>4.5</td><td class="hr-pos">+18.6%</td><td class="hr-pos">+9.9%</td><td>2.5%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td></tr>
+          <tr><td class="rank">3</td><td class="park">Great American Ball Park</td><td>75.9°</td><td>5.6</td><td class="hr-pos">+17.7%</td><td class="hr-pos">+6.1%</td><td>0.0%</td><td>1.1%</td><td>0.4%</td><td>12.2%</td></tr>
+          <tr><td class="rank">4</td><td class="park">Oriole Park at Camden Yards</td><td>76.2°</td><td>5.8</td><td class="hr-pos">+17.4%</td><td class="hr-pos">+4.7%</td><td>1.1%</td><td>0.2%</td><td>0.1%</td><td>11.6%</td></tr>
+          <tr><td class="rank">5</td><td class="park">Dodger Stadium</td><td>75.0°</td><td>5.6</td><td class="hr-pos">+12.0%</td><td class="hr-neg">-5.6%</td><td>3.3%</td><td>0.0%</td><td>0.2%</td><td>0.9%</td></tr>
+          <tr><td class="rank">6</td><td class="park">Coors Field</td><td>74.1°</td><td>7.7</td><td class="hr-pos">+12.0%</td><td class="hr-pos">+27.5%</td><td>1.2%</td><td>2.7%</td><td>3.7%</td><td>8.5%</td></tr>
+          <tr><td class="rank">7</td><td class="park">Rogers Centre</td><td>67.2°</td><td>6.1</td><td class="hr-pos">+10.6%</td><td class="hr-pos">+1.8%</td><td>0.0%</td><td>5.3%</td><td>1.9%</td><td>0.1%</td></tr>
+          <tr><td class="rank">8</td><td class="park">Angel Stadium</td><td>72.3°</td><td>6.5</td><td class="hr-pos">+9.0%</td><td class="hr-mid">+0.2%</td><td>0.8%</td><td>0.0%</td><td>0.0%</td><td>0.5%</td></tr>
+          <tr><td class="rank">9</td><td class="park">Citizens Bank Park</td><td>75.5°</td><td>6.9</td><td class="hr-pos">+8.5%</td><td class="hr-pos">+1.2%</td><td>0.2%</td><td>1.0%</td><td>0.8%</td><td>7.1%</td></tr>
+          <tr><td class="rank">10</td><td class="park">Minute Maid Park</td><td>82.0°</td><td>0.9</td><td class="hr-pos">+6.3%</td><td class="hr-neg">-3.8%</td><td>2.6%</td><td>0.0%</td><td>0.3%</td><td>0.3%</td></tr>
+          <tr><td class="rank">11</td><td class="park">Target Field</td><td>71.1°</td><td>7.7</td><td class="hr-pos">+4.5%</td><td class="hr-pos">+4.3%</td><td>0.0%</td><td>3.8%</td><td>1.2%</td><td>7.9%</td></tr>
+          <tr><td class="rank">12</td><td class="park">American Family Field</td><td>69.0°</td><td>4.0</td><td class="hr-pos">+4.3%</td><td class="hr-neg">-3.2%</td><td>0.1%</td><td>6.7%</td><td>0.3%</td><td>0.4%</td></tr>
+          <tr><td class="rank">13</td><td class="park">T-Mobile Park</td><td>66.6°</td><td>5.0</td><td class="hr-pos">+2.8%</td><td class="hr-neg">-8.2%</td><td>0.0%</td><td>0.6%</td><td>0.0%</td><td>0.0%</td></tr>
+          <tr><td class="rank">14</td><td class="park">Truist Park</td><td>79.7°</td><td>6.1</td><td class="hr-pos">+2.5%</td><td class="hr-pos">+2.8%</td><td>0.3%</td><td>0.1%</td><td>0.1%</td><td>8.3%</td></tr>
+          <tr><td class="rank">15</td><td class="park">Globe Life Field</td><td>81.3°</td><td>0.9</td><td class="hr-pos">+1.7%</td><td class="hr-neg">-2.9%</td><td>11.0%</td><td>0.2%</td><td>0.0%</td><td>0.0%</td></tr>
+          <tr><td class="rank">16</td><td class="park">Nationals Park</td><td>77.2°</td><td>6.6</td><td class="hr-pos">+1.5%</td><td class="hr-pos">+2.3%</td><td>0.8%</td><td>1.0%</td><td>0.6%</td><td>10.1%</td></tr>
+          <tr><td class="rank">17</td><td class="park">Guaranteed Rate Field</td><td>71.3°</td><td>8.1</td><td class="hr-pos">+0.5%</td><td class="hr-neg">-2.5%</td><td>0.2%</td><td>3.0%</td><td>1.6%</td><td>7.9%</td></tr>
+          <tr><td class="rank">18</td><td class="park">Citi Field</td><td>73.1°</td><td>8.0</td><td class="hr-neg">-2.3%</td><td class="hr-neg">-8.2%</td><td>0.2%</td><td>1.3%</td><td>1.2%</td><td>8.0%</td></tr>
+          <tr><td class="rank">19</td><td class="park">Wrigley Field</td><td>70.8°</td><td>8.4</td><td class="hr-neg">-2.4%</td><td class="hr-neg">-3.2%</td><td>0.1%</td><td>3.9%</td><td>2.3%</td><td>5.9%</td></tr>
+          <tr><td class="rank">20</td><td class="park">Tropicana Field</td><td>72.0°</td><td>0.0</td><td class="hr-neg">-2.8%</td><td class="hr-neg">-5.2%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>1.3%</td></tr>
+          <tr><td class="rank">21</td><td class="park">Fenway Park</td><td>69.2°</td><td>7.3</td><td class="hr-neg">-3.6%</td><td class="hr-pos">+11.0%</td><td>0.1%</td><td>2.9%</td><td>1.2%</td><td>6.2%</td></tr>
+          <tr><td class="rank">22</td><td class="park">Chase Field</td><td>91.3°</td><td>2.1</td><td class="hr-neg">-4.6%</td><td class="hr-pos">+7.9%</td><td>43.6%</td><td>0.0%</td><td>0.3%</td><td>0.4%</td></tr>
+          <tr><td class="rank">23</td><td class="park">Petco Park</td><td>69.1°</td><td>8.2</td><td class="hr-neg">-5.3%</td><td class="hr-neg">-7.7%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.9%</td></tr>
+          <tr><td class="rank">24</td><td class="park">Progressive Field</td><td>71.2°</td><td>8.6</td><td class="hr-neg">-6.1%</td><td class="hr-neg">-3.8%</td><td>0.0%</td><td>3.2%</td><td>2.4%</td><td>7.8%</td></tr>
+          <tr><td class="rank">25</td><td class="park">Comerica Park</td><td>71.5°</td><td>8.1</td><td class="hr-neg">-7.6%</td><td class="hr-neg">-0.3%</td><td>0.1%</td><td>3.8%</td><td>0.8%</td><td>6.6%</td></tr>
+          <tr><td class="rank">26</td><td class="park">Busch Stadium</td><td>77.9°</td><td>5.7</td><td class="hr-neg">-15.5%</td><td class="hr-neg">-6.8%</td><td>1.2%</td><td>0.4%</td><td>0.1%</td><td>7.2%</td></tr>
+          <tr><td class="rank">27</td><td class="park">Kauffman Stadium</td><td>78.4°</td><td>8.7</td><td class="hr-neg">-17.7%</td><td class="hr-pos">+1.4%</td><td>2.3%</td><td>0.5%</td><td>2.3%</td><td>5.4%</td></tr>
+          <tr><td class="rank">28</td><td class="park">loanDepot park</td><td>80.9°</td><td>1.0</td><td class="hr-neg">-18.2%</td><td class="hr-neg">-5.7%</td><td>0.0%</td><td>0.0%</td><td>0.0%</td><td>0.3%</td></tr>
+          <tr><td class="rank">29</td><td class="park">PNC Park</td><td>73.1°</td><td>5.4</td><td class="hr-neg">-21.2%</td><td class="hr-neg">-2.8%</td><td>0.0%</td><td>3.0%</td><td>0.5%</td><td>11.4%</td></tr>
+          <tr><td class="rank">30</td><td class="park">Oracle Park</td><td>63.1°</td><td>10.9</td><td class="hr-neg">-26.6%</td><td class="hr-neg">-8.5%</td><td>0.0%</td><td>0.0%</td><td>11.5%</td><td>1.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <h2>What the rankings actually show</h2>
+
+      <p>Yankee Stadium is the most home-run-friendly park in baseball by a comfortable margin. The reasons are cumulative. The short porch in right field is well-known. Summer weather in the Bronx runs warm and humid from June through September, and the data reflects this: July and August at Yankee Stadium produce home run impact numbers of plus 22.3 percent and plus 25.7 percent. April at the same ballpark runs plus 5.8 percent. Same short porch, different environment.</p>
+
+      <p>Sutter Health Park in West Sacramento, the Athletics' temporary home while the team waits for Las Vegas, ranks second at plus 18.6 percent. It is a minor league-sized stadium being used for major league games, which is most of the story. Sacramento summers also run hot, which contributes at the margin. The dataset for Sutter Health is small compared to the ten-year windows of the other parks, so those numbers may move as more games accumulate.</p>
+
+      <p>Great American Ball Park in Cincinnati and Camden Yards in Baltimore round out the top four at plus 17.7 percent and plus 17.4 percent. Both are known hitter-friendly parks by dimension, both sit in warm summer climates, and both show significant month-to-month HR variance driven by weather.</p>
+
+      <p>Oracle Park in San Francisco is the biggest home run suppressor in baseball, and it is not close. The average wind at Oracle is 10.9 mph, the highest in MLB by a wide margin. 11.5 percent of games at Oracle have 20 mph or more of sustained wind, an order of magnitude more common than the next windiest park. Average first-pitch temperature at Oracle is 63.1 degrees, the coldest in baseball. Cold, dense marine air combined with consistent high wind suppresses fly ball carry more than any park in the modern era.</p>
+
+      <p>Coors Field, everyone's assumption for the most home-run-friendly park in baseball, ranks sixth. The humidor works. Home runs are up 12 percent, well below what naive altitude math would suggest, but runs are up 27.5 percent because the wide outfield alleys turn fly balls into doubles and triples instead of home runs. The Coors story is now about total offense, not specifically home runs.</p>
+
+      <p>PNC Park in Pittsburgh is the most surprising bottom-five entry for a lot of DFS players. Home runs there are down 21.2 percent. The weather profile is mild rather than harsh, with an average first-pitch temperature of 73 degrees and moderate 5.4 mph wind. The HR suppression at PNC is driven more by park geometry than by weather, but the number is the number. If you play power hitters in PNC games without adjusting, you are giving up ground.</p>
+
+      <h2>Runs and HRs are not the same story</h2>
+
+      <p>Some parks impact runs and home runs very differently, and DFS players who look only at one number miss the other.</p>
+
+      <p>Fenway Park runs at minus 3.6 percent for home runs, essentially league average, but plus 11 percent for runs. The Green Monster in left field turns some fly balls that would be home runs elsewhere into doubles and holds up other balls short of the wall. The net result is a park that produces extra doubles and slightly fewer home runs than average.</p>
+
+      <p>Kauffman Stadium is a different pattern. Minus 17.7 percent for HRs, but only plus 1.4 percent for runs, close to league average. Kansas City historically had spacious outfield dimensions where gap hits found room, and speed and gap power mattered more than pure power. Worth noting that the Royals moved the outfield fences in for the 2025 season, so the future version of Kauffman will play differently than what the 2015 to 2025 dataset shows. The historical HR suppression should ease going forward.</p>
+
+      <p>Coors is the most extreme split: plus 12 percent HRs, plus 27.5 percent runs. The gap between those two numbers, 15.5 percentage points, is where the run environment actually lives.</p>
+
+      <p>The lesson: if you evaluate parks only on HR impact, you miss the games where runs are the real edge. Denver, Boston, and to a lesser degree Kansas City reward run stacking more than raw power.</p>
+
+      <h2>The weather variables that actually differ by park</h2>
+
+      <p>Some parks have wildly different weather profiles that never show up in season-long averages. Here is what the data shows on extreme conditions.</p>
+
+      <p><strong>Heat.</strong> Chase Field in Phoenix has 43.6 percent of games at 95 degrees or hotter as the outdoor temperature at first pitch. That is not a typo. Nearly half. Globe Life Field in Texas is second at 11 percent. Every other park is under 4 percent. But both of those parks have retractable roofs that close for essentially every summer game. Chase Field's roof is closed 100 percent of the time in July and August. Globe Life Field is 99 to 100 percent closed from June through August. So while the outdoor conditions are extreme, the actual playing conditions at those parks in summer are climate-controlled at roughly 72 degrees with no wind. The heat number describes the environment the fans walk through, not the environment the game is played in.</p>
+
+      <p><strong>Cold.</strong> Wrigley Field (3.9 percent of games under 45 degrees), Detroit (3.8 percent), and Target Field (3.8 percent) are the coldest environments where cold weather actually reaches the field. Milwaukee and Toronto both show high cold-day counts in the raw data (6.7 percent and 5.3 percent respectively), but both close their retractable roofs for the overwhelming majority of April games. American Family Field opens for only 6 percent of April games. Rogers Centre opens for only 5 percent. So while Milwaukee and Toronto see cold outdoor conditions in early season, those games are played in climate-controlled indoor environments. The three uncovered northern venues above are the ones where cold air actually affects play. Wrigley below 45 degrees is a different park than Wrigley in July, and cold does not disappear from the fly ball equation just because the wind is calm.</p>
+
+      <p><strong>Wind.</strong> Oracle Park is at 11.5 percent of games with 20 mph or more sustained wind. The next windiest park is Coors Field at 3.7 percent. The gap between Oracle and everywhere else is a full order of magnitude. San Francisco is not slightly windy. It is dramatically windy in a way that dictates the character of the park.</p>
+
+      <p>Wrigley Field, famous for wind, sits at 2.3 percent for 20 mph or more games. The Wrigley wind story is real, but the extreme wind days are less common than the reputation suggests. What Wrigley has is inconsistency and the ballpark's known responsiveness to wind, not a raw frequency of high-wind days.</p>
+
+      <p><strong>Rain delay probability.</strong> Great American Ball Park in Cincinnati has a 12.2 percent delay rate. Camden Yards is at 11.6 percent, PNC Park at 11.4 percent, and Nationals Park at 10.1 percent. These are the delay-prone parks. West coast venues are essentially immune, with all California and Arizona parks under 1.5 percent. If you play late DFS slates with contingent lineup swaps, the delay-prone list is worth memorizing.</p>
+
+      <h2>Monthly seasonality is bigger than most players think</h2>
+
+      <p>Every park's weather-driven offense varies by month, and the swings are large enough to matter for individual game evaluations.</p>
+
+      <p>Yankee Stadium: plus 5.8 percent April, plus 25.7 percent August, minus 15.7 percent October. Same ballpark. Same short porch. Different weather.</p>
+
+      <p>Great American Ball Park: plus 5.8 percent April, plus 26.1 percent June, minus 22.8 percent October. A 49-percentage-point swing across the season.</p>
+
+      <p>Coors Field: plus 1.2 percent April, plus 23.1 percent August, minus 36.8 percent October. The October number is where cold Denver air combines with the humidor to erase Coors as a home run park entirely.</p>
+
+      <p>The pattern holds at every park. Season averages hide the real DFS-relevant seasonality. April is not July. September is not August. October is a different environment at some venues.</p>
+
+      <h2>Practical rules from the data</h2>
+
+      <p>A few DFS-oriented takeaways.</p>
+
+      <p>Do not rely on annual averages for individual games. Monthly variance within a single park is often bigger than the average difference between parks. A July game at a mid-tier park often outproduces an April game at Yankee Stadium.</p>
+
+      <p>Adjust runs and HRs separately. The parks that boost total offense are not always the parks that boost home runs. Fenway, Coors, and Kauffman all skew toward extra-base hits over homers.</p>
+
+      <p>Note the extreme weather parks and check the roof status. Wrigley, Detroit, and Target Field play in genuine cold when the temperature drops. Chase Field and Globe Life Field only feel heat when the roof is open, which is essentially never in July and August. Milwaukee and Toronto have cold conditions that get filtered out by their roofs in early season. The interaction between outdoor weather and roof status determines the playing conditions at each of these parks, not the raw weather numbers alone.</p>
+
+      <p>Rain delay probability matters for late slates. If you play East Coast or Midwest games in the summer and your late swap is contingent on earlier games being final, use the delay-prone list above to gauge risk.</p>
+
+      <p>Oracle Park is a different sport. The 47-percentage-point gap between Yankee Stadium and Oracle Park is not park factors alone. It is weather. Treat San Francisco games as their own category and adjust everything downward for offense.</p>
+
+      <p>Every park has a story in the numbers. Players who consistently cash on weather-affected slates know the story of each park by heart.</p>
+    </div>
+
+    <div class="callout" style="margin-top: 4rem;">
+      <p class="callout__title">See every game's forecast on the current slate</p>
+      <p class="callout__body">Hourly weather at every ballpark for every game today.</p>
+      <a href="/mlb/today" class="btn btn-storm">Today's MLB slate →</a>
+    </div>
+  </div>
+</article>
+{% endblock %}
