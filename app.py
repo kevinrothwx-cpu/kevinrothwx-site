@@ -20,6 +20,26 @@ from mlb.cache import get_slate, start_warmer
 from mlb.slate import precip_color, precip_icon
 from mlb.storage import save_writeup, attach_writeups_to_slate, get_writeup
 from mlb.wind import wind_compass
+from mlb.park_metadata import PARK_METADATA
+from mlb.stadium_content import STADIUM_CONTENT, STADIUM_BY_SLUG
+from mlb.team_content import (
+    TEAM_CONTENT, TEAM_BY_SLUG, TEAM_TO_DIVISION, DIVISIONS,
+)
+from nfl.venues import NFL_TEAMS
+from nfl.stadium_content import (
+    STADIUM_CONTENT as NFL_STADIUM_CONTENT,
+    STADIUM_BY_SLUG_NFL,
+)
+from nfl.team_content import (
+    TEAM_CONTENT_NFL, TEAM_BY_SLUG_NFL,
+    TEAM_TO_DIVISION_NFL, DIVISIONS_NFL,
+)
+from nascar.tracks import NASCAR_TRACKS
+from nascar.track_content import TRACK_CONTENT, TRACK_BY_SLUG
+from golf.courses import PGA_COURSES
+from golf.course_content import COURSE_CONTENT, COURSE_BY_SLUG
+from cfb.venues import FBS_TEAMS
+from cfb.stadium_content import STADIUM_CONTENT_CFB, STADIUM_BY_SLUG_CFB
 
 from worldcup.cache import get_matchday, start_warmer as start_wc_warmer
 from worldcup.schedule import match_slug as wc_match_slug
@@ -406,7 +426,13 @@ def overcast():
 
 @app.route("/mlb-weather")
 def mlb_weather():
-    return render_template("mlb_weather.html")
+    # Provide the per-park content list so the hub page can index all
+    # /mlb/stadium/<slug> landing pages (inbound links help discovery).
+    stadium_list = [
+        {"park_name": name, "slug": c["slug"]}
+        for name, c in sorted(STADIUM_CONTENT.items())
+    ]
+    return render_template("mlb_weather.html", stadium_content_list=stadium_list)
 
 
 # ===== MLB Weather deep-dive articles (long-form SEO content) =====
@@ -585,6 +611,138 @@ def mlb_game(date_str, slug):
         pretty_date=pretty_date,
     )
 
+
+# ===== MLB stadium landing pages =====
+# Evergreen per-ballpark weather guides. One page per current MLB stadium
+# using PARK_METADATA (geographic facts) + STADIUM_CONTENT (per-park
+# narrative Kevin can hand-verify).
+
+def _cf_direction_label(bearing_degrees):
+    """Convert CF bearing (0-359) into a short human direction label."""
+    if bearing_degrees is None:
+        return "—"
+    dirs = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+            "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+    idx = int(((bearing_degrees + 11.25) % 360) / 22.5)
+    return dirs[idx]
+
+
+@app.route("/mlb/stadium/<slug>")
+def mlb_stadium(slug):
+    """Per-ballpark evergreen weather guide."""
+    entry = STADIUM_BY_SLUG.get(slug)
+    if not entry:
+        abort(404)
+    park_name, content = entry
+    park = PARK_METADATA.get(park_name)
+    if not park:
+        abort(404)
+    cf_direction = _cf_direction_label(park.get("cf_bearing_degrees"))
+    # Look up today/tomorrow's game at this park so the page can show the
+    # actual live forecast, not just a "go to /mlb" link. Users landing
+    # from search for "Wrigley Field weather" get the forecast right here.
+    next_game, next_date, next_when = _find_next_mlb_game_at_park(park_name)
+    return render_template(
+        "mlb/stadium.html",
+        park_name=park_name,
+        park=park,
+        content=content,
+        cf_direction=cf_direction,
+        next_game=next_game,
+        next_date=next_date,
+        next_when=next_when,
+        canonical_path=f"/mlb/stadium/{slug}",
+    )
+
+
+def _park_slug_for_team(team_name):
+    """Look up stadium slug given a team name by scanning STADIUM_CONTENT."""
+    for name, c in STADIUM_CONTENT.items():
+        pm = PARK_METADATA.get(name, {})
+        if pm.get("team") == team_name:
+            return c["slug"]
+    return None
+
+
+def _find_next_mlb_game_for_team(team_name):
+    """Return (game_dict, date_str, when_label) for today's or tomorrow's
+    game featuring this team, or (None, None, None). Used on team pages to
+    show today's forecast inline instead of just a link."""
+    today = _eastern_today()
+    tomorrow = _eastern_tomorrow()
+    for date_str, label in [(today, "Today"), (tomorrow, "Tomorrow")]:
+        slate, _ = get_slate(date_str, allow_build=False)
+        if not slate:
+            continue
+        for g in slate:
+            if g.get("home_name") == team_name or g.get("away_name") == team_name:
+                return g, date_str, label
+    return None, None, None
+
+
+def _find_next_mlb_game_at_park(park_name):
+    """Return (game_dict, date_str, when_label) for today's or tomorrow's
+    game at this park. Used on stadium pages."""
+    today = _eastern_today()
+    tomorrow = _eastern_tomorrow()
+    for date_str, label in [(today, "Today"), (tomorrow, "Tomorrow")]:
+        slate, _ = get_slate(date_str, allow_build=False)
+        if not slate:
+            continue
+        for g in slate:
+            if g.get("venue") == park_name:
+                return g, date_str, label
+    return None, None, None
+
+
+@app.route("/mlb/team/<slug>")
+def mlb_team(slug):
+    """Per-team evergreen weather playbook. Cross-links to the team's
+    stadium page and to division-rival pages so the SEO graph is dense
+    with natural internal links."""
+    entry = TEAM_BY_SLUG.get(slug)
+    if not entry:
+        abort(404)
+    team_name, content = entry
+    park = PARK_METADATA.get(content["home_park"])
+    if not park:
+        abort(404)
+    home_park_slug = STADIUM_CONTENT[content["home_park"]]["slug"]
+    division = TEAM_TO_DIVISION.get(team_name, "")
+
+    # Build division-rival cross-links (skip self)
+    rivals = []
+    for rival_team in DIVISIONS.get(division, []):
+        if rival_team == team_name:
+            continue
+        rival_content = TEAM_CONTENT.get(rival_team)
+        rival_park_slug = _park_slug_for_team(rival_team)
+        if not rival_content or not rival_park_slug:
+            continue
+        rivals.append({
+            "team_name": rival_team,
+            "team_slug": rival_content["slug"],
+            "park_name": rival_content["home_park"],
+            "park_slug": rival_park_slug,
+        })
+
+    # Look up today/tomorrow's game featuring this team so the page can
+    # show the actual forecast inline. This is the whole point of the SEO
+    # pages: deliver the forecast to the searcher, then funnel back to /mlb.
+    next_game, next_date, next_when = _find_next_mlb_game_for_team(team_name)
+    return render_template(
+        "mlb/team.html",
+        team_name=team_name,
+        content=content,
+        park=park,
+        home_park_slug=home_park_slug,
+        division=division,
+        division_rivals=rivals,
+        next_game=next_game,
+        next_date=next_date,
+        next_when=next_when,
+        canonical_path=f"/mlb/team/{slug}",
+    )
 
 
 # ===== World Cup 2026 =====
@@ -914,6 +1072,214 @@ def nfl_game(date_str, slug):
         pretty_date=pretty_date,
         site_url=brand["site_url"],
         canonical_path=f"/nfl/{date_str}/{slug}",
+    )
+
+
+# ===== NFL stadium landing pages =====
+
+def _find_next_nfl_game_at_venue(stadium_name):
+    """Return (game_dict, date_str, when_label) for today's or tomorrow's
+    NFL game at this stadium. Used on NFL stadium pages to surface the
+    forecast inline. Returns (None, None, None) during offseason."""
+    try:
+        games, _ = get_nfl_slate(allow_build=False)
+    except Exception:
+        return None, None, None
+    if not games:
+        return None, None, None
+    today = _eastern_today()
+    tomorrow = _eastern_tomorrow()
+    for date_label, label in [(today, "Today"), (tomorrow, "Tomorrow")]:
+        for g in games:
+            venue_meta = g.get("venue_meta") or {}
+            if venue_meta.get("name") == stadium_name and g.get("kickoff_date_eastern") == date_label:
+                return g, date_label, label
+    return None, None, None
+
+
+@app.route("/nfl/stadium/<slug>")
+def nfl_stadium(slug):
+    """Per-NFL-stadium evergreen weather guide."""
+    entry = STADIUM_BY_SLUG_NFL.get(slug)
+    if not entry:
+        abort(404)
+    stadium_name, content = entry
+    # Look up the stadium dict from NFL_TEAMS (any team that plays there
+    # will do — MetLife and SoFi are shared but the stadium data is the
+    # same for both).
+    stadium = None
+    for t in NFL_TEAMS.values():
+        if t.get("stadium", {}).get("name") == stadium_name:
+            stadium = t["stadium"]
+            break
+    if not stadium:
+        abort(404)
+    next_game, next_date, next_when = _find_next_nfl_game_at_venue(stadium_name)
+    return render_template(
+        "nfl/stadium.html",
+        stadium_name=stadium_name,
+        stadium=stadium,
+        content=content,
+        next_game=next_game,
+        next_date=next_date,
+        next_when=next_when,
+        canonical_path=f"/nfl/stadium/{slug}",
+    )
+
+
+# ===== NFL team landing pages =====
+
+@app.route("/nfl/team/<slug>")
+def nfl_team_page(slug):
+    entry = TEAM_BY_SLUG_NFL.get(slug)
+    if not entry:
+        abort(404)
+    team_name, content = entry
+    # Look up NFL_TEAMS row
+    team_data = None
+    for t in NFL_TEAMS.values():
+        if t.get("name") == team_name:
+            team_data = t
+            break
+    if not team_data:
+        abort(404)
+    stadium = team_data.get("stadium", {})
+    division = TEAM_TO_DIVISION_NFL.get(team_name, "")
+    facts = [
+        ("Home stadium", content["home_stadium"]),
+        ("City", stadium.get("city", "")),
+        ("Roof", {"open": "Open-air", "retractable": "Retractable",
+                  "fixed_dome": "Fixed dome", "fixed_canopy": "Fixed canopy"}
+                 .get(stadium.get("roof_type"), "Open-air")),
+        ("Division", division),
+    ]
+    sections = [
+        ("Home advantage", content["home_advantage"]),
+        ("Division road environments", content["road_challenges"]),
+        ("For DFS and bettors", content["betting_angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="NFL Team Weather Playbook",
+        back_url="/nfl", back_label="NFL Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/nfl",
+        cta_label=f"See today's {team_name} game forecast",
+        breadcrumb_hub_url="/nfl",
+        breadcrumb_hub_label="NFL Weather",
+        breadcrumb_entity=team_name,
+        canonical_path=f"/nfl/team/{slug}",
+    )
+
+
+# ===== NASCAR track landing pages =====
+
+@app.route("/nascar/track/<slug>")
+def nascar_track_page(slug):
+    entry = TRACK_BY_SLUG.get(slug)
+    if not entry:
+        abort(404)
+    track_name, content = entry
+    track_data = NASCAR_TRACKS.get(track_name, {})
+    facts = [
+        ("Length", f"{track_data.get('length_miles', '?')} mi"),
+        ("City", track_data.get("city", "")),
+        ("Track type", track_data.get("track_type", "").replace("_", " ").title()),
+    ]
+    sections = [
+        ("Overview", content["context"]),
+        ("Weather angle", content["weather_angle"]),
+        ("For DFS and bettors", content["betting_angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="NASCAR Track Weather Guide",
+        back_url="/nascar", back_label="NASCAR Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/nascar",
+        cta_label="See this weekend's Cup race weather forecast",
+        breadcrumb_hub_url="/nascar",
+        breadcrumb_hub_label="NASCAR Weather",
+        breadcrumb_entity=track_name,
+        canonical_path=f"/nascar/track/{slug}",
+    )
+
+
+# ===== PGA course landing pages =====
+
+@app.route("/golf/course/<slug>")
+def golf_course_page(slug):
+    entry = COURSE_BY_SLUG.get(slug)
+    if not entry:
+        abort(404)
+    course_name, content = entry
+    course_data = PGA_COURSES.get(course_name, {})
+    facts = [
+        ("Location", course_data.get("city", "")),
+        ("Country", course_data.get("country", "")),
+    ]
+    sections = [
+        ("Overview", content["intro"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="PGA Tour Course Weather Guide",
+        back_url="/golf", back_label="PGA Tour Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/golf",
+        cta_label="See this week's PGA Tour weather forecast",
+        breadcrumb_hub_url="/golf",
+        breadcrumb_hub_label="PGA Tour Weather",
+        breadcrumb_entity=course_name,
+        canonical_path=f"/golf/course/{slug}",
+    )
+
+
+# ===== NCAAF stadium landing pages =====
+
+@app.route("/ncaaf/stadium/<slug>")
+def ncaaf_stadium_page(slug):
+    entry = STADIUM_BY_SLUG_CFB.get(slug)
+    if not entry:
+        abort(404)
+    stadium_name, content = entry
+    # Look up the stadium data by matching team
+    stadium_data = None
+    team_name = content.get("team", "")
+    for t in FBS_TEAMS.values():
+        if t.get("name") == team_name:
+            stadium_data = t.get("stadium", {})
+            break
+    if not stadium_data:
+        stadium_data = {}
+    facts = [
+        ("Team", content["team"]),
+        ("City", stadium_data.get("city", "")),
+        ("Roof", {"open": "Open-air", "retractable": "Retractable",
+                  "fixed_dome": "Fixed dome", "fixed_canopy": "Fixed canopy"}
+                 .get(stadium_data.get("roof"), "Open-air")),
+        ("Capacity", f"{stadium_data.get('cap', 0):,}" if stadium_data.get('cap') else ""),
+    ]
+    sections = [
+        ("Overview", content["intro"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="NCAAF Stadium Weather Guide",
+        back_url="/ncaaf", back_label="NCAAF Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/ncaaf",
+        cta_label="See this weekend's CFB weather forecast",
+        breadcrumb_hub_url="/ncaaf",
+        breadcrumb_hub_label="NCAAF Weather",
+        breadcrumb_entity=stadium_name,
+        canonical_path=f"/ncaaf/stadium/{slug}",
     )
 
 
@@ -1579,6 +1945,44 @@ def sitemap():
         static_urls = list(MYSPORTSWEATHER_STATIC_URLS)
         # Dynamic MLB date-specific URLs (today + tomorrow)
         dynamic_urls = []
+        # Evergreen MLB stadium landing pages (one per current park). These
+        # are essentially static content, so use a fixed lastmod tied to
+        # the batch publication date.
+        for content in STADIUM_CONTENT.values():
+            dynamic_urls.append(
+                (f"/mlb/stadium/{content['slug']}", "0.8", "monthly", "2026-07-02")
+            )
+        # Evergreen MLB team landing pages (one per current MLB team).
+        for content in TEAM_CONTENT.values():
+            dynamic_urls.append(
+                (f"/mlb/team/{content['slug']}", "0.8", "monthly", "2026-07-02")
+            )
+        # Evergreen NFL stadium landing pages (30 unique stadiums for 32 teams;
+        # MetLife and SoFi are shared).
+        for content in NFL_STADIUM_CONTENT.values():
+            dynamic_urls.append(
+                (f"/nfl/stadium/{content['slug']}", "0.8", "monthly", "2026-07-02")
+            )
+        # Evergreen NFL team landing pages (32 teams).
+        for content in TEAM_CONTENT_NFL.values():
+            dynamic_urls.append(
+                (f"/nfl/team/{content['slug']}", "0.8", "monthly", "2026-07-02")
+            )
+        # Evergreen NASCAR track landing pages.
+        for content in TRACK_CONTENT.values():
+            dynamic_urls.append(
+                (f"/nascar/track/{content['slug']}", "0.75", "monthly", "2026-07-02")
+            )
+        # Evergreen PGA course landing pages.
+        for content in COURSE_CONTENT.values():
+            dynamic_urls.append(
+                (f"/golf/course/{content['slug']}", "0.75", "monthly", "2026-07-02")
+            )
+        # Evergreen NCAAF top-25 stadium landing pages.
+        for content in STADIUM_CONTENT_CFB.values():
+            dynamic_urls.append(
+                (f"/ncaaf/stadium/{content['slug']}", "0.75", "monthly", "2026-07-02")
+            )
         for d in (_eastern_today(), _eastern_tomorrow()):
             slate, _ = get_slate(d, allow_build=False)
             if not slate:
@@ -1878,8 +2282,6 @@ def admin_indexnow_push():
     base_url = brand["site_url"]
 
     if request.method == "POST":
-        # MYSPORTSWEATHER_STATIC_URLS entries are 4-tuples
-        # (path, priority, changefreq, lastmod). Only path is needed here.
         urls = [f"{base_url}{path}" for (path, _, _, _) in MYSPORTSWEATHER_STATIC_URLS]
         d = _eastern_today()
         slate, _ = get_slate(d, allow_build=False)

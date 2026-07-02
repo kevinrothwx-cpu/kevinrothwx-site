@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}{{ content.headline }} | Kevin Roth{% endblock %}
+{% block description %}{{ content.climate[:150] }}{% endblock %}
+
+{% block og_title %}{{ content.headline }}{% endblock %}
+{% block og_description %}NFL stadium weather guide for {{ stadium_name }} by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"NFL Weather","item":"{{ site_url }}/nfl"},
+  {"@type":"ListItem","position":3,"name":"Stadium Guides","item":"{{ site_url }}/nfl#stadium-guides"},
+  {"@type":"ListItem","position":4,"name":"{{ stadium_name }}"}
+]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ content.headline }}",
+  "author": {"@type": "Person", "name": "Kevin Roth", "url": "{{ site_url }}/about"},
+  "publisher": {"@type": "Organization", "name": "Kevin Roth Weather", "url": "{{ site_url }}/"},
+  "datePublished": "2026-07-02",
+  "dateModified": "2026-07-02",
+  "about": {
+    "@type": "Place",
+    "name": "{{ stadium_name }}",
+    "address": {"@type": "PostalAddress", "addressLocality": "{{ stadium.city }}"}
+  },
+  "mainEntityOfPage": "{{ site_url }}/nfl/stadium/{{ content.slug }}"
+}
+</script>
+<style>
+  .stadium-page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .stadium-page__back { display: inline-block; color: var(--storm); text-decoration: none; font-size: 0.88rem; margin-bottom: 1rem; font-family: var(--font-sans); }
+  .stadium-page__back:hover { text-decoration: underline; }
+  .stadium-page__kicker { color: var(--fog); font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.4rem; }
+  .stadium-page__title { font-family: var(--font-serif); font-size: 2rem; line-height: 1.2; margin: 0 0 1.5rem; color: var(--ink); }
+  .stadium-byline { margin: 1.5rem 0 2rem; font-size: 0.88rem; color: var(--fog); font-family: var(--font-sans); }
+  .stadium-byline a { color: var(--storm); text-decoration: none; }
+  .stadium-byline a:hover { text-decoration: underline; }
+  .stadium-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; background: #fafafa; border: 1px solid var(--mist); border-radius: 6px; padding: 1rem 1.25rem; margin: 0 0 2rem; }
+  .stadium-fact__label { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.15rem; }
+  .stadium-fact__value { font-family: var(--font-serif); font-size: 1rem; color: var(--ink); font-weight: 500; }
+  .stadium-section-h2 { font-family: var(--font-serif); font-size: 1.35rem; margin: 2rem 0 0.75rem; color: var(--ink); }
+  .stadium-para { font-size: 1.02rem; line-height: 1.7; color: var(--ink); margin: 0 0 1rem; }
+  .stadium-cta { margin: 2.5rem 0 1rem; padding: 1.1rem 1.25rem; background: #fff; border: 1px solid var(--mist); border-radius: 6px; }
+  .stadium-cta__label { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.35rem; }
+  .stadium-cta__link { font-family: var(--font-serif); font-size: 1.05rem; color: var(--storm); text-decoration: none; }
+  .stadium-cta__link:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="stadium-page">
+  <a href="/nfl" class="stadium-page__back">← NFL Weather</a>
+
+  <p class="stadium-page__kicker">NFL Stadium Weather Guide</p>
+  <h1 class="stadium-page__title">{{ content.headline }}</h1>
+  <p class="stadium-byline">
+    By <a href="/about">Kevin Roth</a>, sports meteorologist. Stadium
+    weather guide for DFS players and bettors.
+  </p>
+
+  <div class="stadium-facts">
+    <div><p class="stadium-fact__label">Team</p><p class="stadium-fact__value">{{ content.team }}</p></div>
+    <div><p class="stadium-fact__label">City</p><p class="stadium-fact__value">{{ stadium.city }}</p></div>
+    <div><p class="stadium-fact__label">Roof</p><p class="stadium-fact__value">
+      {% if stadium.roof_type == "retractable" %}Retractable
+      {% elif stadium.roof_type == "fixed_dome" %}Fixed dome
+      {% elif stadium.roof_type == "fixed_canopy" %}Fixed canopy
+      {% else %}Open-air{% endif %}
+    </p></div>
+    <div><p class="stadium-fact__label">Capacity</p><p class="stadium-fact__value">{{ '{:,}'.format(stadium.cap) }}</p></div>
+  </div>
+
+  <h2 class="stadium-section-h2">Climate</h2>
+  <p class="stadium-para">{{ content.climate }}</p>
+
+  <h2 class="stadium-section-h2">How wind and weather play here</h2>
+  <p class="stadium-para">{{ content.wind }}</p>
+
+  {% if content.roof_note %}
+    <h2 class="stadium-section-h2">Roof behavior</h2>
+    <p class="stadium-para">{{ content.roof_note }}</p>
+  {% endif %}
+
+  <h2 class="stadium-section-h2">For DFS and bettors</h2>
+  <p class="stadium-para">{{ content.fantasy_note }}</p>
+
+  <div class="stadium-cta">
+    <p class="stadium-cta__label">Live forecast</p>
+    <a class="stadium-cta__link" href="/nfl">See today's NFL slate weather forecast →</a>
+  </div>
+</article>
+{% endblock %}

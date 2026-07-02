@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}{{ content.headline }} | Kevin Roth{% endblock %}
+{% block description %}{{ content.home_advantage[:150] }}{% endblock %}
+
+{% block og_title %}{{ content.headline }}{% endblock %}
+{% block og_description %}Team-specific weather playbook for the {{ team_name }} by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"MLB Weather","item":"{{ site_url }}/mlb"},
+  {"@type":"ListItem","position":3,"name":"Team Guides","item":"{{ site_url }}/mlb-weather#team-guides"},
+  {"@type":"ListItem","position":4,"name":"{{ team_name }}"}
+]}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{ content.headline }}",
+  "author": {"@type": "Person", "name": "Kevin Roth", "url": "{{ site_url }}/about"},
+  "publisher": {"@type": "Organization", "name": "Kevin Roth Weather", "url": "{{ site_url }}/"},
+  "datePublished": "2026-07-02",
+  "dateModified": "2026-07-02",
+  "about": {
+    "@type": "SportsTeam",
+    "name": "{{ team_name }}"
+  },
+  "mainEntityOfPage": "{{ site_url }}/mlb/team/{{ content.slug }}"
+}
+</script>
+<style>
+  .team-page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .team-page__back {
+    display: inline-block; color: var(--storm); text-decoration: none;
+    font-size: 0.88rem; margin-bottom: 1rem; font-family: var(--font-sans);
+  }
+  .team-page__back:hover { text-decoration: underline; }
+  .team-page__kicker {
+    color: var(--fog); font-family: var(--font-sans);
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    margin: 0 0 0.4rem;
+  }
+  .team-page__title {
+    font-family: var(--font-serif); font-size: 2rem; line-height: 1.2;
+    margin: 0 0 1.5rem; color: var(--ink);
+  }
+  .team-byline {
+    margin: 1.5rem 0 2rem; font-size: 0.88rem; color: var(--fog);
+    font-family: var(--font-sans);
+  }
+  .team-byline a { color: var(--storm); text-decoration: none; }
+  .team-byline a:hover { text-decoration: underline; }
+  .team-facts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem; background: #fafafa; border: 1px solid var(--mist);
+    border-radius: 6px; padding: 1rem 1.25rem; margin: 0 0 2rem;
+  }
+  .team-fact__label {
+    font-family: var(--font-sans); font-size: 0.7rem;
+    color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em;
+    margin: 0 0 0.15rem;
+  }
+  .team-fact__value {
+    font-family: var(--font-serif); font-size: 1rem; color: var(--ink);
+    font-weight: 500;
+  }
+  .team-fact__value a { color: var(--storm); text-decoration: none; }
+  .team-fact__value a:hover { text-decoration: underline; }
+  .team-section-h2 {
+    font-family: var(--font-serif); font-size: 1.35rem;
+    margin: 2rem 0 0.75rem; color: var(--ink);
+  }
+  .team-para {
+    font-size: 1.02rem; line-height: 1.7; color: var(--ink);
+    margin: 0 0 1rem;
+  }
+  .team-cta {
+    margin: 2.5rem 0 1rem; padding: 1.1rem 1.25rem;
+    background: #fff; border: 1px solid var(--mist); border-radius: 6px;
+  }
+  .team-cta__label {
+    font-family: var(--font-sans); font-size: 0.72rem;
+    color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em;
+    margin: 0 0 0.35rem;
+  }
+  .team-cta__link {
+    font-family: var(--font-serif); font-size: 1.05rem; color: var(--storm);
+    text-decoration: none;
+  }
+  .team-cta__link:hover { text-decoration: underline; }
+  .team-related { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--mist); }
+  .team-related__title {
+    font-family: var(--font-sans); font-size: 0.75rem;
+    color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em;
+    margin: 0 0 0.75rem;
+  }
+  .team-related ul { list-style: none; padding: 0; margin: 0; }
+  .team-related li { margin: 0 0 0.55rem; }
+  .team-related a { color: var(--storm); text-decoration: none; font-size: 0.95rem; }
+  .team-related a:hover { text-decoration: underline; }
+  .team-division {
+    margin-top: 2rem; padding: 1.1rem 1.25rem;
+    background: #fafafa; border: 1px solid var(--mist); border-radius: 6px;
+  }
+  .team-division__title {
+    font-family: var(--font-sans); font-size: 0.75rem;
+    color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em;
+    margin: 0 0 0.5rem;
+  }
+  .team-division ul { list-style: none; padding: 0; margin: 0; }
+  .team-division li { margin: 0 0 0.3rem; font-family: var(--font-sans); font-size: 0.93rem; }
+  .team-division a { color: var(--storm); text-decoration: none; }
+  .team-division a:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="team-page">
+  <a href="/mlb" class="team-page__back">← MLB Weather</a>
+
+  <p class="team-page__kicker">Team Weather Playbook</p>
+  <h1 class="team-page__title">{{ content.headline }}</h1>
+  <p class="team-byline">
+    By <a href="/about">Kevin Roth</a>, sports meteorologist. How weather
+    affects the {{ team_name }} at home and on the road.
+  </p>
+
+  {% include "mlb/_next_game_card.html" %}
+
+  <div class="team-facts">
+    <div>
+      <p class="team-fact__label">Home park</p>
+      <p class="team-fact__value">
+        <a href="/mlb/stadium/{{ home_park_slug }}">{{ content.home_park }}</a>
+      </p>
+    </div>
+    <div>
+      <p class="team-fact__label">City</p>
+      <p class="team-fact__value">{{ park.city }}</p>
+    </div>
+    <div>
+      <p class="team-fact__label">Roof</p>
+      <p class="team-fact__value">
+        {% if park.roof_type == "retractable" %}Retractable
+        {% elif park.roof_type == "fixed_dome" %}Fixed dome
+        {% else %}Open-air
+        {% endif %}
+      </p>
+    </div>
+    <div>
+      <p class="team-fact__label">Division</p>
+      <p class="team-fact__value">{{ division }}</p>
+    </div>
+  </div>
+
+  <h2 class="team-section-h2">Home advantage</h2>
+  <p class="team-para">{{ content.home_advantage }}</p>
+
+  <h2 class="team-section-h2">Division road environments</h2>
+  <p class="team-para">{{ content.road_challenges }}</p>
+
+  <h2 class="team-section-h2">For DFS and bettors</h2>
+  <p class="team-para">{{ content.betting_angle }}</p>
+
+  <div class="team-cta">
+    <p class="team-cta__label">Live forecast</p>
+    <a class="team-cta__link" href="/mlb">See today's {{ team_name }} game forecast →</a>
+  </div>
+
+  {% if division_rivals %}
+    <div class="team-division">
+      <p class="team-division__title">{{ division }} rival home parks</p>
+      <ul>
+        {% for rival in division_rivals %}
+          <li><a href="/mlb/team/{{ rival.team_slug }}">{{ rival.team_name }}</a> · <a href="/mlb/stadium/{{ rival.park_slug }}">{{ rival.park_name }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="team-related">
+    <p class="team-related__title">Related reading</p>
+    <ul>
+      <li><a href="/mlb/stadium/{{ home_park_slug }}">{{ content.home_park }} stadium weather guide</a></li>
+      <li><a href="/mlb-weather/wind-rules">How wind affects baseball scoring</a></li>
+      <li><a href="/mlb-weather/stadium-rankings">All 30 MLB stadiums ranked by run environment</a></li>
+     </ul>
+  </div>
+</article>
+{% endblock %}

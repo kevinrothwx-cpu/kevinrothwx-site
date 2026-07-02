@@ -1,0 +1,80 @@
+{# ── Inline "next game" forecast card ────────────────────────────────
+   Used by /mlb/stadium/<slug> and /mlb/team/<slug> pages to show today
+   or tomorrow's game weather directly on the SEO landing page. If no
+   game is scheduled, the caller should skip including this partial.
+   Expects: next_game, next_date, next_when                            #}
+{% if next_game %}
+<section class="next-game-card">
+  <div class="next-game-card__row">
+    <div>
+      <p class="next-game-card__kicker">{{ next_when }} · {{ next_game.first_pitch_eastern_str or "TBD" }}</p>
+      <p class="next-game-card__matchup">
+        {{ next_game.away_name }} at {{ next_game.home_name }}
+      </p>
+      <p class="next-game-card__venue">{{ next_game.venue }}</p>
+    </div>
+    {% if next_game.forecast %}
+      {% set f = next_game.forecast %}
+      <div class="next-game-card__forecast">
+        <div class="next-game-metric">
+          <div class="next-game-metric__value">{{ f.temp }}°</div>
+          <div class="next-game-metric__label">Temp</div>
+        </div>
+        <div class="next-game-metric">
+          <div class="next-game-metric__value">{{ f.wind_speed }}<span style="font-size:0.7em">mph</span></div>
+          <div class="next-game-metric__label">Wind</div>
+        </div>
+        <div class="next-game-metric">
+          <div class="next-game-metric__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</div>
+          <div class="next-game-metric__label">Rain</div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  <a class="next-game-card__link" href="/mlb/{{ next_date }}/{{ next_game.slug }}">
+    See the full forecast with hourly breakdown →
+  </a>
+</section>
+<style>
+  .next-game-card {
+    margin: 0 0 2rem; padding: 1.25rem 1.4rem;
+    background: #fff; border: 2px solid var(--storm); border-radius: 8px;
+  }
+  .next-game-card__row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1.25rem; margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .next-game-card__kicker {
+    font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog);
+    text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.3rem;
+  }
+  .next-game-card__matchup {
+    font-family: var(--font-serif); font-size: 1.2rem; color: var(--ink);
+    margin: 0 0 0.15rem; font-weight: 500; line-height: 1.25;
+  }
+  .next-game-card__venue {
+    font-family: var(--font-sans); font-size: 0.85rem; color: var(--fog);
+    margin: 0;
+  }
+  .next-game-card__forecast {
+    display: flex; gap: 1.25rem;
+  }
+  .next-game-metric {
+    text-align: center;
+  }
+  .next-game-metric__value {
+    font-family: var(--font-serif); font-size: 1.5rem; color: var(--ink);
+    font-weight: 500; line-height: 1;
+  }
+  .next-game-metric__label {
+    font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog);
+    text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;
+  }
+  .next-game-card__link {
+    display: inline-block; font-family: var(--font-serif); font-size: 0.97rem;
+    color: var(--storm); text-decoration: none; padding-top: 0.5rem;
+    border-top: 1px solid var(--mist); width: 100%;
+  }
+  .next-game-card__link:hover { text-decoration: underline; }
+</style>
+{% endif %}
