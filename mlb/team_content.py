@@ -176,7 +176,7 @@ TEAM_CONTENT = {
         "home_park": "Guaranteed Rate Field",
         "headline": "Chicago White Sox Weather Playbook: South Side, Lake Breeze, Division Cold",
         "home_advantage": (
-            "Rate Field sits on the South Side about two miles from Lake "
+            "Rate Field sits on the South Side ake "
             "Michigan. Chicago lake breeze is the story for afternoon "
             "games: south wind at first pitch can flip to east wind by "
             "the fifth inning as the breeze arrives. Night games behind a "
@@ -203,7 +203,7 @@ TEAM_CONTENT = {
         "home_park": "Progressive Field",
         "headline": "Cleveland Guardians Weather Playbook: Lake Erie Cool, Division Handicapping",
         "home_advantage": (
-            "Progressive Field sits less than a mile from Lake Erie. "
+            "Progressive Field sits less than ake Erie. "
             "Lake-influenced wind and cool spring temperatures make April "
             "and early May games routinely play in the 40s and 50s. "
             "Midsummer is cooler than most inland Midwest cities. North "
@@ -433,7 +433,7 @@ TEAM_CONTENT = {
         "headline": "Atlanta Braves Weather Playbook: Summer Humidity, Cobb County Setting",
         "home_advantage": (
             "Truist Park sits in Cumberland north of downtown Atlanta. "
-            "Southern summer humidity with dew points in the low 70s "
+            "Southern summer humidity with typical summer humiditys "
             "combines with south wind out to center and right for strong "
             "carry conditions. Afternoon and evening thunderstorm risk "
             "from June through August is the main weather variance."
@@ -507,7 +507,7 @@ TEAM_CONTENT = {
         "headline": "Philadelphia Phillies Weather Playbook: South Philly Heat, Hitter-Friendly Dimensions",
         "home_advantage": (
             "Citizens Bank Park sits in South Philadelphia about three "
-            "miles from the Delaware. Summer heat and humidity combine "
+            "he Delaware. Summer heat and humidity combine "
             "with dimensions that favor pull-side power for both hands. "
             "Southwest wind, the default summer pattern, blows out to "
             "left-center and center, amplifying the built-in hitter-"
@@ -657,7 +657,7 @@ TEAM_CONTENT = {
         "home_park": "Busch Stadium",
         "headline": "St. Louis Cardinals Weather Playbook: Midwest Heat, Mississippi Valley Setting",
         "home_advantage": (
-            "Busch Stadium sits in downtown St. Louis a half mile from "
+            "Busch Stadium sits in downtown St. Louis"
             "the Mississippi. Summer conditions are hot and humid with "
             "July averages around 90 degrees. South and southwest wind "
             "blows out to center and right. River-valley setting means "
@@ -761,7 +761,7 @@ TEAM_CONTENT = {
         "home_park": "Petco Park",
         "headline": "San Diego Padres Weather Playbook: Marine Layer, Bay Air, Division Air Density",
         "home_advantage": (
-            "Petco Park sits a half mile from San Diego Bay. Summer "
+            "Petco Park sits an Diego Bay. Summer "
             "conditions are mild and dry with July averages around 76 "
             "degrees. Marine layer cloud cover extends into afternoon on "
             "many days. Dense marine-influenced air is the reason Petco "

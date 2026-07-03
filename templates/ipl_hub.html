@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}IPL Weather Guides | Kevin Roth{% endblock %}
+{% block description %}Evergreen weather guides for every IPL franchise and home ground. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container-tight">
+    <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">More Sports</p>
+    <h1 class="display" style="margin-bottom: 1.25rem;">IPL Cricket Weather</h1>
+    <p class="lead" style="margin-bottom: 2rem;">Per-franchise weather playbooks and per-ground weather guides for the Indian Premier League. Live match forecasts coming ahead of the 2027 season.</p>
+
+    <h2 class="h3" style="margin: 2.5rem 0 1rem;">Franchises</h2>
+    <ul style="list-style: none; padding: 0; margin: 0 0 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.5rem;">
+      {% for name, c in teams %}
+        <li><a href="/ipl/team/{{ c.slug }}" style="display: block; padding: 0.55rem 0.75rem; border: 1px solid var(--mist); text-decoration: none; color: var(--ink); font-family: var(--font-sans); font-size: 0.92rem;">{{ name }} ({{ c.abbrev }})</a></li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="h3" style="margin: 2.5rem 0 1rem;">Home Grounds</h2>
+    <ul style="list-style: none; padding: 0; margin: 0 0 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.5rem;">
+      {% for name, c in grounds %}
+        <li><a href="/ipl/ground/{{ c.slug }}" style="display: block; padding: 0.55rem 0.75rem; border: 1px solid var(--mist); text-decoration: none; color: var(--ink); font-family: var(--font-sans); font-size: 0.92rem;">{{ name }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

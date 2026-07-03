@@ -13,6 +13,31 @@
   {"@type":"ListItem","position":3,"name":"{{ race.name }}"}
 ]}
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SportsEvent",
+  "name": "{{ race.name }}",
+  "description": "Weather forecast for the {{ race.name }} NASCAR Cup Series race at {{ race.track }}{% if race.track_meta %} in {{ race.track_meta.city }}{% endif %}. Green flag {{ race.green_flag_eastern_str }}. Hourly forecast around race time by sports meteorologist Kevin Roth.",
+  "sport": "Auto racing",
+  "url": "{{ site_url }}/nascar",
+  "isAccessibleForFree": true,
+  "eventStatus": "https://schema.org/EventScheduled",
+  "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+  "location": {
+    "@type": "Place",
+    "name": "{{ race.track }}"{% if race.track_meta %},
+    "address": {"@type": "PostalAddress", "addressLocality": "{{ race.track_meta.city }}"},
+    "geo": {"@type": "GeoCoordinates", "latitude": {{ race.track_meta.lat }}, "longitude": {{ race.track_meta.lon }}}{% endif %}
+  },
+  "organizer": {"@type": "SportsOrganization", "name": "NASCAR", "url": "https://www.nascar.com/"}{% if race.forecast %},
+  "additionalProperty": [
+    {"@type": "PropertyValue", "name": "Temperature at green flag", "value": "{{ race.forecast.temp }}°F"},
+    {"@type": "PropertyValue", "name": "Wind speed", "value": "{{ race.forecast.wind_speed }} mph"},
+    {"@type": "PropertyValue", "name": "Precipitation chance", "value": "{{ race.forecast.precip_pct }}%"}
+  ]{% endif %}
+}
+</script>
 {% endblock %}
 
 {% block content %}
@@ -33,6 +58,7 @@
         <div class="game-hero__label">At green flag</div>
       </div>
       <div class="game-hero__metric">
+        <div class="game-hero__icon" style="font-family:var(--font-serif);font-size:1.8rem;font-weight:600">{{ f.wind_speed }}</div>
         <div class="game-hero__icon" style="font-family:var(--font-serif);font-size:1.8rem;font-weight:600">{{ f.wind_speed }}</div>
         <div class="game-hero__value" style="font-size:1.4rem;line-height:1.2;color:var(--ash);font-weight:500;letter-spacing:0">mph wind</div>
         <div class="game-hero__label">Dewpoint {{ f.dew }}°</div>

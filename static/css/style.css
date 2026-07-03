@@ -186,6 +186,22 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .sport-nav__count { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem; background: var(--mist); color: var(--slate); border-radius: 999px; font-size: 0.7rem; font-weight: 700; vertical-align: 1px; }
 .sport-nav__item.is-active .sport-nav__count { background: var(--ink); color: var(--white); }
 
+/* "More sports" dropdown. Uses <details>/<summary> so keyboard, touch,
+   and screen readers all work natively. Marker chevron hidden; we
+   rotate our own via [open] state. */
+.sport-nav__more { position: relative; flex-shrink: 0; }
+.sport-nav__more[open] > summary::-webkit-details-marker { display: none; }
+.sport-nav__more > summary { list-style: none; cursor: pointer; }
+.sport-nav__more > summary::-webkit-details-marker { display: none; }
+.sport-nav__more-btn { display: inline-block; }
+.sport-nav__more-menu { position: absolute; top: 100%; right: 0; min-width: 200px; background: var(--white); border: 1px solid var(--mist); border-radius: 6px; box-shadow: 0 6px 20px rgba(15, 26, 58, 0.08); z-index: 20; padding: 0.35rem 0; margin-top: 0.15rem; }
+.sport-nav__more-item { display: block; padding: 0.65rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; color: var(--ink); text-decoration: none; letter-spacing: 0.03em; transition: background-color 0.1s ease; }
+.sport-nav__more-item:hover { background: var(--paper); color: var(--storm); }
+/* Left-align the dropdown on very narrow screens so it doesn't clip off-screen */
+@media (max-width: 600px) {
+  .sport-nav__more-menu { right: auto; left: 0; }
+}
+
 /* ============================================================
  * MLB slate / per-game pages — editorial baseline
  * ============================================================ */

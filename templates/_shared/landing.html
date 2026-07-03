@@ -70,7 +70,7 @@
   <h1 class="landing-page__title">{{ title }}</h1>
   <p class="landing-byline">
     By <a href="/about">Kevin Roth</a>, sports meteorologist. Weather guide
-    for DFS players and bettors.
+    for {{ byline_audience|default("DFS players and bettors") }}.
   </p>
 
   {% if facts %}
@@ -79,6 +79,30 @@
         <div><p class="landing-fact__label">{{ label }}</p><p class="landing-fact__value">{{ value }}</p></div>
       {% endfor %}
     </div>
+  {% endif %}
+
+  {# Optional inline "next game" forecast card for landing pages.
+     Deliver the "Yankees weather today" search intent right on the
+     landing page instead of just a link. #}
+  {% if next_game %}
+    <section style="margin: 0 0 2rem; padding: 1.25rem 1.4rem; background: #fff; border: 2px solid var(--storm); border-radius: 8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap: 1.25rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <div>
+          <p style="font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.3rem;">{{ next_when }}{% if next_game.time_str %} · {{ next_game.time_str }}{% endif %}</p>
+          <p style="font-family: var(--font-serif); font-size: 1.2rem; color: var(--ink); margin: 0 0 0.15rem; font-weight: 500; line-height: 1.25;">{{ next_game.matchup }}</p>
+          <p style="font-family: var(--font-sans); font-size: 0.85rem; color: var(--fog); margin: 0;">{{ next_game.venue }}</p>
+        </div>
+        {% if next_game.forecast %}
+          {% set f = next_game.forecast %}
+          <div style="display:flex; gap: 1.25rem;">
+            <div style="text-align:center"><div style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--ink); font-weight: 500; line-height: 1;">{{ f.temp }}°</div><div style="font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;">Temp</div></div>
+            <div style="text-align:center"><div style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--ink); font-weight: 500; line-height: 1;">{{ f.wind_speed }}<span style="font-size:0.7em">mph</span></div><div style="font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;">Wind</div></div>
+            <div style="text-align:center"><div style="font-family: var(--font-serif); font-size: 1.5rem; font-weight: 500; line-height: 1;" class="{{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</div><div style="font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem;">Rain</div></div>
+          </div>
+        {% endif %}
+      </div>
+      <a href="{{ next_game.url }}" style="display:inline-block; font-family: var(--font-serif); font-size: 0.97rem; color: var(--storm); text-decoration: none; padding-top: 0.5rem; border-top: 1px solid var(--mist); width: 100%;">See the full forecast with hourly breakdown →</a>
+    </section>
   {% endif %}
 
   {% for h2, paragraph in sections %}

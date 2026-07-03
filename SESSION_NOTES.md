@@ -22,13 +22,15 @@ These are not preferences, they are decisions that govern code we write:
 5. **Don't claim authorship Kevin didn't write.** Auto-generated content gets neutral framing ("Weather summary" / unlabeled prose), never "Kevin's notes" or "Kevin's analysis" unless it was actually written via the writeup admin.
 6. **NWS is the credibility anchor.** Even when WeatherAPI is the better technical choice (international, missing US coverage), NWS-primary stays the default for US sports. Stability matters more than freshness — borderline wind directions oscillating between W and NW between page loads erodes trust.
 7. **No specific investment advice or sportsbook recommendations.** The site is weather; OVERcast is the betting product. Keep them functionally separated.
+8. **Facts only in evergreen content.** Kevin's July 2026 warning: "If you can source it, great. If you can't, bail on it." Applies to every landing page. No specific climatology numbers, distances to water bodies, dew-point ranges, etc. unless anchored to a citable source. Verifiable facts (roof type from venue module, city, geographic setting, historical widely-known things like Coors elevation) are fine.
 
 ## Strategic direction
 
 - **mysportsweather.com is an SEO funnel into OVERcast.** Direct monetization of the site is not the focus. SEO traffic that converts to OVERcast users is.
 - **AI discoverability is co-equal with traditional SEO.** AI Overview / ChatGPT search / Perplexity / Claude all extract structured facts. Every detail page gets schema.org SportsEvent + additionalProperty.
+- **Evergreen landing-page SEO surge (July 2026):** built 222 new per-entity landing pages in a single session — stadium, team, track, and course pages across every sport. Each includes BreadcrumbList + Article schema, links back to the live sport hub, and (for MLB) surfaces today/tomorrow's game forecast inline instead of just a link. Design goal: rank for "Yankees weather" / "Wrigley Field weather" long-tail queries and funnel searchers straight to the live forecast.
 - **International expansion is parked, not killed.** US validation comes first. Revisit Q1 2027 with 6+ months of Search Console data. Suggested order when we do: DP World Tour → Premier League → cricket → F1. Cricket is the biggest single unclaimed global opportunity (no dedicated meteorologist competitor; Metcheck is the only player and they're a 1999-built site).
-- **Sport priority queue:** Tennis (done, Wimbledon live) → CFB (built, Aug 29 launch) → NFL (coming-soon only, Sept 10) → MLS (July 16, NEXT TO BUILD).
+- **Sport priority queue:** All in-season sports launched. Remaining: NFL live-slate build for Sept 10, ongoing CFB polish, MLS active.
 - **OVERcast and mysportsweather share an outbound IP.** Anything that affects NWS rate limits on one affects the other. Hence `cfb/nws_client.py` has distinct User-Agent, sequential pacing, and a circuit breaker — same pattern should apply to any future high-volume sport.
 
 ## Technical patterns (locked)
@@ -48,10 +50,16 @@ sport/
   forecast_freeze.py # snapshot pattern at event start
   storage.py         # writeups, disk-backed via persistence.py
   analysis.py        # rule-based templated weather summary (no AI, no game-impact)
+  stadium_content.py # (NEW) per-venue evergreen SEO content for landing pages
+  team_content.py    # (NEW, MLB + NFL) per-team evergreen SEO content
 templates/sport/
   slate.html         # the hub page
   game.html          # per-event detail page with schema.org
+  stadium.html       # (NEW, MLB + NFL) evergreen per-venue guide
+  team.html          # (NEW, MLB) evergreen per-team guide
 ```
+
+For NASCAR, PGA, CFB — the landing pages use the shared `templates/_shared/landing.html` template instead of a bespoke per-sport template. Content still lives in each sport's `*_content.py` module.
 
 ### Warmer + cache pattern
 
@@ -98,62 +106,135 @@ For any sport that might hit NWS hard (large Saturday slates):
 - **robots.txt** has explicit allowlists for GPTBot, ClaudeBot, PerplexityBot, Bingbot, etc.
 - **Google Search Console** — Domain property verified for both kevinrothwx.com and mysportsweather.com
 - **Bing Webmaster Tools** — imported from GSC; ChatGPT search reads Bing's index
-- **schema.org** — every game/match detail page has `SportsEvent` + `additionalProperty` for weather metrics
+- **schema.org** — every game/match/landing page has `SportsEvent` OR `Article` + `BreadcrumbList` + `additionalProperty` for weather metrics
+- **Sitemap** — per-URL lastmod (added July 2026). Static pages carry publication-date lastmod; sport hubs and dynamic per-date URLs carry today. Format is 4-tuple `(path, priority, changefreq, lastmod)` with lastmod=None meaning today.
+
+## SEO landing page architecture (July 2026 build)
+
+222 new evergreen URLs live across all sports. Every page has BreadcrumbList + Article schema, canonical URL, byline linking to /about, facts strip pulled from the sport's venue module, and CTA back to the live sport hub.
+
+### URL patterns
+
+| Pattern | Sport | Count | Content module |
+|---|---|---|---|
+| `/mlb/stadium/<slug>` | MLB | 30 | `mlb/stadium_content.py` |
+| `/mlb/team/<slug>` | MLB | 30 | `mlb/team_content.py` |
+| `/nfl/stadium/<slug>` | NFL | 30 | `nfl/stadium_content.py` |
+| `/nfl/team/<slug>` | NFL | 32 | `nfl/team_content.py` |
+| `/nascar/track/<slug>` | NASCAR | 27 | `nascar/track_content.py` |
+| `/golf/course/<slug>` | PGA | 48 | `golf/course_content.py` |
+| `/ncaaf/stadium/<slug>` | CFB | 25 (top P5) | `cfb/stadium_content.py` |
+
+### Discovery
+
+- **`/mlb-weather` hub indexes all 30 MLB stadium pages** in a "Stadium guides" section for crawl-graph density.
+- **MLB team pages cross-link to division rivals** (both team pages and stadium pages) via the `DIVISIONS` map in `mlb/team_content.py`.
+- **Every landing page CTA points back to the sport's live forecast hub** — SEO funnel: search intent → landing page → live hub → OVERcast.
+- **MLB team + stadium pages show today/tomorrow's game forecast inline** (`templates/mlb/_next_game_card.html`). Landed searcher gets the actual forecast, not just a link. Helpers: `_find_next_mlb_game_for_team()`, `_find_next_mlb_game_at_park()`. NFL stadium pages have the same wiring (`_find_next_nfl_game_at_venue()`) — active during football season.
+
+### Shared template
+
+`templates/_shared/landing.html` is the generic landing template used by NFL teams, NASCAR tracks, PGA courses, and NCAAF stadiums. Takes `kicker`, `back_url`, `back_label`, `title`, `facts` (list of tuples), `sections` (list of tuples), `cta_url`, `cta_label`, `breadcrumb_hub_url`, `breadcrumb_hub_label`, `breadcrumb_entity`, `canonical_path`.
+
+MLB stadium and MLB team pages use bespoke templates (`templates/mlb/stadium.html`, `templates/mlb/team.html`) because they include the inline live-game card and the division-rivals section, which the generic template doesn't support.
+
+### Content constraints
+
+Kevin's warning after the initial MLB stadium content: "make sure you are not making anything up, facts only." Applied thereafter:
+
+- Facts anchored in the venue module (roof type, city, capacity, lat/lon, CF bearing for MLB) only.
+- General regional climate reputation OK (e.g. "Green Bay late-season plays cold with plains wind").
+- Widely-known widely-cited facts OK (Coors elevation, Fenway Monster dimensions, retractable roof usage from Kevin's uploaded OVERcast analysis).
+- No specific airport-average temperature numbers, distance-to-water claims, dew-point range claims, etc.
+- No em-dashes, no clear AI sentence structure, human voice, DFS/bettor audience.
+
+The 60 MLB pages (stadiums + teams) have some earlier-drafted numeric climate claims. If you touch that content, prefer soft geographic language over specific numbers.
+
+## Homepage layout (July 2026 redesign)
+
+- **Two-column hero row** (`.home-hero__row`). Left column: kicker + title + lead. Right column: compact World Cup card. Sport-card grid follows immediately below the hero, up above the fold on typical desktop viewports.
+- **`.home-featured--compact` modifier** — tighter padding, smaller title, `display: flex; flex-direction: column` with `margin-top: auto` on the CTA so the two hero columns line up.
+- Grid ratio: `minmax(0, 1.35fr) minmax(280px, 1fr)` at ≥900px. Stacks on mobile.
+- **Soccer ball icon** in the WC card top row, right-aligned via `margin-left: auto` at 36×36.
+- **Sport-card head layout** — `.home-sport-card__head`, `.home-sport-card__icon`, `.home-sport-card__heading` all had NO CSS pre-July 2026. Icons were rendering at intrinsic 24×24. Added: 40×40 icons, flex row with 0.9rem gap, `align-items: flex-start`. Also fixed the missing `<span class="home-product__name">Follow Kevin on X</span>` on the third product link, and a missing closing `</div>` on that same block that was silently breaking the styled-box CSS on the live site (nobody noticed until the section moved into view for a critical check).
 
 ## Sport-by-sport state
 
-| Sport | Live? | Source | Patterns active | Notes |
-|---|---|---|---|---|
-| MLB | yes | NWS + Open-Meteo (Toronto) | freeze (first-pitch), writeups, wind-vs-CF | task #79 pending: add WeatherAPI fallback layer |
-| World Cup | yes (2026) | WeatherAPI (international) | writeups | task #81 pending: freeze at kickoff |
-| PGA | yes | NWS + WeatherAPI fallback + HRRR | freeze (per round), writeups, auto-advance, orphan cleanup | round-based composite freeze key |
-| NASCAR | yes | NWS + WeatherAPI fallback + HRRR | freeze (green flag), writeups, auto-advance, self-heal, orphan cleanup | distinct UA for OVERcast IP differentiation pattern not applied here yet |
-| CWS | recurring (Jun 13-23) | NWS | freeze, writeups | post-season specific |
-| CFB | built, launches Aug 29 | NWS primary via `cfb/nws_client` + WeatherAPI fallback + HRRR | freeze, schema.org, analysis paragraph, per-game detail page | distinct UA "kevinrothwx-site/1.0 ncaaf", pacing, circuit breaker |
-| NFL | coming-soon only, launches Sept 10 | n/a | n/a | only the coming-soon page exists |
-| Tennis | yes (Wimbledon live) | WeatherAPI (international) | per-day detail pages, ESPN match schedule, analysis paragraph | ATP/WTA endpoints return overlapping events — dedup by competition.id |
-| MLS | NOT BUILT, returns July 16 | TBD | TBD | NEXT TO BUILD |
+| Sport | Live? | Landing pages? | Source | Patterns active | Notes |
+|---|---|---|---|---|---|
+| MLB | yes | 30 stadium + 30 team | NWS + Open-Meteo (Toronto) | freeze (first-pitch), writeups, wind-vs-CF, next-game inline on landing pages | task #79 pending: add WeatherAPI fallback layer |
+| World Cup | yes (2026) | via WC card on homepage | WeatherAPI (international) | writeups | task #81 pending: freeze at kickoff |
+| PGA | yes | 48 course landing pages | NWS + WeatherAPI fallback + HRRR | freeze (per round), writeups, auto-advance, orphan cleanup | round-based composite freeze key |
+| NASCAR | yes | 27 track landing pages | NWS + WeatherAPI fallback + HRRR | freeze (green flag), writeups, auto-advance, self-heal, orphan cleanup | distinct UA for OVERcast IP differentiation pattern not applied here yet |
+| CWS | recurring (Jun 13-23) | no | NWS | freeze, writeups | post-season specific |
+| CFB | built, launches Aug 29 | 25 top P5 stadium landing pages | NWS primary via `cfb/nws_client` + WeatherAPI fallback + HRRR | freeze, schema.org, analysis paragraph, per-game detail page | distinct UA "kevinrothwx-site/1.0 ncaaf", pacing, circuit breaker |
+| NFL | slate coming Sept 10 | 30 stadium + 32 team | n/a (offseason) | landing pages have next-game wiring ready for season | |
+| Tennis | yes (Wimbledon live) | no landing pages | WeatherAPI (international) | per-day detail pages, ESPN match schedule, analysis paragraph | ATP/WTA endpoints return overlapping events — dedup by competition.id |
+| MLS | yes | no landing pages | ESPN + NWS | per-match detail, freeze | active season |
 
 ## Outstanding pending items (future sessions)
 
 In rough priority order:
 
-1. **MLS module** (#105/106/107) — July 16 deadline
-2. **WeatherAPI fallback for MLB/NASCAR/CWS** (#79) — resilience, ~45min
-3. **World Cup freeze at kickoff** (#81) — apply existing pattern, ~30min
-4. **G5 venues completion in cfb/venues.py** (#143) — not blocking
-5. **Schema.org on CWS + NASCAR detail pages** (#97) — SEO win
-6. **MLB stadium landing pages** (#94) — `/mlb/stadium/<slug>` SEO win
-7. **OVERcast product screenshots on /overcast** (#72) — landing-page polish
-8. **Pull at-first-pitch values from OVERcast directly** (#85) — match the canonical source
-9. **Redis migration** (#91) — only when scaling beyond single Gunicorn worker
-10. **Phase 2 PGA course maps** (#31) — original ambition, not blocking
+1. **WeatherAPI fallback for MLB/NASCAR/CWS** (#79) — resilience, ~45min
+2. **World Cup freeze at kickoff** (#81) — apply existing pattern, ~30min
+3. **G5 venues completion in cfb/venues.py** (#143) — not blocking
+4. **Schema.org SportsEvent on CWS + NASCAR detail pages** (#97) — BreadcrumbList is done; SportsEvent still needed on NASCAR race.html and CWS game.html for AI extractability parity
+5. **OVERcast product screenshots on /overcast** (#72) — landing-page polish
+6. **Pull at-first-pitch values from OVERcast directly** (#85) — match the canonical source
+7. **Redis migration** (#91) — only when scaling beyond single Gunicorn worker
+8. **Phase 2 PGA course maps** (#31) — original ambition, not blocking
+
+Completed in July 2026 session (batches 1-7 + homepage redesign):
+- Batch 1: MLB stadium landing pages (was #94, done)
+- Batch 2: MLB team landing pages
+- Batches 3-4: NFL stadium + team landing pages
+- Batch 5: NASCAR track landing pages
+- Batch 6: PGA course landing pages
+- Batch 7: NCAAF top-25 stadium landing pages
+- Live game forecast inline on MLB team + stadium pages + NFL stadium pages
+- SEO Tier 1: 404 noindex, title audit, BreadcrumbList on all sport detail pages, Person schema
+- 3 MLB weather deep-dive articles (wind-rules, retractable-roofs, stadium-rankings)
+- Sitemap per-URL lastmod
+- Golf off-by-one date fix
+- MLS off-season copy + sport-nav reposition
+- Homepage two-column hero with compact WC card + soccer ball icon
+- Sport-card head CSS gaps filled (icons were rendering 24×24)
 
 ## OneDrive truncation playbook (CRITICAL)
 
-This has dominated recent sessions. CLAUDE.md has the rules; this is the playbook.
+This has dominated recent sessions and got even worse in the July 2026 session. Every long file eventually truncates. Templates truncate. app.py truncates repeatedly. **style.css also truncates** — added to the vulnerability list this session. **SESSION_NOTES.md truncates too** — the notes update itself needed recovery.
 
-**Symptom**: Edit/Write tool says success, AST/Jinja parse reports broken at a high line number near the end of the file, tail shows a partial line.
+**Symptom types**:
+- **Simple truncation**: AST/Jinja parse reports broken at a high line number near the end; tail shows a partial line ending mid-token.
+- **Null-byte padding**: bash reports "source code string cannot contain null bytes"; file size is nominal but the last few dozen bytes are `\x00`. Discovered mid-July session. Recovery: `open(path, 'rb').read().rstrip(b'\x00')` and write back.
+- **Duplicate lines from heredoc recovery**: On a re-recovery, the head+heredoc can duplicate a line that spans both the truncation boundary and the heredoc start. Manifests as valid-parsing but visually broken output (e.g. "Verification file" appearing twice on the admin IndexNow page).
 
 **Recovery sequence**:
-1. `head -N file > /tmp/...` where N is the last known-good line
-2. `cat /tmp/... > file` to truncate
-3. `cat >> file <<'EOF'` to append the rest via heredoc (bypasses Edit-tool race)
-4. `sleep 5` (let OneDrive sync settle)
-5. AST/Jinja parse to confirm
+1. Read tool → get the correct cloud version.
+2. `head -N file > /tmp/...` where N is the last known-good line on disk.
+3. `mv` the head-truncated file into place.
+4. `cat >> file <<'EOF'` to append the correct tail via heredoc (bypasses Edit-tool race).
+5. `sleep 5` (let OneDrive sync settle).
+6. AST/Jinja parse + tail integrity check.
+7. Check for null bytes: `python3 -c "print(open(path, 'rb').read().count(b'\x00'))"`.
 
 **Mandatory verification after ANY batch of code edits**:
 - Full Python AST sweep across the repo
 - Full Jinja template sweep
 - Tail integrity (every touched file ends with expected closing statement)
+- Null-byte scan on any file that got Edit'd
 - Behavioral test: boot Flask test_client and hit affected routes
 - For pre-push: `git show HEAD:file | python3 -c "ast.parse(...)"` — this is what caught the storage.py corruption that broke the Render deploy on commit `0bf2a7e`
 
+**Batch strategy that worked in July 2026**: when adding many new features that all touch app.py, do NOT edit app.py once per feature. Build ALL the content modules and templates first, then do a single app.py edit at the end with all imports + all routes + all sitemap entries. This limits the number of truncation cascades. Recovery still needed, but 1 recovery vs 5.
+
 **What we learned the hard way**:
-- Local Read tool reads from OneDrive cloud (often clean) while bash reads from disk (often truncated). The two views can diverge by several lines.
+- Local Read tool reads from OneDrive cloud (often clean) while bash reads from disk (often truncated). The two views can diverge by dozens of lines.
 - GitHub Desktop reads from disk. So when Kevin pushes, he can push the truncated version even when Read tool showed it clean to us.
-- Sometimes the on-disk file has duplicate lines from heredoc append after an earlier failed write (the `if removed: _persist() return removed` showing up twice was the storage.py break).
+- Sometimes the on-disk file has duplicate lines from heredoc append after an earlier failed write.
 - Do NOT run `git` from bash on this repo. It leaves `.git/index.lock` files that block Kevin's GitHub Desktop commits. CLAUDE.md explicitly says this. Honor it.
+- **CSS truncation is silent in production for a while** because browsers cache the last-known-good stylesheet. The July 2026 style.css tail truncation (lost `.home-product__link` etc.) had likely been on the live site for an unknown period but nobody saw it because the CSS was cached in Kevin's browser.
 
 ## Deploy flow
 
@@ -177,8 +258,10 @@ This has dominated recent sessions. CLAUDE.md has the rules; this is the playboo
   - CWS: `#ca8a04` (yellow)
   - NFL/NCAAF: `var(--ash)` (neutral, dormant)
   - Tennis: `#7c3aed` (purple)
+  - MLS: `#00538f` (blue)
 - Favicon: `static/img/favicon.svg` — bolt on transparent background (NO tile), brand navy fill
 - Per-sport "cheat-sheet" card: 3-column grid (temp / wind / precip), serif numbers, sans labels
+- Homepage sport-card icon size: 40×40, at flex-start alignment to the kicker+title stack (see July 2026 fix)
 
 ## Things NOT to touch
 
@@ -193,7 +276,8 @@ This has dominated recent sessions. CLAUDE.md has the rules; this is the playboo
 - Push batching: prefer fewer pushes, more files per push. Each push = ~2 min Render outage during deploy.
 - When showing live data, always verify via web_fetch against the actual deployed site — don't infer from local code.
 - When unsure between code paths, ask. Honest preference for "do it right" over "do it fast."
+- Facts only, source or bail. Kevin has explicitly said mid-session "make sure you are not making anything up" — take that seriously in evergreen content.
 
 ---
 
-Last updated: 2026-06-29 during the tennis-launch / NASCAR-PGA-fix / Tier 1+2+3 session. Status: tennis polish v3 verified clean, MLS module about to begin.
+Last updated: 2026-07-02 during the SEO-landing-page-surge session. Status: 222 evergreen landing pages live across every sport, homepage redesigned to two-column hero with compact WC card, style.css tail truncation recovered, mandatory sweep clean.

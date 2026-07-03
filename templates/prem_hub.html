@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Premier League Weather Guides | Kevin Roth{% endblock %}
+{% block description %}Evergreen weather guides for every Premier League club and stadium. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container-tight">
+    <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">More Sports</p>
+    <h1 class="display" style="margin-bottom: 1.25rem;">Premier League Weather</h1>
+    <p class="lead" style="margin-bottom: 2rem;">Per-club weather playbooks and per-stadium weather guides for the 2026-27 Premier League season. Live match forecasts coming ahead of the August 2026 kickoff.</p>
+
+    <h2 class="h3" style="margin: 2.5rem 0 1rem;">Clubs (2026-27)</h2>
+    <ul style="list-style: none; padding: 0; margin: 0 0 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.5rem;">
+      {% for name, c in teams %}
+        <li><a href="/prem/team/{{ c.slug }}" style="display: block; padding: 0.55rem 0.75rem; border: 1px solid var(--mist); text-decoration: none; color: var(--ink); font-family: var(--font-sans); font-size: 0.92rem;">{{ name }}</a></li>
+      {% endfor %}
+    </ul>
+
+    <h2 class="h3" style="margin: 2.5rem 0 1rem;">Stadiums</h2>
+    <ul style="list-style: none; padding: 0; margin: 0 0 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.5rem;">
+      {% for name, c in stadiums %}
+        <li><a href="/prem/stadium/{{ c.slug }}" style="display: block; padding: 0.55rem 0.75rem; border: 1px solid var(--mist); text-decoration: none; color: var(--ink); font-family: var(--font-sans); font-size: 0.92rem;">{{ name }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

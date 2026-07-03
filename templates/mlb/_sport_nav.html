@@ -46,5 +46,13 @@
       MLS
       {% if sport_counts and sport_counts.mls %}<span class="sport-nav__count">{{ sport_counts.mls }}</span>{% endif %}
     </a>
+    {# More sports dropdown for niche + international sports. #}
+    <details class="sport-nav__more">
+      <summary class="sport-nav__item sport-nav__more-btn">More sports <span aria-hidden="true" style="margin-left:0.2rem;">▾</span></summary>
+      <div class="sport-nav__more-menu" role="menu">
+        <a href="/prem" role="menuitem" class="sport-nav__more-item">Premier League</a>
+        <a href="/ipl" role="menuitem" class="sport-nav__more-item">Cricket (IPL)</a>
+      </div>
+    </details>
   </div>
 </nav>

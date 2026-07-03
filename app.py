@@ -40,6 +40,21 @@ from golf.courses import PGA_COURSES
 from golf.course_content import COURSE_CONTENT, COURSE_BY_SLUG
 from cfb.venues import FBS_TEAMS
 from cfb.stadium_content import STADIUM_CONTENT_CFB, STADIUM_BY_SLUG_CFB
+from mls.venues import MLS_TEAMS
+from mls.content import (
+    TEAM_CONTENT_MLS, TEAM_BY_SLUG_MLS,
+    STADIUM_CONTENT_MLS, STADIUM_BY_SLUG_MLS,
+    TEAM_TO_CONF_MLS,
+)
+from tennis.venue_content import VENUE_CONTENT as TENNIS_VENUE_CONTENT, VENUE_BY_SLUG_TENNIS
+from prem.content import (
+    TEAM_CONTENT_PREM, TEAM_BY_SLUG_PREM,
+    STADIUM_CONTENT_PREM, STADIUM_BY_SLUG_PREM,
+)
+from ipl.content import (
+    TEAM_CONTENT_IPL, TEAM_BY_SLUG_IPL,
+    GROUND_CONTENT_IPL, GROUND_BY_SLUG_IPL,
+)
 
 from worldcup.cache import get_matchday, start_warmer as start_wc_warmer
 from worldcup.schedule import match_slug as wc_match_slug
@@ -1283,6 +1298,274 @@ def ncaaf_stadium_page(slug):
     )
 
 
+# ===== MLS stadium + team landing pages =====
+
+@app.route("/mls/team/<slug>")
+def mls_team_page(slug):
+    entry = TEAM_BY_SLUG_MLS.get(slug)
+    if not entry:
+        abort(404)
+    team_name, content = entry
+    team_data = None
+    for t in MLS_TEAMS.values():
+        if t.get("name") == team_name:
+            team_data = t
+            break
+    if not team_data:
+        abort(404)
+    stadium = team_data.get("stadium", {})
+    conf = TEAM_TO_CONF_MLS.get(team_name, "")
+    facts = [
+        ("Home stadium", content["stadium"]),
+        ("City", stadium.get("city", "")),
+        ("Roof", {"open": "Open-air", "retractable": "Retractable",
+                  "fixed_dome": "Fixed dome", "fixed_roof": "Fixed roof"}
+                 .get(stadium.get("roof_type"), "Open-air")),
+        ("Conference", conf),
+    ]
+    sections = [
+        ("Home advantage", content["home"]),
+        ("Road environments", content["road"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="MLS Team Weather Playbook",
+        back_url="/mls", back_label="MLS Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/mls",
+        cta_label=f"See today's {team_name} match forecast",
+        breadcrumb_hub_url="/mls",
+        breadcrumb_hub_label="MLS Weather",
+        breadcrumb_entity=team_name,
+        canonical_path=f"/mls/team/{slug}",
+    )
+
+
+@app.route("/mls/stadium/<slug>")
+def mls_stadium_page(slug):
+    entry = STADIUM_BY_SLUG_MLS.get(slug)
+    if not entry:
+        abort(404)
+    stadium_name, content = entry
+    stadium_data = {}
+    for t in MLS_TEAMS.values():
+        s = t.get("stadium", {})
+        if s.get("name") == stadium_name:
+            stadium_data = s
+            break
+    facts = [
+        ("Team", content["team"]),
+        ("City", stadium_data.get("city", "")),
+        ("Roof", {"open": "Open-air", "retractable": "Retractable",
+                  "fixed_dome": "Fixed dome", "fixed_roof": "Fixed roof"}
+                 .get(stadium_data.get("roof_type"), "Open-air")),
+    ]
+    sections = [
+        ("Overview", content["climate"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="MLS Stadium Weather Guide",
+        back_url="/mls", back_label="MLS Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/mls",
+        cta_label="See this week's MLS forecast",
+        breadcrumb_hub_url="/mls",
+        breadcrumb_hub_label="MLS Weather",
+        breadcrumb_entity=stadium_name,
+        canonical_path=f"/mls/stadium/{slug}",
+    )
+
+
+# ===== Tennis Grand Slam venue landing pages =====
+
+@app.route("/tennis/venue/<slug>")
+def tennis_venue_page(slug):
+    entry = VENUE_BY_SLUG_TENNIS.get(slug)
+    if not entry:
+        abort(404)
+    slam_key, content = entry
+    facts = [
+        ("Venue", content["name"]),
+        ("Location", content["location"]),
+        ("Tournament", content["tournament"]),
+        ("Window", content["window"]),
+    ]
+    sections = [
+        ("Climate", content["climate"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="Grand Slam Venue Weather Guide",
+        byline_audience="sports fans and bettors",
+        back_url="/tennis", back_label="Tennis Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/tennis",
+        cta_label=f"See today's {content['tournament']} matches forecast",
+        breadcrumb_hub_url="/tennis",
+        breadcrumb_hub_label="Tennis Weather",
+        breadcrumb_entity=content["name"],
+        canonical_path=f"/tennis/venue/{slug}",
+    )
+
+
+# ===== Premier League team + stadium landing pages =====
+
+@app.route("/prem")
+def prem_hub():
+    """Simple index hub for Premier League landing pages. Live match forecasts
+    not yet built — this page lists all 20 clubs + stadiums with links to
+    their evergreen weather guides."""
+    teams = [(name, c) for name, c in sorted(TEAM_CONTENT_PREM.items())]
+    stadiums = [(name, c) for name, c in sorted(STADIUM_CONTENT_PREM.items())]
+    return render_template("prem_hub.html", teams=teams, stadiums=stadiums,
+                           canonical_path="/prem")
+
+
+@app.route("/ipl")
+def ipl_hub():
+    """Simple index hub for IPL landing pages."""
+    teams = [(name, c) for name, c in sorted(TEAM_CONTENT_IPL.items())]
+    grounds = [(name, c) for name, c in sorted(GROUND_CONTENT_IPL.items())]
+    return render_template("ipl_hub.html", teams=teams, grounds=grounds,
+                           canonical_path="/ipl")
+
+
+@app.route("/prem/team/<slug>")
+def prem_team_page(slug):
+    entry = TEAM_BY_SLUG_PREM.get(slug)
+    if not entry:
+        abort(404)
+    team_name, content = entry
+    facts = [
+        ("Home stadium", content["stadium"]),
+        ("City", content["city"]),
+        ("Capacity", f"{content['capacity']:,}"),
+    ]
+    sections = [
+        ("Home advantage", content["home"]),
+        ("Road environments", content["road"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="Premier League Club Weather Playbook",
+        byline_audience="sports fans and bettors",
+        back_url="/prem", back_label="Premier League Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/prem",
+        cta_label=f"See {team_name}'s next match forecast",
+        breadcrumb_hub_url="/prem",
+        breadcrumb_hub_label="Premier League Weather",
+        breadcrumb_entity=team_name,
+        canonical_path=f"/prem/team/{slug}",
+    )
+
+
+@app.route("/prem/stadium/<slug>")
+def prem_stadium_page(slug):
+    entry = STADIUM_BY_SLUG_PREM.get(slug)
+    if not entry:
+        abort(404)
+    stadium_name, content = entry
+    facts = [
+        ("Home club", content["team"]),
+        ("City", content["city"]),
+        ("Capacity", f"{content['capacity']:,}"),
+    ]
+    sections = [
+        ("Overview", content["overview"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="Premier League Stadium Weather Guide",
+        byline_audience="sports fans and bettors",
+        back_url="/prem", back_label="Premier League Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/prem",
+        cta_label="See this week's Premier League forecast",
+        breadcrumb_hub_url="/prem",
+        breadcrumb_hub_label="Premier League Weather",
+        breadcrumb_entity=stadium_name,
+        canonical_path=f"/prem/stadium/{slug}",
+    )
+
+
+# ===== IPL team + ground landing pages =====
+
+@app.route("/ipl/team/<slug>")
+def ipl_team_page(slug):
+    entry = TEAM_BY_SLUG_IPL.get(slug)
+    if not entry:
+        abort(404)
+    team_name, content = entry
+    facts = [
+        ("Home ground", content["ground"]),
+        ("City", content["city"]),
+        ("Abbrev", content["abbrev"]),
+        ("Capacity", f"{content['capacity']:,}"),
+    ]
+    sections = [
+        ("Home advantage", content["home"]),
+        ("Road environments", content["road"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="IPL Franchise Weather Playbook",
+        byline_audience="sports fans and bettors",
+        back_url="/ipl", back_label="IPL Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/ipl",
+        cta_label=f"See {team_name}'s next match forecast",
+        breadcrumb_hub_url="/ipl",
+        breadcrumb_hub_label="IPL Weather",
+        breadcrumb_entity=team_name,
+        canonical_path=f"/ipl/team/{slug}",
+    )
+
+
+@app.route("/ipl/ground/<slug>")
+def ipl_ground_page(slug):
+    entry = GROUND_BY_SLUG_IPL.get(slug)
+    if not entry:
+        abort(404)
+    ground_name, content = entry
+    facts = [
+        ("Home franchise", content["team"]),
+        ("City", content["city"]),
+        ("Capacity", f"{content['capacity']:,}"),
+    ]
+    sections = [
+        ("Overview", content["overview"]),
+        ("Weather angle", content["angle"]),
+    ]
+    return render_template(
+        "_shared/landing.html",
+        kicker="IPL Ground Weather Guide",
+        byline_audience="sports fans and bettors",
+        back_url="/ipl", back_label="IPL Weather",
+        title=content["headline"],
+        facts=facts, sections=sections,
+        cta_url="/ipl",
+        cta_label="See this week's IPL forecast",
+        breadcrumb_hub_url="/ipl",
+        breadcrumb_hub_label="IPL Weather",
+        breadcrumb_entity=ground_name,
+        canonical_path=f"/ipl/ground/{slug}",
+    )
+
+
 @app.route("/ncaaf")
 def ncaaf_root():
     """CFB slate for the current week. During the off-season (kickoff > 7 days
@@ -1919,6 +2202,8 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/ncaaf",                            "0.85", "daily",   None),
     ("/nfl",                              "0.9",  "hourly",  None),
     ("/mls",                              "0.85", "hourly",  None),
+    ("/prem",                             "0.8",  "monthly", "2026-07-03"),
+    ("/ipl",                              "0.8",  "monthly", "2026-07-03"),
     ("/mlb-weather",                      "0.8",  "monthly", "2026-06-27"),
     ("/mlb-weather/wind-rules",           "0.8",  "monthly", "2026-06-27"),
     ("/mlb-weather/retractable-roofs",    "0.8",  "monthly", "2026-06-27"),
@@ -1982,6 +2267,38 @@ def sitemap():
         for content in STADIUM_CONTENT_CFB.values():
             dynamic_urls.append(
                 (f"/ncaaf/stadium/{content['slug']}", "0.75", "monthly", "2026-07-02")
+            )
+        # Evergreen MLS team + stadium landing pages.
+        for content in TEAM_CONTENT_MLS.values():
+            dynamic_urls.append(
+                (f"/mls/team/{content['slug']}", "0.75", "monthly", "2026-07-02")
+            )
+        for content in STADIUM_CONTENT_MLS.values():
+            dynamic_urls.append(
+                (f"/mls/stadium/{content['slug']}", "0.75", "monthly", "2026-07-02")
+            )
+        # Evergreen Grand Slam venue landing pages.
+        for content in TENNIS_VENUE_CONTENT.values():
+            dynamic_urls.append(
+                (f"/tennis/venue/{content['slug']}", "0.8", "monthly", "2026-07-02")
+            )
+        # Evergreen Premier League team + stadium landing pages.
+        for content in TEAM_CONTENT_PREM.values():
+            dynamic_urls.append(
+                (f"/prem/team/{content['slug']}", "0.75", "monthly", "2026-07-03")
+            )
+        for content in STADIUM_CONTENT_PREM.values():
+            dynamic_urls.append(
+                (f"/prem/stadium/{content['slug']}", "0.75", "monthly", "2026-07-03")
+            )
+        # Evergreen IPL franchise + ground landing pages.
+        for content in TEAM_CONTENT_IPL.values():
+            dynamic_urls.append(
+                (f"/ipl/team/{content['slug']}", "0.75", "monthly", "2026-07-03")
+            )
+        for content in GROUND_CONTENT_IPL.values():
+            dynamic_urls.append(
+                (f"/ipl/ground/{content['slug']}", "0.75", "monthly", "2026-07-03")
             )
         for d in (_eastern_today(), _eastern_tomorrow()):
             slate, _ = get_slate(d, allow_build=False)
@@ -2306,8 +2623,6 @@ def admin_indexnow_push():
         mimetype="text/html"
     )
 
-
-# ===== Error handlers =====
 
 @app.errorhandler(404)
 def not_found(e):
