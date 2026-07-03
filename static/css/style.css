@@ -178,7 +178,11 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
  * ============================================================ */
 
 .sport-nav { border-bottom: 1px solid var(--mist); background: var(--white); }
-.sport-nav__inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+/* Outer container: max-width + padding + relative for the "More sports"
+   popover anchor. The scrolling tab strip (__inner) lives inside, with
+   __more as a sibling so its dropdown menu escapes the overflow clip. */
+.sport-nav__container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: stretch; position: relative; }
+.sport-nav__inner { flex: 1 1 auto; min-width: 0; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
 .sport-nav__inner::-webkit-scrollbar { display: none; }
 .sport-nav__item { flex-shrink: 0; padding: 1rem 1.25rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; scroll-snap-align: start; white-space: nowrap; transition: color 0.15s ease, border-color 0.15s ease; }
 .sport-nav__item:hover { color: var(--ink); }

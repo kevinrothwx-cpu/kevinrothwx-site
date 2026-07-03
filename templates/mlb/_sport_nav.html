@@ -5,7 +5,8 @@
    key is set (which the context_processor sets only when in window).
 #}
 <nav class="sport-nav" aria-label="Sport navigation">
-  <div class="sport-nav__inner">
+  <div class="sport-nav__container">
+    <div class="sport-nav__inner">
     <a href="/mlb/today" class="sport-nav__item {% if active_sport == 'mlb' %}is-active{% endif %}">
       MLB
       {% if sport_counts and sport_counts.mlb %}<span class="sport-nav__count">{{ sport_counts.mlb }}</span>{% endif %}
@@ -46,7 +47,10 @@
       MLS
       {% if sport_counts and sport_counts.mls %}<span class="sport-nav__count">{{ sport_counts.mls }}</span>{% endif %}
     </a>
-    {# More sports dropdown for niche + international sports. #}
+    </div>{# /sport-nav__inner — scrolling container ends here #}
+
+    {# "More sports" dropdown lives OUTSIDE __inner so the overflow-x:auto
+       on the scrolling tab strip doesn't clip the popover menu. #}
     <details class="sport-nav__more">
       <summary class="sport-nav__item sport-nav__more-btn">More sports <span aria-hidden="true" style="margin-left:0.2rem;">▾</span></summary>
       <div class="sport-nav__more-menu" role="menu">
