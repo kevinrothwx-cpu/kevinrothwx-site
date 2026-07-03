@@ -205,9 +205,12 @@
   {% endif %}
 
   {% if slam and slam.days %}
-    {# Day-by-day cheat-sheet cards (top of page, visible at a glance). #}
+    {# Day-by-day cheat-sheet cards (top of page, visible at a glance).
+       Skip past/completed days so the top row always leads with today's
+       forecast on the left, then builds forward. #}
     <div class="cheat-row">
       {% for day in slam.days %}
+        {% if day.date_local >= today_local %}
         <div class="cheat-card">
           {# Just the date at the top — "Day X" labels live in the hourly
              breakdown section below, no need to double up here. #}
@@ -231,6 +234,7 @@
             </div>
           {% endif %}
         </div>
+        {% endif %}
       {% endfor %}
     </div>
 
@@ -246,14 +250,19 @@
       </h2>
       {% set ns = namespace(opens_remaining=3) %}
       {% for day in slam.days %}
-        {% if day.hourly %}
+        {# Skip past/completed days entirely — no need to show yesterday's
+           hourly. Today's row leads, everything after follows. #}
+        {% if day.hourly and day.date_local >= today_local %}
           {% set is_today_or_future = day.date_local >= today_local %}
           {% set should_open = is_today_or_future and ns.opens_remaining > 0 %}
           {% if should_open %}{% set ns.opens_remaining = ns.opens_remaining - 1 %}{% endif %}
           <details class="tennis-day-section" {% if should_open %}open{% endif %}>
             <summary>
-              <span class="tennis-day-section__label">{{ day.day_label }}</span>
-              <span class="tennis-day-section__date">{{ day.date_label }}</span>
+              {# Highlighted primary label = date. Muted secondary label =
+                 "Day N" tournament day. Kevin wants date prominent, day
+                 number as context on the right. #}
+              <span class="tennis-day-section__label">{{ day.date_label }}</span>
+              <span class="tennis-day-section__date">{{ day.day_label }}</span>
             </summary>
             <p style="margin: 0.6rem 0 0; font-family: var(--font-sans); font-size: 0.85rem;">
               <a href="/tennis/{{ slam.slam_id }}/{{ day.date_local.isoformat() }}" style="color: var(--storm); text-decoration: none;">View match schedule and full daily forecast →</a>

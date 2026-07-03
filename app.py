@@ -131,6 +131,10 @@ from nfl.storage import (
     attach_writeups_to_slate as nfl_attach_writeups,
 )
 
+from horse.cache import get_horse_slate, start_warmer as start_horse_warmer
+from horse.schedule import get_stakes_race as get_horse_stakes_race
+from horse.slate import build_stakes_day as build_horse_stakes_day
+
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
 
@@ -212,6 +216,7 @@ start_tennis_warmer()
 start_cfb_warmer()
 start_mls_warmer()
 start_nfl_warmer()
+start_horse_warmer()
 
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
@@ -2204,6 +2209,7 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/mls",                              "0.85", "hourly",  None),
     ("/prem",                             "0.8",  "monthly", "2026-07-03"),
     ("/ipl",                              "0.8",  "monthly", "2026-07-03"),
+    ("/horse",                            "0.85", "daily",   None),
     ("/mlb-weather",                      "0.8",  "monthly", "2026-06-27"),
     ("/mlb-weather/wind-rules",           "0.8",  "monthly", "2026-06-27"),
     ("/mlb-weather/retractable-roofs",    "0.8",  "monthly", "2026-06-27"),
@@ -2621,6 +2627,47 @@ def admin_indexnow_push():
         "<form method='POST'><button type='submit'>Push now</button></form>"
         "</body></html>",
         mimetype="text/html"
+    )
+
+
+# ── Horse racing routes ─────────────────────────────────────────────
+# Hand-curated marquee US thoroughbred stakes days. WeatherAPI primary
+# (via horse.slate), HRRR toggle overlay per race, freeze-at-post-time
+# for post-race review.
+
+@app.route("/horse")
+def horse_root():
+    """Horse racing stakes-day hub. Lists upcoming Grade 1/2 stakes
+    with high/wind/precip summary tiles. Deep-links into per-race
+    detail pages with hourly + HRRR toggle.
+    """
+    slate, meta = get_horse_slate(allow_build=True)
+    return render_template(
+        "horse/slate.html",
+        slate=slate,
+        meta=meta,
+        canonical_path="/horse",
+    )
+
+
+@app.route("/horse/<race_id>")
+def horse_race(race_id):
+    """Per-race detail: hourly forecast around post time + HRRR + freeze."""
+    race_seed = get_horse_stakes_race(race_id)
+    if not race_seed:
+        abort(404)
+    try:
+        race = build_horse_stakes_day(race_seed)
+    except Exception as e:
+        print(f"[horse.race] build failed for {race_id}: {e}", flush=True)
+        race = {**race_seed, "track_meta": None, "day_summary": None,
+                "day_hourly": [], "day_hrrr": [], "post_time_period": None,
+                "forecast_source": "unavailable", "build_err": str(e),
+                "race_date": None}
+    return render_template(
+        "horse/race.html",
+        race=race,
+        canonical_path=f"/horse/{race_id}",
     )
 
 

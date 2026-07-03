@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Horse Racing Weather, Stakes Day Forecast | Kevin Roth{% endblock %}
+{% block description %}Weather forecasts for marquee US thoroughbred stakes days. Track-specific hourly outlook around post time. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}Horse Racing Stakes Weather{% endblock %}
+{% block og_description %}Weather forecast for the next Grade 1 stakes day. By Kevin Roth, sports meteorologist.{% endblock %}
+
+{% block extra_head %}
+<style>
+  .horse-slate-hero { text-align: center; margin: 0 auto 1.5rem; max-width: 44rem; padding: 0 1.5rem; }
+  .horse-slate-hero .kicker { color: var(--fog); font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.4rem; }
+  .horse-slate-hero__title { font-family: var(--font-serif); font-size: 2rem; line-height: 1.15; margin: 0 0 0.6rem; color: var(--ink); }
+  .horse-slate-hero__sub { color: var(--slate); font-family: var(--font-sans); font-size: 0.95rem; line-height: 1.45; margin: 0; }
+
+  .horse-race-list { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; }
+  .horse-race-card {
+    background: #fff;
+    border: 1px solid var(--mist);
+    border-radius: 8px;
+    padding: 1.15rem 1.4rem;
+    margin: 0 0 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: start;
+  }
+  .horse-race-card__meta { min-width: 0; }
+  .horse-race-card__date {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--fog);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 0.3rem;
+  }
+  .horse-race-card__title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    color: var(--ink);
+    margin: 0 0 0.15rem;
+    line-height: 1.2;
+  }
+  .horse-race-card__title a { color: inherit; text-decoration: none; }
+  .horse-race-card__title a:hover { color: var(--storm); }
+  .horse-race-card__venue {
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    color: var(--slate);
+    margin: 0 0 0.55rem;
+  }
+  .horse-race-card__specs {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    color: var(--fog);
+    margin: 0;
+  }
+  .horse-race-card__specs .divider { margin: 0 0.4rem; color: var(--smoke); }
+  .horse-race-card__wx {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .horse-wx-tile {
+    text-align: center;
+    min-width: 62px;
+  }
+  .horse-wx-tile__val {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .horse-wx-tile__lbl {
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    color: var(--fog);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.3rem;
+  }
+  .horse-wx-tile__val.precip-hi { color: #b91c1c; }
+  .horse-wx-tile__val.precip-mid { color: #b45309; }
+  .horse-wx-tile__val.precip-lo { color: #15803d; }
+
+  .horse-race-card__grade {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: var(--storm);
+    color: #fff;
+    border-radius: 3px;
+    font-family: var(--font-sans);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+  .horse-race-card__grade--g2 { background: #6b7280; }
+  .horse-race-card__grade--g3 { background: #9ca3af; }
+  .horse-race-card__grade--listed { background: #d1d5db; color: var(--ink); }
+
+  .horse-empty {
+    max-width: 32rem;
+    margin: 3rem auto;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    border: 1px dashed var(--mist);
+    border-radius: 8px;
+  }
+  .horse-empty p {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: var(--slate);
+    margin: 0 0 0.4rem;
+  }
+  .horse-empty small {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--fog);
+  }
+
+  @media (max-width: 640px) {
+    .horse-race-card {
+      grid-template-columns: 1fr;
+    }
+    .horse-race-card__wx {
+      border-top: 1px solid var(--mist);
+      padding-top: 0.85rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mlb-page">
+  <header class="horse-slate-hero" style="padding-top:2rem">
+    <p class="kicker">US Thoroughbred Stakes Weather</p>
+    <h1 class="horse-slate-hero__title">Stakes Day Weather</h1>
+    <p class="horse-slate-hero__sub">
+      Track-specific forecasts for the next US thoroughbred Grade 1 and Grade 2 stakes days.
+      Wind, precip and temp around post time — by sports meteorologist Kevin Roth.
+    </p>
+  </header>
+
+  {% if not slate %}
+    <div class="horse-empty">
+      <p>No upcoming stakes days on the calendar right now.</p>
+      <small>The next race card will appear here as it's added to the schedule.</small>
+    </div>
+  {% else %}
+    <div class="horse-race-list">
+      {% for race in slate %}
+        {% set track = race.track_meta %}
+        {% set fmt_date = race.race_date.strftime("%a, %b %-d") if race.race_date else race.date_local %}
+        <article class="horse-race-card">
+          <div class="horse-race-card__meta">
+            <p class="horse-race-card__date">{{ fmt_date }}{% if race.post_time_local %} · Post {{ race.post_time_local }} local{% endif %}</p>
+            <h2 class="horse-race-card__title">
+              {% if race.grade == 1 %}
+                <span class="horse-race-card__grade">G1</span>
+              {% elif race.grade == 2 %}
+                <span class="horse-race-card__grade horse-race-card__grade--g2">G2</span>
+              {% elif race.grade == 3 %}
+                <span class="horse-race-card__grade horse-race-card__grade--g3">G3</span>
+              {% endif %}
+              <a href="/horse/{{ race.race_id }}">{{ race.race_name }}</a>
+            </h2>
+            <p class="horse-race-card__venue">
+              {% if track %}{{ track.name }} · {{ track.city }}{% else %}{{ race.track }}{% endif %}
+            </p>
+            <p class="horse-race-card__specs">
+              {{ race.distance }}<span class="divider">·</span>{{ race.surface }}
+              {% if race.purse_usd and race.purse_usd > 0 %}
+                <span class="divider">·</span>${{ "{:,.0f}".format(race.purse_usd) }} purse
+              {% endif %}
+            </p>
+          </div>
+
+          {% if race.day_summary %}
+            <div class="horse-race-card__wx">
+              <div class="horse-wx-tile">
+                <div class="horse-wx-tile__val">{{ race.day_summary.high_temp }}°</div>
+                <div class="horse-wx-tile__lbl">High</div>
+              </div>
+              <div class="horse-wx-tile">
+                <div class="horse-wx-tile__val">{{ race.day_summary.avg_wind }}</div>
+                <div class="horse-wx-tile__lbl">mph wind</div>
+              </div>
+              <div class="horse-wx-tile">
+                <div class="horse-wx-tile__val {% if race.day_summary.max_precip >= 60 %}precip-hi{% elif race.day_summary.max_precip >= 30 %}precip-mid{% else %}precip-lo{% endif %}">{{ race.day_summary.max_precip }}%</div>
+                <div class="horse-wx-tile__lbl">Rain</div>
+              </div>
+            </div>
+          {% elif race.build_err %}
+            <p style="font-family:var(--font-sans);font-size:0.75rem;color:var(--fog);max-width:16rem">
+              Forecast is loading. If this persists, WeatherAPI hasn't returned data yet — try again shortly.
+            </p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if meta and meta.build_err %}
+    <p style="font-family:var(--font-sans);font-size:0.78rem;color:var(--fog);text-align:center;margin-top:2rem">
+      Forecast source note: {{ meta.build_err }}
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

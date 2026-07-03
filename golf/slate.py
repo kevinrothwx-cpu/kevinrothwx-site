@@ -154,39 +154,67 @@ def build_tournament(event: dict) -> dict:
             print(f"[golf.slate] HRRR fetch error for {course.get('name','?')}: {e}", flush=True)
             hrrr_periods = None
 
-        # FREEZE pattern: per-round per-tournament. For past rounds use the
-        # frozen snapshot (NWS has rolled those hours off). For today/future
-        # rounds, compute fresh and snapshot. Without freeze, past rounds
-        # display empty hourly because NWS no longer serves those hours.
+        # FREEZE pattern rules:
+        #   Past round  → drop entirely (once yesterday is over, we lead
+        #                  with today at the top of the page).
+        #   Today       → freeze once at first cycle of the local day.
+        #                  Serve the freeze the rest of the day so NWS
+        #                  rolling early hours off doesn't shrink the
+        #                  hourly table. If a stale freeze exists from a
+        #                  prior day (written too early with incomplete
+        #                  NWS data), ignore it and re-freeze now.
+        #   Future      → live data, no freeze read or write.
         event_id = event.get("event_id") or ""
         today_local = datetime.now(tz).date()
+        today_start_utc = datetime.combine(
+            today_local, datetime.min.time(), tzinfo=tz
+        ).astimezone(timezone.utc)
 
         num_rounds = (last_round_local - first_round_local).days + 1
         cur = first_round_local
         round_num = 1
         while cur <= last_round_local:
             round_is_past = cur < today_local
+            round_is_today = cur == today_local
 
-            if round_is_past and event_id and forecast_freeze.has(event_id, cur):
-                # Past round + we have a snapshot — show the locked view
-                frozen = forecast_freeze.get(event_id, cur) or {}
-                day_summary = frozen.get("summary")
-                day_periods = frozen.get("hourly") or []
-                day_hrrr = frozen.get("hrrr_hourly") or []
+            if round_is_past:
+                cur += timedelta(days=1)
+                round_num += 1
+                continue
+
+            if round_is_today:
+                frozen = forecast_freeze.get(event_id, cur) if event_id else None
+                frozen_at = frozen.get("frozen_at_utc") if frozen else None
+                if isinstance(frozen_at, str):
+                    try:
+                        frozen_at = datetime.fromisoformat(frozen_at)
+                    except (ValueError, TypeError):
+                        frozen_at = None
+                # Only trust a freeze written today (in venue tz). A freeze
+                # from yesterday means the round was frozen too early with
+                # partial NWS data — re-freeze now.
+                if frozen and frozen_at and frozen_at >= today_start_utc:
+                    day_summary = frozen.get("summary")
+                    day_periods = frozen.get("hourly") or []
+                    day_hrrr = frozen.get("hrrr_hourly") or []
+                else:
+                    day_periods = _periods_for_round_day(periods or [], cur, tz)
+                    day_hrrr = _periods_for_round_day(hrrr_periods or [], cur, tz) if hrrr_periods else []
+                    day_summary = _summarize_day(day_periods)
+                    if event_id and day_periods:
+                        forecast_freeze.freeze(
+                            event_id, cur,
+                            summary=day_summary,
+                            hourly=day_periods,
+                            hrrr_hourly=day_hrrr,
+                        )
             else:
-                # Today or future round, OR past round with no snapshot:
-                # compute fresh from current periods.
+                # Future round — live data every cycle. We only freeze
+                # once the round day actually becomes today, so early
+                # partial NWS data never gets locked in.
                 day_periods = _periods_for_round_day(periods or [], cur, tz)
                 day_hrrr = _periods_for_round_day(hrrr_periods or [], cur, tz) if hrrr_periods else []
                 day_summary = _summarize_day(day_periods)
-                # Snapshot today/future rounds so they remain after rolling off
-                if event_id and not round_is_past and day_periods:
-                    forecast_freeze.freeze(
-                        event_id, cur,
-                        summary=day_summary,
-                        hourly=day_periods,
-                        hrrr_hourly=day_hrrr,
-                    )
 
             if round_num == num_rounds and num_rounds < 4:
                 label = "Final Round"

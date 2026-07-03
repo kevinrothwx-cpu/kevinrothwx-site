@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}{{ race.race_name }} Weather Forecast — {{ race.track_meta.name if race.track_meta else race.track }} | Kevin Roth{% endblock %}
+{% block description %}Hourly weather forecast for the {{ race.race_name }} at {{ race.track_meta.name if race.track_meta else race.track }}. Wind, precip and temp around post time by sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}{{ race.race_name }} Weather Forecast{% endblock %}
+{% block og_description %}Track-specific hourly forecast for {{ race.race_name }} race day. By Kevin Roth, sports meteorologist.{% endblock %}
+
+{% block extra_head %}
+{% if race.track_meta %}
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
+  {"@type":"ListItem","position":1,"name":"Home","item":"{{ site_url }}/"},
+  {"@type":"ListItem","position":2,"name":"Horse Racing","item":"{{ site_url }}/horse"},
+  {"@type":"ListItem","position":3,"name":"{{ race.race_name }}"}
+]}
+</script>
+{% endif %}
+<style>
+  .horse-race-hero { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 1.25rem; }
+  .horse-race-hero .kicker { color: var(--fog); font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.4rem; }
+  .horse-race-hero__title { font-family: var(--font-serif); font-size: 2rem; line-height: 1.15; margin: 0 0 0.5rem; color: var(--ink); }
+  .horse-race-hero__venue { font-family: var(--font-sans); font-size: 1rem; color: var(--slate); margin: 0 0 0.5rem; }
+  .horse-race-hero__specs { font-family: var(--font-sans); font-size: 0.85rem; color: var(--fog); margin: 0; }
+  .horse-race-hero__specs .divider { margin: 0 0.4rem; color: var(--smoke); }
+  .horse-race-hero__back { display: inline-block; color: var(--storm); text-decoration: none; font-size: 0.88rem; margin-bottom: 1rem; font-family: var(--font-sans); }
+  .horse-race-hero__back:hover { text-decoration: underline; }
+  .horse-verify-flag {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    background: #fbbf24;
+    color: #78350f;
+    border-radius: 3px;
+    font-family: var(--font-sans);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  .horse-summary-row {
+    max-width: 900px;
+    margin: 0.5rem auto 1.5rem;
+    padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .horse-summary-tile {
+    background: #fafafa;
+    border: 1px solid var(--mist);
+    border-radius: 6px;
+    text-align: center;
+    padding: 1rem 0.75rem;
+  }
+  .horse-summary-tile__val { font-family: var(--font-serif); font-size: 1.8rem; font-weight: 600; color: var(--ink); line-height: 1; }
+  .horse-summary-tile__lbl { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.4rem; }
+  .horse-summary-tile__val.precip-hi { color: #b91c1c; }
+  .horse-summary-tile__val.precip-mid { color: #b45309; }
+  .horse-summary-tile__val.precip-lo { color: #15803d; }
+
+  .horse-hourly-section {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    padding: 0 1.5rem;
+  }
+  .horse-hourly-section h2 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--ink);
+    margin: 0 0 0.85rem;
+  }
+  .horse-hourly-section h2 small {
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    color: var(--fog);
+    font-style: italic;
+    font-weight: 400;
+    margin-left: 0.4rem;
+  }
+  .horse-hourly {
+    overflow-x: auto;
+    border: 1px solid var(--mist);
+    border-radius: 6px;
+  }
+  .horse-hourly table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .horse-hourly th, .horse-hourly td { padding: 0.55rem 0.4rem; text-align: center; border-bottom: 1px solid var(--mist); }
+  .horse-hourly thead th { background: #f4f4f4; color: var(--fog); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; font-family: var(--font-sans); }
+  .horse-hourly tbody th { text-align: left; color: var(--fog); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; background: #fafafa; padding-left: 0.85rem; font-weight: 600; width: 75px; }
+  .horse-hourly .precip-high { color: #b91c1c; font-weight: 600; }
+  .horse-hourly .precip-mid  { color: #b45309; font-weight: 600; }
+  .horse-hourly .precip-low  { color: #6b7280; }
+  .horse-hourly .post-time-col { background: rgba(15, 76, 129, 0.08); }
+
+  .hrrr-toggle-horse {
+    max-width: 900px;
+    margin: 1rem auto 2rem;
+    padding: 0 1.5rem;
+  }
+  .hrrr-toggle-horse summary {
+    cursor: pointer;
+    padding: 0.7rem 1rem;
+    background: #f8f8f8;
+    border: 1px solid var(--mist);
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--ink);
+    list-style: none;
+  }
+  .hrrr-toggle-horse summary::-webkit-details-marker { display: none; }
+  .hrrr-toggle-horse summary::before { content: "\25B8"; color: var(--fog); font-size: 0.8rem; margin-right: 0.5rem; display: inline-block; transition: transform 0.15s; }
+  .hrrr-toggle-horse[open] summary::before { transform: rotate(90deg); }
+  .hrrr-toggle-horse__meta { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); margin-left: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  .horse-notes-block {
+    max-width: 900px;
+    margin: 1rem auto 2rem;
+    padding: 1rem 1.25rem;
+    background: #fff8e1;
+    border-left: 3px solid #fbbf24;
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: #78350f;
+    line-height: 1.5;
+  }
+  .horse-track-note {
+    max-width: 900px;
+    margin: 1rem auto 2rem;
+    padding: 0 1.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    color: var(--slate);
+    line-height: 1.55;
+  }
+  .horse-track-note strong { color: var(--ink); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mlb-page">
+  <header class="horse-race-hero">
+    <a href="/horse" class="horse-race-hero__back">← All stakes days</a>
+    <p class="kicker">
+      {% if race.grade == 1 %}Grade 1
+      {% elif race.grade == 2 %}Grade 2
+      {% elif race.grade == 3 %}Grade 3
+      {% else %}Stakes
+      {% endif %}
+      · US Thoroughbred
+    </p>
+    <h1 class="horse-race-hero__title">
+      {{ race.race_name }}
+      {% if not race.verified %}<span class="horse-verify-flag" title="Date and post time need verification against official source">Unverified</span>{% endif %}
+    </h1>
+    <p class="horse-race-hero__venue">
+      {% if race.track_meta %}
+        {{ race.track_meta.name }} · {{ race.track_meta.city }}
+      {% else %}
+        {{ race.track }}
+      {% endif %}
+    </p>
+    <p class="horse-race-hero__specs">
+      {{ race.race_date.strftime("%A, %B %-d, %Y") if race.race_date else race.date_local }}
+      {% if race.post_time_local %}<span class="divider">·</span>Post {{ race.post_time_local }} local{% endif %}
+      <span class="divider">·</span>{{ race.distance }}
+      <span class="divider">·</span>{{ race.surface }}
+      {% if race.purse_usd and race.purse_usd > 0 %}<span class="divider">·</span>${{ "{:,.0f}".format(race.purse_usd) }} purse{% endif %}
+    </p>
+  </header>
+
+  {% if race.notes %}
+    <p class="horse-track-note">
+      <strong>Handicapping note:</strong> {{ race.notes }}
+    </p>
+  {% endif %}
+
+  {% if race.day_summary %}
+    <div class="horse-summary-row">
+      <div class="horse-summary-tile">
+        <div class="horse-summary-tile__val">{{ race.day_summary.high_temp }}°</div>
+        <div class="horse-summary-tile__lbl">Race-day high</div>
+      </div>
+      <div class="horse-summary-tile">
+        <div class="horse-summary-tile__val">{{ race.day_summary.avg_wind }}</div>
+        <div class="horse-summary-tile__lbl">mph wind (avg)</div>
+      </div>
+      <div class="horse-summary-tile">
+        <div class="horse-summary-tile__val {% if race.day_summary.max_precip >= 60 %}precip-hi{% elif race.day_summary.max_precip >= 30 %}precip-mid{% else %}precip-lo{% endif %}">{{ race.day_summary.max_precip }}%</div>
+        <div class="horse-summary-tile__lbl">Max chance of rain</div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if race.day_hourly %}
+    <section class="horse-hourly-section">
+      <h2>
+        Hourly forecast <small>track local time · {{ race.forecast_source or "WeatherAPI" }}</small>
+      </h2>
+      <div class="horse-hourly">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              {% for p in race.day_hourly %}
+                {% set is_post = race.post_time_period and p.hour_local_dt == race.post_time_period.hour_local_dt %}
+                <th class="{% if is_post %}post-time-col{% endif %}">{{ p.hour_local }}{% if is_post %} ⭐{% endif %}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th>Precip</th>
+              {% for p in race.day_hourly %}
+                {% set pct = p.precip_pct or 0 %}
+                {% set is_post = race.post_time_period and p.hour_local_dt == race.post_time_period.hour_local_dt %}
+                <td class="{% if pct >= 60 %}precip-high{% elif pct >= 30 %}precip-mid{% else %}precip-low{% endif %} {% if is_post %}post-time-col{% endif %}">{{ pct }}%</td>
+              {% endfor %}
+            </tr>
+            <tr><th>Temp</th>
+              {% for p in race.day_hourly %}
+                {% set is_post = race.post_time_period and p.hour_local_dt == race.post_time_period.hour_local_dt %}
+                <td class="{% if is_post %}post-time-col{% endif %}">{{ p.temp }}°</td>
+              {% endfor %}
+            </tr>
+            <tr><th>Wind</th>
+              {% for p in race.day_hourly %}
+                {% set is_post = race.post_time_period and p.hour_local_dt == race.post_time_period.hour_local_dt %}
+                <td class="{% if is_post %}post-time-col{% endif %}">{{ p.wind_speed }} mph</td>
+              {% endfor %}
+            </tr>
+            <tr><th>Wind dir</th>
+              {% for p in race.day_hourly %}
+                {% set is_post = race.post_time_period and p.hour_local_dt == race.post_time_period.hour_local_dt %}
+                <td class="{% if is_post %}post-time-col{% endif %}">{{ p.wind_deg|wind_compass if p.wind_deg is not none else '—' }}</td>
+              {% endfor %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if race.day_hrrr %}
+    <details class="hrrr-toggle-horse" open>
+      <summary>High-resolution model <span class="hrrr-toggle-horse__meta">HRRR · 3 km · hourly updates</span></summary>
+      <div class="horse-hourly-section" style="padding-top:0.85rem;padding-bottom:0">
+        <div class="horse-hourly">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                {% for p in race.day_hrrr %}<th>{{ p.hour_local }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th>Precip</th>
+                {% for p in race.day_hrrr %}
+                  {% set pct = p.precip_pct or 0 %}
+                  <td class="{% if pct >= 60 %}precip-high{% elif pct >= 30 %}precip-mid{% else %}precip-low{% endif %}">{{ pct }}%</td>
+                {% endfor %}
+              </tr>
+              <tr><th>Temp</th>{% for p in race.day_hrrr %}<td>{{ p.temp }}°</td>{% endfor %}</tr>
+              <tr><th>Wind</th>{% for p in race.day_hrrr %}<td>{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+              <tr><th>Wind dir</th>{% for p in race.day_hrrr %}<td>{{ p.wind_deg|wind_compass if p.wind_deg is not none else '—' }}</td>{% endfor %}</tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  {% endif %}
+
+  {% if race.track_meta and race.track_meta.notes %}
+    <p class="horse-track-note">
+      <strong>About the track:</strong> {{ race.track_meta.notes }}
+    </p>
+  {% endif %}
+
+  {% if race.build_err %}
+    <p style="font-family:var(--font-sans);font-size:0.78rem;color:var(--fog);text-align:center;margin:1.5rem auto;max-width:44rem;padding:0 1.5rem">
+      Forecast source note: {{ race.build_err }}
+    </p>
+  {% endif %}
+
+</div>
+{% endblock %}
