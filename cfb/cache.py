@@ -247,3 +247,6 @@ def start_warmer() -> None:
 
 def stop_warmer() -> None:
     _warmer_stop.set()
+
+
+# EOF-CANARY 2026-07-04-cfb-recovery

@@ -498,11 +498,6 @@ def lookup_international_venue(fullname, city, country=None) -> Optional[dict]:
             return dict(matches[0])
 
     return None
-rn dict(v)
 
-    if co:
-        matches = [v for v in INTERNATIONAL_VENUES.values() if v["country"] == co]
-        if len(matches) == 1:
-            return dict(matches[0])
 
-    return None
+# EOF-CANARY 2026-07-04-cfb-recovery

@@ -100,3 +100,6 @@ def delete_orphaned(live_event_ids) -> int:
     if removed:
         _persist()
     return removed
+
+
+# EOF-CANARY 2026-07-04-cfb-recovery

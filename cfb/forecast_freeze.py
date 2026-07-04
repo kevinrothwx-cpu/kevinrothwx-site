@@ -93,3 +93,6 @@ def clear_all() -> None:
 def count() -> int:
     with _lock:
         return len(_frozen)
+
+
+# EOF-CANARY 2026-07-04-cfb-recovery

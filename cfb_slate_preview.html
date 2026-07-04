@@ -1,0 +1,2404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Football Weather, Forecasts for Every FBS Game | Kevin Roth</title>
+  <meta name="description" content="Free live weather forecasts for every Division I college football game. Saturday slate, Top 25 matchups, conference games. Stadium-specific temp, wind, precipitation. By sports meteorologist Kevin Roth.">
+  
+  <link rel="canonical" href="https://kevinrothwx.com/ncaaf">
+  <meta property="og:title" content="College Football Weather Forecasts">
+  <meta property="og:description" content="Real meteorologist weather forecasts for every FBS game this week. By Kevin Roth.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kevinrothwx.com/ncaaf">
+  <meta property="og:image" content="https://kevinrothwx.com/static/img/og-default.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@KevinRothWx">
+  <meta name="twitter:creator" content="@KevinRothWx">
+  <meta name="twitter:title" content="Kevin Roth, Sports Meteorologist">
+  <meta name="twitter:description" content="Sports meteorologist. Founder of OVERcast.">
+  <meta name="twitter:image" content="https://kevinrothwx.com/static/img/og-default.jpg">
+  
+  <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+  <style>/*
+ * kevinrothwx.com — design system
+ * Black-and-white photojournalism with a serious storm-blue accent.
+ */
+
+:root {
+  --ink: #0a0a0a;
+  --slate: #1f1f1f;
+  --ash: #525252;
+  --fog: #737373;
+  --smoke: #d4d4d4;
+  --mist: #e5e5e5;
+  --paper: #fafafa;
+  --white: #ffffff;
+  --storm: #1e3a8a;
+  --storm-hover: #1e40af;
+  --sky: #3b82f6;
+  --font-serif: 'Newsreader', 'Source Serif Pro', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: var(--font-sans); color: var(--ink); background: var(--white); font-size: 16px; line-height: 1.6; min-height: 100vh; margin: 0; }
+
+.serif { font-family: var(--font-serif); }
+.mono { font-family: var(--font-mono); }
+.kicker { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.kicker-storm { color: var(--storm); }
+.display { font-family: var(--font-serif); font-weight: 600; font-size: clamp(2.5rem, 5vw + 0.5rem, 4.5rem); line-height: 1.05; letter-spacing: -0.02em; color: var(--ink); margin: 0; }
+.h2 { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.75rem, 2.5vw + 0.5rem, 2.5rem); line-height: 1.15; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+.h3 { font-family: var(--font-serif); font-weight: 600; font-size: 1.5rem; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink); margin: 0; }
+.lead { font-family: var(--font-serif); font-size: 1.375rem; line-height: 1.5; color: var(--slate); font-weight: 400; }
+
+.prose { font-size: 1.125rem; line-height: 1.75; color: var(--slate); }
+.prose p { margin-bottom: 1.5em; }
+.prose h2 { font-family: var(--font-serif); font-weight: 600; font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; margin-top: 2.5em; margin-bottom: 0.6em; color: var(--ink); }
+.prose h3 { font-family: var(--font-serif); font-weight: 600; font-size: 1.375rem; margin-top: 2em; margin-bottom: 0.5em; color: var(--ink); }
+.prose strong { color: var(--ink); font-weight: 600; }
+.prose a { color: var(--storm); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.prose a:hover { color: var(--storm-hover); }
+.dropcap > p:first-of-type::first-letter { font-family: var(--font-serif); font-weight: 600; font-size: 4.5em; float: left; line-height: 0.85; margin: 0.08em 0.08em 0 0; color: var(--ink); }
+
+.container-tight { max-width: 720px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+.container { max-width: 1100px; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+.section { padding-top: 5rem; padding-bottom: 5rem; }
+.section-tight { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+.rule { border: 0; border-top: 1px solid var(--mist); margin: 3rem 0; }
+
+.site-header { border-bottom: 1px solid var(--mist); background: var(--white); position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(180%) blur(8px); background-color: rgba(255, 255, 255, 0.92); }
+.site-header__inner { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.brand { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); text-decoration: none; display: inline-flex; align-items: baseline; gap: 0.6rem; }
+.brand__divider { color: var(--smoke); font-weight: 400; }
+.brand__role { font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fog); font-weight: 500; }
+.nav { display: none; align-items: center; gap: 1.75rem; }
+@media (min-width: 768px) { .nav { display: flex; } }
+.nav a { color: var(--slate); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.15s ease; }
+.nav a:hover { color: var(--storm); }
+.nav__cta { background: var(--ink); color: var(--white) !important; padding: 0.5rem 1rem; border-radius: 4px; transition: background 0.15s ease; }
+.nav__cta:hover { background: var(--storm); }
+
+.mobile-toggle { background: none; border: 0; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 500; color: var(--ink); cursor: pointer; }
+@media (min-width: 768px) { .mobile-toggle { display: none; } }
+.mobile-nav { display: none; border-top: 1px solid var(--mist); padding: 0.5rem 0; }
+.mobile-nav.open { display: block; }
+.mobile-nav a { display: block; padding: 0.75rem 1.5rem; color: var(--slate); text-decoration: none; font-size: 0.95rem; }
+.mobile-nav a:hover { background: var(--paper); color: var(--storm); }
+
+.site-footer { border-top: 1px solid var(--mist); background: var(--paper); margin-top: 6rem; }
+.site-footer__inner { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem 2rem; display: grid; grid-template-columns: 1fr; gap: 2rem; font-size: 0.9rem; color: var(--ash); }
+@media (min-width: 640px) { .site-footer__inner { grid-template-columns: 2fr 1fr 1fr; } }
+.site-footer h4 { font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); font-weight: 600; margin: 0 0 0.75rem 0; }
+.site-footer p { margin: 0 0 0.5rem 0; }
+.site-footer ul { list-style: none; padding: 0; margin: 0; }
+.site-footer li { margin-bottom: 0.4rem; }
+.site-footer a { color: var(--slate); text-decoration: none; }
+.site-footer a:hover { color: var(--storm); }
+.site-footer__copy { border-top: 1px solid var(--mist); padding: 1rem 1.5rem; max-width: 1100px; margin: 0 auto; font-size: 0.75rem; color: var(--fog); }
+
+.hero { padding-top: 5rem; padding-bottom: 5rem; }
+@media (min-width: 768px) { .hero { padding-top: 7rem; padding-bottom: 7rem; } }
+.hero__credit-line { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+.hero__credit-line::before { content: ''; height: 1px; width: 2.5rem; background: var(--ink); display: inline-block; }
+.hero p.lead { margin-top: 1.5rem; max-width: 38rem; }
+.hero__cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.5rem; }
+
+.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.5rem; font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; text-decoration: none; border-radius: 4px; transition: all 0.15s ease; border: 1px solid transparent; cursor: pointer; }
+.btn-primary { background: var(--ink); color: var(--white); }
+.btn-primary:hover { background: var(--storm); }
+.btn-secondary { background: transparent; color: var(--ink); border-color: var(--smoke); }
+.btn-secondary:hover { border-color: var(--ink); background: var(--paper); }
+.btn-storm { background: var(--storm); color: var(--white); }
+.btn-storm:hover { background: var(--storm-hover); }
+
+.featured-strip { border-top: 1px solid var(--mist); border-bottom: 1px solid var(--mist); background: var(--paper); padding: 2rem 0; }
+.featured-strip__inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+.featured-strip__label { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fog); margin-bottom: 1.25rem; }
+.featured-strip__list { display: flex; flex-wrap: wrap; gap: 2rem 2.5rem; align-items: center; }
+.featured-strip__item { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; color: var(--ink); letter-spacing: -0.01em; }
+
+.cards { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+@media (min-width: 768px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+.card { display: block; padding: 2rem; border: 1px solid var(--mist); background: var(--white); text-decoration: none; color: var(--ink); transition: all 0.2s ease; position: relative; }
+.card:hover { border-color: var(--ink); transform: translateY(-2px); }
+.card__kicker { font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); margin-bottom: 0.75rem; }
+.card__title { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 0.75rem 0; color: var(--ink); }
+.card__body { font-size: 0.95rem; color: var(--ash); line-height: 1.55; margin: 0; }
+.card__arrow { position: absolute; top: 1.5rem; right: 1.5rem; color: var(--smoke); transition: color 0.15s ease, transform 0.15s ease; }
+.card:hover .card__arrow { color: var(--storm); transform: translate(2px, -2px); }
+
+.stats { display: grid; grid-template-columns: 1fr; gap: 2rem; padding: 2.5rem 0; }
+@media (min-width: 640px) { .stats { grid-template-columns: repeat(3, 1fr); } }
+.stat__value { font-family: var(--font-serif); font-size: 2.75rem; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
+.stat__label { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); margin-top: 0.5rem; }
+
+.press-list { list-style: none; padding: 0; margin: 0; }
+.press-list li { padding: 1.25rem 0; border-bottom: 1px solid var(--mist); }
+.press-list a { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; color: var(--ink); text-decoration: none; letter-spacing: -0.005em; }
+.press-list a:hover { color: var(--storm); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.press-list .muted { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); }
+
+.bio { display: grid; grid-template-columns: 1fr; gap: 2rem; margin-bottom: 3rem; }
+@media (min-width: 768px) { .bio { grid-template-columns: 220px 1fr; gap: 3rem; } }
+.bio__photo { width: 100%; max-width: 220px; aspect-ratio: 1 / 1; object-fit: cover; filter: grayscale(15%); background: var(--mist); }
+.bio__body p { font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.65; color: var(--slate); margin: 0 0 1.25rem 0; }
+
+.linklist { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr; gap: 0; }
+@media (min-width: 640px) { .linklist { grid-template-columns: repeat(2, 1fr); gap: 0 2rem; } }
+.linklist a { color: var(--slate); text-decoration: none; border-bottom: 1px solid var(--mist); padding: 0.65rem 0; display: block; transition: all 0.15s ease; font-size: 0.95rem; }
+.linklist a:hover { color: var(--storm); border-bottom-color: var(--storm); }
+
+.callout { border-left: 3px solid var(--storm); padding: 1.5rem 1.75rem; background: var(--paper); margin: 2rem 0; }
+.callout__title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem 0; color: var(--ink); }
+.callout__body { color: var(--slate); font-size: 0.95rem; margin: 0 0 1rem 0; }
+
+.field { margin-bottom: 1.25rem; }
+.field label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--ink); margin-bottom: 0.4rem; }
+.field input, .field textarea { width: 100%; padding: 0.75rem 0.9rem; border: 1px solid var(--smoke); background: var(--white); font-family: var(--font-sans); font-size: 0.95rem; color: var(--ink); border-radius: 3px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.06); }
+.honeypot { display: none !important; }
+
+.flash { max-width: 720px; margin: 1rem auto 0; padding: 0 1.5rem; }
+.flash__msg { padding: 0.75rem 1rem; border-radius: 3px; font-size: 0.9rem; }
+.flash__msg--error { background: #fef2f2; color: #991b1b; border-left: 3px solid #dc2626; }
+.flash__msg--success { background: #f0fdf4; color: #166534; border-left: 3px solid #16a34a; }
+
+@media print { .site-header, .site-footer { display: none; } body { color: #000; background: #fff; } }
+
+/* Four-stat variant for homepage */
+.stats--four .stat__value { font-size: 2.25rem; }
+@media (min-width: 640px) { .stats--four { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .stats--four { grid-template-columns: repeat(4, 1fr); } }
+
+.stat__icon { color: var(--ash); margin-bottom: 0.75rem; display: inline-block; line-height: 0; }
+.stat__icon svg { display: block; }
+
+/* 4-card layout for homepage */
+@media (min-width: 700px) { .cards--four { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .cards--four { grid-template-columns: repeat(4, 1fr); } }
+.cards--four .card { padding: 1.5rem; }
+.cards--four .card__title { font-size: 1.25rem; }
+.cards--four .card__body { font-size: 0.9rem; }
+
+/* Icon refinement: bigger, centered above value */
+.stats > div { text-align: center; }
+.stat__icon { margin-bottom: 1rem; }
+.stat__icon svg { width: 40px; height: 40px; margin: 0 auto; }
+
+/* Inline icon next to value, override previous block-above treatment */
+.stats > div { text-align: left; }
+.stat__row { display: flex; align-items: baseline; gap: 0.55rem; }
+.stat__row .stat__icon { display: inline-flex; align-self: center; margin-bottom: 0; color: var(--ash); }
+.stat__row .stat__icon svg { width: 22px; height: 22px; display: block; }
+
+/* ============================================================
+ * Sport navigation — strip below site header on /sport/* pages
+ * ============================================================ */
+
+.sport-nav { border-bottom: 1px solid var(--mist); background: var(--white); }
+.sport-nav__inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+.sport-nav__inner::-webkit-scrollbar { display: none; }
+/* NOTE: .sport-nav__container was used to anchor the "More sports"
+   dropdown outside the scrolling __inner. Removed 2026-07-04 along with
+   the dropdown. If bringing More sports back, restore both the wrapper
+   div in the template AND the .sport-nav__container flex rule here. */
+.sport-nav__item { flex-shrink: 0; padding: 1rem 1.25rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; scroll-snap-align: start; white-space: nowrap; transition: color 0.15s ease, border-color 0.15s ease; }
+.sport-nav__item:hover { color: var(--ink); }
+.sport-nav__item.is-active { color: var(--ink); border-bottom-color: var(--storm); }
+.sport-nav__count { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem; background: var(--mist); color: var(--slate); border-radius: 999px; font-size: 0.7rem; font-weight: 700; vertical-align: 1px; }
+.sport-nav__item.is-active .sport-nav__count { background: var(--ink); color: var(--white); }
+
+/* "More sports" dropdown. Uses <details>/<summary> so keyboard, touch,
+   and screen readers all work natively. Marker chevron hidden; we
+   rotate our own via [open] state. */
+.sport-nav__more { position: relative; flex-shrink: 0; }
+.sport-nav__more[open] > summary::-webkit-details-marker { display: none; }
+.sport-nav__more > summary { list-style: none; cursor: pointer; }
+.sport-nav__more > summary::-webkit-details-marker { display: none; }
+.sport-nav__more-btn { display: inline-block; }
+.sport-nav__more-menu { position: absolute; top: 100%; right: 0; min-width: 200px; background: var(--white); border: 1px solid var(--mist); border-radius: 6px; box-shadow: 0 6px 20px rgba(15, 26, 58, 0.08); z-index: 20; padding: 0.35rem 0; margin-top: 0.15rem; }
+.sport-nav__more-item { display: block; padding: 0.65rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; color: var(--ink); text-decoration: none; letter-spacing: 0.03em; transition: background-color 0.1s ease; }
+.sport-nav__more-item:hover { background: var(--paper); color: var(--storm); }
+/* Left-align the dropdown on very narrow screens so it doesn't clip off-screen */
+@media (max-width: 600px) {
+  .sport-nav__more-menu { right: auto; left: 0; }
+}
+
+/* ============================================================
+ * MLB slate / per-game pages — editorial baseline
+ * ============================================================ */
+
+/* Page header */
+.mlb-page { padding-top: 2.5rem; padding-bottom: 4rem; }
+.mlb-page__header { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 2rem; border-bottom: 1px solid var(--mist); margin-bottom: 2.5rem; }
+.mlb-page__hed { display: flex; align-items: baseline; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+.mlb-page__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0.4rem 0 0; }
+.mlb-page__sub { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); margin-top: 0.75rem; }
+.mlb-page__datenav { display: flex; gap: 0.5rem; align-items: center; }
+.mlb-page__datelink { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); text-decoration: none; padding: 0.4rem 0.8rem; border: 1px solid var(--mist); transition: all 0.15s ease; }
+.mlb-page__datelink:hover { color: var(--ink); border-color: var(--ash); }
+.mlb-page__datelink.is-active { color: var(--white); background: var(--ink); border-color: var(--ink); }
+
+/* ============================================================
+ * Cheat-sheet row — minimal editorial cards with team logos
+ * ============================================================ */
+
+.cheat-row { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+
+.cheat-card { display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.9rem; text-decoration: none; color: var(--ink); position: relative; transition: border-color 0.15s ease, transform 0.15s ease; }
+.cheat-card:hover { border-color: var(--ink); }
+.cheat-card:hover .cheat-card__time { color: var(--storm); }
+
+.cheat-card__rule { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.75rem; }
+.cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; }
+.cheat-card__badge { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); }
+.cheat-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); }
+.cheat-card__rule-right { display: inline-flex; align-items: center; gap: 0.4rem; }
+.cheat-card__roof { font-family: var(--font-sans); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.1rem 0.4rem; border: 1px solid var(--smoke); color: var(--slate); border-radius: 2px; line-height: 1.4; }
+.cheat-card__roof--retractable { border-color: #1e3a8a; color: #1e3a8a; }
+.cheat-card__roof--canopy      { border-color: var(--ash); color: var(--ash); }
+.cheat-card__roof--dome        { border-color: #4b5563; color: #4b5563; }
+
+.cheat-card__teams { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem; }
+.cheat-card__team { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; }
+.cheat-card__logo { width: 28px; height: 28px; flex-shrink: 0; object-fit: contain; }
+.cheat-card__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap; }
+.cheat-card__at { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0; padding: 0 0.15rem; }
+
+.cheat-card__wx { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
+.cheat-card__temp { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+.cheat-card__wxmid { display: flex; flex-direction: column; gap: 0.15rem; }
+.cheat-card__wind { font-family: var(--font-sans); font-size: 0.75rem; color: var(--slate); display: flex; align-items: center; gap: 0.3rem; }
+.cheat-card__precip { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; }
+.cheat-card__skyicon { width: 32px; height: 32px; }
+.cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
+
+/* ============================================================
+ * HRRR secondary forecast toggle (PGA + NASCAR)
+ * ============================================================ */
+.hrrr-toggle { margin: 0.75rem 0 0; }
+.hrrr-toggle > summary { cursor: pointer; list-style: none; user-select: none; font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--storm); padding: 0.55rem 0.85rem; border: 1px solid var(--mist); background: var(--white); display: inline-flex; align-items: center; gap: 0.5rem; transition: border-color 0.15s ease, background 0.15s ease; }
+.hrrr-toggle > summary::-webkit-details-marker { display: none; }
+.hrrr-toggle > summary::before { content: "▸"; font-size: 0.7rem; color: var(--ash); transition: transform 0.15s ease; display: inline-block; }
+.hrrr-toggle[open] > summary::before { transform: rotate(90deg); }
+.hrrr-toggle > summary:hover { border-color: var(--ink); background: var(--cream, #fafaf7); }
+.hrrr-toggle__meta { font-weight: 500; color: var(--ash); font-size: 0.78rem; letter-spacing: 0.01em; }
+.hrrr-section { margin-top: 0.75rem; padding: 0.6rem 0.75rem 0.75rem; border-left: 3px solid var(--storm); background: rgba(30, 58, 138, 0.025); }
+.hrrr-section .hourly { margin-bottom: 0; }
+
+/* Wind SVG arrow */
+.wind-arrow-svg { width: 14px; height: 14px; transition: transform 0.2s ease; }
+.wind-arrow-svg--out { color: #15803d; }   /* green-700, more editorial than bright */
+.wind-arrow-svg--in { color: #b91c1c; }    /* red-700 */
+.wind-arrow-svg--cross { color: var(--fog); }
+.wind-arrow-svg--unknown { color: var(--smoke); }
+
+/* Precip color buckets — editorial weights, not neon */
+.precip-green  { color: #15803d; font-weight: 600; }
+.precip-yellow { color: #b45309; font-weight: 600; }
+.precip-orange { color: #c2410c; font-weight: 700; }
+.precip-red    { color: #b91c1c; font-weight: 700; }
+.precip-none   { color: var(--fog); }
+
+/* Weather icons — minimal stroke style */
+.wx-icon { width: 32px; height: 32px; flex-shrink: 0; }
+.wx-icon--sun { color: #ca8a04; }       /* yellow-600 */
+.wx-icon--partly { color: var(--fog); }
+.wx-icon--rain { color: var(--storm); }
+.wx-icon--storm { color: var(--slate); }
+
+/* ============================================================
+ * Section 2 — write-ups or CTA pair
+ * ============================================================ */
+
+.mlb-section { max-width: 900px; margin: 0 auto 4rem; padding: 0 1.5rem; }
+
+/* Big CTA pair — editorial, not gradient buttons */
+.mlb-ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--ink); margin-bottom: 2rem; }
+@media (max-width: 640px) { .mlb-ctas { grid-template-columns: 1fr; } }
+.mlb-cta { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.75rem 1.75rem 2rem; text-decoration: none; color: var(--ink); transition: background 0.15s ease, color 0.15s ease; position: relative; }
+.mlb-cta + .mlb-cta { border-left: 1px solid var(--mist); }
+@media (max-width: 640px) { .mlb-cta + .mlb-cta { border-left: 0; border-top: 1px solid var(--mist); } }
+.mlb-cta:hover { background: var(--ink); color: var(--white); }
+.mlb-cta:hover .mlb-cta__kicker, .mlb-cta:hover .mlb-cta__sub { color: rgba(255,255,255,0.7); }
+.mlb-cta:hover .mlb-cta__arrow { transform: translateX(4px); }
+.mlb-cta__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); transition: color 0.15s ease; }
+.mlb-cta__title { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; display: flex; align-items: baseline; gap: 0.5rem; }
+.mlb-cta__arrow { font-weight: 400; transition: transform 0.2s ease; }
+.mlb-cta__sub { font-family: var(--font-sans); font-size: 0.9rem; color: var(--ash); transition: color 0.15s ease; }
+
+/* Small OVERcast tease (when writeups exist) */
+.mlb-overcast-tease { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border: 1px solid var(--mist); background: var(--paper); margin-bottom: 2rem; text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, background 0.15s ease; }
+.mlb-overcast-tease:hover { border-color: var(--ink); background: var(--white); }
+.mlb-overcast-tease__text { display: flex; flex-direction: column; }
+.mlb-overcast-tease__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.mlb-overcast-tease__title { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; margin-top: 0.1rem; }
+.mlb-overcast-tease__arrow { font-family: var(--font-sans); font-size: 1.25rem; color: var(--ash); transition: transform 0.2s ease; }
+.mlb-overcast-tease:hover .mlb-overcast-tease__arrow { transform: translateX(4px); color: var(--ink); }
+
+/* Ad slot — editorial restraint */
+.mlb-ad-slot { display: flex; justify-content: center; align-items: center; min-height: 90px; border: 1px dashed var(--smoke); background: var(--paper); margin-bottom: 2rem; }
+.mlb-ad-slot__placeholder { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fog); }
+
+/* Write-up block */
+.mlb-writeup { padding: 1.5rem 1.75rem 1.75rem; border-left: 9px solid var(--storm); background: var(--paper); margin-bottom: 1.25rem; }
+.mlb-writeup__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.65rem; gap: 1rem; flex-wrap: wrap; }
+.mlb-writeup__matchup { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+.mlb-writeup__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+.mlb-writeup__body { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.55; color: var(--slate); white-space: pre-wrap; }
+
+/* ============================================================
+ * Section 3 — hourly tables stacked per game
+ * ============================================================ */
+
+.mlb-hourly-group { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+.mlb-game-block { margin-bottom: 3rem; scroll-margin-top: 90px; }
+.mlb-game-block__header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--ink); }
+.mlb-game-block__matchup { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+.mlb-game-block__venue { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); margin-top: 0.2rem; }
+.mlb-game-block__time { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+.mlb-game-block__deeplink { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; color: var(--storm); text-decoration: none; margin-top: 0.75rem; }
+.mlb-game-block__deeplink:hover { color: var(--storm-hover); text-decoration: underline; }
+
+/* Hourly forecast table — RotoGrinders-inspired compact stack */
+.hourly { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.hourly__table { width: 100%; border-collapse: collapse; font-family: var(--font-sans); font-size: 0.85rem; }
+.hourly__label-col, .hourly__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog); text-align: left; padding: 0.45rem 0.85rem 0.45rem 0; white-space: nowrap; }
+.hourly__hour-col { padding: 0.5rem 0.5rem 0.4rem; text-align: center; border-bottom: 1px solid var(--mist); min-width: 56px; }
+.hourly__hour-col.is-game-hour { background: rgba(30,58,138,0.06); }
+.hourly__sky { display: flex; justify-content: center; margin-bottom: 0.15rem; }
+.hourly__time { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; color: var(--slate); }
+.hourly__cell { text-align: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--mist); color: var(--slate); }
+.hourly__cell.is-game-hour { background: rgba(30,58,138,0.06); }
+.hourly tbody tr:last-child td { border-bottom: 0; }
+.hourly__precip { font-weight: 700; }
+.hourly__missing { font-family: var(--font-sans); color: var(--fog); font-style: italic; padding: 1.25rem 0; }
+
+/* ============================================================
+ * Per-game detail page
+ * ============================================================ */
+
+.game-page { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+.game-page__kicker { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
+.game-page__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.85rem, 3.5vw + 0.5rem, 3rem); letter-spacing: -0.02em; line-height: 1.08; margin: 0.5rem 0 0.5rem; }
+.game-page__meta { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); margin-bottom: 2.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--mist); }
+
+/* Hero block — editorial big-number layout */
+.game-hero { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 0; border: 1px solid var(--ink); margin-bottom: 3rem; }
+@media (max-width: 640px) { .game-hero { grid-template-columns: 1fr; } }
+.game-hero__metric { padding: 1.75rem 1.5rem; text-align: center; }
+.game-hero__metric + .game-hero__metric { border-left: 1px solid var(--mist); }
+@media (max-width: 640px) { .game-hero__metric + .game-hero__metric { border-left: 0; border-top: 1px solid var(--mist); } }
+.game-hero__metric--primary { background: var(--ink); color: var(--white); }
+.game-hero__icon { display: flex; justify-content: center; margin-bottom: 0.5rem; }
+.game-hero__icon .wx-icon { width: 48px; height: 48px; }
+.game-hero__icon .wx-icon--sun { color: #fbbf24; }
+.game-hero__value { font-family: var(--font-serif); font-size: 2.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.game-hero__value-unit { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 500; color: var(--ash); margin-left: 0.15em; }
+.game-hero__metric--primary .game-hero__value-unit { color: rgba(255,255,255,0.5); }
+.game-hero__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); margin-top: 0.7rem; }
+.game-hero__metric--primary .game-hero__label { color: rgba(255,255,255,0.65); }
+
+/* Microclimate — feels like a sidebar/aside in editorial layout */
+.game-microclimate { margin: 3rem 0; padding: 1.75rem 1.75rem 2rem; background: var(--paper); border-left: 3px solid var(--ink); }
+.game-microclimate__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); margin-bottom: 0.6rem; }
+.game-microclimate__title { font-family: var(--font-serif); font-size: 1.25rem; font-weight: 600; margin-bottom: 0.65rem; letter-spacing: -0.01em; }
+.game-microclimate__body { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.6; color: var(--slate); }
+
+/* Game-page write-up */
+.game-writeup { padding: 1.75rem; border-left: 9px solid var(--storm); background: var(--paper); margin-bottom: 2.5rem; }
+.game-writeup__label { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); margin-bottom: 0.6rem; }
+.game-writeup__body { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.6; color: var(--slate); white-space: pre-wrap; }
+
+.game-page__back { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 2.5rem; font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); text-decoration: none; }
+.game-page__back:hover { color: var(--ink); }
+
+/* Section header inside game page */
+.game-section-h2 { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; margin: 3rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+
+/* CWS OVERcast weather-impact strip, full-width container under each game */
+.cws-impact-strip { padding: 0.25rem 1.25rem 1rem; }
+.cws-impact-strip > div { max-width: 100% !important; }
+/* Loosen the strip's inline nowrap so narrow viewports can wrap text */
+.cws-impact-strip [style*="nowrap"] { white-space: normal !important; }
+@media (max-width: 720px) {
+  /* Mobile: keep all 3 tiles in a single row, shrink everything in place
+     so the strip matches the hourly-forecast card's horizontal width above.
+     Do NOT stack vertically. */
+  .cws-impact-strip { padding: 0.15rem 0.6rem 0.75rem; }
+  .cws-impact-strip > div > div:nth-of-type(3) { gap: 6px !important; }
+  .cws-impact-strip > div > div:nth-of-type(3) > div { padding: 9px 8px !important; }
+  /* The big % number */
+  .cws-impact-strip [style*="font-size:32px"] { font-size: 20px !important; line-height: 1 !important; }
+  /* Tile label + tile footnote (both 11px) */
+  .cws-impact-strip [style*="font-size:11px"] { font-size: 9.5px !important; }
+  /* Tile detail rows */
+  .cws-impact-strip [style*="font-size:12.5px"] { font-size: 10.5px !important; line-height: 1.45 !important; }
+  /* Prose line above tiles */
+  .cws-impact-strip [style*="font-size:15px"] { font-size: 12.5px !important; line-height: 1.45 !important; }
+  /* Strip top row + OVERcast brand */
+  .cws-impact-strip [style*="font-size:12px"] { font-size: 10.5px !important; }
+  /* Baseline footnote */
+  .cws-impact-strip [style*="font-size:11.5px"] { font-size: 10px !important; }
+}
+
+/* Mobile tightening for MLB + CWS game-block cards (they share these
+   classes). Targets the hairline horizontal scroll caused by the
+   matchup title strip being a hair too wide. Flex items default to
+   min-width:auto, which prevents the team-name spans from shrinking
+   past their intrinsic text width — explicit min-width:0 unlocks that. */
+@media (max-width: 720px) {
+  .mlb-hourly-group { padding: 0 0.75rem; }
+  .mlb-game-block__header {
+    padding: 0.6rem 0.8rem 0.5rem;
+    gap: 0.25rem 0.7rem;
+  }
+  .mlb-game-block__header > div:first-child { min-width: 0; flex: 1 1 100%; }
+  .mlb-game-block__matchup {
+    font-size: 1.02rem;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .mlb-game-block__matchup > * { min-width: 0; }
+  .mlb-game-block__matchup .matchup-logo { width: 1.15em; height: 1.15em; }
+  .mlb-game-block__matchup .matchup-at { font-size: 0.6em; padding: 0; }
+  .mlb-game-block__venue { font-size: 0.66rem; margin-top: 0.08rem; }
+  .mlb-game-block__time { font-size: 0.68rem; letter-spacing: 0.06em; }
+  .mlb-game-block__hourly { padding: 0.45rem 0.5rem 0.65rem; }
+  .mlb-game-block__deeplink { padding: 0.55rem 0.85rem 0.65rem; font-size: 0.76rem; }
+}
+
+/* Stadium notes (per-venue climatological context, World Cup match page) */
+.stadium-notes { margin-bottom: 1rem; }
+.stadium-notes__body { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.6; color: var(--ink); max-width: 62ch; }
+
+/* ============================================================
+ * v3 polish — tighten layout, add game-block borders,
+ * add per-game summary panel beside hourly table
+ * ============================================================ */
+
+/* Tighter page header so cheat-sheet fits closer to viewport top */
+.mlb-page { padding-top: 1.5rem; }
+.mlb-page__header { padding: 0 1.5rem 1.25rem; margin: 0 auto 1.5rem; }
+.mlb-page__title { margin-top: 0.3rem; }
+.mlb-page__sub { margin-top: 0.5rem; }
+
+/* Compact cheat-sheet — smaller cards, tighter gap */
+.cheat-row { gap: 0.6rem; margin-bottom: 2rem; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); }
+.cheat-card { padding: 0.7rem 0.85rem 0.75rem; }
+.cheat-card__rule { padding-bottom: 0.5rem; margin-bottom: 0.55rem; }
+.cheat-card__teams { gap: 0.5rem; margin-bottom: 0.55rem; }
+.cheat-card__logo { width: 22px; height: 22px; }
+.cheat-card__abbr { font-size: 1.05rem; }
+.cheat-card__wx { gap: 0.5rem; padding-top: 0.5rem; }
+.cheat-card__temp { font-size: 1.35rem; }
+.cheat-card__skyicon { width: 28px; height: 28px; }
+
+/* Mobile cheat-sheet — 2 cards per row, much tighter, so the slate isn't 8 screens of scrolling */
+@media (max-width: 720px) {
+  .cheat-row { grid-template-columns: 1fr 1fr; gap: 0.45rem; padding: 0 0.85rem; margin-bottom: 1.25rem; }
+  .cheat-card { padding: 0.55rem 0.65rem 0.6rem; }
+  .cheat-card__rule { padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
+  .cheat-card__time { font-size: 0.66rem; letter-spacing: 0.06em; }
+  .cheat-card__date { font-size: 0.66rem; }
+  .cheat-card__teams { gap: 0.3rem; margin-bottom: 0.45rem; }
+  .cheat-card__logo { width: 18px; height: 18px; }
+  .cheat-card__abbr { font-size: 0.9rem; }
+  .cheat-card__at { font-size: 0.62rem; padding: 0 0.05rem; }
+  .cheat-card__wx { grid-template-columns: auto 1fr auto; gap: 0.35rem; padding-top: 0.4rem; }
+  .cheat-card__temp { font-size: 1.1rem; }
+  .cheat-card__wind { font-size: 0.68rem; }
+  .cheat-card__precip { font-size: 0.7rem; }
+  .cheat-card__skyicon { width: 22px; height: 22px; }
+}
+
+/* ── Ballpark cut-out diamond with rotated wind arrow ──────── */
+.field-diagram { display: inline-flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.field-diagram__svg { width: 64px; height: 64px; flex-shrink: 0; }
+.field-diagram__svg--sm { width: 38px; height: 38px; }
+.field-diagram__svg--lg { width: 110px; height: 110px; }
+.field-diagram__label { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); text-align: center; line-height: 1.2; }
+.field-diagram__sublabel { font-family: var(--font-sans); font-size: 0.72rem; color: var(--ash); margin-top: 0.1rem; }
+
+/* Field outline strokes */
+.fd-grass { fill: #f4f6f4; stroke: var(--smoke); stroke-width: 1; }
+.fd-infield { fill: var(--mist); stroke: var(--ash); stroke-width: 0.5; }
+.fd-line { stroke: var(--ash); stroke-width: 0.8; fill: none; }
+.fd-plate { fill: var(--slate); }
+.fd-arrow { transform-origin: 50% 50%; transition: transform 0.25s ease; }
+.fd-arrow--out { color: #15803d; fill: #15803d; }
+.fd-arrow--in  { color: #b91c1c; fill: #b91c1c; }
+.fd-arrow--cross { color: var(--ash); fill: var(--ash); }
+.fd-arrow--unknown { color: var(--smoke); fill: var(--smoke); }
+
+/* NFL football-field diagram (summary panel) */
+.nfl-field { color: #15803d; }
+.nfl-field--high { color: #b45309; }
+.nfl-field--severe { color: #b91c1c; }
+.nfl-field__turf { fill: #f4f7f2; stroke: #b8bcb2; stroke-width: 0.8; }
+.nfl-field__endzone { fill: #dfe5d8; }
+.nfl-field__goalline { stroke: #94a190; stroke-width: 1; }
+.nfl-field__yard { stroke: #cdd2c5; stroke-width: 0.5; }
+.nfl-field__mid { stroke: #94a190; stroke-width: 1.2; }
+.nfl-field__arrow { transform-origin: 50px 50px; transition: transform 0.25s ease; }
+
+/* ── Game block redesigned as a bordered card ───────────────── */
+.mlb-game-block { margin-bottom: 1.75rem; scroll-margin-top: 90px; border: 1px solid var(--mist); background: var(--white); padding: 0; }
+.mlb-game-block__header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--mist); }
+.mlb-game-block__matchup { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.mlb-game-block__venue { font-size: 0.76rem; margin-top: 0.18rem; }
+.mlb-game-block__time { white-space: nowrap; }
+
+/* Side-by-side: summary panel | hourly table */
+.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; }
+@media (max-width: 720px) { .mlb-game-block__body { grid-template-columns: 1fr; } }
+
+.game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
+@media (max-width: 720px) { .game-summary { border-right: 0; border-bottom: 1px solid var(--mist); flex-direction: row; justify-content: space-around; flex-wrap: wrap; } }
+
+.game-summary__skyicon .wx-icon { width: 44px; height: 44px; }
+.game-summary__primary { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+.game-summary__temp { font-family: var(--font-serif); font-size: 2.25rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1; }
+.game-summary__label { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ash); }
+.game-summary__metrics { display: flex; gap: 0.85rem; justify-content: center; }
+.game-summary__metric { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
+.game-summary__metric-value { font-family: var(--font-serif); font-size: 1.05rem; font-weight: 600; line-height: 1; }
+.game-summary__metric-label { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); }
+
+.game-summary__field { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding-top: 0.4rem; border-top: 1px dashed var(--smoke); width: 100%; }
+
+/* Hourly table moves inside the game block, no longer needs its own border */
+.mlb-game-block__hourly { padding: 0.6rem 1rem 0.85rem; }
+.mlb-game-block__hourly .hourly { overflow-x: auto; }
+.mlb-game-block__hourly .hourly__hour-col { min-width: 52px; padding: 0.45rem 0.4rem 0.35rem; }
+.mlb-game-block__hourly .hourly__label { padding: 0.35rem 0.7rem 0.35rem 0; font-size: 0.66rem; }
+.mlb-game-block__hourly .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
+
+/* Deep-link to per-game page */
+.mlb-game-block__deeplink { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.25rem 0.85rem; font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--storm); text-decoration: none; border-top: 1px solid var(--mist); width: 100%; box-sizing: border-box; transition: background 0.15s ease; }
+.mlb-game-block__deeplink:hover { background: var(--paper); color: var(--storm-hover); text-decoration: underline; }
+
+/* Hourly group container no longer needs gutters since cards have their own */
+.mlb-hourly-group { padding: 0 1.5rem; }
+
+/* ============================================================
+ * v4 polish — summary panel 2x2 grid, fills hourly height
+ * ============================================================ */
+
+/* Reset the old single-column game-summary layout */
+.game-summary {
+  background: var(--paper);
+  border-right: 1px solid var(--mist);
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  align-items: stretch;
+  gap: 0;
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .game-summary { border-right: 0; border-bottom: 1px solid var(--mist); }
+}
+
+.game-summary__cell {
+  padding: 0.85rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 0;
+}
+.game-summary__cell:nth-child(even) { border-left: 1px dashed var(--smoke); }
+.game-summary__cell:nth-child(n+3) { border-top: 1px dashed var(--smoke); }
+
+.game-summary__sky { display: flex; justify-content: center; }
+.game-summary__sky .wx-icon { width: 34px; height: 34px; }
+
+.game-summary__primary-value {
+  font-family: var(--font-serif);
+  font-size: 2.1rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.game-summary__primary-label,
+.game-summary__cell-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+  line-height: 1.2;
+}
+.game-summary__value {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+/* Tighter field diagram inside summary cell — fits the 2x2 layout */
+.game-summary .field-diagram__svg { width: 52px; height: 52px; }
+.game-summary .field-diagram__label { font-size: 0.62rem; }
+
+/* Bigger hourly icons per Kevin's spec */
+.mlb-game-block__hourly .hourly__hour-col { min-width: 56px; padding: 0.5rem 0.45rem 0.4rem; }
+.mlb-game-block__hourly .hourly__sky .wx-icon { width: 32px; height: 32px; }
+
+
+/* v5: text label removed below field diagram, so make the diagram bigger */
+.game-summary__cell--field { padding: 0.6rem 0.5rem; }
+.game-summary .field-diagram__svg { width: 72px; height: 72px; }
+
+/* v6: inline team logos beside team names in section headers */
+.mlb-game-block__matchup,
+.game-page__title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.matchup-logo { width: 1.4em; height: 1.4em; object-fit: contain; flex-shrink: 0; vertical-align: middle; }
+.matchup-at { font-family: var(--font-sans); font-size: 0.65em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); padding: 0 0.15rem; }
+
+/* v7: credentials strip — "real meteorologist, not AI" branding */
+.mlb-credline {
+  max-width: 1100px;
+  margin: 0 auto 1.75rem;
+  padding: 0.85rem 1.5rem;
+  background: var(--paper);
+  border-top: 1px solid var(--mist);
+  border-bottom: 1px solid var(--mist);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--slate);
+}
+.mlb-credline__bullet { color: var(--storm); font-size: 0.7rem; flex-shrink: 0; }
+.mlb-credline strong { color: var(--ink); font-weight: 700; }
+.mlb-credline em { color: var(--storm); font-style: normal; font-weight: 700; letter-spacing: 0.02em; }
+
+/* Hourly table — bigger row heights so it matches summary panel vertical */
+.mlb-game-block__hourly .hourly__hour-col { padding: 0.7rem 0.45rem 0.5rem; }
+.mlb-game-block__hourly .hourly__label,
+.mlb-game-block__hourly .hourly__cell { padding: 0.6rem 0.5rem; }
+.mlb-game-block__hourly .hourly__sky .wx-icon { width: 34px; height: 34px; }
+
+/* World Cup matchday day headers */
+.wc-dayhed { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; letter-spacing: -0.01em; margin: 2.5rem 0 1.25rem; padding-bottom: 0.6rem; border-bottom: 2px solid var(--ink); display: flex; align-items: baseline; gap: 0.85rem; flex-wrap: wrap; }
+.wc-dayhed__tag { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); background: var(--storm); padding: 0.25rem 0.65rem; border-radius: 3px; }
+.wc-dayhed__count { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); margin-left: auto; }
+
+/* Colored write-up borders (per Kevin's color-tagging scheme) */
+.mlb-writeup--green  { border-left-color: #15803d; }
+.mlb-writeup--yellow { border-left-color: #ca8a04; }
+.mlb-writeup--orange { border-left-color: #ea580c; }
+.mlb-writeup--red    { border-left-color: #b91c1c; }
+.game-writeup--green  { border-left-color: #15803d; }
+.game-writeup--yellow { border-left-color: #ca8a04; }
+.game-writeup--orange { border-left-color: #ea580c; }
+.game-writeup--red    { border-left-color: #b91c1c; }
+
+/* Venue roof status badges (World Cup) */
+.venue-roof-flag { display: inline-block; font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.5rem; margin-left: 0.5rem; border: 1px solid; vertical-align: middle; }
+.venue-roof-flag--closed         { color: #b91c1c; border-color: #b91c1c; background: #fef2f2; }
+.venue-roof-flag--likely-closed  { color: #c2410c; border-color: #c2410c; background: #fff7ed; }
+.venue-roof-flag--variable       { color: var(--ash); border-color: var(--smoke); background: var(--paper); }
+.venue-roof-flag--canopy         { color: var(--storm); border-color: var(--storm); background: var(--paper); }
+.venue-roof-flag--retractable    { color: var(--ash); border-color: var(--smoke); background: var(--paper); }
+
+/* ============================================================
+ * PGA Tour pages
+ * ============================================================ */
+
+.golf-tournament { max-width: 1100px; margin: 0 auto 3.5rem; padding: 0 1.5rem; }
+.golf-tournament__header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
+.golf-tournament__name { font-family: var(--font-serif); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.015em; margin: 0; line-height: 1.15; }
+.golf-tournament__course { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); margin: 0.35rem 0 0; letter-spacing: 0.03em; }
+.golf-tournament__leaderboard { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; color: var(--storm); text-decoration: none; }
+.golf-tournament__leaderboard:hover { text-decoration: underline; }
+
+/* Round summary cards — 4 per row (Thu/Fri/Sat/Sun) */
+.round-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-bottom: 2.5rem; }
+.round-card { display: flex; flex-direction: column; align-items: center; padding: 1.1rem 0.85rem 1.25rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s, transform 0.15s; gap: 0.5rem; }
+.round-card:hover { border-color: var(--ink); transform: translateY(-1px); }
+.round-card__head { display: flex; justify-content: space-between; align-items: baseline; width: 100%; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+.round-card__num { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--storm); }
+.round-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; color: var(--ash); }
+.round-card__icon { margin: 0.2rem 0; }
+.round-card__temps { display: flex; align-items: baseline; gap: 0.4rem; font-family: var(--font-serif); }
+.round-card__hi { font-size: 1.7rem; font-weight: 600; letter-spacing: -0.02em; }
+.round-card__sep { color: var(--smoke); font-size: 1rem; }
+.round-card__lo { font-size: 1.1rem; font-weight: 500; color: var(--ash); }
+.round-card__meta { display: flex; gap: 0.85rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); margin-top: 0.1rem; }
+.round-card__precip { font-weight: 700; }
+.round-card__wind { color: var(--slate); }
+.round-card__missing { color: var(--fog); font-size: 0.85rem; font-style: italic; padding: 1rem 0; }
+
+/* 3-column card grid for the live-forecasts section on the homepage */
+.cards--three { display: grid; grid-template-columns: 1fr; gap: 0.85rem; margin: 1rem 0 0; }
+@media (min-width: 720px) { .cards--three { grid-template-columns: repeat(3, 1fr); } }
+
+/* ── Golf course map with per-hole wind impact ──────────────── */
+.hole-map { margin: 1.25rem 0 0.5rem; }
+.hole-map__svg { display: block; width: 100%; max-width: 760px; height: auto; }
+.hole-map__frame { fill: var(--paper); stroke: var(--mist); stroke-width: 1; }
+.hole-map__hole { fill: none; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
+.hole-impact-helping { stroke: #15803d; }  /* matches precip-green */
+.hole-impact-hurting { stroke: #b91c1c; }  /* matches precip-red */
+.hole-impact-cross   { stroke: var(--ash); }
+.hole-impact-unknown { stroke: var(--smoke); }
+.hole-map__tee { fill: var(--white); stroke: var(--ash); stroke-width: 1.5; }
+.hole-map__num { font-family: var(--font-sans); font-size: 15px; font-weight: 700; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: var(--paper); stroke-width: 4; }
+.hole-map__compass-face { fill: var(--white); fill-opacity: 0.88; stroke: var(--smoke); stroke-width: 1; }
+.hole-map__compass-tick { stroke: var(--ash); stroke-width: 1.5; }
+.hole-map__compass-n { font-family: var(--font-sans); font-size: 12px; font-weight: 700; fill: var(--ash); text-anchor: middle; }
+.hole-map__compass-arrow { stroke: var(--storm); stroke-width: 4; stroke-linecap: round; }
+.hole-map__compass-head { fill: var(--storm); }
+.hole-map__compass-calm { fill: var(--smoke); }
+.hole-map__caption { display: flex; flex-wrap: wrap; align-items: center; gap: 0.85rem; margin-top: 0.6rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); }
+.hole-map__chip { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; }
+.hole-map__swatch { display: inline-block; width: 14px; height: 4px; border-radius: 2px; }
+.hole-map__swatch--helping { background: #15803d; }
+.hole-map__swatch--hurting { background: #b91c1c; }
+.hole-map__swatch--cross { background: var(--ash); }
+.hole-map__windnote { margin-left: auto; font-weight: 600; color: var(--storm); }
+@media (max-width: 600px) { .hole-map__windnote { margin-left: 0; flex-basis: 100%; } }
+
+/* ============================================================
+ * NASCAR pages
+ * ============================================================ */
+
+.nascar-race-section { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; }
+
+.race-card { display: flex; flex-direction: column; padding: 1rem 1.1rem 1.1rem; border: 1px solid var(--mist); background: var(--white); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; gap: 0.6rem; margin-bottom: 1rem; }
+.race-card:hover { border-color: var(--ink); transform: translateY(-1px); }
+.race-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; padding-bottom: 0.45rem; border-bottom: 1px solid var(--mist); }
+.race-card__name { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; }
+.race-card__time { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--storm); }
+.race-card__track { font-family: var(--font-sans); font-size: 0.85rem; color: var(--ash); }
+.race-card__tracktype { display: inline-block; margin-left: 0.4rem; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fog); }
+.race-card__wx { display: flex; align-items: center; gap: 1rem; padding-top: 0.55rem; border-top: 1px dashed var(--smoke); }
+.race-card__wx-stack { display: flex; flex-direction: column; gap: 0.15rem; }
+.race-card__skyicon { flex-shrink: 0; }
+.race-card__temp { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+.race-card__precip, .race-card__wind { font-family: var(--font-sans); font-size: 0.8rem; }
+.race-card__wind { color: var(--ash); }
+.race-card__wx-missing { color: var(--fog); font-size: 0.85rem; font-style: italic; padding: 0.4rem 0; }
+
+/* ============================================================
+ * Coming-soon stub pages (NFL, NCAAF)
+ * ============================================================ */
+
+.comingsoon { max-width: 1100px; margin: 0 auto 4rem; padding: 0 1.5rem; display: grid; grid-template-columns: 1fr; gap: 2.5rem; }
+@media (min-width: 900px) { .comingsoon { grid-template-columns: 1.6fr 1fr; } }
+.comingsoon__copy { display: flex; flex-direction: column; gap: 1rem; }
+.comingsoon__h2 { font-family: var(--font-serif); font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; margin: 0; }
+.comingsoon__lead { font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.6; color: var(--slate); }
+.comingsoon__sidebar { padding: 1.5rem 1.75rem; background: var(--paper); border-left: 3px solid var(--ink); }
+.comingsoon__list { list-style: none; padding: 0; margin: 0.6rem 0 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.comingsoon__list li { font-family: var(--font-sans); font-size: 0.92rem; color: var(--slate); padding-left: 1rem; position: relative; line-height: 1.45; }
+.comingsoon__list li::before { content: "→"; position: absolute; left: 0; color: var(--storm); font-weight: 700; }
+
+/* ============================================================
+ * Retractable-roof toggle widget — adopted from OVERcast
+ * ============================================================ */
+
+.roof-toggle { display: inline-flex; background: var(--paper); border: 1px solid var(--mist); border-radius: 999px; padding: 2px; gap: 0; font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; user-select: none; cursor: pointer; }
+.roof-toggle__option { padding: 0.4rem 0.95rem; border: 0; background: transparent; border-radius: 999px; color: var(--ash); font: inherit; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; line-height: 1; }
+.roof-toggle__option.is-active { background: var(--ink); color: var(--white); }
+.roof-toggle__option:hover:not(.is-active) { color: var(--ink); }
+
+/* When a game block is in "roof closed" state, hide the weather body
+   visually but keep it in the DOM so crawlers still index it. */
+.has-roof-toggle.is-roof-closed .mlb-game-block__body { display: none; }
+.has-roof-toggle.is-roof-closed .mlb-game-block__deeplink { display: none; }
+.has-roof-toggle .roof-closed-message { display: none; padding: 1rem 1.25rem 1.1rem; color: var(--slate); font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5; border-bottom: 1px solid var(--mist); }
+.has-roof-toggle.is-roof-closed .roof-closed-message { display: block; }
+.roof-closed-message strong { color: var(--ink); font-weight: 700; }
+
+/* Toggle in game-block header */
+.mlb-game-block__header .roof-toggle { align-self: center; }
+
+/* v2 polish: toggle widget smaller + better header alignment */
+.roof-toggle { font-size: 0.66rem; padding: 1px; }
+.roof-toggle__option { padding: 0.35rem 0.7rem; }
+
+/* Game block header: stop using baseline alignment so the toggle sits centered vertically; allow header to wrap cleanly */
+.mlb-game-block__header { align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.mlb-game-block__header > div:first-child { flex: 1 1 auto; min-width: 0; }
+.mlb-game-block__header .roof-toggle,
+.mlb-game-block__header .mlb-game-block__time { flex-shrink: 0; }
+
+/* Cheat-card badge: slightly tighter so 'Roof' or 'Dome' never crowds the time text */
+.cheat-card__badge { font-size: 0.58rem; padding: 0.08rem 0.42rem; letter-spacing: 0.08em; }
+.cheat-card__rule { gap: 0.4rem; }
+.cheat-card__time { font-size: 0.72rem; }
+
+/* ============================================================
+ * Homepage — sports-first redesign
+ * ============================================================ */
+
+.home-hero { padding: 3rem 0 2rem; border-bottom: 1px solid var(--mist); }
+.home-hero .kicker { margin-bottom: 0.85rem; }
+.home-hero__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.85rem, 3.5vw + 0.5rem, 3.25rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 1rem; max-width: 32ch; }
+.home-hero__lead { font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.55; color: var(--slate); max-width: 50rem; margin: 0; }
+/* Two-column hero row: title/lead on the left, compact WC card on the
+   right. Sport-card grid follows below. Under 900px the WC card drops
+   below the title on its own row so it stays legible on mobile. */
+.home-hero__row { display: grid; gap: 1.75rem; grid-template-columns: 1fr; align-items: start; }
+.home-hero__intro { min-width: 0; }
+@media (min-width: 900px) {
+  .home-hero__row { grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr); gap: 2.5rem; }
+}
+
+.home-section { padding: 2.5rem 0; }
+.home-section--secondary { padding: 3rem 0 4rem; background: var(--paper); border-top: 1px solid var(--mist); }
+
+/* Sport-card grid */
+.home-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 720px)  { .home-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1100px) { .home-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+/* Featured top-of-page block (used to promote the active World Cup during
+   the tournament window). Bigger, bolder, with a Live pill at the top. */
+.home-featured { display: block; padding: 2rem 1.75rem 1.75rem; background: var(--white); border: 1px solid var(--ink); text-decoration: none; color: var(--ink); position: relative; margin-bottom: 1.25rem; transition: border-color 0.15s ease, transform 0.15s ease; }
+.home-featured:hover { border-color: var(--storm); transform: translateY(-2px); }
+.home-featured__top { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.home-featured__kicker { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash); }
+.home-featured__title { font-family: var(--font-serif); font-size: clamp(1.55rem, 2.4vw + 0.4rem, 2.25rem); font-weight: 600; letter-spacing: -0.015em; line-height: 1.18; margin: 0 0 0.85rem; max-width: 28ch; }
+.home-featured__body { font-family: var(--font-sans); font-size: 1rem; line-height: 1.55; color: var(--slate); max-width: 65ch; margin: 0 0 1.25rem; }
+.home-featured__cta { font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--ink); display: inline-flex; align-items: center; gap: 0.5rem; padding-top: 0.9rem; border-top: 1px solid var(--mist); }
+.home-featured__arrow { transition: transform 0.15s ease; }
+.home-featured:hover .home-featured__arrow { transform: translateX(3px); }
+
+/* Compact variant used when the featured card sits next to the hero
+   title in the two-column hero row. Tighter padding, smaller title,
+   removes margin-bottom (the hero row handles spacing). */
+.home-featured--compact { padding: 1.4rem 1.35rem 1.25rem; margin-bottom: 0; height: 100%; display: flex; flex-direction: column; }
+.home-featured--compact .home-featured__top { margin-bottom: 0.75rem; }
+/* Soccer ball icon anchored right in the top row so the WC card reads
+   visually as "the soccer card" at a glance. */
+.home-featured__icon { width: 36px; height: 36px; margin-left: auto; flex-shrink: 0; }
+.home-featured--compact .home-featured__title { font-size: clamp(1.15rem, 1.4vw + 0.6rem, 1.4rem); margin: 0 0 0.6rem; max-width: none; line-height: 1.22; }
+.home-featured--compact .home-featured__body { font-size: 0.92rem; line-height: 1.5; margin: 0 0 1rem; max-width: none; }
+.home-featured--compact .home-featured__cta { padding-top: 0.75rem; margin-top: auto; }
+
+/* Live pulse pill */
+.live-badge { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: white; background: #c41e3a; padding: 0.32rem 0.7rem 0.34rem; border-radius: 999px; display: inline-flex; align-items: center; gap: 0.45rem; line-height: 1; }
+.live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse-live 1.6s ease-in-out infinite; }
+@keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.home-sport-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem 1.3rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; position: relative; min-height: 180px; }
+.home-sport-card:hover { border-color: var(--ink); transform: translateY(-2px); }
+.home-sport-card__head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.15rem; }
+.home-sport-card__icon { width: 40px; height: 40px; flex-shrink: 0; }
+.home-sport-card__heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.home-sport-card__kicker { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--storm); }
+.home-sport-card__title { font-family: var(--font-serif); font-size: 1.55rem; font-weight: 600; letter-spacing: -0.015em; margin: 0; line-height: 1.15; }
+.home-sport-card__body { font-family: var(--font-sans); font-size: 0.9rem; line-height: 1.5; color: var(--slate); margin: 0; flex: 1; }
+.home-sport-card__indicator { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--ink); display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; padding-top: 0.7rem; border-top: 1px solid var(--mist); }
+.home-sport-card__indicator strong { color: var(--storm); font-weight: 700; font-size: 1.05rem; }
+.home-sport-card__arrow { font-size: 1.1rem; transition: transform 0.2s ease; color: var(--ash); }
+.home-sport-card:hover .home-sport-card__arrow { transform: translateX(4px); color: var(--ink); }
+
+/* Distinctive accent stripes per sport */
+.home-sport-card--mlb    { border-top: 3px solid #1e3a8a; }
+.home-sport-card--wc     { border-top: 3px solid #15803d; }
+.home-sport-card--pga    { border-top: 3px solid #166534; }
+.home-sport-card--nascar { border-top: 3px solid #b91c1c; }
+.home-sport-card--cws    { border-top: 3px solid #ca8a04; }
+.home-sport-card--nfl    { border-top: 3px solid var(--ash); }
+.home-sport-card--ncaaf  { border-top: 3px solid var(--ash); }
+.home-sport-card--tennis { border-top: 3px solid #7c3aed; }
+.home-sport-card--mls    { border-top: 3px solid #00538f; }
+
+/* Secondary section: Kevin bio + products */
+.home-secondary { display: grid; grid-template-columns: 1fr; gap: 2.5rem; }
+@media (min-width: 900px) { .home-secondary { grid-template-columns: 1.4fr 1fr; gap: 4rem; } }
+.home-secondary__col .kicker { margin-bottom: 0.6rem; }
+.home-secondary__h2 { font-family: var(--font-serif); font-size: clamp(1.4rem, 2.5vw, 1.85rem); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; margin: 0 0 0.85rem; }
+.home-secondary__body { font-family: var(--font-serif); font-size: 1.02rem; line-height: 1.6; color: var(--slate); margin: 0; }
+.home-secondary .btn { margin-right: 0.5rem; }
+
+.home-product { margin-bottom: 0.85rem; }
+.home-product__link { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.95rem 1</style>
+  <style>
+    /* X pill in header nav — handle text hides on narrow viewports so the
+       nav fits without wrapping. Icon stays visible. */
+    .nav__x:hover { background: #e5e7eb !important; }
+    @media (max-width: 640px) {
+      .nav__x-handle { display: none; }
+      .nav__x { padding: 5px 7px !important; }
+    }
+  </style>
+  
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Kevin Roth, Sports Meteorologist",
+    "url": "https://kevinrothwx.com/",
+    "publisher": {
+      "@type": "Person",
+      "@id": "https://kevinrothwx.com/about#kevin-roth",
+      "name": "Kevin Roth"
+    }
+  }
+  </script>
+  
+<style>
+  /* v14 CFB slate CSS — inlined here while still iterating; will move to
+     static/css/style.css once Kevin signs off on the live page. */
+
+  .ncaaf-page { max-width: 1100px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+  .ncaaf-page__header { padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .ncaaf-page__title {
+    font-family: var(--font-serif); font-weight: 600;
+    font-size: clamp(1.4rem, 1.8vw + 0.5rem, 1.85rem);
+    letter-spacing: -0.015em; line-height: 1.1; margin: 0.3rem 0 0;
+  }
+
+  /* Date section + cheat-row */
+  .date-section { margin-bottom: 1.75rem; }
+  .date-header { display: flex; align-items: baseline; gap: 0.65rem; padding-bottom: 0.6rem; margin-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
+  .date-header__title { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  .date-header__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); font-weight: 500; }
+
+  /* CFB-specific cheat-card overrides on top of existing .cheat-card styles */
+  .cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; align-items: start; }
+  .cheat-card--cfb {
+    display: flex; flex-direction: column;
+    background: var(--white); border: 1px solid var(--mist);
+    padding: 0.7rem 0.85rem 0.8rem;
+    color: var(--ink); transition: border-color 0.15s ease;
+    cursor: pointer; text-decoration: none;
+  }
+  .cheat-card--cfb:hover { border-color: var(--ink); }
+  .cheat-card--cfb .cheat-card__rule {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 0.4rem; margin-bottom: 0.4rem; padding-bottom: 0; border-bottom: 0;
+  }
+  .cheat-card--cfb .cheat-card__time {
+    font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate);
+  }
+  .cheat-card__rule-right { display: inline-flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; }
+  .cheat-card__location { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 500; color: var(--fog); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cheat-card--cfb .cheat-card__badge { font-family: var(--font-sans); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); border-radius: 2px; white-space: nowrap; }
+  .cheat-card__badge--dome { color: var(--slate); border-color: var(--slate); }
+  .cheat-card__badge--roof { color: var(--storm); border-color: var(--storm); }
+
+  .cheat-card--cfb .cheat-card__teams { display: flex; align-items: center; gap: 0.55rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.65rem; }
+  .cheat-card--cfb .cheat-card__team { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
+  .cheat-card__team--right { justify-content: flex-end; }
+  .cheat-card--cfb .cheat-card__logo { width: 24px; height: 24px; flex-shrink: 0; object-fit: contain; }
+  .cheat-card--cfb .cheat-card__abbr { font-family: var(--font-serif); font-size: 1.08rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1; color: var(--ink); white-space: nowrap; }
+  .cheat-card--cfb .cheat-card__rank { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 600; color: var(--fog); margin-right: 0.15rem; vertical-align: super; }
+  .cheat-card--cfb .cheat-card__at { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; color: var(--fog); flex-shrink: 0; }
+
+  .cheat-card__wx { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; margin-top: auto; }
+  .cheat-card__wx-missing { font-size: 0.78rem; color: var(--fog); text-align: center; padding-top: 0.5rem; border-top: 1px solid var(--mist); margin-top: auto; }
+  .wx-stat { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+  .wx-stat__primary { font-family: var(--font-serif); font-size: 1.45rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1; color: var(--ink); white-space: nowrap; }
+  .wx-stat__primary--cold   { color: #1e40af; }
+  .wx-stat__primary--hot    { color: #b91c1c; }
+  .wx-stat__primary--severe { color: #b91c1c; }
+  .wx-stat__primary--high   { color: #b45309; }
+  .wx-stat__primary--precip-low  { color: #15803d; }
+  .wx-stat__primary--precip-mid  { color: #b45309; }
+  .wx-stat__primary--precip-high { color: #b91c1c; }
+  .wx-stat__secondary { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); font-weight: 500; line-height: 1.25; margin-top: 0.35rem; min-height: 1.7rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem; white-space: nowrap; }
+  .wx-stat__secondary strong { color: var(--slate); font-weight: 600; }
+  .wx-stat__icon { width: 26px; height: 26px; flex-shrink: 0; }
+
+  /* Stadium icon */
+  .wx-stadium { width: 34px; height: 20px; flex-shrink: 0; display: inline-flex; vertical-align: middle; }
+  .wx-stadium svg { width: 34px; height: 20px; }
+  .wx-stadium__bowl { fill: none; stroke: #9aa0a6; stroke-width: 1; }
+  .wx-stadium__endzone-fill { fill: #f1f3f5; }
+  .wx-stadium__endzone-line { stroke: #b8bcc0; stroke-width: 0.8; }
+  .wx-stadium__midline { stroke: #d4d4d4; stroke-width: 0.5; stroke-dasharray: 1.5 1; }
+  .wx-stadium__arrow line { stroke: #15803d; stroke-width: 2.4; stroke-linecap: round; }
+  .wx-stadium__arrow polygon { fill: #15803d; }
+  .wx-stadium--high .wx-stadium__arrow line   { stroke: #b45309; }
+  .wx-stadium--high .wx-stadium__arrow polygon { fill: #b45309; }
+  .wx-stadium--severe .wx-stadium__arrow line   { stroke: #b91c1c; }
+  .wx-stadium--severe .wx-stadium__arrow polygon { fill: #b91c1c; }
+</style>
+
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="/" class="brand">
+        Kevin Roth
+        <span class="brand__divider">/</span>
+        <span class="brand__role">Sports Meteorologist</span>
+      </a>
+      <nav class="nav">
+        
+        <a href="https://x.com/KevinRothWx" target="_blank" rel="noopener" class="nav__x" aria-label="Follow @KevinRothWx on X" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;background:#f3f4f6;color:#111;font-size:13px;font-weight:500;text-decoration:none;line-height:1">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span class="nav__x-handle">@KevinRothWx</span>
+        </a>
+        
+          <a href="/about">About</a>
+          <a href="/press">Press</a>
+          <a href="/overcast" class="nav__cta">OVERcast</a>
+        
+      </nav>
+      <button id="mobile-menu-btn" class="mobile-toggle" aria-label="Menu">Menu</button>
+    </div>
+    <nav id="mobile-menu" class="mobile-nav">
+      
+        <a href="https://mysportsweather.com/mlb">MLB Weather</a>
+        <a href="https://mysportsweather.com/worldcup">World Cup Weather</a>
+        <a href="https://mysportsweather.com/golf">PGA Tour Weather</a>
+        <a href="https://mysportsweather.com/nascar">NASCAR Weather</a>
+        <a href="/about">About</a>
+        <a href="/press">Press</a>
+        <a href="/overcast">OVERcast</a>
+        <a href="/contact">Contact</a>
+      
+    </nav>
+  </header>
+  
+  
+  
+    
+  
+  <main>
+
+<div class="ncaaf-page">
+
+  <header class="ncaaf-page__header">
+    <p class="kicker kicker-storm">NCAAF Weather · Live Coverage</p>
+    <h1 class="ncaaf-page__title">
+      
+        Week of Oct 24 to Oct 24, 2026
+      
+    </h1>
+  </header>
+
+  
+    
+    
+    
+      
+        
+        
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+      
+        
+      
+    
+    
+    
+      <div class="date-section">
+        
+  <div class="date-header">
+    <h2 class="date-header__title">Saturday, Oct 24</h2>
+    <span class="date-header__count">13 games</span>
+  </div>
+
+        <div class="cheat-row">
+          
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">12:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">State College, PA</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/130.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">5</span>MICH</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">8</span>PSU</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/213.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">46°</div>
+        <div class="wx-stat__secondary">Feels 44°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">12 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(90 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-mid">30%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud-sun.svg?color=%23525252&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">12:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Baton Rouge, LA</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/333.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">3</span>BAMA</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">12</span>LSU</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/99.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">74°</div>
+        <div class="wx-stat__secondary">Feels 72°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">6 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(0 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">20%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">12:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Athens, GA</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">15</span>TENN</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">2</span>UGA</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/61.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">61°</div>
+        <div class="wx-stat__secondary">Feels 59°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">8 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(270 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-mid">55%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">12:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Austin, TX</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/201.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">9</span>OU</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">6</span>TEX</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/251.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">82°</div>
+        <div class="wx-stat__secondary">Feels 80°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">5 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(340 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">10%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">3:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Los Angeles, CA</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/87.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">7</span>ND</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">USC</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/30.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">71°</div>
+        <div class="wx-stat__secondary">Feels 69°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">4 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(70 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">3:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Tallahassee, FL</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">17</span>MIA</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">20</span>FSU</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/52.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">79°</div>
+        <div class="wx-stat__secondary">Feels 77°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">14 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(270 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-high">65%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud-lightning.svg?color=%23ca8a04&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">3:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Stillwater, OK</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr">KSU</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">OSU</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/197.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">52°</div>
+        <div class="wx-stat__secondary">Feels 50°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--severe">26 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+  <span class="wx-stadium wx-stadium--severe" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(160 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+ <strong>G34</strong></div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">15%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:sun.svg?color=%23ca8a04&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">3:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Syracuse, NY</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/221.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr">PITT</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">CUSE</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/183.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">38°</div>
+        <div class="wx-stat__secondary">Feels 36°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--high">18 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+  <span class="wx-stadium wx-stadium--high" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(120 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+ <strong>G26</strong></div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-mid">40%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+      
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud-snow.svg?color=%235b21b6&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">7:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Madison, WI</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/194.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">1</span>OSU2</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">WISC</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/275.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">34°</div>
+        <div class="wx-stat__secondary">Feels 32°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">15 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(170 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+ <strong>G23</strong></div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">25%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud.svg?color=%23525252&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">7:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Seattle, WA</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">4</span>ORE</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">UW</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/264.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">48°</div>
+        <div class="wx-stat__secondary">Feels 46°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">8 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(40 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-high">70%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud-rain.svg?color=%231e40af&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">7:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Waco, TX</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/2628.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr">TCU</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">BAY</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/239.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">66°</div>
+        <div class="wx-stat__secondary">Feels 64°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">4 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(0 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">7:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">Salt Lake City, UT</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/12.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr">ARIZ</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr"><span class="cheat-card__rank">14</span>UTAH</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/254.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">42°</div>
+        <div class="wx-stat__secondary">Feels 40°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">10 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(200 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">20%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:cloud-moon.svg?color=%23525252&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+  
+  
+  
+  
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+    
+  
+  
+  
+  
+  <a href="#" class="cheat-card cheat-card--cfb">
+    <div class="cheat-card__rule">
+      <span class="cheat-card__time">10:00 PM ET</span>
+      <span class="cheat-card__rule-right">
+        
+        
+        <span class="cheat-card__location">San Diego, CA</span>
+      </span>
+    </div>
+    <div class="cheat-card__teams">
+      <div class="cheat-card__team">
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/68.png" alt="" loading="lazy">
+        <span class="cheat-card__abbr">BSU</span>
+      </div>
+      <span class="cheat-card__at">@</span>
+      <div class="cheat-card__team cheat-card__team--right">
+        <span class="cheat-card__abbr">SDSU</span>
+        <img class="cheat-card__logo" src="https://a.espncdn.com/i/teamlogos/ncaa/500/21.png" alt="" loading="lazy">
+      </div>
+    </div>
+    
+    <div class="cheat-card__wx">
+      <div class="wx-stat">
+        <div class="wx-stat__primary">64°</div>
+        <div class="wx-stat__secondary">Feels 62°&nbsp;</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary">7 <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  <span class="wx-stadium" aria-hidden="true">
+    <svg viewBox="0 0 40 24">
+      <rect class="wx-stadium__endzone-fill" x="2.5" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__endzone-fill" x="32" y="2.5" width="5.5" height="19"/>
+      <rect class="wx-stadium__bowl" x="2" y="2" width="36" height="20" rx="0.6" ry="0.6"/>
+      <line class="wx-stadium__endzone-line" x1="8" y1="2" x2="8" y2="22"/>
+      <line class="wx-stadium__endzone-line" x1="32" y1="2" x2="32" y2="22"/>
+      <line class="wx-stadium__midline" x1="20" y1="2.5" x2="20" y2="21.5"/>
+      <g class="wx-stadium__arrow" transform="rotate(80 20 12)">
+        <line x1="20" y1="18" x2="20" y2="7"/>
+        <polygon points="20,5 16.5,9.5 23.5,9.5"/>
+      </g>
+    </svg>
+  </span>
+</div>
+      </div>
+      <div class="wx-stat">
+        <div class="wx-stat__primary wx-stat__primary--precip-low">0%</div>
+        <div class="wx-stat__secondary">
+  
+  
+  
+  
+  
+    
+    
+  
+  <img class="wx-stat__icon" alt=""
+       src="https://api.iconify.design/ph:moon.svg?color=%231e3a8a&width=26&height=26"
+       width="26" height="26" loading="lazy">
+</div>
+      </div>
+    </div>
+    
+  </a>
+
+        </div>
+      </div>
+    
+  
+
+</div>
+</main>
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div>
+        <p style="font-family: var(--font-serif); font-size: 1.15rem; font-weight: 500; color: var(--ink); margin-bottom: 0.5rem;">Kevin Roth</p>
+        
+          <p>Sports meteorologist. Founder of OVERcast. Weather analysis for bettors and daily fantasy players across MLB, NFL, PGA, NCAAF, and NASCAR.</p>
+        
+      </div>
+      <div>
+        <h4>Site</h4>
+        <ul>
+          
+            <li><a href="/about">About</a></li>
+            <li><a href="/press">Press</a></li>
+            <li><a href="/overcast">OVERcast</a></li>
+            <li><a href="/contact">Contact</a></li>
+            <li><a href="https://mysportsweather.com">Sports Weather Forecasts ↗</a></li>
+          
+        </ul>
+      </div>
+      <div>
+        <h4>Elsewhere</h4>
+        <ul>
+          <li><a href="https://x.com/KevinRothWx">X / Twitter</a></li>
+          <li><a href="https://www.linkedin.com/in/kevin-roth-70bb0295/">LinkedIn</a></li>
+          <li><a href="https://app.kevinrothwx.com/">OVERcast App</a></li>
+          <li><a href="https://propfinder.app/weather">PropFinder MLB</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__copy">&copy; 2026 Kevin Roth. All rights reserved.</div>
+  </footer>
+  <script>
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+      document.getElementById('mobile-menu')?.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>

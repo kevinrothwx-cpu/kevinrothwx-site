@@ -191,3 +191,6 @@ def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
         except (ValueError, AttributeError):
             continue
     return out
+
+
+# EOF-CANARY 2026-07-04-cfb-recovery

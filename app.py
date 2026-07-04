@@ -2699,5 +2699,7 @@ def not_found(e):
     return render_template("404.html"), 404
 
 
+# EOF-CANARY 2026-07-04-cfb-recovery
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)

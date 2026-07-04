@@ -770,3 +770,6 @@ if 349 in FBS_TEAMS:
     FBS_TEAMS[349]["conf"] = AAC
 if 113 in FBS_TEAMS:
     FBS_TEAMS[113]["conf"] = MAC
+
+
+# EOF-CANARY 2026-07-04-cfb-recovery

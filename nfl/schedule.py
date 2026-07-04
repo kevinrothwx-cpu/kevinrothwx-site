@@ -244,3 +244,6 @@ def _make_slug(away_abbrev: str, home_abbrev: str) -> str:
     aw = (away_abbrev or "??").lower()
     hm = (home_abbrev or "??").lower()
     return f"{aw}-at-{hm}"
+
+
+# EOF-CANARY 2026-07-04-cfb-recovery
