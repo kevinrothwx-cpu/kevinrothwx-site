@@ -138,6 +138,8 @@ from horse.slate import build_stakes_day as build_horse_stakes_day
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
 
+import api as msw_api
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
@@ -217,6 +219,10 @@ start_cfb_warmer()
 start_mls_warmer()
 start_nfl_warmer()
 start_horse_warmer()
+
+# Register the JSON API blueprint (docs/FORECAST_API_CONTRACT_v1.md).
+# Consumers: OVERcast NFL + OVERcast CFB. Auth via MSW_API_KEYS env var.
+msw_api.register(app)
 
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
