@@ -6,53 +6,38 @@ to produce a normalized list of games each carrying:
   - Full team + venue + ranking info from the schedule
   - Kickoff-time weather snapshot
   - Hourly forecast strip around kickoff (for detail pages)
+  - HRRR overlay strip around kickoff (3km CONUS)
   - Weather source tag + error if any
 
-Weather strategy (per design decision with Kevin, revised 2026-06-28):
+Weather strategy (per design decision with Kevin):
     PRIMARY: NWS via cfb/nws_client (distinct UA, sequential pacing,
              circuit breaker on 429/503, permanent gridpoint cache)
     FALLBACK: WeatherAPI (paid tier, when NWS fails or circuit is open)
+    OVERLAY:  HRRR (Open-Meteo 3km CONUS), attached separately so the
+              template can render an optional higher-resolution toggle.
 
-This matches the MLB and golf pattern. NWS gives more stable forecast
-values between updates (curated human edits + ensemble averaging), which
-matters because users mentally bookmark the cheat-sheet numbers and we
-don't want them to oscillate on every page load. WeatherAPI is the
-safety net so the site never breaks if NWS throttles us.
-
-The cfb/nws_client wrapper exists specifically to keep CFB traffic
-distinguishable from OVERcast and MLB traffic at the NWS server side,
-with pacing + circuit breaker so a CFB Saturday burst can never compound
-into an OVERcast incident.
-
-Caching: per-venue (lat/lon) weather is cached for the duration of a
-slate build, so games at the same stadium share a single fetch. Gridpoint
-resolutions inside cfb/nws_client are cached permanently per venue.
-
-Game shape (extends schedule.py's parse_cfb_event output):
-    All schedule fields, plus:
-    - "forecast":         kickoff snapshot dict (or None on failure)
-    - "hourly":           list of period dicts around kickoff (or [])
-    - "weather_source":   "nws" | "weatherapi-fallback" | "all-failed"
-    - "weather_error":    None | str (last-source error message)
+Stale-game filter: games with a kickoff_local calendar date already in
+the past at the venue's local timezone are dropped from the slate. CFB
+spreads across Wed-Sat, so we can't just filter by "today ET"; each
+game ages off in its own venue-local morning.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 from .schedule import get_cfb_week_games
 from .nws_client import fetch_cfb_hourly
 
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import extract_forecast, find_period_for_time
+from hrrr import get_hrrr_periods
 
 
 # ── Tuning constants ──────────────────────────────────────────────────────
 
-# Hourly strip around kickoff for the detail page.
-# Football games run ~3.5 hours. Show 1 hour before kickoff through end of
-# game window so user sees pre-game and full-game conditions.
 HOURS_BEFORE_KICKOFF = 1
 HOURS_GAME_WINDOW    = 4   # buffer past kickoff to cover ~3.5h game + halftime
 
@@ -61,18 +46,7 @@ HOURS_GAME_WINDOW    = 4   # buffer past kickoff to cover ~3.5h game + halftime
 
 def build_cfb_slate(start_date: Optional[datetime] = None,
                     days_ahead: int = 7) -> list[dict]:
-    """Build the full weather-attached slate for a date window.
-
-    Args:
-        start_date: First day to include (datetime; date portion used).
-                    Defaults to today (UTC date boundary).
-        days_ahead: How many forward days to fetch. Default 7 covers the
-                    typical CFB week (Tue MAC night through Sunday).
-
-    Returns:
-        List of game dicts sorted by kickoff time, each with weather
-        attached. Empty list if no games or all fetches fail.
-    """
+    """Build the full weather-attached slate for a date window."""
     if start_date is None:
         start_date = datetime.now(timezone.utc)
 
@@ -80,41 +54,62 @@ def build_cfb_slate(start_date: Optional[datetime] = None,
     if not games:
         return []
 
-    # Per-venue weather cache (shared across all games in this slate build).
-    # Key: (lat, lon), value: (periods_list, source_str, error_str)
+    # Drop stale games — kickoff already in the past by venue-local date.
+    games = [g for g in games if not _is_game_stale(g)]
+
+    # Per-venue NWS/WeatherAPI cache shared across the build.
     venue_weather: dict[tuple[float, float], tuple[list[dict], str, Optional[str]]] = {}
+    # Separate HRRR cache — HRRR is optional overlay, US CONUS only.
+    venue_hrrr: dict[tuple[float, float], list[dict]] = {}
 
     for g in games:
-        _attach_weather_to_game(g, venue_weather)
+        _attach_weather_to_game(g, venue_weather, venue_hrrr)
 
     print(
         f"[cfb.slate] built slate: {len(games)} games, "
-        f"{len(venue_weather)} unique venues fetched",
+        f"{len(venue_weather)} unique venues fetched, "
+        f"{len(venue_hrrr)} HRRR overlays",
         flush=True,
     )
     return games
 
 
+def _is_game_stale(game: dict) -> bool:
+    """A game is stale when today's local calendar date at the venue is
+    already past the game's local calendar date. Handles CFB's Wed-Sat
+    spread cleanly — each game ages off in its own venue-local morning
+    regardless of what timezone the venue is in."""
+    venue = game.get("venue") or {}
+    kickoff_utc = game.get("kickoff_utc")
+    tz_name = venue.get("timezone") or venue.get("tz")
+    if not kickoff_utc or not tz_name:
+        return False
+    try:
+        tz = ZoneInfo(tz_name)
+        kickoff_local_date = kickoff_utc.astimezone(tz).date()
+        today_local_date = datetime.now(tz).date()
+        return kickoff_local_date < today_local_date
+    except Exception:
+        return False
+
+
 # ── Weather attachment ────────────────────────────────────────────────────
 
-def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
-    """Mutate game dict in place: add forecast, hourly, weather_source,
-    weather_error fields."""
+def _attach_weather_to_game(game: dict, venue_cache: dict, hrrr_cache: dict) -> None:
+    """Mutate game dict in place: forecast, hourly, hrrr_hourly, weather_source, weather_error."""
     venue = game.get("venue") or {}
     lat = venue.get("lat")
     lon = venue.get("lon")
     kickoff_utc = game.get("kickoff_utc")
 
-    # No lat/lon = game at a venue not yet populated in our DB AND not
-    # provided by ESPN's venue payload either. Leave weather null.
     if lat is None or lon is None or kickoff_utc is None:
         game["forecast"] = None
         game["hourly"] = []
+        game["hrrr_hourly"] = []
         game["weather_source"] = "no-venue-data"
         game["weather_error"] = "Stadium lat/lon not available for this game"
         return
 
-    # Cache hit or miss
     key = (round(lat, 4), round(lon, 4))
     if key in venue_cache:
         periods, source, err = venue_cache[key]
@@ -125,24 +120,39 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
     if not periods:
         game["forecast"] = None
         game["hourly"] = []
+        game["hrrr_hourly"] = []
         game["weather_source"] = source or "all-failed"
         game["weather_error"] = err
         return
 
     # Kickoff snapshot.
-    # NWS periods are already normalized via extract_forecast inside
-    # cfb/nws_client; find_period_for_time picks the right one by time.
-    # WeatherAPI uses its own period finder.
     if source == "nws":
         snapshot = find_period_for_time(periods, kickoff_utc)
     else:  # weatherapi-fallback
         snapshot = find_weatherapi_period(periods, kickoff_utc)
 
-    # Hourly window: 1h before kickoff through 4h after
     hourly = _hourly_window(periods, kickoff_utc)
+
+    # HRRR overlay — CONUS-only. Skip venues flagged nws_unsupported
+    # (future-proof for teams playing in Ireland/UK — not a concern today
+    # since all FBS teams are US, but the schema is ready).
+    hrrr_hourly: list[dict] = []
+    if not venue.get("nws_unsupported"):
+        if key in hrrr_cache:
+            all_hrrr = hrrr_cache[key]
+        else:
+            try:
+                all_hrrr = get_hrrr_periods(lat, lon) or []
+            except Exception as e:
+                print(f"[cfb.slate] HRRR fetch failed at {lat},{lon}: {e}", flush=True)
+                all_hrrr = []
+            hrrr_cache[key] = all_hrrr
+        if all_hrrr:
+            hrrr_hourly = _hourly_window(all_hrrr, kickoff_utc)
 
     game["forecast"] = snapshot
     game["hourly"] = hourly
+    game["hrrr_hourly"] = hrrr_hourly
     game["weather_source"] = source
     game["weather_error"] = err
 
@@ -150,18 +160,7 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
 # ── Provider fetch with fallback ──────────────────────────────────────────
 
 def _fetch_weather_with_fallback(lat: float, lon: float) -> tuple[list[dict], str, Optional[str]]:
-    """Try NWS first (primary for CFB), fall back to WeatherAPI on failure.
-
-    NWS goes through cfb/nws_client which adds pacing, circuit breaker,
-    and distinct User-Agent to keep CFB traffic distinguishable from
-    OVERcast at the NWS server side. fetch_cfb_hourly returns None on
-    any failure (rate limit, timeout, bad response, circuit open) — the
-    caller falls back to WeatherAPI in any of those cases.
-
-    Returns (periods, source_label, error_msg).
-    Empty periods list means BOTH sources failed.
-    """
-    # Layer 1: NWS primary via the paced/circuit-broken client
+    """NWS primary via cfb/nws_client, WeatherAPI fallback on failure."""
     try:
         periods = fetch_cfb_hourly(lat, lon)
         if periods:
@@ -169,10 +168,9 @@ def _fetch_weather_with_fallback(lat: float, lon: float) -> tuple[list[dict], st
         nws_err = "NWS returned None (circuit open, rate-limited, or empty)"
     except Exception as e:
         nws_err = str(e)
-        print(f"[cfb.slate] NWS client raised for {lat},{lon}: {e} — falling back to WeatherAPI",
+        print(f"[cfb.slate] NWS client raised for {lat},{lon}: {e} - falling back to WeatherAPI",
               flush=True)
 
-    # Layer 2: WeatherAPI fallback
     try:
         periods = fetch_weatherapi_hourly(lat, lon)
         if periods:
@@ -186,18 +184,7 @@ def _fetch_weather_with_fallback(lat: float, lon: float) -> tuple[list[dict], st
 # ── Hourly window extraction ──────────────────────────────────────────────
 
 def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
-    """Extract the hourly forecast for the game window around kickoff.
-
-    Returns 1h before kickoff through 4h after (5-6 entries typical).
-    Each entry is a period dict matching the provider's hourly shape.
-    Game-time entries are flagged with is_game_hour=True for template use.
-    """
-    """Extract the hourly forecast for the game window around kickoff.
-
-    Returns 1h before kickoff through 4h after (5-6 entries typical).
-    Each entry is a period dict matching the provider's hourly shape.
-    Game-time entries are flagged with is_game_hour=True for template use.
-    """
+    """Extract 1h before kickoff through 4h after. Game-time entries flagged."""
     if not periods:
         return []
     kickoff = kickoff_utc.replace(minute=0, second=0, microsecond=0)

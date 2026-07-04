@@ -35,7 +35,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from .venues import NFL_TEAMS, get_team, get_stadium
+from .venues import NFL_TEAMS, get_team, get_stadium, lookup_international_venue
 
 log = logging.getLogger(__name__)
 
@@ -114,10 +114,12 @@ def get_nfl_week_games(start_date: datetime, days_ahead: int = 7) -> list[dict]:
 def parse_nfl_event(event: dict, season_type: int = 2, week: Optional[int] = None) -> Optional[dict]:
     """Convert one ESPN event into our normalized game shape.
 
-    Skips international games (London, Munich, Madrid, São Paulo) — our
-    venue DB only covers US stadiums, so applying a US home-team forecast
-    to a London game would be wrong. ESPN flags these via
-    competition.venue.address.country.
+    International games (London, Munich, Madrid, Mexico City, etc.) get
+    their venue overridden with an entry from INTERNATIONAL_VENUES
+    (flagged nws_unsupported so the slate builder routes them through
+    WeatherAPI instead of NWS). If ESPN reports a non-US country but
+    we can't match the venue, we skip the game rather than fall through
+    to the home team's US stadium.
     """
     eid = str(event.get("id") or "")
     if not eid:
@@ -128,13 +130,26 @@ def parse_nfl_event(event: dict, season_type: int = 2, week: Optional[int] = Non
     if len(competitors) < 2:
         return None
 
-    # International-game filter: skip non-US venues.
+    # International-game handling: override the venue with an entry from
+    # our international directory. If country is non-US but we can't
+    # match a known site, skip (better than showing US-stadium weather).
     espn_venue = comp.get("venue") or {}
     espn_venue_addr = espn_venue.get("address") or {}
     espn_country = (espn_venue_addr.get("country") or "").strip()
+    espn_fullname = espn_venue.get("fullName") or ""
+    espn_city = espn_venue_addr.get("city") or ""
+    international_venue = None
     if espn_country and espn_country.upper() not in ("US", "USA", "UNITED STATES"):
-        log.info(f"[nfl.schedule] skipping international game {eid} at {espn_venue.get('fullName')} ({espn_country})")
-        return None
+        international_venue = lookup_international_venue(
+            espn_fullname, espn_city, espn_country
+        )
+        if not international_venue:
+            log.info(
+                f"[nfl.schedule] skipping unmapped international game {eid} at "
+                f"{espn_fullname!r} in {espn_city!r} ({espn_country}) — "
+                f"add to nfl.venues.INTERNATIONAL_VENUES to enable forecast"
+            )
+            return None
 
     home = away = None
     for c in competitors:
@@ -148,7 +163,12 @@ def parse_nfl_event(event: dict, season_type: int = 2, week: Optional[int] = Non
     if not home or not away:
         return None
 
-    venue = get_stadium(home["team_id"])
+    # International override — the ESPN-reported non-US venue wins.
+    # Otherwise we use the home team's normal US stadium.
+    if international_venue:
+        venue = international_venue
+    else:
+        venue = get_stadium(home["team_id"])
     if not venue:
         log.warning(f"[nfl.schedule] no venue for team_id={home['team_id']} ({home['name']})")
         return None
@@ -193,28 +213,34 @@ def _build_team_record(competitor: dict) -> Optional[dict]:
         team_id = 0
     if not team_id:
         return None
-
     local = NFL_TEAMS.get(team_id)
     if local:
         return {
-            "team_id":  team_id,
-            "name":     local["name"],
-            "short":    local["short"],
-            "abbrev":   local["abbrev"],
-            "color":    local["color"],
-            "logo_url": f"https://a.espncdn.com/i/teamlogos/nfl/500/{local['abbrev'].lower()}.png",
+            "team_id": team_id,
+            "name":    local["name"],
+            "short":   local["short"],
+            "abbrev":  local["abbrev"],
+            "conf":    local["conf"],
+            "div":     local["div"],
+            "color":   local["color"],
+            "logo_url": team_block.get("logo") or "",
         }
+    # Fallback if ESPN reports a team ID we don't recognize (rare)
+    disp = team_block.get("displayName") or team_block.get("name") or f"Team {team_id}"
+    abbr = team_block.get("abbreviation") or team_block.get("shortDisplayName") or "?"
     return {
-        "team_id":  team_id,
-        "name":     team_block.get("displayName") or f"Team {team_id}",
-        "short":    team_block.get("shortDisplayName") or team_block.get("abbreviation") or "?",
-        "abbrev":   team_block.get("abbreviation") or "?",
-        "color":    "#666666",
-        "logo_url": f"https://a.espncdn.com/i/teamlogos/nfl/500/{(team_block.get('abbreviation') or 'nfl').lower()}.png",
+        "team_id": team_id,
+        "name":    disp,
+        "short":   team_block.get("shortDisplayName") or disp,
+        "abbrev":  abbr,
+        "conf":    "",
+        "div":     "",
+        "color":   "#666666",
+        "logo_url": team_block.get("logo") or "",
     }
 
 
 def _make_slug(away_abbrev: str, home_abbrev: str) -> str:
-    a = (away_abbrev or "tbd").lower().replace(".", "")
-    h = (home_abbrev or "tbd").lower().replace(".", "")
-    return f"{a}-at-{h}"
+    aw = (away_abbrev or "??").lower()
+    hm = (home_abbrev or "??").lower()
+    return f"{aw}-at-{hm}"

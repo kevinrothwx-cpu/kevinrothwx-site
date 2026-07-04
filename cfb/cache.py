@@ -24,6 +24,8 @@ import traceback
 from datetime import datetime, timedelta, timezone
 
 from .slate import build_cfb_slate
+from . import forecast_freeze
+from . import storage as cfb_storage
 
 
 REFRESH_SECONDS = 25 * 60
@@ -59,12 +61,9 @@ _cache_lock = threading.Lock()
 _warmer_thread = None
 _warmer_stop = threading.Event()
 
-# Frozen kickoff snapshots, keyed by ESPN game id.
-# Value is the forecast dict captured at the moment we entered the freeze
-# window. Released once the game is well past kickoff so the dict doesn't
-# grow without bound across the season.
-_frozen_forecasts: dict[str, dict] = {}
-_frozen_lock = threading.Lock()
+# Frozen kickoff snapshots are now handled by cfb.forecast_freeze (disk-backed
+# via persistence module — survives Render restarts). The in-memory dict here
+# was replaced 2026-07-04 to match every other kickoff-sensitive sport.
 
 
 def get_cfb_slate(allow_build: bool = True) -> tuple[list, dict | None]:
@@ -117,6 +116,14 @@ def _rebuild() -> None:
     try:
         games = build_cfb_slate(days_ahead=DEFAULT_WINDOW_DAYS)
         _apply_freeze(games)
+        # Attach writeups + clean up orphaned notes for games that
+        # rolled off the slate (finished + aged out).
+        cfb_storage.attach_writeups_to_slate(games)
+        live_ids = [g.get("event_id") for g in games if g.get("event_id")]
+        try:
+            cfb_storage.delete_orphaned(live_ids)
+        except Exception as _e:
+            print(f"[cfb.cache] writeup cleanup skipped: {_e}", flush=True)
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
         traceback.print_exc()
@@ -129,53 +136,64 @@ def _rebuild() -> None:
 def _apply_freeze(games: list[dict]) -> None:
     """Walk the slate and freeze kickoff-window games in place.
 
-    For each game:
-      - If kickoff is within FREEZE_BEFORE_KICKOFF_HOURS or already passed
-        (but within the release window), we want to use a frozen snapshot.
-      - If we already have a frozen snapshot for this game ID, swap it in.
-      - If not, capture the current forecast as the freeze snapshot.
-      - Either way, set game["is_frozen"] = True for template use.
+    Now DISK-BACKED via cfb.forecast_freeze so snapshots survive Render
+    restarts. Also freezes hourly + hrrr_hourly, not just the headline
+    forecast dict — that way both the cheat card AND the detail-page
+    hourly strip stay stable through the game window.
 
-    Cleanup: drop frozen entries for games whose release time has passed
-    so the dict doesn't grow unbounded.
+    Cleanup: drop frozen entries whose release time has passed so the
+    persistent JSON doesn't grow unbounded across the season.
     """
     now = datetime.now(timezone.utc)
     freeze_window_start = timedelta(hours=FREEZE_BEFORE_KICKOFF_HOURS)
     freeze_window_end = timedelta(hours=FREEZE_RELEASE_AFTER_KICKOFF_HOURS)
 
-    seen_ids: set[str] = set()
-    with _frozen_lock:
-        for g in games:
-            gid = str(g.get("id") or "")
-            kickoff = g.get("kickoff_utc")
-            if not gid or not kickoff:
-                g["is_frozen"] = False
-                continue
-            seen_ids.add(gid)
+    for g in games:
+        gid = str(g.get("id") or "")
+        kickoff = g.get("kickoff_utc")
+        if not gid or not kickoff:
+            g["is_frozen"] = False
+            continue
 
-            time_to_kickoff = kickoff - now
-            in_freeze_window = (
-                -freeze_window_end <= time_to_kickoff <= freeze_window_start
-            )
+        time_to_kickoff = kickoff - now
+        in_freeze_window = (
+            -freeze_window_end <= time_to_kickoff <= freeze_window_start
+        )
 
-            if not in_freeze_window:
-                g["is_frozen"] = False
-                continue
+        if not in_freeze_window:
+            g["is_frozen"] = False
+            continue
 
-            cached = _frozen_forecasts.get(gid)
-            if cached:
-                g["forecast"] = dict(cached)
+        cached = forecast_freeze.get(gid)
+        if cached:
+            # Restore the frozen snapshot in full — forecast + hourly + HRRR.
+            g["forecast"]       = cached.get("forecast")
+            g["hourly"]         = cached.get("hourly") or []
+            g["hrrr_hourly"]    = cached.get("hrrr_hourly") or []
+            g["weather_source"] = cached.get("weather_source") or g.get("weather_source")
+            g["weather_error"]  = cached.get("weather_error")  or g.get("weather_error")
+            g["is_frozen"] = True
+        else:
+            if g.get("forecast"):
+                forecast_freeze.freeze(
+                    gid,
+                    forecast=g.get("forecast"),
+                    hourly=g.get("hourly") or [],
+                    hrrr_hourly=g.get("hrrr_hourly") or [],
+                    weather_source=g.get("weather_source"),
+                    weather_error=g.get("weather_error"),
+                )
                 g["is_frozen"] = True
             else:
-                if g.get("forecast"):
-                    _frozen_forecasts[gid] = dict(g["forecast"])
-                    g["is_frozen"] = True
-                else:
-                    g["is_frozen"] = False
+                g["is_frozen"] = False
 
-        stale = [k for k in _frozen_forecasts if k not in seen_ids]
-        for k in stale:
-            del _frozen_forecasts[k]
+    # Persistent freeze cleanup: drop anything older than the release window
+    # (frozen_at_utc + release hours would be well in the past).
+    try:
+        cutoff = now - timedelta(hours=FREEZE_RELEASE_AFTER_KICKOFF_HOURS + 12)
+        forecast_freeze.clear_old(cutoff)
+    except Exception as _e:
+        print(f"[cfb.cache] freeze cleanup skipped: {_e}", flush=True)
 
 
 def find_game_in_slate(date_str: str, slug: str) -> dict | None:
@@ -189,7 +207,10 @@ def find_game_in_slate(date_str: str, slug: str) -> dict | None:
 
 def frozen_count() -> int:
     """Number of currently-frozen game snapshots, for admin diagnostics."""
-    return len(_frozen_forecasts)
+    try:
+        return forecast_freeze.count()
+    except Exception:
+        return 0
 
 
 def warmer_loop() -> None:

@@ -27,6 +27,7 @@ from .schedule import get_mls_week_games
 from cfb.nws_client import fetch_cfb_hourly
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import find_period_for_time
+from hrrr import get_hrrr_periods
 
 
 # MLS regular-season match window: 1h before through 3h after kickoff.
@@ -54,20 +55,23 @@ def build_mls_slate(start_date: Optional[datetime] = None,
 
     # Per-venue weather cache shared across the build.
     venue_weather: dict[tuple[float, float], tuple[list[dict], str, Optional[str]]] = {}
+    # HRRR overlay cache — CONUS only, Canadian venues skip.
+    venue_hrrr: dict[tuple[float, float], list[dict]] = {}
 
     for m in matches:
-        _attach_weather_to_match(m, venue_weather)
+        _attach_weather_to_match(m, venue_weather, venue_hrrr)
 
     print(
         f"[mls.slate] built slate: {len(matches)} matches, "
-        f"{len(venue_weather)} unique venues fetched",
+        f"{len(venue_weather)} unique venues fetched, "
+        f"{len(venue_hrrr)} HRRR overlays",
         flush=True,
     )
     return matches
 
 
-def _attach_weather_to_match(match: dict, venue_cache: dict) -> None:
-    """Mutate match dict in place: add forecast, hourly, weather_source, weather_error."""
+def _attach_weather_to_match(match: dict, venue_cache: dict, hrrr_cache: dict) -> None:
+    """Mutate match dict in place: forecast, hourly, hrrr_hourly, weather_source, weather_error."""
     venue = match.get("venue") or {}
     lat = venue.get("lat")
     lon = venue.get("lon")
@@ -77,6 +81,7 @@ def _attach_weather_to_match(match: dict, venue_cache: dict) -> None:
     if lat is None or lon is None or kickoff_utc is None:
         match["forecast"] = None
         match["hourly"] = []
+        match["hrrr_hourly"] = []
         match["weather_source"] = "no-venue-data"
         match["weather_error"] = "Stadium lat/lon not available for this match"
         return
@@ -94,6 +99,7 @@ def _attach_weather_to_match(match: dict, venue_cache: dict) -> None:
     if not periods:
         match["forecast"] = None
         match["hourly"] = []
+        match["hrrr_hourly"] = []
         match["weather_source"] = source or "all-failed"
         match["weather_error"] = err
         return
@@ -105,8 +111,25 @@ def _attach_weather_to_match(match: dict, venue_cache: dict) -> None:
 
     hourly = _hourly_window(periods, kickoff_utc)
 
+    # HRRR overlay — CONUS only. Canadian venues (Toronto, Montreal,
+    # Vancouver) already flagged nws_unsupported skip this fetch.
+    hrrr_hourly: list[dict] = []
+    if not nws_unsupported:
+        if key in hrrr_cache:
+            all_hrrr = hrrr_cache[key]
+        else:
+            try:
+                all_hrrr = get_hrrr_periods(lat, lon) or []
+            except Exception as e:
+                print(f"[mls.slate] HRRR fetch failed at {lat},{lon}: {e}", flush=True)
+                all_hrrr = []
+            hrrr_cache[key] = all_hrrr
+        if all_hrrr:
+            hrrr_hourly = _hourly_window(all_hrrr, kickoff_utc)
+
     match["forecast"] = snapshot
     match["hourly"] = hourly
+    match["hrrr_hourly"] = hrrr_hourly
     match["weather_source"] = source
     match["weather_error"] = err
 

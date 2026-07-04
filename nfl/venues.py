@@ -417,3 +417,92 @@ def is_dome(team_id: int) -> bool:
 def is_retractable(team_id: int) -> bool:
     s = get_stadium(team_id)
     return bool(s and s["roof_type"] == "retractable")
+
+
+# ── International venues ──────────────────────────────────────────────────
+#
+# NFL International Series venues. When ESPN reports a game with a
+# non-US venue country, the schedule fetcher swaps in one of these
+# instead of using the home team's US stadium. Every entry has
+# nws_unsupported=True so the slate builder routes them through
+# WeatherAPI (NWS only covers US territory).
+
+INTERNATIONAL_VENUES: dict[str, dict] = {
+    "tottenham": {"name": "Tottenham Hotspur Stadium", "city": "London, UK",
+                  "lat": 51.6042, "lon": -0.0666, "timezone": "Europe/London",
+                  "roof_type": "open", "capacity": 62850,
+                  "nws_unsupported": True, "country": "GB"},
+    "wembley":   {"name": "Wembley Stadium", "city": "London, UK",
+                  "lat": 51.5560, "lon": -0.2795, "timezone": "Europe/London",
+                  "roof_type": "retractable", "capacity": 90000,
+                  "nws_unsupported": True, "country": "GB"},
+    "azteca":    {"name": "Estadio Azteca", "city": "Mexico City, MX",
+                  "lat": 19.3029, "lon": -99.1505, "timezone": "America/Mexico_City",
+                  "roof_type": "open", "capacity": 87000,
+                  "nws_unsupported": True, "country": "MX"},
+    "frankfurt": {"name": "Deutsche Bank Park", "city": "Frankfurt, DE",
+                  "lat": 50.0687, "lon": 8.6456, "timezone": "Europe/Berlin",
+                  "roof_type": "retractable", "capacity": 51500,
+                  "nws_unsupported": True, "country": "DE"},
+    "munich":    {"name": "Allianz Arena", "city": "Munich, DE",
+                  "lat": 48.2188, "lon": 11.6247, "timezone": "Europe/Berlin",
+                  "roof_type": "open", "capacity": 75000,
+                  "nws_unsupported": True, "country": "DE"},
+    "berlin":    {"name": "Olympiastadion", "city": "Berlin, DE",
+                  "lat": 52.5147, "lon": 13.2394, "timezone": "Europe/Berlin",
+                  "roof_type": "open", "capacity": 74475,
+                  "nws_unsupported": True, "country": "DE"},
+    "sao-paulo": {"name": "Arena Corinthians", "city": "Sao Paulo, BR",
+                  "lat": -23.5453, "lon": -46.4742, "timezone": "America/Sao_Paulo",
+                  "roof_type": "open", "capacity": 49000,
+                  "nws_unsupported": True, "country": "BR"},
+    "dublin":    {"name": "Croke Park", "city": "Dublin, IE",
+                  "lat": 53.3608, "lon": -6.2511, "timezone": "Europe/Dublin",
+                  "roof_type": "open", "capacity": 82300,
+                  "nws_unsupported": True, "country": "IE"},
+    "madrid":    {"name": "Estadio Santiago Bernabeu", "city": "Madrid, ES",
+                  "lat": 40.4531, "lon": -3.6883, "timezone": "Europe/Madrid",
+                  "roof_type": "retractable", "capacity": 78000,
+                  "nws_unsupported": True, "country": "ES"},
+    "melbourne": {"name": "Melbourne Cricket Ground", "city": "Melbourne, AU",
+                  "lat": -37.8199, "lon": 144.9834, "timezone": "Australia/Melbourne",
+                  "roof_type": "open", "capacity": 100024,
+                  "nws_unsupported": True, "country": "AU"},
+}
+
+
+def lookup_international_venue(fullname, city, country=None) -> Optional[dict]:
+    """Match an ESPN international venue payload to our override table.
+
+    Match order:
+      1. Fullname substring match ("Tottenham Hotspur Stadium")
+      2. City substring match ("London", "Mexico City")
+      3. Country code fallback (only when exactly one venue in that country)
+    """
+    fn = (fullname or "").lower()
+    ci = (city or "").lower()
+    co = (country or "").strip().upper()
+
+    for slug, v in INTERNATIONAL_VENUES.items():
+        if v["name"].lower() in fn or slug in fn:
+            return dict(v)
+
+    for slug, v in INTERNATIONAL_VENUES.items():
+        v_city = v["city"].split(",")[0].strip().lower()
+        if v_city and v_city in ci:
+            return dict(v)
+
+    if co:
+        matches = [v for v in INTERNATIONAL_VENUES.values() if v["country"] == co]
+        if len(matches) == 1:
+            return dict(matches[0])
+
+    return None
+rn dict(v)
+
+    if co:
+        matches = [v for v in INTERNATIONAL_VENUES.values() if v["country"] == co]
+        if len(matches) == 1:
+            return dict(matches[0])
+
+    return None

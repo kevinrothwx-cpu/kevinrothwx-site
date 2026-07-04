@@ -2100,6 +2100,29 @@ def admin_nfl():
     return render_template("nfl/admin.html", slate=games)
 
 
+@app.route("/admin/cfb", methods=["GET", "POST"])
+@_admin_required
+def admin_cfb():
+    """CFB write-up admin. One note per game keyed by ESPN event_id.
+    Kevin's stated intent: wire the capability in even if he doesn't post
+    notes every week — the option is there for marquee matchups."""
+    from cfb import storage as cfb_storage
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            cfb_storage.save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_cfb"))
+
+    games, _ = get_cfb_slate()
+    if games is None:
+        games = []
+    cfb_storage.attach_writeups_to_slate(games)
+    return render_template("ncaaf/admin.html", slate=games)
+
+
 @app.route("/admin/mls", methods=["GET", "POST"])
 @_admin_required
 def admin_mls():

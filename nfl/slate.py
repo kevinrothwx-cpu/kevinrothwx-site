@@ -83,7 +83,14 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
     if key in venue_cache:
         periods, source, err = venue_cache[key]
     else:
-        periods, source, err = _fetch_with_nws_fallback(lat, lon)
+        # International venues (nws_unsupported) skip the NWS attempt —
+        # NWS only covers US territory, calling it for London / Mexico
+        # City / Munich just wastes a request and trips the circuit
+        # breaker over time.
+        if venue.get("nws_unsupported"):
+            periods, source, err = _fetch_weatherapi_only(lat, lon)
+        else:
+            periods, source, err = _fetch_with_nws_fallback(lat, lon)
         venue_cache[key] = (periods, source, err)
 
     if not periods:
@@ -108,16 +115,32 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
     # HRRR high-res overlay (3 km CONUS, includes wind gusts). Fetched per
     # game so the per-game HRRR toggle on the slate page has data. HRRR is
     # cached in-process by lat/lon so shared venues (MetLife: NYG+NYJ,
-    # SoFi: LAR+LAC) get one fetch. Fail-soft: no HRRR = no toggle.
-    try:
-        hrrr_periods = get_hrrr_periods(lat, lon)
-        if hrrr_periods:
-            game["hrrr_hourly"] = _hourly_window(hrrr_periods, kickoff_utc)
-        else:
-            game["hrrr_hourly"] = []
-    except Exception as e:
-        print(f"[nfl.slate] HRRR fetch failed for {lat},{lon}: {e}", flush=True)
+    # SoFi: LAR+LAC) get one fetch. Skip HRRR entirely for international
+    # venues — HRRR is CONUS only. Fail-soft: no HRRR = no toggle.
+    if venue.get("nws_unsupported"):
         game["hrrr_hourly"] = []
+    else:
+        try:
+            hrrr_periods = get_hrrr_periods(lat, lon)
+            if hrrr_periods:
+                game["hrrr_hourly"] = _hourly_window(hrrr_periods, kickoff_utc)
+            else:
+                game["hrrr_hourly"] = []
+        except Exception as e:
+            print(f"[nfl.slate] HRRR fetch failed for {lat},{lon}: {e}", flush=True)
+            game["hrrr_hourly"] = []
+
+
+def _fetch_weatherapi_only(lat: float, lon: float) -> tuple[list[dict], str, Optional[str]]:
+    """Direct WeatherAPI path for international venues — NWS only serves
+    US territory, no point trying NWS first for London / Munich / etc."""
+    try:
+        periods = fetch_weatherapi_hourly(lat, lon)
+        if periods:
+            return periods, "weatherapi-international", None
+        return [], "all-failed", "WeatherAPI returned empty for international venue"
+    except Exception as e:
+        return [], "all-failed", f"WeatherAPI: {e}"
 
 
 def _fetch_with_nws_fallback(lat: float, lon: float) -> tuple[list[dict], str, Optional[str]]:
@@ -141,8 +164,8 @@ def _fetch_with_nws_fallback(lat: float, lon: float) -> tuple[list[dict], str, O
         return [], "all-failed", f"NWS: {nws_err}; WeatherAPI: {wa_err}"
 
 
-
 def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
+    """Extract 1h before kickoff through 4h after. Game-time flagged."""
     if not periods:
         return []
     kickoff = kickoff_utc.replace(minute=0, second=0, microsecond=0)
@@ -157,7 +180,7 @@ def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
                 st = st.replace(tzinfo=timezone.utc)
             if start <= st < end:
                 p2 = dict(p)
-                p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_GAME_HIGHLIGHT))
+                p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_GAME_WINDOW))
                 out.append(p2)
         except (ValueError, AttributeError):
             continue
