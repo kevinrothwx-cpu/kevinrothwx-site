@@ -3,10 +3,15 @@
    `sport_counts` is an optional dict with the "today" indicator per sport.
    CWS and Tennis are conditional: they only render when their sport_counts
    key is set (which the context_processor sets only when in window).
+
+   NOTE: "More sports" dropdown (Horse Racing, Premier League, Cricket)
+   was removed on 2026-07-04. Those modules exist but aren't ready for
+   public traffic yet — surfacing them prematurely undercuts the
+   meteorologist-byline credibility. Re-add the <details class="sport-nav__more">
+   block once those sports have real content behind them.
 #}
 <nav class="sport-nav" aria-label="Sport navigation">
-  <div class="sport-nav__container">
-    <div class="sport-nav__inner">
+  <div class="sport-nav__inner">
     <a href="/mlb/today" class="sport-nav__item {% if active_sport == 'mlb' %}is-active{% endif %}">
       MLB
       {% if sport_counts and sport_counts.mlb %}<span class="sport-nav__count">{{ sport_counts.mlb }}</span>{% endif %}
@@ -47,17 +52,5 @@
       MLS
       {% if sport_counts and sport_counts.mls %}<span class="sport-nav__count">{{ sport_counts.mls }}</span>{% endif %}
     </a>
-    </div>{# /sport-nav__inner — scrolling container ends here #}
-
-    {# "More sports" dropdown lives OUTSIDE __inner so the overflow-x:auto
-       on the scrolling tab strip doesn't clip the popover menu. #}
-    <details class="sport-nav__more">
-      <summary class="sport-nav__item sport-nav__more-btn">More sports <span aria-hidden="true" style="margin-left:0.2rem;">▾</span></summary>
-      <div class="sport-nav__more-menu" role="menu">
-        <a href="/horse" role="menuitem" class="sport-nav__more-item">Horse Racing</a>
-        <a href="/prem" role="menuitem" class="sport-nav__more-item">Premier League</a>
-        <a href="/ipl" role="menuitem" class="sport-nav__more-item">Cricket (IPL)</a>
-      </div>
-    </details>
   </div>
 </nav>
