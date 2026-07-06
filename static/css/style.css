@@ -534,7 +534,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__time { white-space: nowrap; }
 
 /* Side-by-side: summary panel | hourly table */
-.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; }
+.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; align-items: start; }
 @media (max-width: 720px) { .mlb-game-block__body { grid-template-columns: 1fr; } }
 
 .game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
