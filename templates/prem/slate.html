@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Premier League Weather, Matchday Forecast | Kevin Roth{% endblock %}
+{% block description %}Free live weather forecasts for every Premier League match. Stadium-specific temperature, wind, precipitation. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}Premier League Weather Forecasts{% endblock %}
+{% block og_description %}Real meteorologist forecasts for every English Premier League match. By Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<style>
+  .prem-hero { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.5rem 0.5rem; }
+  .prem-hero .kicker { color: var(--fog); font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.35rem; }
+  .prem-hero__title { font-family: var(--font-serif); font-size: clamp(1.4rem, 2vw + 0.4rem, 2rem); line-height: 1.15; margin: 0 0 0.5rem; color: var(--ink); }
+  .prem-hero__sub { font-family: var(--font-sans); font-size: 0.9rem; color: var(--slate); margin: 0; }
+
+  .prem-day-section { max-width: 1100px; margin: 0 auto 2rem; padding: 0 1.5rem; }
+  .prem-day-section__header { display: flex; align-items: baseline; gap: 0.65rem; padding-bottom: 0.55rem; margin-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
+  .prem-day-section__title { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; margin: 0; }
+  .prem-day-section__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); }
+
+  .prem-cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.7rem; align-items: start; }
+
+  .prem-match { background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.95rem; }
+  .prem-match__kickoff { display: flex; justify-content: space-between; align-items: baseline; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .prem-match__time-uk { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
+  .prem-match__time-et { font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); }
+  .prem-match__venue { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); margin-bottom: 0.55rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+
+  .prem-match__teams { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
+  .prem-match__team { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
+  .prem-match__team--home { justify-content: flex-start; }
+  .prem-match__team--away { justify-content: flex-end; }
+  .prem-match__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .prem-match__logo { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+  .prem-match__vs { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; color: var(--fog); letter-spacing: 0.08em; flex-shrink: 0; }
+
+  .prem-match__wx { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--mist); }
+  .prem-match__wx-cell { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .prem-match__wx-val { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; line-height: 1; color: var(--ink); }
+  .prem-match__wx-lbl { font-family: var(--font-sans); font-size: 0.62rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.3rem; }
+  .prem-match__wx-val.precip-hi { color: #b91c1c; }
+  .prem-match__wx-val.precip-mid { color: #b45309; }
+  .prem-match__wx-val.precip-lo { color: #15803d; }
+
+  .prem-writeup { padding: 0.6rem 0.75rem; margin-top: 0.6rem; border-left: 3px solid var(--mist); background: #fafafa; font-family: var(--font-serif); font-size: 0.85rem; line-height: 1.45; color: var(--slate); }
+  .prem-writeup--green  { border-left-color: #15803d; }
+  .prem-writeup--yellow { border-left-color: #ca8a04; }
+  .prem-writeup--orange { border-left-color: #ea580c; }
+  .prem-writeup--red    { border-left-color: #b91c1c; }
+  .prem-writeup__head { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog); margin-bottom: 0.25rem; }
+
+  .prem-match__link { display: block; margin-top: 0.65rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--storm); text-decoration: none; text-align: center; padding-top: 0.5rem; border-top: 1px solid var(--mist); }
+  .prem-match__link:hover { text-decoration: underline; }
+
+  .prem-empty { max-width: 32rem; margin: 3rem auto; padding: 2.5rem 1.5rem; text-align: center; border: 1px dashed var(--mist); border-radius: 8px; }
+  .prem-empty p { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.55; color: var(--slate); margin: 0 0 0.4rem; }
+  .prem-empty small { font-family: var(--font-sans); font-size: 0.78rem; color: var(--fog); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mlb-page">
+  <header class="prem-hero">
+    <p class="kicker">Premier League Weather · Live coverage</p>
+    <h1 class="prem-hero__title">This week's Premier League matches</h1>
+    <p class="prem-hero__sub">
+      Kickoff-time weather at every EPL ground, all 20 clubs. UK local time primary, US Eastern in parentheses for the US audience.
+      Free forecasts by sports meteorologist <a href="/about" style="color:var(--storm);text-decoration:none">Kevin Roth</a>.
+    </p>
+  </header>
+
+  {% if not days_data %}
+    <div class="prem-empty">
+      <p>No Premier League matches scheduled in the next 7 days.</p>
+      <small>The 2026-27 season kicks off in mid-August. Check back closer to matchweek 1.</small>
+    </div>
+  {% else %}
+    {% for day in days_data %}
+      <section class="prem-day-section">
+        <div class="prem-day-section__header">
+          <h2 class="prem-day-section__title">{{ day.pretty_date }}</h2>
+          <span class="prem-day-section__count">{{ day.match_count }} match{{ 'es' if day.match_count != 1 else '' }}</span>
+        </div>
+        <div class="prem-cheat-row">
+          {% for m in day.matches %}
+            <article class="prem-match">
+              <div class="prem-match__kickoff">
+                <span class="prem-match__time-uk">{{ m.kickoff_local_str }}</span>
+                <span class="prem-match__time-et">{{ m.kickoff_eastern_str }}</span>
+              </div>
+              <div class="prem-match__venue">{{ m.venue.name }} · {{ m.venue.city }}</div>
+
+              <div class="prem-match__teams">
+                <div class="prem-match__team prem-match__team--home">
+                  {% if m.home.logo_url %}<img class="prem-match__logo" src="{{ m.home.logo_url }}" alt="" loading="lazy">{% endif %}
+                  <span class="prem-match__abbr">{{ m.home.abbrev }}</span>
+                </div>
+                <span class="prem-match__vs">v</span>
+                <div class="prem-match__team prem-match__team--away">
+                  <span class="prem-match__abbr">{{ m.away.abbrev }}</span>
+                  {% if m.away.logo_url %}<img class="prem-match__logo" src="{{ m.away.logo_url }}" alt="" loading="lazy">{% endif %}
+                </div>
+              </div>
+
+              {% set f = m.forecast %}
+              {% if f %}
+                <div class="prem-match__wx">
+                  <div class="prem-match__wx-cell">
+                    <div class="prem-match__wx-val">{{ f.temp }}°</div>
+                    <div class="prem-match__wx-lbl">Temp</div>
+                  </div>
+                  <div class="prem-match__wx-cell">
+                    <div class="prem-match__wx-val">{{ f.wind_speed }}</div>
+                    <div class="prem-match__wx-lbl">mph wind</div>
+                  </div>
+                  <div class="prem-match__wx-cell">
+                    <div class="prem-match__wx-val {% if f.precip_pct >= 60 %}precip-hi{% elif f.precip_pct >= 30 %}precip-mid{% else %}precip-lo{% endif %}">{{ f.precip_pct }}%</div>
+                    <div class="prem-match__wx-lbl">Rain</div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if m.writeup %}
+                <div class="prem-writeup prem-writeup--{{ m.writeup.color or 'none' }}">
+                  <div class="prem-writeup__head">Kevin's note</div>
+                  {{ m.writeup.text }}
+                </div>
+              {% endif %}
+
+              <a class="prem-match__link" href="/prem/{{ m.date_local }}/{{ m.slug }}">
+                Full forecast for this match →
+              </a>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}
+
+{# EOF-CANARY 2026-07-06-prem-build #}

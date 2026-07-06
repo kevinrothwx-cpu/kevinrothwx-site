@@ -135,6 +135,18 @@ from horse.cache import get_horse_slate, start_warmer as start_horse_warmer
 from horse.schedule import get_stakes_race as get_horse_stakes_race
 from horse.slate import build_stakes_day as build_horse_stakes_day
 
+from prem.cache import (
+    get_epl_slate as get_prem_slate,
+    start_warmer as start_prem_warmer,
+    find_match_in_slate as find_prem_match,
+    frozen_count as prem_frozen_count,
+)
+from prem.storage import (
+    save_writeup as prem_save_writeup,
+    get_writeup as prem_get_writeup,
+    attach_writeups_to_slate as prem_attach_writeups,
+)
+
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
 
@@ -219,6 +231,7 @@ start_cfb_warmer()
 start_mls_warmer()
 start_nfl_warmer()
 start_horse_warmer()
+start_prem_warmer()
 
 # Register the JSON API blueprint (docs/FORECAST_API_CONTRACT_v1.md).
 # Consumers: OVERcast NFL + OVERcast CFB. Auth via MSW_API_KEYS env var.
@@ -1429,14 +1442,93 @@ def tennis_venue_page(slug):
 # ===== Premier League team + stadium landing pages =====
 
 @app.route("/prem")
+def prem_root():
+    """Premier League slate hub. Groups matches by venue-local date (UK) and
+    shows cheat cards per match with WeatherAPI-only weather (no NWS since
+    the UK sits outside NWS coverage, no HRRR since UK is outside CONUS).
+    Off-season (May–August) returns an empty slate; template renders a
+    'season resumes' message.
+    """
+    matches, meta = get_prem_slate(allow_build=True)
+    prem_attach_writeups(matches)
+
+    # Group matches by their UK-local date (date_local field is YYYY-MM-DD).
+    uk_today = datetime.now(ZoneInfo("Europe/London")).date()
+    grouped: dict[str, list[dict]] = {}
+    for m in matches:
+        d = m.get("date_local")
+        if not d:
+            continue
+        grouped.setdefault(d, []).append(m)
+
+    days_data = []
+    for date_str in sorted(grouped.keys()):
+        try:
+            d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        days_data.append({
+            "date_str":    date_str,
+            "pretty_date": d.strftime("%A, %B %-d"),
+            "is_today":    (d == uk_today),
+            "is_tomorrow": (d == uk_today + timedelta(days=1)),
+            "matches":     grouped[date_str],
+            "slate":       grouped[date_str],
+            "match_count": len(grouped[date_str]),
+        })
+
+    return render_template(
+        "prem/slate.html",
+        days_data=days_data,
+        showing_multiple=(len(days_data) > 1),
+        total_matches=len(matches),
+        meta=meta,
+        canonical_path="/prem",
+    )
+
+
+@app.route("/prem/guides")
 def prem_hub():
-    """Simple index hub for Premier League landing pages. Live match forecasts
-    not yet built — this page lists all 20 clubs + stadiums with links to
-    their evergreen weather guides."""
+    """Team + stadium landing-page index. Kept live so the /prem/team/<slug>
+    and /prem/stadium/<slug> pages have a hub to link back to for internal
+    linking / SEO. The main /prem is now the live match slate."""
     teams = [(name, c) for name, c in sorted(TEAM_CONTENT_PREM.items())]
     stadiums = [(name, c) for name, c in sorted(STADIUM_CONTENT_PREM.items())]
     return render_template("prem_hub.html", teams=teams, stadiums=stadiums,
-                           canonical_path="/prem")
+                           canonical_path="/prem/guides")
+
+
+@app.route("/prem/<date_str>/<slug>")
+def prem_match(date_str, slug):
+    """Per-match Premier League detail page with schema.org SportsEvent +
+    hourly forecast around kickoff. UK-local dates."""
+    if not _valid_date_str(date_str):
+        abort(404)
+    match = find_prem_match(date_str, slug)
+    if not match:
+        abort(404)
+
+    # Schema.org end time: 3h after kickoff covers 90-min match + halftime +
+    # injury time + a buffer.
+    kickoff = match.get("kickoff_utc")
+    if kickoff:
+        match["kickoff_end_utc"] = kickoff + timedelta(hours=3)
+
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        pretty_date = d.strftime("%A, %B %-d")
+    except ValueError:
+        pretty_date = date_str
+
+    brand = get_site_brand(request.host)
+    return render_template(
+        "prem/match.html",
+        match=match,
+        date_str=date_str,
+        pretty_date=pretty_date,
+        site_url=brand["site_url"],
+        canonical_path=f"/prem/{date_str}/{slug}",
+    )
 
 
 @app.route("/ipl")
@@ -2151,6 +2243,28 @@ def admin_mls():
     return render_template("mls/admin.html", slate=matches)
 
 
+@app.route("/admin/prem", methods=["GET", "POST"])
+@_admin_required
+def admin_prem():
+    """Premier League write-up admin. One note per match keyed by ESPN
+    event_id. Notes auto-delete when matches drop off the slate
+    (prem/cache.py calls prem.storage.delete_orphaned after each rebuild)."""
+    if request.method == "POST":
+        event_id = request.form.get("event_id", "").strip()
+        text = request.form.get("text", "")
+        color = request.form.get("color", "").strip() or None
+        if event_id:
+            prem_save_writeup(event_id, text, color=color)
+            flash("Write-up saved.", "success")
+        return redirect(url_for("admin_prem"))
+
+    matches, _ = get_prem_slate()
+    if matches is None:
+        matches = []
+    prem_attach_writeups(matches)
+    return render_template("prem/admin.html", slate=matches)
+
+
 @app.route("/admin/nascar", methods=["GET", "POST"])
 @_admin_required
 def admin_nascar():
@@ -2236,7 +2350,8 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/ncaaf",                            "0.85", "daily",   None),
     ("/nfl",                              "0.9",  "hourly",  None),
     ("/mls",                              "0.85", "hourly",  None),
-    ("/prem",                             "0.8",  "monthly", "2026-07-03"),
+    ("/prem",                             "0.9",  "hourly",  None),
+    ("/prem/guides",                      "0.75", "monthly", "2026-07-03"),
     ("/ipl",                              "0.8",  "monthly", "2026-07-03"),
     ("/horse",                            "0.85", "daily",   None),
     ("/mlb-weather",                      "0.8",  "monthly", "2026-06-27"),
@@ -2362,6 +2477,20 @@ def sitemap():
                         dynamic_urls.append((f"/nfl/{d_iso}/{slug}", "0.75", "hourly"))
         except Exception as e:
             print(f"[sitemap] NFL dynamic URLs failed: {e}", flush=True)
+
+        # Premier League per-match URLs. Slate covers ~7 days; emit a
+        # /prem/<date>/<slug> URL per match so each is independently
+        # indexable. Off-season returns an empty list, which is fine.
+        try:
+            prem_matches, _ = get_prem_slate(allow_build=False)
+            if prem_matches:
+                for m in prem_matches:
+                    d_iso = m.get("date_local")
+                    slug = m.get("slug")
+                    if d_iso and slug:
+                        dynamic_urls.append((f"/prem/{d_iso}/{slug}", "0.7", "hourly"))
+        except Exception as e:
+            print(f"[sitemap] Premier League dynamic URLs failed: {e}", flush=True)
 
         # MLS per-match URLs. Slate covers ~7 days; emit a /mls/<date>/<slug>
         # URL for every match so each is independently indexable. The
@@ -2595,6 +2724,7 @@ def admin_nws_health():
         f'<div class="stat"><div class="stat-label">Frozen CFB snapshots</div><div class="stat-value">{cfb_frozen_count()}</div></div>'
         f'<div class="stat"><div class="stat-label">Frozen MLS snapshots</div><div class="stat-value">{mls_frozen_count()}</div></div>'
         f'<div class="stat"><div class="stat-label">Frozen NFL snapshots</div><div class="stat-value">{nfl_frozen_count()}</div></div>'
+        f'<div class="stat"><div class="stat-label">Frozen Prem snapshots</div><div class="stat-value">{prem_frozen_count()}</div></div>'
         '</div>'
     )
 
@@ -2705,7 +2835,7 @@ def not_found(e):
     return render_template("404.html"), 404
 
 
-# EOF-CANARY 2026-07-04-cfb-recovery
+# EOF-CANARY 2026-07-06-prem-build
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
