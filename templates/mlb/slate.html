@@ -90,6 +90,23 @@
             {{ game_summary_panel(g) }}
             <div class="mlb-game-block__hourly">
               {{ hourly_table(g) }}
+
+              {# HRRR high-resolution overlay — CONUS-only. Skipped for
+                 international park games (Field of Dreams, London Series).
+                 Same schema as the game detail page: closed by default,
+                 expand for 3km hourly across the same hours. #}
+              {% if g.hrrr_hourly %}
+                <details style="margin: 1rem 0 0.5rem; border: 1px solid var(--mist); border-radius: 6px;">
+                  <summary style="cursor: pointer; padding: 0.7rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; background: #f8f8f8;">
+                    Higher-resolution model
+                    <span style="display:inline-block; margin-left:0.5rem; padding:0.15rem 0.5rem; background: var(--storm); color: #fff; border-radius: 3px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle;">HRRR</span>
+                    <span style="color: var(--fog); font-size: 0.75rem; margin-left: 0.5rem;">3 km hourly updates</span>
+                  </summary>
+                  <div style="padding: 0.5rem 1rem 1rem;">
+                    {{ hourly_table(g, hours=g.hrrr_hourly) }}
+                  </div>
+                </details>
+              {% endif %}
             </div>
           </div>
           <a class="mlb-game-block__deeplink" href="/mlb/{{ date_str }}/{{ g.slug }}">
@@ -108,7 +125,7 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0.7rem;margin-top:0.6rem;">
       <a href="/mlb-weather/wind-rules" style="font-family:var(--font-sans);font-size:0.88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;border-bottom:1px solid transparent;">Baseball and Wind: What DFS Players Get Half Right →</a>
       <a href="/mlb-weather/retractable-roofs" style="font-family:var(--font-sans);font-size:0.88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;">How Each MLB Retractable Roof Actually Gets Used →</a>
-      <a href="/mlb-weather/stadium-rankings" style="font-family:var(--font-sans);font-size:0.88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;">Ranking Every MLB Ballpark by Weather Impact →</a>
+88rem;color:var(--slate);text-decoration:none;padding:0.35rem 0;">Ranking Every MLB Ballpark by Weather Impact →</a>
     </div>
   </section>
 </div>
@@ -145,3 +162,5 @@
   });
 </script>
 {% endblock %}
+
+{# EOF-CANARY 2026-07-06-mlb-slate-hrrr #}
