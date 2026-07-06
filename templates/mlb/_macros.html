@@ -196,8 +196,8 @@
 {# ── Hourly forecast table.
    Row order: Precip, Temp, Wind, Wind dir, Dewpoint.
    MLB keeps Dewpoint (gusts not displayed here per Kevin's spec). #}
-{% macro hourly_table(game) %}
-  {% set hours = game.hourly or [] %}
+{% macro hourly_table(game, hours=None) %}
+  {% set hours = hours if hours is not none else (game.hourly or []) %}
   {% if hours %}
     <div class="hourly">
       <table class="hourly__table">
@@ -254,3 +254,5 @@
     <p class="hourly__missing">Hourly forecast not available for this game.</p>
   {% endif %}
 {% endmacro %}
+
+{# EOF-CANARY 2026-07-04-polish-batch #}

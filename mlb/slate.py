@@ -42,6 +42,7 @@ from .nws import (
     find_period_for_time, extract_forecast,
 )
 from .weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
+from hrrr import get_hrrr_periods
 
 
 EASTERN_TZ = ZoneInfo("America/New_York")
@@ -210,6 +211,18 @@ def build_slate(date_str: str) -> list[dict]:
             if fp_utc > now_utc and forecast and hourly:
                 forecast_freeze.freeze(game_pk, forecast, wind_info, hourly)
 
+        # HRRR overlay — CONUS-only 3km high-resolution model. Not frozen
+        # (HRRR updates hourly, freezing defeats the purpose). International
+        # parks (Field of Dreams, London Series) skip via nws_unsupported.
+        hrrr_hourly = []
+        if not park.get("nws_unsupported"):
+            try:
+                all_hrrr = get_hrrr_periods(park["lat"], park["lon"]) or []
+                if all_hrrr:
+                    hrrr_hourly = _hourly_window(all_hrrr, fp_utc, park_tz)
+            except Exception as _e:
+                print(f"[mlb.slate] HRRR fetch failed for {park.get('name','?')}: {_e}", flush=True)
+
         slug = game_slug(parsed["away_name"], parsed["home_name"])
         # Doubleheaders: append game_num
         if parsed.get("double_header") in ("Y", "S") and parsed.get("game_num", 1) > 1:
@@ -225,6 +238,7 @@ def build_slate(date_str: str) -> list[dict]:
             "forecast":            forecast,
             "wind_info":           wind_info,
             "hourly":              hourly,
+            "hrrr_hourly":         hrrr_hourly,
             "slug":                slug,
             "weather_source":      source,
             "weather_error":       err,
@@ -279,3 +293,6 @@ def precip_icon(pct) -> str:
     if pct <= 65:
         return "icon-rain"
     return "icon-storm"
+
+
+# EOF-CANARY 2026-07-04-polish-batch

@@ -28,7 +28,7 @@ from hrrr import get_hrrr_periods
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
-HOURS_BEFORE = 2   # pre-race buildup
+HOURS_BEFORE = 1   # pre-race buildup (tightened from 2h per Kevin)
 HOURS_RACE   = 3   # most Cup races are ~3 hours
 HOURS_AFTER  = 1
 
@@ -197,3 +197,6 @@ def build_nascar_slate():
         out.append(build_race(parsed))
     out.sort(key=lambda r: r.get("green_flag_utc", ""))
     return out
+
+
+# EOF-CANARY 2026-07-04-polish-batch

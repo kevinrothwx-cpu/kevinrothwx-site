@@ -23,19 +23,39 @@
   .color-radio input:checked + span { border-color: var(--ink); color: var(--ink); background: var(--white); }
   .admin-form button { padding: 0.85rem 1.5rem; background: var(--ink); color: var(--white); border: 0; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; align-self: flex-start; }
   .admin-form button:hover { background: var(--storm); }
+  .admin-form .fmt-hint { font-size: 0.78rem; color: var(--ash); font-family: var(--font-sans); line-height: 1.5; margin: 0.5rem 0 0; }
+  .admin-form .fmt-hint code { background: var(--paper); padding: 0.05rem 0.3rem; border: 1px solid var(--mist); font-family: monospace; font-size: 0.85em; }
+  .admin-existing { margin-top: 2.5rem; }
+  .admin-existing h3 { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ash); margin-bottom: 0.75rem; }
+  .admin-existing-item { padding: 1rem 1.25rem; border: 1px solid var(--mist); border-left-width: 4px; margin-bottom: 0.6rem; background: var(--white); }
+  .admin-existing-item--green  { border-left-color: #15803d; }
+  .admin-existing-item--yellow { border-left-color: #ca8a04; }
+  .admin-existing-item--orange { border-left-color: #ea580c; }
+  .admin-existing-item--red    { border-left-color: #b91c1c; }
+  .admin-existing-item__head { font-weight: 600; margin-bottom: 0.4rem; }
+  .admin-existing-item__body { font-family: var(--font-serif); font-size: 0.95rem; line-height: 1.5; color: var(--slate); white-space: pre-wrap; }
+  .admin-existing-item__meta { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); margin-top: 0.4rem; letter-spacing: 0.05em; }
+  .admin-existing-item__actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+  .admin-action { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.4rem 0.85rem; border: 1px solid var(--mist); background: var(--white); color: var(--slate); cursor: pointer; }
+  .admin-action:hover { border-color: var(--ink); color: var(--ink); }
+  .admin-action--delete:hover { border-color: #b91c1c; color: #b91c1c; }
 </style>
 {% endblock %}
 {% block content %}
 <div class="admin-page">
   <h1 class="admin-page__h1">NASCAR Write-up Admin</h1>
-  <p class="admin-page__sub">{{ slate|length }} races loaded. Storage is in-memory.</p>
+  <p class="admin-page__sub">{{ slate|length }} race{{ 's' if slate|length != 1 else '' }} loaded.</p>
   <form class="admin-form" method="POST" action="/admin/nascar">
     <div>
       <label for="event_id">Race</label>
       <select id="event_id" name="event_id" required>
         <option value="">- pick a race -</option>
-        {% for r in slate %}
-          <option value="{{ r.event_id }}">{{ r.name }} ({{ r.track }}){% if r.writeup %} · has write-up{% endif %}</option>
+        {% for race in slate %}
+          <option value="{{ race.event_id }}"
+                  data-text="{{ (race.writeup.text if race.writeup else '')|e }}"
+                  data-color="{{ (race.writeup.color if race.writeup and race.writeup.color else '')|e }}">
+            {{ race.name }}{% if race.track %} at {{ race.track }}{% endif %}{% if race.writeup %} - has write-up{% endif %}
+          </option>
         {% endfor %}
       </select>
     </div>
@@ -51,9 +71,67 @@
     </div>
     <div>
       <label for="text">Write-up</label>
-      <textarea id="text" name="text" placeholder="Sunday afternoon storms expected to develop in the panhandle. Likely 30-60 minute red flag delay mid-race..."></textarea>
+      <textarea id="text" name="text" placeholder="Rain likely to move in by lap 200. Track will be hot and slick early, cooling as storms approach..."></textarea>
+      <p class="fmt-hint">
+        Selecting a race with an existing write-up will load it into the form, ready to tweak.
+        Wrap text in <code>**double asterisks**</code> to render <strong>bold</strong> in the slate.
+        Leave the textarea empty and click Save to delete the existing write-up.
+      </p>
     </div>
     <button type="submit">Save write-up</button>
   </form>
+  {% set existing = slate | selectattr("writeup") | list %}
+  {% if existing %}
+    <div class="admin-existing">
+      <h3>Current write-ups</h3>
+      {% for race in existing %}
+        <div class="admin-existing-item admin-existing-item--{{ race.writeup.color or 'none' }}">
+          <div class="admin-existing-item__head">{{ race.name }}{% if race.track %} at {{ race.track }}{% endif %}</div>
+          <div class="admin-existing-item__body">{{ race.writeup.text }}</div>
+          <div class="admin-existing-item__meta">
+            Color: {{ race.writeup.color|upper if race.writeup.color else 'none' }}
+            {% if race.writeup.updated_at_utc %} - updated {{ race.writeup.updated_at_utc.strftime("%H:%M UTC") }}{% endif %}
+          </div>
+          <div class="admin-existing-item__actions">
+            <button type="button" class="admin-action admin-action--edit" data-event-id="{{ race.event_id }}">Edit</button>
+            <form method="POST" action="/admin/nascar" onsubmit="return confirm('Delete this write-up?')" style="display:inline">
+              <input type="hidden" name="event_id" value="{{ race.event_id }}">
+              <input type="hidden" name="text" value="">
+              <button type="submit" class="admin-action admin-action--delete">Delete</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 </div>
+<script>
+  (function(){
+    var sel = document.getElementById('event_id');
+    var textarea = document.getElementById('text');
+    if (!sel || !textarea) return;
+    function applyOption(opt) {
+      if (!opt) return;
+      textarea.value = opt.getAttribute('data-text') || '';
+      var color = opt.getAttribute('data-color') || '';
+      var radio = document.querySelector('input[name="color"][value="' + color + '"]');
+      if (radio) { radio.checked = true; }
+      else {
+        var noneRadio = document.querySelector('input[name="color"][value=""]');
+        if (noneRadio) noneRadio.checked = true;
+      }
+    }
+    sel.addEventListener('change', function(){ applyOption(sel.options[sel.selectedIndex]); });
+    document.querySelectorAll('.admin-action--edit').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var eid = btn.getAttribute('data-event-id');
+        sel.value = eid;
+        applyOption(sel.options[sel.selectedIndex]);
+        document.querySelector('.admin-form').scrollIntoView({behavior:'smooth', block:'start'});
+        textarea.focus();
+      });
+    });
+  })();
+</script>
 {% endblock %}
+{# EOF-CANARY 2026-07-04-polish-batch #}
