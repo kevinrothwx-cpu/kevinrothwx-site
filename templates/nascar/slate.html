@@ -62,7 +62,7 @@
       {% if race.writeup %}
         <div class="mlb-writeup mlb-writeup--{{ race.writeup.color or 'none' }}">
           <div class="mlb-writeup__header">
-            <span class="mlb-writeup__matchup">Kevin's note · {{ race.short_name }}</span>
+            <span class="mlb-writeup__matchup">Kevin's note · {{ race.name }}</span>
             <span class="mlb-writeup__time">Green flag {{ race.green_flag_eastern_str }}</span>
           </div>
           <div class="mlb-writeup__body">{{ race.writeup.text }}</div>
