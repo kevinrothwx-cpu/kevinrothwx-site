@@ -110,23 +110,35 @@
     var sel = document.getElementById('event_id');
     var textarea = document.getElementById('text');
     if (!sel || !textarea) return;
-    function applyOption(opt) {
+    function applyOption(opt, force) {
       if (!opt) return;
-      textarea.value = opt.getAttribute('data-text') || '';
-      var color = opt.getAttribute('data-color') || '';
-      var radio = document.querySelector('input[name="color"][value="' + color + '"]');
-      if (radio) { radio.checked = true; }
-      else {
-        var noneRadio = document.querySelector('input[name="color"][value=""]');
-        if (noneRadio) noneRadio.checked = true;
+      var newText = opt.getAttribute('data-text') || '';
+      var newColor = opt.getAttribute('data-color') || '';
+      // Only overwrite the textarea if forced (Edit button) or currently empty.
+      // Protects in-progress typing when the user picks a race AFTER
+      // starting to compose.
+      if (force || !textarea.value.trim()) {
+        textarea.value = newText;
+      }
+      // Only overwrite color if forced or the user hasn't picked one yet
+      // (i.e., current selection is still the default "none").
+      var currentChecked = document.querySelector('input[name="color"]:checked');
+      var currentIsDefault = !currentChecked || currentChecked.value === '';
+      if (force || currentIsDefault) {
+        var radio = document.querySelector('input[name="color"][value="' + newColor + '"]');
+        if (radio) { radio.checked = true; }
+        else {
+          var noneRadio = document.querySelector('input[name="color"][value=""]');
+          if (noneRadio) noneRadio.checked = true;
+        }
       }
     }
-    sel.addEventListener('change', function(){ applyOption(sel.options[sel.selectedIndex]); });
+    sel.addEventListener('change', function(){ applyOption(sel.options[sel.selectedIndex], false); });
     document.querySelectorAll('.admin-action--edit').forEach(function(btn){
       btn.addEventListener('click', function(){
         var eid = btn.getAttribute('data-event-id');
         sel.value = eid;
-        applyOption(sel.options[sel.selectedIndex]);
+        applyOption(sel.options[sel.selectedIndex], true);
         document.querySelector('.admin-form').scrollIntoView({behavior:'smooth', block:'start'});
         textarea.focus();
       });
@@ -134,4 +146,4 @@
   })();
 </script>
 {% endblock %}
-{# EOF-CANARY 2026-07-04-polish-batch #}
+{# EOF-CANARY 2026-07-12-admin-preserve-typing #}

@@ -7,7 +7,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
-from persistence import load_json, save_json
+from persistence import load_json, save_json, parse_dt
 
 
 VALID_COLORS = {"green", "yellow", "orange", "red"}
@@ -18,10 +18,15 @@ _lock = threading.Lock()
 
 
 def _load_from_disk() -> None:
+    """Read writeups from disk. JSON datetime strings come back as strings;
+    convert ``updated_at_utc`` back to datetime so admin templates can
+    format it without crashing on string.strftime calls."""
     raw = load_json(_DISK_FILE, default={})
     with _lock:
         _MEMORY_STORE.clear()
         for k, v in raw.items():
+            if isinstance(v, dict) and "updated_at_utc" in v:
+                v["updated_at_utc"] = parse_dt(v["updated_at_utc"])
             _MEMORY_STORE[str(k)] = v
 
 
@@ -93,3 +98,6 @@ def delete_orphaned(live_event_ids) -> int:
     if removed:
         _persist()
     return removed
+
+
+# EOF-CANARY 2026-07-12-nascar-admin-500-fix
