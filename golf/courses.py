@@ -282,6 +282,17 @@ PGA_COURSES = {
         "nws_unsupported": True,  # NWS does not cover Canada
         "aliases": ["TPC Toronto", "Osprey Valley", "TPC Toronto Osprey Valley"],
     },
+    # Corales Golf Course at Puntacana Resort — hosts the Corales Puntacana
+    # Championship, a PGA Tour opposite-field event (usually clashes with
+    # The Open Championship in July). Dominican Republic — outside NWS.
+    "Corales Golf Course": {
+        "city": "Punta Cana", "country": "DO",
+        "lat": 18.5050, "lon": -68.3722,
+        "timezone": "America/Santo_Domingo",
+        "nws_unsupported": True,
+        "aliases": ["Corales", "Corales Puntacana", "Corales Puntacana Golf Course",
+                    "Puntacana Resort & Club", "Puntacana Resort and Club"],
+    },
 }
 
 
@@ -307,3 +318,6 @@ def lookup_course(name: str):
         if n.startswith(canon_lower) or canon_lower.startswith(n):
             return {**PGA_COURSES[canon], "_canonical_name": canon}
     return None
+
+
+# EOF-CANARY 2026-07-15-golf-corales

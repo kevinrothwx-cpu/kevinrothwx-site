@@ -57,20 +57,28 @@ def get_pga_scoreboard() -> list[dict]:
         print(f"[golf.schedule] ESPN error: {e}", flush=True)
 
     # Merge in fallback events that ESPN didn't already surface, deduped by
-    # tournament name (case-insensitive). ESPN wins on duplicates so a live
-    # tournament keeps its canonical ESPN event_id.
+    # tournament name OR shortName (case-insensitive). ESPN wins on duplicates
+    # so a live tournament keeps its canonical ESPN event_id. We check BOTH
+    # name and shortName because ESPN sometimes returns just "The Open" while
+    # the fallback carries "The Open Championship" as the full name — without
+    # cross-checking shortName, both survive and we get a duplicate on /golf.
     fallback = get_fallback_events(datetime.now(timezone.utc))
-    espn_names_lower = {
-        (e.get("name", "") or "").strip().lower()
-        for e in espn_events
-    }
+    espn_identifiers = set()
+    for e in espn_events:
+        for key in ("name", "shortName"):
+            v = (e.get(key, "") or "").strip().lower()
+            if v:
+                espn_identifiers.add(v)
     merged = list(espn_events)
     added = 0
     for fe in fallback:
-        fe_name_lower = (fe.get("name", "") or "").strip().lower()
-        if fe_name_lower and fe_name_lower not in espn_names_lower:
-            merged.append(fe)
-            added += 1
+        fe_name = (fe.get("name", "") or "").strip().lower()
+        fe_short = (fe.get("shortName", "") or "").strip().lower()
+        if (fe_name and fe_name in espn_identifiers) or \
+           (fe_short and fe_short in espn_identifiers):
+            continue
+        merged.append(fe)
+        added += 1
     print(
         f"[golf.schedule] ESPN={len(espn_events)} events, "
         f"fallback added {added} of {len(fallback)}, merged={len(merged)}",
@@ -185,6 +193,10 @@ TOURNAMENT_NAME_TO_COURSE = {
     "tour championship":         "East Lake Golf Club",
     "procore championship":      "Silverado Resort",
 
+    # PGA Tour opposite-field events (usually clash with majors)
+    "corales puntacana championship": "Corales Golf Course",
+    "corales puntacana":              "Corales Golf Course",
+
     # Fall / silly season
     "rsm classic":               "Sea Island Resort (Seaside Course)",
     "the rsm classic":           "Sea Island Resort (Seaside Course)",
@@ -206,3 +218,6 @@ def tournament_slug(name: str) -> str:
     n = re.sub(r"[^a-z0-9 ]+", "", n)
     n = re.sub(r"\s+", "-", n).strip("-")
     return n or "tournament"
+
+
+# EOF-CANARY 2026-07-15-golf-corales

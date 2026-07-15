@@ -140,6 +140,13 @@ NASCAR_TRACKS = {
         "track_type": "intermediate_oval", "length_miles": 1.333,
         "aliases": ["Nashville"],
     },
+    "North Wilkesboro Speedway": {
+        "city": "North Wilkesboro, NC", "country": "US",
+        "lat": 36.1319, "lon": -81.1522,
+        "timezone": "America/New_York",
+        "track_type": "short_oval", "length_miles": 0.625,
+        "aliases": ["North Wilkesboro", "Wilkesboro"],
+    },
 
     # ── ROAD COURSES ─────────────────────────────────────────
     "Sonoma Raceway": {
