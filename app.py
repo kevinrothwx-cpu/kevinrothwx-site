@@ -2753,10 +2753,138 @@ def admin_nws_health():
     return Response(body, mimetype="text/html")
 
 
+def _msw_all_url_paths() -> list[str]:
+    """Return every URL path mysportsweather.com's sitemap would emit.
+
+    Mirrors the URL-building logic in the /sitemap.xml route but returns
+    only paths (not lastmod/changefreq/priority tuples). Used by the
+    IndexNow admin push so a single click submits ALL landing pages —
+    not just the ~23 static hubs + today's MLB games (which was the old
+    behavior and missed all evergreen team/stadium/course/venue pages).
+
+    Duplicates the sitemap's URL enumeration intentionally: the sitemap
+    route is SEO-critical and we don't want to refactor it in the same
+    change as the IndexNow fix. If we add a new sport later, both places
+    need updating.
+    """
+    paths = [entry[0] for entry in MYSPORTSWEATHER_STATIC_URLS]
+
+    # Evergreen landing pages (all sports)
+    for content in STADIUM_CONTENT.values():
+        paths.append(f"/mlb/stadium/{content['slug']}")
+    for content in TEAM_CONTENT.values():
+        paths.append(f"/mlb/team/{content['slug']}")
+    for content in NFL_STADIUM_CONTENT.values():
+        paths.append(f"/nfl/stadium/{content['slug']}")
+    for content in TEAM_CONTENT_NFL.values():
+        paths.append(f"/nfl/team/{content['slug']}")
+    for content in TRACK_CONTENT.values():
+        paths.append(f"/nascar/track/{content['slug']}")
+    for content in COURSE_CONTENT.values():
+        paths.append(f"/golf/course/{content['slug']}")
+    for content in STADIUM_CONTENT_CFB.values():
+        paths.append(f"/ncaaf/stadium/{content['slug']}")
+    for content in TEAM_CONTENT_MLS.values():
+        paths.append(f"/mls/team/{content['slug']}")
+    for content in STADIUM_CONTENT_MLS.values():
+        paths.append(f"/mls/stadium/{content['slug']}")
+    for content in TENNIS_VENUE_CONTENT.values():
+        paths.append(f"/tennis/venue/{content['slug']}")
+    for content in TEAM_CONTENT_PREM.values():
+        paths.append(f"/prem/team/{content['slug']}")
+    for content in STADIUM_CONTENT_PREM.values():
+        paths.append(f"/prem/stadium/{content['slug']}")
+    for content in TEAM_CONTENT_IPL.values():
+        paths.append(f"/ipl/team/{content['slug']}")
+    for content in GROUND_CONTENT_IPL.values():
+        paths.append(f"/ipl/ground/{content['slug']}")
+
+    # MLB per-game URLs (today + tomorrow)
+    for d in (_eastern_today(), _eastern_tomorrow()):
+        slate, _ = get_slate(d, allow_build=False)
+        if not slate:
+            continue
+        paths.append(f"/mlb/{d}")
+        for g in slate:
+            paths.append(f"/mlb/{d}/{g['slug']}")
+
+    # World Cup per-match URLs (next 3 days)
+    for offset in (0, 1, 2):
+        d = (datetime.now(EASTERN_TZ) + timedelta(days=offset)).strftime("%Y-%m-%d")
+        wc_slate, _ = get_matchday(d, allow_build=False)
+        if not wc_slate:
+            continue
+        paths.append(f"/worldcup/{d}")
+        for m in wc_slate:
+            paths.append(f"/worldcup/{d}/{m['slug']}")
+
+    # NFL per-game URLs across the ~8-day cache window
+    try:
+        nfl_games, _ = get_nfl_slate(allow_build=False)
+        if nfl_games:
+            for g in nfl_games:
+                d_iso = g.get("kickoff_date_eastern")
+                slug = g.get("slug")
+                if d_iso and slug:
+                    paths.append(f"/nfl/{d_iso}/{slug}")
+    except Exception as e:
+        print(f"[indexnow] NFL dynamic URLs failed: {e}", flush=True)
+
+    # Premier League per-match URLs
+    try:
+        prem_matches, _ = get_prem_slate(allow_build=False)
+        if prem_matches:
+            for m in prem_matches:
+                d_iso = m.get("date_local")
+                slug = m.get("slug")
+                if d_iso and slug:
+                    paths.append(f"/prem/{d_iso}/{slug}")
+    except Exception as e:
+        print(f"[indexnow] Premier League dynamic URLs failed: {e}", flush=True)
+
+    # MLS per-match URLs
+    try:
+        mls_slate, _ = get_mls_slate(allow_build=False)
+        if mls_slate:
+            for m in mls_slate:
+                d_iso = m.get("date_local")
+                slug = m.get("slug")
+                if d_iso and slug:
+                    paths.append(f"/mls/{d_iso}/{slug}")
+    except Exception as e:
+        print(f"[indexnow] MLS dynamic URLs failed: {e}", flush=True)
+
+    # Tennis Grand Slam URLs (only when active)
+    if is_any_slam_active():
+        paths.append("/tennis")
+        slam = active_slam()
+        if slam:
+            paths.append(f"/tennis/{slam['slam_id']}")
+            slam_slate, _ = get_slam_slate_by_id(slam["slam_id"])
+            if slam_slate and slam_slate.get("days"):
+                for day in slam_slate["days"]:
+                    d_iso = day["date_local"].isoformat()
+                    paths.append(f"/tennis/{slam['slam_id']}/{d_iso}")
+
+    # De-duplicate while preserving order
+    seen = set()
+    unique = []
+    for p in paths:
+        if p not in seen:
+            seen.add(p)
+            unique.append(p)
+    return unique
+
+
 @app.route("/admin/indexnow", methods=["GET", "POST"])
 @_admin_required
 def admin_indexnow_push():
-    """Manual IndexNow push of current sitemap URLs to Bing/Yandex/ChatGPT-search."""
+    """Manual IndexNow push of current sitemap URLs to Bing/Yandex/ChatGPT-search.
+
+    Submits the FULL sitemap URL list (~400 URLs including every evergreen
+    landing page + active per-game URLs), not just the static hubs. IndexNow
+    accepts up to 10K URLs per request so a single push covers everything.
+    """
     brand = get_site_brand(request.host)
     if not brand["is_product_site"]:
         return Response("IndexNow only configured for mysportsweather.com.", 400)
@@ -2764,13 +2892,8 @@ def admin_indexnow_push():
     base_url = brand["site_url"]
 
     if request.method == "POST":
-        urls = [f"{base_url}{path}" for (path, _, _, _) in MYSPORTSWEATHER_STATIC_URLS]
-        d = _eastern_today()
-        slate, _ = get_slate(d, allow_build=False)
-        if slate:
-            urls.append(f"{base_url}/mlb/{d}")
-            for g in slate:
-                urls.append(f"{base_url}/mlb/{d}/{g['slug']}")
+        paths = _msw_all_url_paths()
+        urls = [f"{base_url}{p}" for p in paths]
         ok = indexnow_notify(urls, host="mysportsweather.com")
         msg = f"Pushed {len(urls)} URLs to IndexNow. Result: {'OK' if ok else 'FAILED (check logs)'}"
         return Response(
@@ -2835,7 +2958,7 @@ def not_found(e):
     return render_template("404.html"), 404
 
 
-# EOF-CANARY 2026-07-06-prem-build
+# EOF-CANARY 2026-07-15-indexnow-full-push
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
