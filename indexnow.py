@@ -18,7 +18,7 @@ import json
 import logging
 from typing import Iterable
 from urllib.request import Request, urlopen
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 
 log = logging.getLogger(__name__)
 
@@ -34,9 +34,10 @@ def notify(urls: Iterable[str], host: str = "mysportsweather.com") -> bool:
     IndexNow accepts up to 10k URLs per request — well above any slate size
     we generate. Empty or non-http URLs are filtered out defensively.
 
-    On failure this logs a warning and returns False. It does NOT raise —
-    indexing pushes are best-effort and should never break the request that
-    triggered them.
+    On failure this logs a warning (with Bing's response body when available,
+    so we can see the actual rejection reason) and returns False. It does NOT
+    raise — indexing pushes are best-effort and should never break the request
+    that triggered them.
     """
     url_list = [u for u in urls if isinstance(u, str) and u.startswith("http")]
     if not url_list:
@@ -63,11 +64,42 @@ def notify(urls: Iterable[str], host: str = "mysportsweather.com") -> bool:
             if 200 <= status < 300:
                 log.info(f"IndexNow accepted {len(url_list)} URLs (status {status})")
                 return True
-            log.warning(f"IndexNow returned status {status} for {len(url_list)} URLs")
+            # Non-2xx that didn't raise (rare — redirect edge cases).
+            body_preview = _safe_read_body(resp)
+            msg = f"IndexNow status {status} for {len(url_list)} URLs; body: {body_preview!r}"
+            log.warning(msg)
+            print(f"[indexnow] {msg}", flush=True)
             return False
+    except HTTPError as e:
+        # 4xx / 5xx: read Bing's response body — it explains WHY they rejected
+        # the submission (InvalidHost, InvalidUrl, Forbidden, TooManyUrls, etc.)
+        body_preview = _safe_read_body(e)
+        msg = f"IndexNow HTTP {e.code} for {len(url_list)} URLs; body: {body_preview!r}"
+        log.warning(msg)
+        print(f"[indexnow] {msg}", flush=True)
+        return False
     except URLError as e:
-        log.warning(f"IndexNow request failed: {e}")
+        msg = f"IndexNow request failed (network/URL error): {e}"
+        log.warning(msg)
+        print(f"[indexnow] {msg}", flush=True)
         return False
     except Exception as e:
         log.exception(f"IndexNow unexpected error: {e}")
+        print(f"[indexnow] unexpected error: {type(e).__name__}: {e}", flush=True)
         return False
+
+
+def _safe_read_body(resp_or_err, max_bytes: int = 2000) -> str:
+    """Read up to ``max_bytes`` from an HTTP response or HTTPError.
+    Returns a decoded string (replacement chars on bad bytes) or "" on
+    any failure — never raises."""
+    try:
+        raw = resp_or_err.read(max_bytes)
+        if isinstance(raw, bytes):
+            return raw.decode("utf-8", errors="replace")
+        return str(raw)
+    except Exception:
+        return ""
+
+
+# EOF-CANARY 2026-07-18-indexnow-body-logging
