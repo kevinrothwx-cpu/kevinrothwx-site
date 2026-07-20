@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ site_name }}, {{ site_subtitle }}{% endblock %}</title>
-  <meta name="description" content="{% block description %}{% if is_product_site %}Free sports weather forecasts for MLB, World Cup, PGA, NASCAR, CWS — by sports meteorologist Kevin Roth.{% else %}Kevin Roth is a sports meteorologist and founder of OVERcast. Daily MLB weather analysis, NFL forecasts, and weather-driven sports betting insight.{% endif %}{% endblock %}">
+  <meta name="description" content="{% block description %}{% if is_product_site %}Free sports weather forecasts for MLB, NFL, PGA, NASCAR, MLS, and NCAAF — by sports meteorologist Kevin Roth.{% else %}Kevin Roth is a sports meteorologist and founder of OVERcast. Daily MLB weather analysis, NFL forecasts, and weather-driven sports betting insight.{% endif %}{% endblock %}">
   {# canonical_path lets routes override the default self-canonical so multiple
      URLs serving the same content (e.g. /mlb, /mlb/today, /mlb/<today_date>)
      can point Google at one canonical hub. Falls back to request.path.
@@ -101,7 +101,6 @@
     <nav id="mobile-menu" class="mobile-nav">
       {% if is_product_site %}
         <a href="/mlb">MLB Weather</a>
-        <a href="/worldcup">World Cup Weather</a>
         <a href="/golf">PGA Tour Weather</a>
         <a href="/nascar">NASCAR Weather</a>
         <a href="/about">About Kevin</a>
@@ -109,7 +108,6 @@
         <a href="/contact">Contact</a>
       {% else %}
         <a href="https://mysportsweather.com/mlb">MLB Weather</a>
-        <a href="https://mysportsweather.com/worldcup">World Cup Weather</a>
         <a href="https://mysportsweather.com/golf">PGA Tour Weather</a>
         <a href="https://mysportsweather.com/nascar">NASCAR Weather</a>
         <a href="/about">About</a>

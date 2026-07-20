@@ -251,7 +251,7 @@ MYSPORTSWEATHER_HOSTS = {"mysportsweather.com", "www.mysportsweather.com"}
 
 # Sport sections that live on mysportsweather.com going forward. Requests
 # for these on kevinrothwx.com get 301-redirected.
-SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/worldcup", "/golf", "/nascar", "/nfl", "/ncaaf", "/mls")
+SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/golf", "/nascar", "/nfl", "/ncaaf", "/mls")
 SPORT_PATH_EXACT = {"/mlb-weather", "/nfl-weather", "/pga-weather"}
 
 
@@ -344,29 +344,6 @@ def inject_sport_nav():
         mlb_slate, _ = get_slate(today_str, allow_build=False)
         if mlb_slate:
             counts["mlb"] = str(len(mlb_slate))
-    except Exception:
-        pass
-
-    # World Cup — count matches whose Eastern-Time date is today. Late-night
-    # ET kickoffs (e.g. midnight ET) are technically the NEXT UTC day, so we
-    # check today + tomorrow UTC slates and filter to ET-today. Previously
-    # we showed a 3-day rolling total ("16") which was misleading on days
-    # when only a few matches were actually scheduled for today.
-    try:
-        total_wc = 0
-        for offset in (0, 1):
-            d = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
-            wc_slate, _ = get_matchday(d, allow_build=False)
-            if not wc_slate:
-                continue
-            for m in wc_slate:
-                ko_dt = m.get("kickoff_utc_dt")
-                if ko_dt is None:
-                    continue
-                if ko_dt.astimezone(EASTERN_TZ).date() == today:
-                    total_wc += 1
-        if total_wc > 0:
-            counts["worldcup"] = str(total_wc)
     except Exception:
         pass
 
@@ -784,87 +761,13 @@ def mlb_team(slug):
     )
 
 
-# ===== World Cup 2026 =====
-
-@app.route("/worldcup")
-def worldcup_root():
-    """Matchday view: today + next 2 days."""
-    return _render_worldcup_matchday(_eastern_today(), days=3)
-
-
-@app.route("/worldcup/<date_str>")
-def worldcup_date(date_str):
-    """Specific-date matchday."""
-    if not _valid_date_str(date_str):
-        abort(404)
-    return _render_worldcup_matchday(date_str, days=1)
-
-
-@app.route("/worldcup/<date_str>/<slug>")
-def worldcup_match(date_str, slug):
-    """Per-match detail page."""
-    if not _valid_date_str(date_str):
-        abort(404)
-    slate, meta = get_matchday(date_str)
-    if slate is None:
-        abort(404)
-    match = next((m for m in slate if m["slug"] == slug), None)
-    if not match:
-        abort(404)
-    match["writeup"] = wc_get_writeup(match["event_id"])
-    # Attach climatological notes for the venue (used on the match page).
-    from worldcup.stadium_notes import get_stadium_notes
-    match["stadium_notes"] = get_stadium_notes(match.get("venue", ""))
-    d = datetime.strptime(date_str, "%Y-%m-%d").date()
-    pretty_date = d.strftime("%A, %B %-d")
-    return render_template(
-        "worldcup/match.html",
-        match=match, meta=meta, date_str=date_str, pretty_date=pretty_date,
-    )
-
-
-def _render_worldcup_matchday(start_date_str, days=3):
-    """Helper: render one or multiple days of matches on the matchday page."""
-    if not _valid_date_str(start_date_str):
-        start_date_str = _eastern_today()
-
-    days_data = []
-    start_d = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-    today = datetime.now(EASTERN_TZ).date()
-    for i in range(days):
-        d = start_d + timedelta(days=i)
-        ds = d.strftime("%Y-%m-%d")
-        # allow_build=True so a fresh page load after a deploy/restart builds
-        # the slate inline instead of showing empty. Matches MLB behavior.
-        slate, meta = get_matchday(ds, allow_build=True)
-        if slate is None:
-            slate, meta = [], None
-        wc_attach_writeups(slate)
-        days_data.append({
-            "date_str":    ds,
-            "pretty_date": d.strftime("%A, %B %-d"),
-            "is_today":    (d == today),
-            "is_tomorrow": (d == today + timedelta(days=1)),
-            "is_past":     (d < today),
-            "slate":       slate,
-            "match_count": len(slate),
-        })
-
-    total_matches = sum(day["match_count"] for day in days_data)
-
-    # /worldcup is the canonical hub; specific-date pages are self-canonical.
-    canonical_path = "/worldcup" if days > 1 else f"/worldcup/{start_date_str}"
-
-    return render_template(
-        "worldcup/slate.html",
-        days_data=days_data,
-        total_matches=total_matches,
-        start_date_str=start_date_str,
-        showing_multiple=(days > 1),
-        canonical_path=canonical_path,
-    )
-
-
+# ===== World Cup 2026 (retired 2026-07-18) =====
+# Routes removed after the tournament wrapped. Module imports (worldcup.cache,
+# worldcup.schedule, worldcup.storage) are still at the top of this file
+# because worldcup/_macros.html is imported by MLS and Premier League slate
+# templates — removing those imports would break MLS/EPL. If we later want to
+# fully retire the worldcup/ module, we'd need to lift the macros to a
+# shared location first.
 
 
 # ===== Tennis Grand Slams =====
@@ -2133,31 +2036,6 @@ def admin_mlb():
 
 
 
-@app.route("/admin/worldcup", methods=["GET", "POST"])
-@_admin_required
-def admin_worldcup():
-    """Write-up admin for World Cup matches. Color tag supported."""
-    date_str = request.args.get("date", _eastern_today())
-    if not _valid_date_str(date_str):
-        date_str = _eastern_today()
-
-    if request.method == "POST":
-        event_id = request.form.get("event_id", "").strip()
-        text = request.form.get("text", "")
-        color = request.form.get("color", "").strip() or None
-        if event_id:
-            wc_save_writeup(event_id, text, color=color)
-            flash("Write-up saved.", "success")
-        return redirect(url_for("admin_worldcup", date=date_str))
-
-    slate, _ = get_matchday(date_str)
-    if slate is None:
-        slate = []
-    wc_attach_writeups(slate)
-
-    return render_template("worldcup/admin.html", slate=slate, date_str=date_str)
-
-
 @app.route("/admin/golf", methods=["GET", "POST"])
 @_admin_required
 def admin_golf():
@@ -2343,7 +2221,6 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/",                                 "1.0",  "daily",   None),
     ("/mlb",                              "0.95", "hourly",  None),
     ("/mlb/tomorrow",                     "0.9",  "hourly",  None),
-    ("/worldcup",                         "0.9",  "hourly",  None),
     ("/cws",                              "0.85", "hourly",  None),
     ("/golf",                             "0.85", "daily",   None),
     ("/nascar",                           "0.85", "daily",   None),
@@ -2457,15 +2334,6 @@ def sitemap():
             dynamic_urls.append((f"/mlb/{d}", "0.85", "hourly"))
             for g in slate:
                 dynamic_urls.append((f"/mlb/{d}/{g['slug']}", "0.7", "hourly"))
-        # World Cup matchday + per-match URLs (today + next 2 days)
-        for offset in (0, 1, 2):
-            d = (datetime.now(EASTERN_TZ) + timedelta(days=offset)).strftime("%Y-%m-%d")
-            wc_slate, _ = get_matchday(d, allow_build=False)
-            if not wc_slate:
-                continue
-            dynamic_urls.append((f"/worldcup/{d}", "0.85", "hourly"))
-            for m in wc_slate:
-                dynamic_urls.append((f"/worldcup/{d}/{m['slug']}", "0.7", "hourly"))
         # NFL per-game URLs across the 8-day cache window.
         try:
             nfl_games, _ = get_nfl_slate(allow_build=False)
@@ -2630,8 +2498,8 @@ def llms_txt():
     body = (
         "# MySportsWeather\n\n"
         "> Free sports weather forecasts by Kevin Roth, a professional meteorologist "
-        "with 15+ years of experience covering MLB, NFL, NCAAF, PGA Tour, NASCAR, "
-        "World Cup soccer, and Grand Slam tennis. Every forecast is stadium-specific "
+        "with 15+ years of experience covering MLB, NFL, NCAAF, PGA Tour, NASCAR, MLS, "
+        "and Grand Slam tennis. Every forecast is stadium-specific "
         "with hourly temperature, wind direction relative to field orientation, "
         "precipitation probability, retractable-roof toggles for indoor venues, and "
         "written notes from Kevin when weather actually affects game outcomes.\n\n"
@@ -2639,7 +2507,6 @@ def llms_txt():
         "MLB Network, Action Network, and major sportsbooks.\n\n"
         "## Sport Coverage\n\n"
         f"- [MLB Weather Today]({base}/mlb): All 30 ballparks. Hourly forecast at first pitch, wind direction relative to home plate, retractable-roof toggles for the seven indoor venues.\n"
-        f"- [World Cup 2026]({base}/worldcup): Match weather across all 16 host cities in the US, Canada, and Mexico.\n"
         f"- [PGA Tour]({base}/golf): Round-by-round tournament forecasts with HRRR high-resolution model overlay.\n"
         f"- [NASCAR Cup Series]({base}/nascar): Race-day forecasts for every Cup round.\n"
         f"- [MLS]({base}/mls): Major League Soccer match weather for all 29 venues, with retractable-roof flags for Atlanta and Vancouver.\n"
@@ -2807,16 +2674,6 @@ def _msw_all_url_paths() -> list[str]:
         paths.append(f"/mlb/{d}")
         for g in slate:
             paths.append(f"/mlb/{d}/{g['slug']}")
-
-    # World Cup per-match URLs (next 3 days)
-    for offset in (0, 1, 2):
-        d = (datetime.now(EASTERN_TZ) + timedelta(days=offset)).strftime("%Y-%m-%d")
-        wc_slate, _ = get_matchday(d, allow_build=False)
-        if not wc_slate:
-            continue
-        paths.append(f"/worldcup/{d}")
-        for m in wc_slate:
-            paths.append(f"/worldcup/{d}/{m['slug']}")
 
     # NFL per-game URLs across the ~8-day cache window
     try:

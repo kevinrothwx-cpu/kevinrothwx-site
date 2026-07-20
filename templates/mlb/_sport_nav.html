@@ -16,10 +16,6 @@
       MLB
       {% if sport_counts and sport_counts.mlb %}<span class="sport-nav__count">{{ sport_counts.mlb }}</span>{% endif %}
     </a>
-    <a href="/worldcup" class="sport-nav__item {% if active_sport == 'worldcup' %}is-active{% endif %}">
-      World&nbsp;Cup
-      {% if sport_counts and sport_counts.worldcup %}<span class="sport-nav__count">{{ sport_counts.worldcup }}</span>{% endif %}
-    </a>
     <a href="/golf" class="sport-nav__item {% if active_sport == 'pga' %}is-active{% endif %}">
       PGA
       {% if sport_counts and sport_counts.pga %}<span class="sport-nav__count">{{ sport_counts.pga }}</span>{% endif %}

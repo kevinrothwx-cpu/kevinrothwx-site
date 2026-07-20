@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}{% if is_product_site %}Sports Weather Forecasts, MLB, World Cup, PGA, NASCAR | MySportsWeather{% else %}Kevin Roth, Sports Meteorologist{% endif %}{% endblock %}
-{% block description %}{% if is_product_site %}Free live weather forecasts for every MLB game, World Cup match, PGA Tour round, NASCAR race, and college baseball game. Updated continuously from NWS data. Built by sports meteorologist Kevin Roth.{% else %}Kevin Roth is a professional sports meteorologist with 15+ years on the beat. Founder of OVERcast. Daily MLB Weather columnist on PropFinder. Daily forecasts at MySportsWeather.com.{% endif %}{% endblock %}
+{% block title %}{% if is_product_site %}Sports Weather Forecasts, MLB, NFL, PGA, NASCAR, NCAAF, MLS | MySportsWeather{% else %}Kevin Roth, Sports Meteorologist{% endif %}{% endblock %}
+{% block description %}{% if is_product_site %}Free live weather forecasts for every MLB game, NFL game, PGA Tour round, NASCAR race, and MLS match. Updated continuously from NWS data. Built by sports meteorologist Kevin Roth.{% else %}Kevin Roth is a professional sports meteorologist with 15+ years on the beat. Founder of OVERcast. Daily MLB Weather columnist on PropFinder. Daily forecasts at MySportsWeather.com.{% endif %}{% endblock %}
 
 {% block content %}
 
@@ -12,7 +12,7 @@
       <p class="kicker kicker-storm">Sports Meteorologist · 15+ years on the beat</p>
       <h1 class="home-hero__title">Kevin Roth</h1>
       <p class="home-hero__lead">
-        Professional meteorologist covering MLB, NFL, PGA, NASCAR, World Cup, and college sports. Featured by Fox Weather, Yahoo Sports, CBS Sports, Sporting News, The Weather Channel, and Baseball America.
+        Professional meteorologist covering MLB, NFL, PGA, NASCAR, MLS, and college sports. Featured by Fox Weather, Yahoo Sports, CBS Sports, Sporting News, The Weather Channel, and Baseball America.
       </p>
     </div>
   </section>
@@ -28,7 +28,7 @@
         </div>
         <h2 class="home-featured__title" style="color:var(--storm)">For Kevin's daily sports-weather forecasts → MySportsWeather.com</h2>
         <p class="home-featured__body">
-          Free hourly forecasts for every MLB game, PGA Tour round, NASCAR race, World Cup match, and college baseball game. Updated continuously from NWS + HRRR model data. Built by a meteorologist, not AI.
+          Free hourly forecasts for every MLB game, NFL game, PGA Tour round, NASCAR race, and MLS match. Updated continuously from NWS + HRRR model data. Built by a meteorologist, not AI.
         </p>
         <span class="home-featured__cta">
           Visit MySportsWeather.com
@@ -87,41 +87,18 @@
 
 {% else %}
   {# ───── mysportsweather.com homepage: sports-first product page ─────
-       Layout: hero title (left) + compact World Cup card (right) share
-       one row so the WC card doesn't push all the sport cards below the
-       fold. Sport grid follows immediately. Two-column above 900px;
-       stacks on mobile. #}
+       Hero title spans full width now that the featured World Cup card
+       has been retired. Sport grid follows immediately below. #}
   <section class="home-hero">
     <div class="container">
-      <div class="home-hero__row">
-        <div class="home-hero__intro">
-          <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
-          {# text-wrap: balance distributes the headline across lines evenly so
-             it doesn't end with a single orphan word ("round.") on its own line. #}
-          <h1 class="home-hero__title" style="text-wrap: balance">Weather for every game, match, race, and round.</h1>
-          <p class="home-hero__lead">
-            Live forecasts across every sport, built by a meteorologist.
-          </p>
-        </div>
-
-        {# Featured World Cup card — compact sidebar variant. Keeps the
-           tournament in a premium above-fold spot without eating a full
-           row of vertical real estate. #}
-        <a href="/worldcup" class="home-featured home-featured--wc home-featured--compact">
-          <div class="home-featured__top">
-            <span class="live-badge">Live · Matchday</span>
-            <span class="home-featured__kicker">World Cup 2026</span>
-            <img class="home-featured__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="" loading="lazy">
-          </div>
-          <h2 class="home-featured__title">Meteorologist breakdowns for every World Cup match.</h2>
-          <p class="home-featured__body">
-            16 venues across the US, Mexico, and Canada. Roof status, altitude, storm risk.
-          </p>
-          <span class="home-featured__cta">
-            {% if sport_counts.worldcup %}<strong>{{ sport_counts.worldcup }}</strong>&nbsp;{% if sport_counts.worldcup == '1' %}match today{% else %}matches today{% endif %}{% else %}See all matches{% endif %}
-            <span class="home-featured__arrow">→</span>
-          </span>
-        </a>
+      <div class="home-hero__intro">
+        <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
+        {# text-wrap: balance distributes the headline across lines evenly so
+           it doesn't end with a single orphan word ("round.") on its own line. #}
+        <h1 class="home-hero__title" style="text-wrap: balance">Weather for every game, match, race, and round.</h1>
+        <p class="home-hero__lead">
+          Live forecasts across every sport, built by a meteorologist.
+        </p>
       </div>
     </div>
   </section>
