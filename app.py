@@ -1708,29 +1708,47 @@ def _mls_to_wc_shape(m: dict) -> dict:
         if "short" in t and "short_name" not in t:
             t["short_name"] = t["short"]
         out[side] = t
-    # Hourly aliases — wc table reads .hour_eastern
-    hourly_out = []
-    for h in (m.get("hourly") or []):
-        h2 = dict(h)
-        if "hour_eastern" not in h2:
-            h2["hour_eastern"] = h.get("local_hour_label") or (h.get("start_time", "")[11:16])
-        hourly_out.append(h2)
-    out["hourly"] = hourly_out
+    # Hourly aliases — wc table reads .hour_eastern. Format as 12-hour
+    # ("7 PM" style) rather than 24-hour military. Parse the UTC ISO
+    # start_time and convert to Eastern; fall back to raw slice if parse
+    # fails so a bad row can't blank the whole table. Apply the same
+    # conversion to hrrr_hourly so the HRRR toggle uses matching labels.
+    def _reshape_periods(period_list):
+        out_list = []
+        for h in (period_list or []):
+            h2 = dict(h)
+            if "hour_eastern" not in h2:
+                st_raw = h.get("start_time") or ""
+                try:
+                    st_utc = datetime.fromisoformat(st_raw.replace("Z", "+00:00"))
+                    if st_utc.tzinfo is None:
+                        st_utc = st_utc.replace(tzinfo=timezone.utc)
+                    h2["hour_eastern"] = st_utc.astimezone(EASTERN_TZ).strftime("%-I %p")
+                except (ValueError, AttributeError):
+                    h2["hour_eastern"] = h.get("local_hour_label") or st_raw[11:16]
+            out_list.append(h2)
+        return out_list
+
+    out["hourly"] = _reshape_periods(m.get("hourly"))
+    out["hrrr_hourly"] = _reshape_periods(m.get("hrrr_hourly"))
     return out
 
 
 @app.route("/mls")
 def mls_root():
-    """MLS slate hub. Groups matches by venue-local date, shows cheat cards
-    + writeups + per-day blocks. Off-season returns an empty slate; we
-    render the same template with no matches rather than a coming-soon
-    page since MLS is a long season (Feb–Nov) and the off-season window
-    is short."""
+    """MLS slate hub. Shows ONLY the next matchday's cheat cards + hourly
+    forecasts — MLS plays roughly Wed/Sat, so the 7-day slate would produce
+    a huge above-fold block of duplicate-looking cards. Filtering to the
+    single next matchday (today or the earliest future date) keeps the
+    page focused on what actually matters for tomorrow's action.
+
+    Off-season returns an empty slate; template renders "no matches" copy.
+    """
     matches, meta = get_mls_slate(allow_build=True)
     mls_attach_writeups(matches)
 
     # Group matches by their venue-local date (date_local field already
-    # YYYY-MM-DD). Build a days_data list the template iterates.
+    # YYYY-MM-DD).
     today_et = datetime.now(EASTERN_TZ).date()
     grouped: dict[str, list[dict]] = {}
     for m in matches:
@@ -1739,27 +1757,40 @@ def mls_root():
             continue
         grouped.setdefault(d, []).append(_mls_to_wc_shape(m))
 
-    days_data = []
+    # Next-matchday filter: keep only the first date >= today that has
+    # matches. On Mon/Tue we show Wed games; on Thu/Fri we show Sat games;
+    # on Sun we show whatever the next matchday is. If TODAY has matches,
+    # we show today's. Full-week slate was too much visual noise per Kevin.
+    next_date = None
     for date_str in sorted(grouped.keys()):
         try:
             d = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
             continue
+        if d >= today_et:
+            next_date = date_str
+            break
+
+    days_data = []
+    if next_date is not None:
+        d = datetime.strptime(next_date, "%Y-%m-%d").date()
         days_data.append({
-            "date_str":     date_str,
+            "date_str":     next_date,
             "pretty_date":  d.strftime("%A, %B %-d"),
             "is_today":     (d == today_et),
             "is_tomorrow":  (d == today_et + timedelta(days=1)),
-            "slate":        grouped[date_str],   # wc template iterates day.slate
-            "matches":      grouped[date_str],   # keep both keys for safety
-            "match_count":  len(grouped[date_str]),
+            "slate":        grouped[next_date],
+            "matches":      grouped[next_date],
+            "match_count":  len(grouped[next_date]),
         })
+
+    total_matches = sum(day["match_count"] for day in days_data)
 
     return render_template(
         "mls/slate.html",
         days_data=days_data,
         showing_multiple=(len(days_data) > 1),
-        total_matches=len(matches),
+        total_matches=total_matches,
         meta=meta,
         canonical_path="/mls",
     )

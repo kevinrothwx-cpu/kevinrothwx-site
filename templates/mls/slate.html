@@ -117,6 +117,25 @@
               {{ wc_summary_panel(m) }}
               <div class="mlb-game-block__hourly">
                 {{ wc_hourly_table(m) }}
+
+                {# HRRR high-resolution overlay — CONUS-only, so Canadian
+                   MLS venues (Toronto, Montreal, Vancouver) skip this
+                   block naturally (mls/slate.py leaves hrrr_hourly empty
+                   for nws_unsupported venues). Closed by default per the
+                   MLB/NASCAR/CFB pattern so users see a single clean
+                   forecast unless they opt in. #}
+                {% if m.hrrr_hourly %}
+                  <details style="margin: 1rem 0 0.5rem; border: 1px solid var(--mist); border-radius: 6px;">
+                    <summary style="cursor: pointer; padding: 0.7rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; background: #f8f8f8;">
+                      Show high-resolution model
+                      <span style="display:inline-block; margin-left:0.5rem; padding:0.15rem 0.5rem; background: var(--storm); color: #fff; border-radius: 3px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle;">HRRR</span>
+                      <span style="color: var(--fog); font-size: 0.75rem; margin-left: 0.5rem;">3 km hourly updates</span>
+                    </summary>
+                    <div style="padding: 0.5rem 1rem 1rem;">
+                      {{ wc_hourly_table({'hourly': m.hrrr_hourly}) }}
+                    </div>
+                  </details>
+                {% endif %}
               </div>
             </div>
             <a class="mlb-game-block__deeplink" href="/mls/{{ day.date_str }}/{{ m.slug }}">

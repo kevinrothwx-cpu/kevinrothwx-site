@@ -10,14 +10,25 @@
 {% from "mlb/_macros.html" import weather_icon %}
 
 
-{# Soccer pitch diagram with compass wind arrow. Unlike baseball, pitch
-   orientation doesn't carry tactical meaning, so we show the wind arrow
-   in real compass space: arrow points the direction the wind is BLOWING
-   TO. North is up. #}
-{% macro pitch_diagram(forecast) %}
+{# Soccer pitch diagram with field-relative wind arrow. Field stays
+   drawn horizontally in the SVG (goals at left and right). The wind
+   arrow rotates to show wind direction RELATIVE TO THE FIELD — mirror
+   of the MLB home-plate-relative wind treatment.
+
+   Math: SVG "right" corresponds to real-world compass bearing
+   orientation_deg. To convert a true wind-to bearing into SVG rotation:
+       rot = (wind_to - orientation_deg + 90) % 360
+   The +90 accounts for the fact that SVG "up" is offset 90° from SVG
+   "right" (which is our pitch-axis reference direction).
+
+   Falls back to orientation_deg=0 (raw compass, north-up) if the venue
+   entry doesn't include orientation data — that reproduces the old
+   behavior so any venue we haven't measured yet still renders sensibly.
+#}
+{% macro pitch_diagram(forecast, orientation_deg=0) %}
   {% if forecast %}
     {% set wind_to = (forecast.wind_deg + 180) % 360 %}
-    {% set rot = wind_to %}
+    {% set rot = (wind_to - orientation_deg + 90) % 360 %}
   {% else %}
     {% set rot = 0 %}
   {% endif %}
@@ -104,7 +115,7 @@
         <span class="game-summary__primary-label">At kickoff</span>
       </div>
       <div class="game-summary__cell game-summary__cell--field">
-        {{ pitch_diagram(f) }}
+        {{ pitch_diagram(f, orientation_deg=(match.venue_meta.orientation_deg if match.venue_meta and match.venue_meta.orientation_deg else 0)) }}
       </div>
       <div class="game-summary__cell">
         <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
