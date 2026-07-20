@@ -282,8 +282,24 @@ def attach_nws_gusts(periods: list, lat: float, lon: float) -> list:
     return periods
 
 
+def _period_start(period: dict) -> str:
+    """Return the period's start-time ISO string, tolerating both the raw
+    NWS key ("startTime", camelCase) and the normalized shape ("start_time",
+    snake_case) that ``extract_forecast`` emits. MLB/NASCAR/CWS/WC pass raw
+    periods; MLS/CFB/NFL/Golf pass normalized ones — this helper lets a
+    single ``find_period_for_time`` serve both call sites."""
+    return period.get("startTime") or period.get("start_time") or ""
+
+
+def _period_end(period: dict) -> str:
+    """Same tolerance for the end-time key."""
+    return period.get("endTime") or period.get("end_time") or ""
+
+
 def find_period_for_time(periods: list, target_utc: datetime) -> dict:
-    """Return the hourly forecast period that covers the rounded target time."""
+    """Return the hourly forecast period that covers the rounded target time.
+    Handles both raw NWS periods (``startTime``/``endTime``) and normalized
+    periods emitted by ``extract_forecast`` (``start_time``/``end_time``)."""
     rounded_utc = target_utc.replace(second=0, microsecond=0)
     if rounded_utc.minute >= 30:
         rounded_utc = rounded_utc.replace(minute=0) + timedelta(hours=1)
@@ -291,16 +307,17 @@ def find_period_for_time(periods: list, target_utc: datetime) -> dict:
         rounded_utc = rounded_utc.replace(minute=0)
 
     for period in periods:
-        start = datetime.fromisoformat(period["startTime"])
-        end   = datetime.fromisoformat(period["endTime"])
+        start = datetime.fromisoformat(_period_start(period))
+        end   = datetime.fromisoformat(_period_end(period))
         if start <= rounded_utc.astimezone(start.tzinfo) < end:
             return period
 
+    if not periods:
+        return {}
+    first_start = datetime.fromisoformat(_period_start(periods[0]))
     future = [
         p for p in periods
-        if datetime.fromisoformat(p["startTime"]) >= rounded_utc.astimezone(
-            datetime.fromisoformat(periods[0]["startTime"]).tzinfo
-        )
+        if datetime.fromisoformat(_period_start(p)) >= rounded_utc.astimezone(first_start.tzinfo)
     ]
     return future[0] if future else periods[0]
 
