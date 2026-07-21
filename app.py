@@ -8,7 +8,7 @@ Phase 3 (later): admin UI for manual write-ups (storage hook is ready).
 import os
 import time
 import functools
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from flask import (
@@ -219,6 +219,21 @@ def cws_impact_strip(forecast):
 app.jinja_env.globals["cws_impact_strip"] = cws_impact_strip
 
 EASTERN_TZ = ZoneInfo("America/New_York")
+
+# ── Worker startup marker ────────────────────────────────────────────
+# Log the process's PID + boot time so we can count workers from Render logs.
+# If more than one distinct PID shows up in [app.startup] lines, gunicorn is
+# running multiple workers — each has its own in-memory cache and they will
+# drift apart (2026-07-21 cache-staleness incident). Fix: Render Start Command
+# must be `gunicorn -w 1 --threads 4 app:app` — the Procfile flag is IGNORED
+# when the dashboard has a Start Command set. (-w 1 = one process = one shared
+# cache. --threads 4 = still handle 4 concurrent requests via threads inside
+# that one process, so a slow uncached slate build doesn't block other users.)
+_APP_STARTED_AT = datetime.now(timezone.utc)
+print(
+    f"[app.startup] pid={os.getpid()} started_at={_APP_STARTED_AT.isoformat()}",
+    flush=True,
+)
 
 # Start the slate warmer thread on import (gunicorn imports app:app once per worker)
 start_warmer()
@@ -2648,6 +2663,163 @@ def admin_nws_health():
         f'when rate-limit count crosses threshold, with a 1-hour cooldown.</p>'
         f'</body></html>'
     )
+    return Response(body, mimetype="text/html")
+
+
+@app.route("/admin/cache-health")
+@_admin_required
+def admin_cache_health():
+    """Diagnostic page: freshness of every sport's slate cache + freeze count.
+
+    The 2026-07-21 stale-cache incident showed we had no way to spot data
+    drift until a user noticed a specific game's temp was off. This page
+    surfaces staleness proactively: green if the cache is fresh, red if it's
+    older than the warmer's refresh interval.
+
+    Also shows the worker's PID + uptime. If you refresh this page a few
+    times and see DIFFERENT PIDs, gunicorn is running multiple workers and
+    caches will drift — that's the exact bug the -w 1 flag prevents. If PID
+    stays constant across refreshes, single-worker mode is confirmed.
+    """
+    import mlb.cache as _mlb_cache
+    now_utc = datetime.now(timezone.utc)
+    uptime_min = int((now_utc - _APP_STARTED_AT).total_seconds() / 60)
+
+    def _age_min(built_at):
+        if built_at is None:
+            return None
+        try:
+            return int((now_utc - built_at).total_seconds() / 60)
+        except Exception:
+            return None
+
+    def _freshness_class(age):
+        if age is None:
+            return "stale"
+        if age > 30:
+            return "stale"
+        if age > 25:
+            return "warn"
+        return "fresh"
+
+    # MLB slate cache — inspect the module's private cache dict directly.
+    # It's keyed by date_str and each entry has a "built_at_utc" field.
+    mlb_rows = []
+    with _mlb_cache._cache_lock:
+        for date_str in sorted(_mlb_cache._slate_cache.keys()):
+            entry = _mlb_cache._slate_cache[date_str]
+            age = _age_min(entry.get("built_at_utc"))
+            slate = entry.get("slate") or []
+            err = entry.get("build_err") or ""
+            mlb_rows.append({
+                "date_str":  date_str,
+                "age_min":   age,
+                "game_ct":   len(slate),
+                "err":       err[:100],
+                "cls":       _freshness_class(age),
+            })
+
+    # Per-sport freeze counts. Accessor location differs by sport — some
+    # sports expose count() on the forecast_freeze module, others expose
+    # frozen_count() on the cache module. MLB has no public accessor so we
+    # read its private dict directly. Defensive — if any import/call fails,
+    # we show "err" rather than 500 the whole page.
+    freeze_counts = []
+    for label, mod_name, attr in [
+        ("MLB",    "mlb.forecast_freeze",  "_frozen"),      # no accessor — dict
+        ("CFB",    "cfb.forecast_freeze",  "count"),        # callable
+        ("NFL",    "nfl.cache",            "frozen_count"), # callable
+        ("MLS",    "mls.cache",            "frozen_count"), # callable
+        ("Prem",   "prem.forecast_freeze", "count"),        # callable
+    ]:
+        try:
+            mod = __import__(mod_name, fromlist=[attr])
+            val = getattr(mod, attr, None)
+            if callable(val):
+                n = val()
+            elif isinstance(val, dict):
+                n = len(val)
+            else:
+                n = "?"
+        except Exception as e:
+            n = f"err: {type(e).__name__}"
+        freeze_counts.append((label, n))
+
+    # Build the HTML. Small standalone template — no base.html so this
+    # page renders even if something's wrong with the shared template.
+    style = (
+        "body{font-family:system-ui,sans-serif;padding:2rem;max-width:900px;margin:auto}"
+        "h1{font-size:1.5rem;margin:0 0 1rem}"
+        "h2{font-size:1.05rem;margin:1.5rem 0 .5rem;color:#333}"
+        ".pill{display:inline-block;padding:.15rem .6rem;border-radius:3px;font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}"
+        ".pill-fresh{background:#dcfce7;color:#166534}"
+        ".pill-warn{background:#fef9c3;color:#854d0e}"
+        ".pill-stale{background:#fecaca;color:#991b1b}"
+        "table{width:100%;border-collapse:collapse;margin-top:.5rem;font-size:.9rem}"
+        "th,td{text-align:left;padding:.5rem;border-bottom:1px solid #eee}"
+        "th{background:#f5f5f5}"
+        ".meta{color:#666;font-size:.85rem}"
+        ".alert{background:#fff8e1;border-left:3px solid #f59e0b;padding:.75rem 1rem;margin:1rem 0}"
+    )
+
+    def _pill(cls):
+        return f'<span class="pill pill-{cls}">{cls.upper()}</span>'
+
+    mlb_rows_html = ""
+    if mlb_rows:
+        mlb_rows_html = "".join(
+            f"<tr><td>{r['date_str']}</td>"
+            f"<td>{r['age_min']!s} min</td>"
+            f"<td>{r['game_ct']}</td>"
+            f"<td>{_pill(r['cls'])}</td>"
+            f"<td><code style='font-size:.8rem'>{r['err']}</code></td></tr>"
+            for r in mlb_rows
+        )
+    else:
+        mlb_rows_html = "<tr><td colspan='5' style='color:#888'>Slate cache empty — warmer hasn't populated yet or crashed.</td></tr>"
+
+    freeze_html = "".join(
+        f"<tr><td>{label}</td><td>{n}</td></tr>"
+        for label, n in freeze_counts
+    )
+
+    worker_pill = _pill("fresh") if uptime_min < 60 * 24 else _pill("warn")
+
+    body = f"""<!DOCTYPE html><html><head><title>Cache Health</title>
+<style>{style}</style></head><body>
+<h1>Cache Health</h1>
+<div class="alert">
+  <strong>Multi-worker check:</strong> refresh this page a few times.
+  If PID stays the same, single-worker mode is active (correct).
+  If PID changes on refresh, gunicorn is running multiple workers and caches
+  will drift — Render Start Command must be <code>gunicorn -w 1 --threads 4 app:app</code>.
+</div>
+
+<h2>Worker</h2>
+<table>
+<tr><th>PID</th><td>{os.getpid()}</td></tr>
+<tr><th>Started</th><td>{_APP_STARTED_AT.isoformat()}</td></tr>
+<tr><th>Uptime</th><td>{uptime_min} min {worker_pill}</td></tr>
+</table>
+
+<h2>MLB slate cache</h2>
+<p class="meta">Warmer refreshes every 25 min. Ages above 30 min = stale (warmer likely dead or worker not serving your requests).</p>
+<table>
+<thead><tr><th>Date</th><th>Age</th><th>Games</th><th>Freshness</th><th>Last build error</th></tr></thead>
+<tbody>{mlb_rows_html}</tbody>
+</table>
+
+<h2>Frozen snapshot counts</h2>
+<p class="meta">Frozen forecasts locked at kickoff/first pitch. Should grow through the day and clear overnight.</p>
+<table>
+<thead><tr><th>Sport</th><th>Frozen count</th></tr></thead>
+<tbody>{freeze_html}</tbody>
+</table>
+
+<p class="meta" style="margin-top:2rem">
+Checked at {now_utc.isoformat()}. See also: <a href="/admin/nws-health">/admin/nws-health</a>.
+</p>
+</body></html>"""
     return Response(body, mimetype="text/html")
 
 
