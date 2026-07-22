@@ -2704,7 +2704,10 @@ def admin_cache_health():
 
     # MLB slate cache — inspect the module's private cache dict directly.
     # It's keyed by date_str and each entry has a "built_at_utc" field.
+    # Also collect per-game details so we can spot missing doubleheaders or
+    # detect that this worker's cache diverged from the actual schedule.
     mlb_rows = []
+    mlb_games = []  # flattened list across all cached dates for detail table
     with _mlb_cache._cache_lock:
         for date_str in sorted(_mlb_cache._slate_cache.keys()):
             entry = _mlb_cache._slate_cache[date_str]
@@ -2718,6 +2721,20 @@ def admin_cache_health():
                 "err":       err[:100],
                 "cls":       _freshness_class(age),
             })
+            for g in slate:
+                dh = g.get("double_header", "N")
+                gn = g.get("game_num", 1)
+                dh_label = ""
+                if dh in ("Y", "S") or gn > 1:
+                    dh_label = f" (G{gn})"
+                mlb_games.append({
+                    "date_str":  date_str,
+                    "matchup":   f"{g.get('away_abbr','?')} @ {g.get('home_abbr','?')}{dh_label}",
+                    "venue":     g.get("venue", "?"),
+                    "game_pk":   g.get("game_pk", ""),
+                    "status":    g.get("status", ""),
+                    "src":       g.get("weather_source", ""),
+                })
 
     # Per-sport freeze counts. Accessor location differs by sport — some
     # sports expose count() on the forecast_freeze module, others expose
@@ -2809,6 +2826,16 @@ def admin_cache_health():
 <tbody>{mlb_rows_html}</tbody>
 </table>
 
+<h2>MLB cached games ({len(mlb_games)})</h2>
+<p class="meta">Every game currently in this worker's cache. If the real slate has more games than shown here, this worker's cache is stale or missed a schedule update. Force a refresh with the button below (uses same rebuild the warmer runs every 25 min).</p>
+<form method="POST" action="/admin/rebuild-mlb" style="margin:.5rem 0 1rem">
+  <button type="submit" style="padding:.4rem .9rem;background:#1e3a8a;color:#fff;border:0;border-radius:3px;font-weight:600;cursor:pointer">Rebuild MLB slate cache now</button>
+</form>
+<table>
+<thead><tr><th>Date</th><th>Matchup</th><th>Venue</th><th>game_pk</th><th>Status</th><th>Source</th></tr></thead>
+<tbody>{"".join(f"<tr><td>{gm['date_str']}</td><td>{gm['matchup']}</td><td>{gm['venue']}</td><td><code style='font-size:.75rem'>{gm['game_pk']}</code></td><td>{gm['status']}</td><td>{gm['src']}</td></tr>" for gm in mlb_games) or "<tr><td colspan='6' style='color:#888'>no games cached</td></tr>"}</tbody>
+</table>
+
 <h2>Frozen snapshot counts</h2>
 <p class="meta">Frozen forecasts locked at kickoff/first pitch. Should grow through the day and clear overnight.</p>
 <table>
@@ -2821,6 +2848,28 @@ Checked at {now_utc.isoformat()}. See also: <a href="/admin/nws-health">/admin/n
 </p>
 </body></html>"""
     return Response(body, mimetype="text/html")
+
+
+@app.route("/admin/rebuild-mlb", methods=["POST"])
+@_admin_required
+def admin_rebuild_mlb():
+    """Force an immediate rebuild of today+tomorrow MLB slate on THIS worker.
+
+    Same code path as the 25-min warmer — safe to call on demand. Useful when
+    Kevin notices the slate is missing a game (e.g. late-announced doubleheader
+    makeup) and doesn't want to wait for the next warmer cycle.
+
+    Note on multi-worker: this only rebuilds THIS worker's cache. If gunicorn
+    is running multiple workers, the OTHER workers' caches remain unchanged
+    until they hit their own warmer cycle. Hit the endpoint a few times to
+    increase the odds of round-robin reaching each worker.
+    """
+    import mlb.cache as _mlb_cache
+    today    = _mlb_cache._today_eastern_str()
+    tomorrow = _mlb_cache._tomorrow_eastern_str()
+    _mlb_cache._rebuild(today)
+    _mlb_cache._rebuild(tomorrow)
+    return redirect("/admin/cache-health")
 
 
 def _msw_all_url_paths() -> list[str]:
@@ -3016,6 +3065,35 @@ def horse_race(race_id):
 @app.errorhandler(404)
 def not_found(e):
     return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    """Any uncaught exception in a route handler shows the maintenance page
+    instead of Flask's default traceback / generic 500. Kevin gets a nicer
+    error signal via Render logs; users see 'Kevin is working on it...'.
+
+    Note: this does NOT catch worker deadlocks, timeouts, OOM kills, or
+    Render platform outages — in those cases Flask isn't running so we
+    can't render anything, and users still see a gateway error page.
+    """
+    # Best-effort log; don't let the error handler itself crash
+    try:
+        import traceback as _tb
+        print(f"[app.errorhandler 500] {type(e).__name__}: {e}", flush=True)
+        _tb.print_exc()
+    except Exception:
+        pass
+    try:
+        return render_template("maintenance.html"), 503
+    except Exception:
+        # If even the template fails, fall back to a plain string so the
+        # user gets *something* instead of a generic Flask error page.
+        return (
+            "Kevin is working on making the site better right now... "
+            "check back in 2 minutes.",
+            503,
+        )
 
 
 # EOF-CANARY 2026-07-15-indexnow-full-push

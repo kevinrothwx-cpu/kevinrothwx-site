@@ -241,7 +241,8 @@ This has dominated recent sessions and got even worse in the July 2026 session. 
 - Kevin pushes via GitHub Desktop on Windows.
 - Render auto-deploys on git push to main.
 - Render service: `kevinrothwx-site`, Python 3, Starter tier ($7/mo), 1 GB persistent disk at `/var/data`.
-- Procfile: `web: gunicorn -w 1 app:app` (single worker — task #90 fixed multi-worker cache divergence).
+- Procfile: `web: gunicorn -w 1 --threads 4 app:app` (single worker, threads for concurrency — task #90 fixed multi-worker cache divergence, task #17 on 2026-07-21 re-fixed it after Render dashboard override was silently reintroducing 2 workers; --threads 4 added so one slow uncached slate build doesn't block other users).
+- Render Start Command MUST match Procfile (`gunicorn -w 1 --threads 4 app:app`). If the dashboard field is set, it overrides the Procfile silently. Verify via `/admin/cache-health` — PID should stay constant across refreshes.
 - Render's edge cache can serve stale `/robots.txt` and similar text responses for hours after deploy. Append `?nocache=1` to bypass when debugging.
 - Persistent state files (`data/writeups_*.json`, `data/*_forecast_freeze.json`) live at `/var/data` in production, `./data` locally. Should NOT be committed to git — that was an accident on commit `0bf2a7e`. TODO: add `data/*.json` to `.gitignore`.
 
