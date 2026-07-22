@@ -788,6 +788,22 @@ def mlb_team(slug):
 # templates — removing those imports would break MLS/EPL. If we later want to
 # fully retire the worldcup/ module, we'd need to lift the macros to a
 # shared location first.
+#
+# 410 Gone handlers (added 2026-07-22): Google Search Console still shows the
+# retired /worldcup URLs as "Discovered - currently not indexed". Returning 410
+# (instead of 404, which is what an unrouted path returns by default) tells
+# search engines these URLs are permanently gone, which speeds up removal from
+# the index. 404 says "not found right now, keep trying"; 410 says "gone, stop
+# asking". Catches /worldcup, /worldcup/<date>, /worldcup/<date>/<slug>.
+
+@app.route("/worldcup")
+@app.route("/worldcup/<path:subpath>")
+def worldcup_gone(subpath=None):
+    return (
+        "The 2026 FIFA World Cup coverage has been retired.",
+        410,
+        {"Content-Type": "text/plain; charset=utf-8"},
+    )
 
 
 # ===== Tennis Grand Slams =====
