@@ -36,6 +36,10 @@
       <span class="sport-nav__count">{{ sport_counts.tennis }}</span>
     </a>
     {% endif %}
+    <a href="/mls" class="sport-nav__item {% if active_sport == 'mls' %}is-active{% endif %}">
+      MLS
+      {% if sport_counts and sport_counts.mls %}<span class="sport-nav__count">{{ sport_counts.mls }}</span>{% endif %}
+    </a>
     <a href="/nfl" class="sport-nav__item {% if active_sport == 'nfl' %}is-active{% endif %}" style="margin-left:auto">
       NFL
       {% if sport_counts and sport_counts.nfl %}<span class="sport-nav__count">{{ sport_counts.nfl }}</span>{% endif %}
@@ -43,10 +47,6 @@
     <a href="/ncaaf" class="sport-nav__item {% if active_sport == 'ncaaf' %}is-active{% endif %}">
       NCAAF
       {% if sport_counts and sport_counts.ncaaf %}<span class="sport-nav__count">{{ sport_counts.ncaaf }}</span>{% endif %}
-    </a>
-    <a href="/mls" class="sport-nav__item {% if active_sport == 'mls' %}is-active{% endif %}">
-      MLS
-      {% if sport_counts and sport_counts.mls %}<span class="sport-nav__count">{{ sport_counts.mls }}</span>{% endif %}
     </a>
   </div>
 </nav>

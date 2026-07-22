@@ -103,6 +103,33 @@
     </div>
   </section>
 
+  {# ── Wednesday PGA prime slot ─────────────────────────────────
+     Every Wednesday, feature the current PGA tournament preview
+     as a full-width card above the sport grid. PGA rounds start
+     Thursday, so Wednesday is when a tournament-preview lift has
+     the most user value. Toggled by is_wednesday_eastern from
+     the inject_globals context processor (America/New_York). #}
+  {% if is_wednesday_eastern %}
+  <section class="home-section">
+    <div class="container">
+      <a href="/golf" class="home-featured home-featured--wc" style="border:2px solid #166534;background:linear-gradient(180deg,var(--white) 0%,#f0f7f0 100%)">
+        <div class="home-featured__top">
+          <span class="live-badge" style="background:#166534">Tournament Preview</span>
+          <span class="home-featured__kicker">PGA Tour · Rounds start Thursday</span>
+        </div>
+        <h2 class="home-featured__title" style="color:#166534">This week's PGA Tour weather preview</h2>
+        <p class="home-featured__body">
+          Course-local hourly weather for every round of this week's tournament. Morning vs. afternoon wave, wind forecast, and rain risk by tee time, updated continuously from NWS data.
+        </p>
+        <span class="home-featured__cta">
+          See this week's PGA Tour forecast
+          <span class="home-featured__arrow">→</span>
+        </span>
+      </a>
+    </div>
+  </section>
+  {% endif %}
+
   <section class="home-section">
     <div class="container">
 

@@ -4,8 +4,9 @@
 {% block description %}How weather affects MLB games. Wind, temperature, humidity, rain delays, and ballpark-specific conditions explained by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block extra_head %}
+<link rel="canonical" href="https://mysportsweather.com/mlb-weather">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Article","headline":"How Weather Affects MLB Games","author":{"@type":"Person","@id":"https://kevinrothwx.com/about#kevin-roth","name":"Kevin Roth"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://kevinrothwx.com/"},"mainEntityOfPage":"https://kevinrothwx.com/mlb-weather","about":["MLB weather","Baseball","Sports meteorology","Sports betting"]}
+{"@context":"https://schema.org","@type":"Article","headline":"How Weather Affects MLB Games","author":{"@type":"Person","@id":"https://mysportsweather.com/about#kevin-roth","name":"Kevin Roth","jobTitle":"Sports Meteorologist"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://mysportsweather.com/"},"mainEntityOfPage":"https://mysportsweather.com/mlb-weather","about":["MLB weather","Baseball","Sports meteorology","Sports betting"],"inLanguage":"en-US"}
 </script>
 {% endblock %}
 
@@ -61,6 +62,15 @@
       <p class="callout__body">OVERcast quantifies the weather impact on every MLB game.</p>
       <a href="/overcast" class="btn btn-primary">Learn more about OVERcast →</a>
     </div>
+
+    <section style="margin-top: 4rem;">
+      <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">Related weather guides</p>
+      <h2 style="font-family: var(--font-serif); font-size: 1.5rem; margin: 0 0 1.25rem;">More sport-specific weather analysis</h2>
+      <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.9rem;">
+        <li><a href="/nfl-weather" style="display:block;padding:1rem 1.25rem;border:1px solid var(--mist);text-decoration:none;color:var(--ink);"><strong style="font-family:var(--font-serif);font-size:1.1rem;">How Weather Affects NFL Games</strong><br><span style="font-family:var(--font-sans);font-size:0.9rem;color:var(--ash);">Wind, cold, snow, dome vs. outdoor splits, and kicker performance in the NFL.</span></a></li>
+        <li><a href="/pga-weather" style="display:block;padding:1rem 1.25rem;border:1px solid var(--mist);text-decoration:none;color:var(--ink);"><strong style="font-family:var(--font-serif);font-size:1.1rem;">How Weather Affects PGA Tour Tournaments</strong><br><span style="font-family:var(--font-sans);font-size:0.9rem;color:var(--ash);">Morning vs. afternoon waves, rain and course conditions, and the DFS edge from weather.</span></a></li>
+      </ul>
+    </section>
   </div>
 </article>
 {% endblock %}

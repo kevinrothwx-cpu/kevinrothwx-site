@@ -340,9 +340,14 @@ def inject_globals():
         ga_id = os.environ.get("GA_MEASUREMENT_ID_MYSPORTSWEATHER", "").strip()
     else:
         ga_id = os.environ.get("GA_MEASUREMENT_ID", "").strip()
+    # Day-of-week helper for content that only shows on certain days
+    # (e.g. Wednesday PGA prime slot on the homepage — Wednesday is our
+    # tournament-preview day since PGA Tour rounds start Thursday).
+    is_wednesday_eastern = datetime.now(EASTERN_TZ).weekday() == 2
     return {
         "current_year":     datetime.utcnow().year,
         "ga_measurement_id": ga_id,
+        "is_wednesday_eastern": is_wednesday_eastern,
         **brand,
     }
 

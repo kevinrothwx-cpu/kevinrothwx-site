@@ -4,8 +4,9 @@
 {% block description %}How weather affects PGA Tour tournaments. Wind, morning vs. afternoon waves, rain delays, and weather and DFS strategy explained by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block extra_head %}
+<link rel="canonical" href="https://mysportsweather.com/pga-weather">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Article","headline":"How Weather Affects PGA Tour Tournaments","author":{"@type":"Person","@id":"https://kevinrothwx.com/about#kevin-roth","name":"Kevin Roth"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://kevinrothwx.com/"},"mainEntityOfPage":"https://kevinrothwx.com/pga-weather","about":["PGA weather","Golf","Sports meteorology","Sports betting"]}
+{"@context":"https://schema.org","@type":"Article","headline":"How Weather Affects PGA Tour Tournaments","author":{"@type":"Person","@id":"https://mysportsweather.com/about#kevin-roth","name":"Kevin Roth","jobTitle":"Sports Meteorologist"},"publisher":{"@type":"Organization","name":"Kevin Roth, Sports Meteorologist","url":"https://mysportsweather.com/"},"mainEntityOfPage":"https://mysportsweather.com/pga-weather","about":["PGA weather","Golf","Sports meteorology","Sports betting"],"inLanguage":"en-US"}
 </script>
 {% endblock %}
 
@@ -29,10 +30,20 @@
       <p>The clearest DFS edge from weather forecasting is wave-based pivoting late in the week. Build your Thursday lineup core around the wave that will play easier, and don't be afraid to fade chalk that's stuck on the wrong wave. For betting matchups, target morning-wave players Thursday and afternoon-wave Friday when conditions are forecast to be tougher in the second half of the round. Tour championship odds are slower to react to weather than head-to-heads, so look there for outright value on weather-driven favorites or fades.</p>
     </div>
     <div class="callout" style="margin-top: 4rem;">
-      <p class="callout__title">PGA weather coverage</p>
-      <p class="callout__body">Kevin's PGA weather forecasts run weekly during tour events.</p>
-      <a href="https://x.com/KevinRothWx" class="btn btn-storm">Follow on X →</a>
+      <p class="callout__title">Want the actual weather for this week's tournament?</p>
+      <p class="callout__body">This page is the explainer. For live, course-local hourly weather across all four rounds of the current PGA Tour event (with morning-vs-afternoon wave splits), head to the tournament forecast.</p>
+      <a href="/golf" class="btn btn-storm">See this week's tournament forecast →</a>
+      <a href="https://x.com/KevinRothWx" class="btn btn-secondary" style="margin-left:0.75rem" target="_blank" rel="noopener">Follow @KevinRothWx on X →</a>
     </div>
+
+    <section style="margin-top: 4rem;">
+      <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">Related weather guides</p>
+      <h2 style="font-family: var(--font-serif); font-size: 1.5rem; margin: 0 0 1.25rem;">More sport-specific weather analysis</h2>
+      <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.9rem;">
+        <li><a href="/mlb-weather" style="display:block;padding:1rem 1.25rem;border:1px solid var(--mist);text-decoration:none;color:var(--ink);"><strong style="font-family:var(--font-serif);font-size:1.1rem;">How Weather Affects MLB Games</strong><br><span style="font-family:var(--font-sans);font-size:0.9rem;color:var(--ash);">Wind, humidity, temperature, and ballpark-specific weather patterns for baseball.</span></a></li>
+        <li><a href="/nfl-weather" style="display:block;padding:1rem 1.25rem;border:1px solid var(--mist);text-decoration:none;color:var(--ink);"><strong style="font-family:var(--font-serif);font-size:1.1rem;">How Weather Affects NFL Games</strong><br><span style="font-family:var(--font-sans);font-size:0.9rem;color:var(--ash);">Wind, cold, snow, dome vs. outdoor splits, and kicker performance in the NFL.</span></a></li>
+      </ul>
+    </section>
   </div>
 </article>
 {% endblock %}
