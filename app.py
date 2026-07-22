@@ -2817,6 +2817,7 @@ def admin_cache_health():
 <tr><th>PID</th><td>{os.getpid()}</td></tr>
 <tr><th>Started</th><td>{_APP_STARTED_AT.isoformat()}</td></tr>
 <tr><th>Uptime</th><td>{uptime_min} min {worker_pill}</td></tr>
+<tr><th>MLB disk cache</th><td>{"DISABLED (env var MLB_DISK_CACHE_DISABLED=1)" if os.environ.get("MLB_DISK_CACHE_DISABLED","").strip() == "1" else "enabled"}</td></tr>
 </table>
 
 <h2>MLB slate cache</h2>

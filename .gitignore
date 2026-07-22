@@ -11,3 +11,10 @@ instance/
 SECRETS*
 .env
 .env.*
+
+# Persistent state — lives at /var/data in production, ./data locally.
+# These files are runtime state, not source. See SESSION_NOTES task #90.
+data/*.json
+data/*.pkl
+data/mlb_slate_cache/
+data/*_forecast_freeze.json
