@@ -87,10 +87,42 @@
 
 {% else %}
   {# ───── mysportsweather.com homepage: sports-first product page ─────
-       Hero title spans full width now that the featured World Cup card
-       has been retired. Sport grid follows immediately below. #}
+       On most days the hero title spans full width. On Wednesdays we
+       drop into a two-column layout (home-hero__row) so the PGA Tour
+       prime slot sits beside the title, occupying the same spot World
+       Cup used to occupy during the World Cup run. Toggled by
+       is_wednesday_eastern from the inject_globals context processor
+       (America/New_York). PGA rounds start Thursday, so Wednesday is
+       when a tournament-preview lift has the most user value. #}
   <section class="home-hero">
     <div class="container">
+      {% if is_wednesday_eastern %}
+      <div class="home-hero__row">
+        <div class="home-hero__intro">
+          <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
+          <h1 class="home-hero__title" style="text-wrap: balance">Weather for every game, match, race, and round.</h1>
+          <p class="home-hero__lead">
+            Live forecasts across every sport, built by a meteorologist.
+          </p>
+        </div>
+        <aside>
+          <a href="/golf" class="home-featured home-featured--compact" style="border:2px solid #166534;background:linear-gradient(180deg,var(--white) 0%,#f0f7f0 100%)">
+            <div class="home-featured__top">
+              <span class="live-badge" style="background:#166534">Tournament Preview</span>
+              <span class="home-featured__kicker">PGA Tour · Rounds start Thursday</span>
+            </div>
+            <h2 class="home-featured__title" style="color:#166534">This week's PGA Tour weather preview</h2>
+            <p class="home-featured__body">
+              Course-local hourly weather for every round of this week's tournament. Morning vs. afternoon wave, wind, and rain risk by tee time.
+            </p>
+            <span class="home-featured__cta">
+              See this week's PGA Tour forecast
+              <span class="home-featured__arrow">→</span>
+            </span>
+          </a>
+        </aside>
+      </div>
+      {% else %}
       <div class="home-hero__intro">
         <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
         {# text-wrap: balance distributes the headline across lines evenly so
@@ -100,35 +132,9 @@
           Live forecasts across every sport, built by a meteorologist.
         </p>
       </div>
+      {% endif %}
     </div>
   </section>
-
-  {# ── Wednesday PGA prime slot ─────────────────────────────────
-     Every Wednesday, feature the current PGA tournament preview
-     as a full-width card above the sport grid. PGA rounds start
-     Thursday, so Wednesday is when a tournament-preview lift has
-     the most user value. Toggled by is_wednesday_eastern from
-     the inject_globals context processor (America/New_York). #}
-  {% if is_wednesday_eastern %}
-  <section class="home-section">
-    <div class="container">
-      <a href="/golf" class="home-featured home-featured--wc" style="border:2px solid #166534;background:linear-gradient(180deg,var(--white) 0%,#f0f7f0 100%)">
-        <div class="home-featured__top">
-          <span class="live-badge" style="background:#166534">Tournament Preview</span>
-          <span class="home-featured__kicker">PGA Tour · Rounds start Thursday</span>
-        </div>
-        <h2 class="home-featured__title" style="color:#166534">This week's PGA Tour weather preview</h2>
-        <p class="home-featured__body">
-          Course-local hourly weather for every round of this week's tournament. Morning vs. afternoon wave, wind forecast, and rain risk by tee time, updated continuously from NWS data.
-        </p>
-        <span class="home-featured__cta">
-          See this week's PGA Tour forecast
-          <span class="home-featured__arrow">→</span>
-        </span>
-      </a>
-    </div>
-  </section>
-  {% endif %}
 
   <section class="home-section">
     <div class="container">
