@@ -806,6 +806,27 @@ def worldcup_gone(subpath=None):
     )
 
 
+# ── Cloudflare Worker debug endpoint ────────────────────────────────
+# Deliberately returns HTTP 502 so we can verify the Cloudflare Worker
+# is intercepting 5xx origin responses and serving the maintenance page.
+# Not linked from anywhere on the site; only usable by visiting the URL
+# directly. If the Worker is configured correctly, visiting
+# /__cf-test-502 should show the maintenance page (503), NOT this 502.
+# Header X-Robots-Tag prevents accidental indexing.
+@app.route("/__cf-test-502")
+def cf_test_502():
+    return (
+        "Simulated 502 for Cloudflare Worker interception test. "
+        "If you see this raw text, the Worker did NOT intercept. "
+        "If you see the maintenance page instead, the Worker works.",
+        502,
+        {
+            "Content-Type": "text/plain; charset=utf-8",
+            "X-Robots-Tag": "noindex, nofollow",
+        },
+    )
+
+
 # ===== Tennis Grand Slams =====
 #
 # Tennis is a SEO-focused, automated-only product. Card auto-shows during
