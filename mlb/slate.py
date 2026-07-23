@@ -36,6 +36,8 @@ from typing import Optional
 from .park_metadata import PARK_METADATA, PARK_NAME_TO_CANONICAL, EXCLUDED_VENUES
 from .wind import get_wind_info
 from . import forecast_freeze
+from . import odds_storage
+from .odds import fetch_mlb_totals, match_odds_to_game
 from .nws import (
     get_mlb_schedule, parse_mlb_game,
     get_nws_hourly_url, get_nws_periods,
@@ -157,12 +159,75 @@ def _hourly_window(periods: list[dict], first_pitch_utc: datetime, tz: ZoneInfo)
     return selected
 
 
+def _build_odds_for_game(game_pk: int, away_name: str, home_name: str,
+                          fp_utc: datetime, odds_list: list[dict],
+                          game_started: bool) -> Optional[dict]:
+    """Match a game to its odds entry, record the opening line if new,
+    and return a dict shaped for the template:
+
+        {
+          "current":       8.5,          # current O/U (or frozen if game started)
+          "opening":       8.0,          # first-seen O/U (immutable)
+          "delta":         0.5,          # current - opening, can be negative
+          "delta_str":     "+0.5",       # pretty-printed
+          "book_display":  "DraftKings",
+          "frozen":        False,        # True if the current line is locked
+        }
+
+    Returns None if we couldn't match odds for this game (Odds API doesn't
+    always cover every game, especially late-added ones)."""
+    if not odds_list:
+        return None
+    match = match_odds_to_game(odds_list, away_name, home_name, fp_utc)
+    if not match:
+        return None
+
+    current_total = match["total"]
+    book_display  = match["book_display"]
+
+    # Only record opening for games that haven't started yet — after first
+    # pitch, the "current" total is actually the frozen close, and we don't
+    # want to accidentally record that as the opening for late-arriving games.
+    if not game_started:
+        odds_storage.record_opening_if_new(game_pk, current_total, book_display)
+
+    opening_rec = odds_storage.get_opening(game_pk)
+    opening_total = opening_rec["total"] if opening_rec else None
+
+    if opening_total is not None:
+        delta = round(current_total - opening_total, 2)
+    else:
+        delta = None
+
+    if delta is None:
+        delta_str = None
+    elif delta > 0:
+        delta_str = f"+{delta}"
+    elif delta < 0:
+        delta_str = f"{delta}"
+    else:
+        delta_str = "0"
+
+    return {
+        "current":      current_total,
+        "opening":      opening_total,
+        "delta":        delta,
+        "delta_str":    delta_str,
+        "book_display": book_display,
+        "frozen":       game_started,
+    }
+
+
 def build_slate(date_str: str) -> list[dict]:
     """
     Build the slate for a given date. Returns games in chronological order
     by first pitch. Games with no park match are dropped silently.
     """
     raw_games = get_mlb_schedule(date_str)
+    # Fetch odds ONCE per slate build (not per game) — one API credit
+    # covers all games in the response. Empty list if API is down or
+    # ODDS_API_KEY is unset; the slate still builds without odds.
+    odds_list = fetch_mlb_totals()
     out = []
 
     for g in raw_games:
@@ -188,16 +253,21 @@ def build_slate(date_str: str) -> list[dict]:
         # and (if the game is still in the future) save the snapshot.
         now_utc = datetime.now(timezone.utc)
         game_pk = parsed["game_pk"]
-        if fp_utc <= now_utc and forecast_freeze.has(game_pk):
+        game_started = fp_utc <= now_utc
+        if game_started and forecast_freeze.has(game_pk):
             # Game has started — read the locked snapshot
             frozen = forecast_freeze.get(game_pk)
             forecast = frozen["forecast"]
             wind_info = frozen["wind_info"]
             hourly    = frozen["hourly"]
+            # Odds may or may not have been in the freeze payload (older
+            # freezes predate odds integration). Fall back to None if missing.
+            frozen_odds = frozen.get("odds")
             source    = "nws-frozen"
             err       = None
         else:
             # Fetch fresh
+            frozen_odds = None
             forecast, all_periods, source, err = _forecast_for_park(park, fp_utc)
             wind_info = None
             if forecast:
@@ -207,9 +277,19 @@ def build_slate(date_str: str) -> list[dict]:
                     wind_speed=forecast["wind_speed"],
                 )
             hourly = _hourly_window(all_periods or [], fp_utc, park_tz)
-            # Lock the snapshot while game is still upcoming
+            # Lock the snapshot while game is still upcoming. Include odds
+            # in the freeze so the post-first-pitch view shows the closing
+            # line and (later) the delta from open.
             if fp_utc > now_utc and forecast and hourly:
-                forecast_freeze.freeze(game_pk, forecast, wind_info, hourly)
+                pre_freeze_odds = _build_odds_for_game(
+                    game_pk, parsed["away_name"], parsed["home_name"],
+                    fp_utc, odds_list, game_started=False,
+                )
+                forecast_freeze.freeze(
+                    game_pk, forecast, wind_info, hourly,
+                    odds=pre_freeze_odds,
+                )
+                frozen_odds = pre_freeze_odds
 
         # HRRR overlay — CONUS-only 3km high-resolution model. Not frozen
         # (HRRR updates hourly, freezing defeats the purpose). International
@@ -228,6 +308,18 @@ def build_slate(date_str: str) -> list[dict]:
         if parsed.get("double_header") in ("Y", "S") and parsed.get("game_num", 1) > 1:
             slug = f"{slug}-g{parsed['game_num']}"
 
+        # Odds resolution: use frozen odds if the game has started (matches
+        # OVERcast's freeze-at-first-pitch pattern). Otherwise attach live
+        # odds — this will also record the opening line the first time we
+        # see it, so later visits can compute the delta.
+        if game_started:
+            odds = frozen_odds
+        else:
+            odds = _build_odds_for_game(
+                game_pk, parsed["away_name"], parsed["home_name"],
+                fp_utc, odds_list, game_started=False,
+            )
+
         out.append({
             **parsed,
             "park":                park,
@@ -239,6 +331,7 @@ def build_slate(date_str: str) -> list[dict]:
             "wind_info":           wind_info,
             "hourly":              hourly,
             "hrrr_hourly":         hrrr_hourly,
+            "odds":                odds,
             "slug":                slug,
             "weather_source":      source,
             "weather_error":       err,

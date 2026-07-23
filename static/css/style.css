@@ -234,6 +234,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__rule { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.75rem; }
 .cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; }
 .cheat-card__badge { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); }
+.cheat-card__total { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; color: var(--slate); margin-left: auto; letter-spacing: 0.02em; }
 .cheat-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); }
 .cheat-card__rule-right { display: inline-flex; align-items: center; gap: 0.4rem; }
 .cheat-card__roof { font-family: var(--font-sans); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.1rem 0.4rem; border: 1px solid var(--smoke); color: var(--slate); border-radius: 2px; line-height: 1.4; }

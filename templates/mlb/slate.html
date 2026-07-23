@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "mlb/_macros.html" import cheat_card, hourly_table, game_summary_panel %}
+{% from "mlb/_macros.html" import cheat_card, hourly_table, game_summary_panel, game_odds_block %}
 
 {% block title %}MLB Weather Forecast, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}Free MLB weather forecasts for every ballpark on {{ pretty_date }}: hourly temperature, wind direction relative to center field, precipitation. By sports meteorologist Kevin Roth.{% endblock %}
@@ -89,6 +89,7 @@
           <div class="mlb-game-block__body">
             {{ game_summary_panel(g) }}
             <div class="mlb-game-block__hourly">
+              {{ game_odds_block(g) }}
               {{ hourly_table(g) }}
 
               {# HRRR high-resolution overlay — CONUS-only. Skipped for

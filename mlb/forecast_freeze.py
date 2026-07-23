@@ -68,13 +68,18 @@ def get(game_pk: int) -> Optional[dict]:
         return _frozen.get(int(game_pk))
 
 
-def freeze(game_pk: int, forecast: dict, wind_info: dict, hourly: list[dict]) -> None:
-    """Save a game's forecast snapshot. Called by slate builder while game is future."""
+def freeze(game_pk: int, forecast: dict, wind_info: dict, hourly: list[dict],
+           odds: Optional[dict] = None) -> None:
+    """Save a game's forecast snapshot. Called by slate builder while game is future.
+
+    `odds` is optional — added 2026-07-22 for the odds integration. Old freezes
+    without it still load fine because slate.py uses `.get('odds')` on read."""
     with _lock:
         _frozen[int(game_pk)] = {
             "forecast":      forecast,
             "wind_info":     wind_info,
             "hourly":        hourly,
+            "odds":          odds,
             "frozen_at_utc": datetime.now(timezone.utc),
         }
     _persist()

@@ -125,6 +125,9 @@
       <span class="cheat-card__time">{{ game.first_pitch_eastern_str }}</span>
       {% if roof == "retractable" %}<span class="cheat-card__badge">Roof</span>{% endif %}
       {% if roof == "fixed_dome" %}<span class="cheat-card__badge">Dome</span>{% endif %}
+      {% if game.odds and game.odds.current is not none %}
+        <span class="cheat-card__total">O/U {{ game.odds.current }}</span>
+      {% endif %}
     </div>
     <div class="cheat-card__teams">
       <div class="cheat-card__team">
@@ -190,6 +193,29 @@
       </div>
     {% endif %}
   </div>
+{% endmacro %}
+
+
+{# ── Odds block: three items only per Kevin: O/U, Opened, ± delta.
+   No book name, no status text. Subtle, small, sits above the hourly
+   forecast. Silent if no odds data (unmatched game or API down). #}
+{% macro game_odds_block(game) %}
+  {% set o = game.odds %}
+  {% if o and o.current is not none %}
+    <div class="game-odds" style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.9rem;margin:0.85rem 0 0.25rem;padding:0.55rem 0.9rem;background:#f8f8f8;border-left:3px solid var(--fog);font-family:var(--font-sans);font-size:0.85rem;color:var(--slate)">
+      <span style="font-weight:600;color:var(--ink)">
+        O/U <span style="font-family:var(--font-serif);font-size:1.05rem">{{ o.current }}</span>
+      </span>
+      {% if o.opening is not none %}
+        <span style="color:var(--ash)">Opened {{ o.opening }}</span>
+        {% if o.delta is not none and o.delta != 0 %}
+          <span style="font-weight:600;color:{% if o.delta > 0 %}#166534{% else %}#b91c1c{% endif %}">
+            {% if o.delta > 0 %}↑{% else %}↓{% endif %} {{ o.delta_str }}
+          </span>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
 {% endmacro %}
 
 
