@@ -94,27 +94,30 @@
             <div class="mlb-game-block__hourly">
               {{ hourly_table(g) }}
             </div>
-          </div>
 
-          {# HRRR high-resolution overlay — CONUS-only. Skipped for
-             international park games (Field of Dreams, London Series).
-             Moved OUTSIDE .mlb-game-block__body so expanding it doesn't
-             stretch the quad summary panel (regression 2026-07-23 when
-             we switched body grid to align-items: stretch to line up
-             quad's bottom with dewpoint row). Same schema as game
-             detail page: closed by default, expand for 3km hourly. #}
-          {% if g.hrrr_hourly %}
-            <details style="margin: 0.5rem 1rem 0.5rem; border: 1px solid var(--mist); border-radius: 6px;">
-              <summary style="cursor: pointer; padding: 0.7rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; background: #f8f8f8;">
-                Higher-resolution model
-                <span style="display:inline-block; margin-left:0.5rem; padding:0.15rem 0.5rem; background: var(--storm); color: #fff; border-radius: 3px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle;">HRRR</span>
-                <span style="color: var(--fog); font-size: 0.75rem; margin-left: 0.5rem;">3 km hourly updates</span>
-              </summary>
-              <div style="padding: 0.5rem 1rem 1rem;">
-                {{ hourly_table(g, hours=g.hrrr_hourly) }}
+            {# HRRR high-resolution overlay — CONUS-only. Skipped for
+               international park games (Field of Dreams, London Series).
+               Placed as a NEW ROW in the body grid but pinned to col 2
+               (grid-column: 2) so it appears directly under the main
+               hourly forecast and does NOT stretch the quad summary panel
+               when opened. Fixes the 2026-07-23 regression where HRRR was
+               moved outside body and stretched full-width across both
+               columns. #}
+            {% if g.hrrr_hourly %}
+              <div style="grid-column: 2; padding: 0 1rem 0.85rem;">
+                <details style="border: 1px solid var(--mist); border-radius: 6px;">
+                  <summary style="cursor: pointer; padding: 0.7rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; background: #f8f8f8;">
+                    Higher-resolution model
+                    <span style="display:inline-block; margin-left:0.5rem; padding:0.15rem 0.5rem; background: var(--storm); color: #fff; border-radius: 3px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle;">HRRR</span>
+                    <span style="color: var(--fog); font-size: 0.75rem; margin-left: 0.5rem;">3 km hourly updates</span>
+                  </summary>
+                  <div style="padding: 0.5rem 1rem 1rem;">
+                    {{ hourly_table(g, hours=g.hrrr_hourly) }}
+                  </div>
+                </details>
               </div>
-            </details>
-          {% endif %}
+            {% endif %}
+          </div>
           {# "Full forecast for this game →" link removed 2026-07-23:
              the per-game detail page (/mlb/<date>/<slug>) doesn't add
              meaningful forecast info beyond what the slate already shows,
