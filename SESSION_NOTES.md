@@ -264,6 +264,51 @@ This has dominated recent sessions and got even worse in the July 2026 session. 
 - Per-sport "cheat-sheet" card: 3-column grid (temp / wind / precip), serif numbers, sans labels
 - Homepage sport-card icon size: 40×40, at flex-start alignment to the kicker+title stack (see July 2026 fix)
 
+## Design + UX decisions (locked, July 22-23 2026 sessions)
+
+Kevin's explicit request: **"I don't want any drifting back to where we were after the design fixes we've made across mobile and computer."** Every item below was a deliberate decision. Do not undo any of them without Kevin's explicit sign-off.
+
+### Per-game block layout
+
+- **Odds display goes in the header, top-right, stacked below "First pitch · X"** on the slate per-game block, and left-aligned right under the venue meta on the game detail page. NEVER put a bordered odds box above the hourly forecast — that placement was tried and Kevin rejected it. Macro: `game_odds_inline(game, align)` in `templates/mlb/_macros.html`.
+- **Odds display content is 3 items only: O/U current, Opened value, ± delta with arrow.** NO book name, NO status text ("locked at first pitch"), NO reason text of any kind. Kevin's exact words: "Just 3 things."
+- **Cheat card top row includes a subtle `O/U X.X`** appended to the existing time+badge line. Class `.cheat-card__total`. Never restructure the cheat card itself — Kevin explicitly noted the card design must not be downgraded, only added to.
+- **Per-game header uses `align-items: flex-start`** so first-pitch time + odds sit at the top-right (not center-right).
+- **Body grid uses `align-items: stretch`** so the quad summary box's bottom aligns with the hourly's dewpoint row.
+- **HRRR sits in body grid row 2, column 2 (desktop)** via `.mlb-game-block__hrrr` class. This prevents the quad box from stretching when HRRR is toggled open (a regression that was fixed). NEVER move HRRR back inside `.mlb-game-block__hourly`.
+- **CSS cascade note:** the mobile HRRR override (`grid-column: 1`) MUST be defined AFTER the desktop `.mlb-game-block__hrrr { grid-column: 2 }` rule in style.css. Same specificity → later wins. Do not move the mobile media query up to be with the body mobile override.
+- **"Full forecast for this game →" deep-links removed** from all sport slate templates (mlb, nfl, cws, mls, prem). Per-game pages still exist and are in sitemap.xml for SEO discovery. Homepage `_next_game_card.html` still has one editorial link. Do NOT re-add to slate templates unless per-game pages gain unique content.
+
+### Mobile grid pattern
+
+- **Use `minmax(0, 1fr)` on grid columns** and `min-width: 0` on grid items so they can shrink. Without this, wide hourly tables force horizontal page scroll on mobile. `.mlb-game-block__body > * { min-width: 0 }` is the safety net.
+- **Matchup headers wrap each team in `<span class="matchup-team">`** so the logo+name stay together when the header wraps on narrow viewports. `.matchup-team { display: inline-flex; white-space: nowrap }`. Never revert to plain inline layout — the header breaks on mobile ("Away Name at [home logo]" splits across lines).
+
+### Homepage
+
+- **Homepage `<title>` is capped at ~57 chars:** `"Free MLB, PGA, NASCAR Weather Forecasts | MySportsWeather"`. Don't expand back to the 68-char version listing every sport — Bing WMT flagged it as too long.
+- **All homepage sport-card `<img>` tags have descriptive alt text** ("MLB baseball weather", "PGA Tour golf weather", etc.). Empty `alt=""` was flagged as an SEO error. Don't strip alt text.
+- **Wednesday PGA prime slot**: on Wednesdays only, a compact PGA tournament preview card renders BESIDE the hero (two-column via `.home-hero__row`) — same slot the retired World Cup card used. Driven by `is_wednesday_eastern` from `inject_globals` context processor. On other days the hero title spans full width.
+- **Sport nav order (left group, then right group with `margin-left: auto` on NFL):** MLB · PGA · NASCAR · (CWS if in window) · (Tennis if in window) · MLS · **[gap]** · NFL · NCAAF. MLS was moved from the right group to the left group at Kevin's request. Don't move MLS back.
+
+### SEO hygiene
+
+- **Schema.org URLs on sport weather hubs point to mysportsweather.com**, never kevinrothwx.com. Sport paths on kevinrothwx.com 301-redirect to mysportsweather.com, so kevinrothwx.com URLs in schema fragment backlink authority.
+- **All sport weather hubs have `<link rel="canonical">`** — mlb_weather.html, nfl_weather.html, pga_weather.html. Don't remove.
+- **Sport weather hubs cross-link** ("Related weather guides" section) between mlb-weather, nfl-weather, and pga-weather. Builds topical cluster for Google.
+- **NFL and PGA weather hubs' CTAs point to `/nfl` and `/golf`** respectively (not to Twitter). Twitter follow is preserved as a SECONDARY button next to the primary slate CTA. Do not remove the Twitter link — 89K follower audience matters.
+- **`/worldcup*` URLs return 410 Gone** (via a catch-all Flask route), not 404. Speeds search-engine removal from indexes. Route lives in app.py.
+
+### Infrastructure
+
+- **Disk-backed MLB slate cache at `/var/data/mlb_slate_cache/*.pkl`.** All gunicorn workers share via disk, killing the multi-worker cache-staleness bug. Kill switch: env var `MLB_DISK_CACHE_DISABLED=1`. Never disable this without a specific reason.
+- **`ODDS_API_KEY` env var in Render** — fetches MLB totals from The Odds API. Book priority MUST mirror OVERcast exactly (Pinnacle → DraftKings → FanDuel → BetMGM → Caesars → first). Never average. Divergence from OVERcast causes displayed totals to disagree.
+- **Opening line snapshots at `/var/data/mlb_odds_openings.json`** — first-seen total per game_pk, immutable. Used to compute the ± delta in odds display. Never re-record.
+- **500 errorhandler serves `templates/maintenance.html`** (with 503 status) for any uncaught Flask exception. Don't remove.
+- **mysportsweather.com is behind Cloudflare**, apex + www proxied. SSL mode: Full. Route `*mysportsweather.com/*` attached to `mysportsweather-maintenance` Cloudflare Worker (worker code stored at repo root `cloudflare-worker.js`). Worker is meant to intercept 5xx origin responses and serve maintenance page; NOT currently working (under investigation — see `/__cf-test-502` diagnostic endpoint for repeatable testing).
+- **kevinrothwx.com is NOT behind Cloudflare** — deliberate choice, Kevin's personal site, low traffic.
+- **`/admin/cache-health` diagnostic page** — shows worker PID, MLB disk cache freshness, per-game details, and a "Rebuild MLB slate cache now" button. Auth via basic auth (same as other /admin routes).
+
 ## Things NOT to touch
 
 - `app.kevinrothwx.com` and anything in OVERcast — separate Render service, separate codebase.
@@ -282,3 +327,5 @@ This has dominated recent sessions and got even worse in the July 2026 session. 
 ---
 
 Last updated: 2026-07-02 during the SEO-landing-page-surge session. Status: 222 evergreen landing pages live across every sport, homepage redesigned to two-column hero with compact WC card, style.css tail truncation recovered, mandatory sweep clean.
+
+Also updated: 2026-07-22 & 2026-07-23 (major sessions). Highlights: MLB odds integration (mirrors OVERcast book priority), disk-backed slate cache eliminating multi-worker staleness, Cloudflare + Worker setup for mysportsweather.com (Worker interception still under investigation), press release distributed via EIN Presswire, 410 handler for retired /worldcup URLs, schema.org URLs fixed to mysportsweather.com on all sport weather hubs, comprehensive design/UX pass on per-game blocks with locked decisions documented in "Design + UX decisions (locked, July 22-23 2026 sessions)" section above — read it before touching any layout.

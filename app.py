@@ -2769,13 +2769,37 @@ def admin_cache_health():
                 dh_label = ""
                 if dh in ("Y", "S") or gn > 1:
                     dh_label = f" (G{gn})"
+                odds = g.get("odds") or {}
+                # Also pull the raw opening record for its first_seen_at
+                # timestamp so we can see when we first captured the line.
+                pk = g.get("game_pk")
+                opening_rec = None
+                if pk:
+                    try:
+                        from mlb import odds_storage as _mlb_odds_storage
+                        opening_rec = _mlb_odds_storage.get_opening(int(pk))
+                    except Exception:
+                        opening_rec = None
+                first_seen = ""
+                if opening_rec and opening_rec.get("first_seen_at"):
+                    fs = opening_rec["first_seen_at"]
+                    try:
+                        first_seen = fs.astimezone(EASTERN_TZ).strftime("%m-%d %H:%M ET")
+                    except Exception:
+                        first_seen = str(fs)[:19]
                 mlb_games.append({
-                    "date_str":  date_str,
-                    "matchup":   f"{g.get('away_abbr','?')} @ {g.get('home_abbr','?')}{dh_label}",
-                    "venue":     g.get("venue", "?"),
-                    "game_pk":   g.get("game_pk", ""),
-                    "status":    g.get("status", ""),
-                    "src":       g.get("weather_source", ""),
+                    "date_str":     date_str,
+                    "matchup":      f"{g.get('away_abbr','?')} @ {g.get('home_abbr','?')}{dh_label}",
+                    "venue":        g.get("venue", "?"),
+                    "game_pk":      g.get("game_pk", ""),
+                    "status":       g.get("status", ""),
+                    "src":          g.get("weather_source", ""),
+                    "odds_current": odds.get("current") if odds else None,
+                    "odds_opening": odds.get("opening") if odds else None,
+                    "odds_delta":   odds.get("delta_str") if odds else None,
+                    "odds_book":    odds.get("book_display") if odds else None,
+                    "odds_frozen":  bool(odds.get("frozen")) if odds else False,
+                    "first_seen":   first_seen,
                 })
 
     # Per-sport freeze counts. Accessor location differs by sport — some
@@ -2875,9 +2899,10 @@ def admin_cache_health():
   <button type="submit" style="padding:.4rem .9rem;background:#1e3a8a;color:#fff;border:0;border-radius:3px;font-weight:600;cursor:pointer">Rebuild MLB slate cache now</button>
 </form>
 <table>
-<thead><tr><th>Date</th><th>Matchup</th><th>Venue</th><th>game_pk</th><th>Status</th><th>Source</th></tr></thead>
-<tbody>{"".join(f"<tr><td>{gm['date_str']}</td><td>{gm['matchup']}</td><td>{gm['venue']}</td><td><code style='font-size:.75rem'>{gm['game_pk']}</code></td><td>{gm['status']}</td><td>{gm['src']}</td></tr>" for gm in mlb_games) or "<tr><td colspan='6' style='color:#888'>no games cached</td></tr>"}</tbody>
+<thead><tr><th>Date</th><th>Matchup</th><th>Venue</th><th>Current</th><th>Opened</th><th>Delta</th><th>Book</th><th>First seen</th><th>Src</th></tr></thead>
+<tbody>{"".join(f"<tr><td>{gm['date_str']}</td><td>{gm['matchup']}</td><td style='font-size:.78rem;color:#666'>{gm['venue']}</td><td>{'—' if gm['odds_current'] is None else gm['odds_current']}</td><td>{'—' if gm['odds_opening'] is None else gm['odds_opening']}{' ' + ('🔒' if gm['odds_frozen'] else '') if gm['odds_opening'] is not None else ''}</td><td style='font-weight:600;color:{('#166534' if gm['odds_delta'] and gm['odds_delta'].startswith('+') else ('#b91c1c' if gm['odds_delta'] and gm['odds_delta'].startswith('-') else '#888'))}'>{gm['odds_delta'] or '—'}</td><td style='font-size:.78rem'>{gm['odds_book'] or '—'}</td><td style='font-size:.75rem;color:#666'>{gm['first_seen'] or '—'}</td><td style='font-size:.78rem;color:#666'>{gm['src']}</td></tr>" for gm in mlb_games) or "<tr><td colspan='9' style='color:#888'>no games cached</td></tr>"}</tbody>
 </table>
+<p class="meta" style="font-size:.75rem">🔒 = odds frozen at first pitch. "Book" shows which sportsbook the current line came from — Pinnacle → DraftKings → FanDuel → BetMGM → Caesars → first available.</p>
 
 <h2>Frozen snapshot counts</h2>
 <p class="meta">Frozen forecasts locked at kickoff/first pitch. Should grow through the day and clear overnight.</p>
