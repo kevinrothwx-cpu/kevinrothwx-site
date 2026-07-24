@@ -529,7 +529,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 
 /* ── Game block redesigned as a bordered card ───────────────── */
 .mlb-game-block { margin-bottom: 1.75rem; scroll-margin-top: 90px; border: 1px solid var(--mist); background: var(--white); padding: 0; }
-.mlb-game-block__header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--mist); }
+.mlb-game-block__header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-bottom: 0; padding: 1rem 1.25rem 0.75rem; border-bottom: 1px solid var(--mist); }
 .mlb-game-block__matchup { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
 .mlb-game-block__venue { font-size: 0.76rem; margin-top: 0.18rem; }
 .mlb-game-block__time { white-space: nowrap; }
@@ -556,7 +556,8 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__hourly { padding: 0 1rem 0.85rem; }
 .mlb-game-block__hourly .hourly { overflow-x: auto; }
 .mlb-game-block__hourly .hourly__hour-col { min-width: 52px; padding: 0.45rem 0.4rem 0.35rem; }
-.mlb-game-block__hourly .hourly__label { padding: 0.35rem 0.3rem 0.35rem 0; font-size: 0.66rem; }
+.mlb-game-block__hourly .hourly__label,
+.mlb-game-block__hourly .hourly__label-col { padding: 0.35rem 0.3rem 0.35rem 0.5rem; font-size: 0.66rem; }
 .mlb-game-block__hourly .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
 
 /* Deep-link to per-game page */
