@@ -127,9 +127,10 @@
                 </div>
               {% endif %}
 
-              <a class="prem-match__link" href="/prem/{{ m.date_local }}/{{ m.slug }}">
-                Full forecast for this match →
-              </a>
+              {# "Full forecast" deep-link removed 2026-07-23 for UX consistency
+                 with MLB — per-match page doesn't add info beyond this slate.
+                 Page kept in sitemap for SEO discovery. See mlb/slate.html for
+                 the full rationale. #}
             </article>
           {% endfor %}
         </div>

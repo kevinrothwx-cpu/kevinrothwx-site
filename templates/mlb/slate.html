@@ -112,9 +112,15 @@
               {% endif %}
             </div>
           </div>
-          <a class="mlb-game-block__deeplink" href="/mlb/{{ date_str }}/{{ g.slug }}">
-            Full forecast for this game <span aria-hidden="true">→</span>
-          </a>
+          {# "Full forecast for this game →" link removed 2026-07-23:
+             the per-game detail page (/mlb/<date>/<slug>) doesn't add
+             meaningful forecast info beyond what the slate already shows,
+             so the link was misleading UX. Pages themselves are kept and
+             still in sitemap.xml so Google indexes them for long-tail
+             "yankees vs red sox weather" queries; also still linked from
+             the homepage "next game" card (_next_game_card.html). Do NOT
+             add a user-facing deep link back here unless the game page
+             actually gains unique content beyond the slate. #}
         </article>
       {% endfor %}
     </div>

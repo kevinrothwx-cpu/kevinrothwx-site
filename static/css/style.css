@@ -449,7 +449,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   .mlb-game-block__matchup .matchup-at { font-size: 0.6em; padding: 0; }
   .mlb-game-block__venue { font-size: 0.66rem; margin-top: 0.08rem; }
   .mlb-game-block__time { font-size: 0.68rem; letter-spacing: 0.06em; }
-  .mlb-game-block__hourly { padding: 0.45rem 0.5rem 0.65rem; }
+  .mlb-game-block__hourly { padding: 0 0.5rem 0.65rem; }
   .mlb-game-block__deeplink { padding: 0.55rem 0.85rem 0.65rem; font-size: 0.76rem; }
 }
 
@@ -535,7 +535,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__time { white-space: nowrap; }
 
 /* Side-by-side: summary panel | hourly table */
-.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; align-items: start; }
+.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; align-items: stretch; }
 @media (max-width: 720px) { .mlb-game-block__body { grid-template-columns: 1fr; } }
 
 .game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
@@ -553,10 +553,10 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .game-summary__field { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding-top: 0.4rem; border-top: 1px dashed var(--smoke); width: 100%; }
 
 /* Hourly table moves inside the game block, no longer needs its own border */
-.mlb-game-block__hourly { padding: 0.6rem 1rem 0.85rem; }
+.mlb-game-block__hourly { padding: 0 1rem 0.85rem; }
 .mlb-game-block__hourly .hourly { overflow-x: auto; }
 .mlb-game-block__hourly .hourly__hour-col { min-width: 52px; padding: 0.45rem 0.4rem 0.35rem; }
-.mlb-game-block__hourly .hourly__label { padding: 0.35rem 0.7rem 0.35rem 0; font-size: 0.66rem; }
+.mlb-game-block__hourly .hourly__label { padding: 0.35rem 0.3rem 0.35rem 0; font-size: 0.66rem; }
 .mlb-game-block__hourly .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
 
 /* Deep-link to per-game page */
@@ -587,7 +587,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 }
 
 .game-summary__cell {
-  padding: 0.85rem 0.7rem;
+  padding: 0.6rem 0.7rem;
   display: flex;
   flex-direction: column;
   justify-content: center;

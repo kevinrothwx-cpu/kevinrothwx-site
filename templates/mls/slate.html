@@ -138,9 +138,10 @@
                 {% endif %}
               </div>
             </div>
-            <a class="mlb-game-block__deeplink" href="/mls/{{ day.date_str }}/{{ m.slug }}">
-              Full forecast for this match <span aria-hidden="true">→</span>
-            </a>
+            {# "Full forecast" deep-link removed 2026-07-23 for UX consistency
+               with MLB — per-match page doesn't add info beyond this slate.
+               Page kept in sitemap for SEO discovery. See mlb/slate.html for
+               the full rationale. #}
           </article>
         {% endfor %}
       </div>

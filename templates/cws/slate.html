@@ -109,9 +109,10 @@
                   {{ cws_impact_strip(g.forecast) }}
                 </div>
               {% endif %}
-              <a class="mlb-game-block__deeplink" href="/cws/{{ day.date_str }}/{{ g.slug }}">
-                Full forecast for this game <span aria-hidden="true">→</span>
-              </a>
+              {# "Full forecast" deep-link removed 2026-07-23 for UX consistency
+                 with MLB — per-game page doesn't add info beyond this slate.
+                 Page kept in sitemap for SEO discovery. See mlb/slate.html for
+                 the full rationale. #}
             </article>
           {% endfor %}
         </div>
