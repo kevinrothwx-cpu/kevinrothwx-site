@@ -1,16 +1,30 @@
 """
 mlb.odds — The Odds API client for MLB game totals (O/U).
 
-Mirrors OVERcast's configuration exactly so MSW and OVERcast never diverge:
+Configuration:
     - Source: api.the-odds-api.com, sport `baseball_mlb`
     - Market: `totals` only (never spreads, never moneylines)
-    - Region: `us`
-    - Book priority: Pinnacle → DraftKings → FanDuel → BetMGM → Caesars →
-      first available. NEVER averages across books — that produces
-      non-real lines like 7.75 that cause false pushes.
+    - Region: `us` (US-licensed books only — see book-choice note below)
+    - Book priority: DraftKings → FanDuel → BetMGM → Caesars → first
+      available. NEVER averages across books — that produces non-real
+      lines like 7.75 that cause false pushes.
     - Timing: pulls the current pre-game line at fetch time. Once a game
       starts, the line freezes (handled in mlb/slate.py via the existing
       forecast_freeze pattern).
+
+Book-choice note (decided 2026-07-24):
+    OVERcast uses Pinnacle-first (eu region), falling back to DraftKings.
+    MSW deliberately DIVERGES from OVERcast on this: MSW uses DraftKings
+    primary (us region only). Rationale:
+      - Pinnacle isn't legal in the US, so those numbers are "reference
+        only" for MSW's audience (casual sports fans / weather-focused).
+      - DK is what MSW users can actually bet at, so the number they see
+        on MSW matches what they'd see in their DK app.
+      - Future plan: hyperlink the O/U value on the site to a DK affiliate
+        link so users can click through and place a bet directly. Having
+        the displayed line match DK's line is a prerequisite.
+    Trade-off: MSW's totals will sometimes differ from OVERcast's by
+    ~0.5 for the same game (DK vs. Pinnacle). Accepted.
 
 Credit budget:
     One fetch = 1 credit (1 market × 1 region × 1 request).
@@ -33,9 +47,13 @@ from typing import Optional
 
 ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/baseball_mlb/odds"
 
-# Book priority — matches OVERcast. Never change this without also
-# updating OVERcast, or the two products' displayed totals will diverge.
-BOOK_PRIORITY = ["pinnacle", "draftkings", "fanduel", "betmgm", "williamhill_us"]
+# Book priority for MSW — DraftKings first. Pinnacle is deliberately NOT
+# in this list even though OVERcast uses it, because Pinnacle isn't in
+# The Odds API's `us` region response and MSW's audience needs a US-legal
+# book they can actually bet at. See module docstring for the full
+# rationale. Do NOT re-add pinnacle unless you also change region=us to
+# region=us,eu (which doubles credit cost per fetch).
+BOOK_PRIORITY = ["draftkings", "fanduel", "betmgm", "williamhill_us"]
 # Note: "williamhill_us" is Caesars' API name on The Odds API.
 
 # Short display names keyed by the API's book keys.
