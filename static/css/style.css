@@ -538,10 +538,9 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; align-items: stretch; }
 @media (max-width: 720px) {
   .mlb-game-block__body { grid-template-columns: 1fr; }
-  /* On mobile the body is a single column; reset HRRR grid-column so
-     it flows below the hourly instead of creating a phantom col 2 that
-     breaks the layout and causes horizontal scroll. */
-  .mlb-game-block__hrrr { grid-column: 1; padding: 0 0.5rem 0.65rem; }
+  /* NOTE: mobile HRRR override is defined LATER in this file (after the
+     desktop .mlb-game-block__hrrr rule) so it wins the cascade. Do NOT
+     move it up here — same specificity means later-defined wins. */
 }
 
 .game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
@@ -581,6 +580,15 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__hrrr-body .hourly__label,
 .mlb-game-block__hrrr-body .hourly__label-col { padding: 0.35rem 0.3rem 0.35rem 1rem; font-size: 0.66rem; }
 .mlb-game-block__hrrr-body .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
+
+/* Mobile HRRR override — MUST come AFTER the desktop .mlb-game-block__hrrr
+   rules above so it wins the cascade. On mobile the body grid collapses to
+   single column via the earlier media query; HRRR needs grid-column: 1 (not
+   the desktop col 2) so it flows below quad+hourly instead of creating a
+   phantom col 2 that breaks mobile layout and causes horizontal scroll. */
+@media (max-width: 720px) {
+  .mlb-game-block__hrrr { grid-column: 1; padding: 0 0.5rem 0.65rem; }
+}
 
 /* Deep-link to per-game page */
 .mlb-game-block__deeplink { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.25rem 0.85rem; font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--storm); text-decoration: none; border-top: 1px solid var(--mist); width: 100%; box-sizing: border-box; transition: background 0.15s ease; }
