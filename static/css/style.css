@@ -535,13 +535,28 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__time { white-space: nowrap; }
 
 /* Side-by-side: summary panel | hourly table */
-.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; align-items: stretch; }
+/* minmax(0, 1fr) on the hourly column allows the grid item to shrink
+   below its content min-width. Without min: 0, the hourly table's natural
+   width (~350px+ with 5-6 hour cols) would force the entire block wider
+   than the viewport on mobile, causing horizontal page scroll. With
+   min: 0, the grid item respects viewport width and the .hourly's own
+   overflow-x: auto scrolls internally. */
+.mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 0; align-items: stretch; }
+.mlb-game-block__body > * { min-width: 0; }
 @media (max-width: 720px) {
-  .mlb-game-block__body { grid-template-columns: 1fr; }
+  .mlb-game-block__body { grid-template-columns: minmax(0, 1fr); }
   /* NOTE: mobile HRRR override is defined LATER in this file (after the
      desktop .mlb-game-block__hrrr rule) so it wins the cascade. Do NOT
      move it up here — same specificity means later-defined wins. */
 }
+
+/* Matchup h2: flex container so the away/home teams stay grouped with
+   their logos and wrap cleanly on narrow viewports. Without this, on
+   mobile the plain-inline layout would break like "Away Name at [home
+   logo]" on line 1 and "Home Name" orphaned on line 2. */
+.mlb-game-block__matchup,
+.game-page__title { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.55rem; }
+.matchup-team { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
 
 .game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
 @media (max-width: 720px) { .game-summary { border-right: 0; border-bottom: 1px solid var(--mist); flex-direction: row; justify-content: space-around; flex-wrap: wrap; } }
