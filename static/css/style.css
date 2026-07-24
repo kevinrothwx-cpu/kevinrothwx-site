@@ -536,7 +536,13 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 
 /* Side-by-side: summary panel | hourly table */
 .mlb-game-block__body { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 0; align-items: stretch; }
-@media (max-width: 720px) { .mlb-game-block__body { grid-template-columns: 1fr; } }
+@media (max-width: 720px) {
+  .mlb-game-block__body { grid-template-columns: 1fr; }
+  /* On mobile the body is a single column; reset HRRR grid-column so
+     it flows below the hourly instead of creating a phantom col 2 that
+     breaks the layout and causes horizontal scroll. */
+  .mlb-game-block__hrrr { grid-column: 1; padding: 0 0.5rem 0.65rem; }
+}
 
 .game-summary { background: var(--paper); border-right: 1px solid var(--mist); padding: 1rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; align-items: center; text-align: center; }
 @media (max-width: 720px) { .game-summary { border-right: 0; border-bottom: 1px solid var(--mist); flex-direction: row; justify-content: space-around; flex-wrap: wrap; } }
@@ -559,6 +565,22 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-game-block__hourly .hourly__label,
 .mlb-game-block__hourly .hourly__label-col { padding: 0.35rem 0.3rem 0.35rem 0.5rem; font-size: 0.66rem; }
 .mlb-game-block__hourly .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
+
+/* HRRR block — pinned to grid col 2 on desktop so it appears below the
+   main hourly forecast and does NOT stretch the quad summary panel.
+   Mobile media query below resets to single-column span. */
+.mlb-game-block__hrrr { grid-column: 2; padding: 0 1rem 0.85rem; }
+.mlb-game-block__hrrr details { border: 1px solid var(--mist); border-radius: 6px; }
+.mlb-game-block__hrrr summary { cursor: pointer; padding: 0.7rem 1rem; font-family: var(--font-sans); font-size: 0.9rem; background: #f8f8f8; }
+.mlb-game-block__hrrr-badge { display: inline-block; margin-left: 0.5rem; padding: 0.15rem 0.5rem; background: var(--storm); color: #fff; border-radius: 3px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle; }
+.mlb-game-block__hrrr-note { color: var(--fog); font-size: 0.75rem; margin-left: 0.5rem; }
+/* Zero left/right padding on the inner container so the HRRR hourly's
+   columns line up EXACTLY with the main hourly's columns above it. */
+.mlb-game-block__hrrr-body { padding: 0.5rem 0 1rem 0; }
+.mlb-game-block__hrrr-body .hourly__hour-col { min-width: 52px; padding: 0.45rem 0.4rem 0.35rem; }
+.mlb-game-block__hrrr-body .hourly__label,
+.mlb-game-block__hrrr-body .hourly__label-col { padding: 0.35rem 0.3rem 0.35rem 1rem; font-size: 0.66rem; }
+.mlb-game-block__hrrr-body .hourly__cell { padding: 0.35rem 0.4rem; font-size: 0.82rem; }
 
 /* Deep-link to per-game page */
 .mlb-game-block__deeplink { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.65rem 1.25rem 0.85rem; font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; color: var(--storm); text-decoration: none; border-top: 1px solid var(--mist); width: 100%; box-sizing: border-box; transition: background 0.15s ease; }
