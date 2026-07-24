@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "mlb/_macros.html" import cheat_card, hourly_table, game_summary_panel, game_odds_block %}
+{% from "mlb/_macros.html" import cheat_card, hourly_table, game_summary_panel, game_odds_inline %}
 
 {% block title %}MLB Weather Forecast, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}Free MLB weather forecasts for every ballpark on {{ pretty_date }}: hourly temperature, wind direction relative to center field, precipitation. By sports meteorologist Kevin Roth.{% endblock %}
@@ -67,19 +67,22 @@
       {% for g in slate %}
         {% set has_toggle = g.park.roof_type == "retractable" or g.park.roof_type == "fixed_dome" %}
         <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="game-{{ g.slug }}">
-          <header class="mlb-game-block__header">
+          <header class="mlb-game-block__header" style="align-items:flex-start">
             <div>
               <h2 class="mlb-game-block__matchup"><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ g.away_team_id }}.svg" alt="" loading="lazy"><span>{{ g.away_name }}</span><span class="matchup-at">at</span><img class="matchup-logo" src="https://www.mlbstatic.com/team-logos/{{ g.home_team_id }}.svg" alt="" loading="lazy"><span>{{ g.home_name }}</span></h2>
               <div class="mlb-game-block__venue">{{ g.venue }} · {{ g.park.city }}</div>
             </div>
-            {% if has_toggle %}
-              <div class="roof-toggle" role="group" aria-label="Roof status">
-                <button class="roof-toggle__option is-active" data-roof="closed">Closed</button>
-                <button class="roof-toggle__option" data-roof="open">Open</button>
-              </div>
-            {% else %}
-              <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
-            {% endif %}
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.35rem">
+              {% if has_toggle %}
+                <div class="roof-toggle" role="group" aria-label="Roof status">
+                  <button class="roof-toggle__option is-active" data-roof="closed">Closed</button>
+                  <button class="roof-toggle__option" data-roof="open">Open</button>
+                </div>
+              {% else %}
+                <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
+              {% endif %}
+              {{ game_odds_inline(g) }}
+            </div>
           </header>
           {% if has_toggle %}
             <div class="roof-closed-message">
@@ -89,7 +92,6 @@
           <div class="mlb-game-block__body">
             {{ game_summary_panel(g) }}
             <div class="mlb-game-block__hourly">
-              {{ game_odds_block(g) }}
               {{ hourly_table(g) }}
 
               {# HRRR high-resolution overlay — CONUS-only. Skipped for

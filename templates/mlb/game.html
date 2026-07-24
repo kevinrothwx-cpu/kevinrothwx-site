@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "mlb/_macros.html" import hourly_table, weather_icon, wind_arrow_svg, mlb_logo, game_odds_block %}
+{% from "mlb/_macros.html" import hourly_table, weather_icon, wind_arrow_svg, mlb_logo, game_odds_inline %}
 
 {% block title %}{{ game.away_name }} at {{ game.home_name }}, {{ pretty_date }} Weather | Kevin Roth{% endblock %}
 {% block description %}{{ game.away_name }} at {{ game.home_name }} weather forecast for {{ pretty_date }}. First pitch {{ game.first_pitch_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at game time, wind {{ game.wind_info.label if game.wind_info else 'unknown' }}{% endif %}. By sports meteorologist Kevin Roth.{% endblock %}
@@ -87,6 +87,11 @@
     {% if game.park.roof_type == "retractable" %} · Retractable roof{% endif %}
     {% if game.park.roof_type == "fixed_dome" %} · Domed venue{% endif %}
   </p>
+  {% if game.odds and game.odds.current is not none %}
+    <div style="margin:-0.25rem 0 1rem">
+      {{ game_odds_inline(game, align="left") }}
+    </div>
+  {% endif %}
 
   {# ── Editorial hero: temp big, wind + precip flanking ─────── #}
   {% if game.forecast %}
@@ -122,7 +127,6 @@
 
   {# ── Hourly forecast ──────────────────────────────────────── #}
   <h2 class="game-section-h2">Hourly forecast</h2>
-  {{ game_odds_block(game) }}
   {{ hourly_table(game) }}
 
   {# HRRR high-resolution overlay — CONUS only. International park games
