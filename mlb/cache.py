@@ -190,6 +190,40 @@ def get_slate(date_str: str, allow_build: bool = True) -> tuple[list[dict] | Non
     }
 
 
+def _prune_old_slates() -> None:
+    """Remove cached slates for dates older than today (Eastern) from
+    both memory and disk. Without this, _slate_cache accumulates one
+    entry per date any user or admin has ever browsed to — after a
+    week you see 7+ dates in /admin/cache-health, all showing STALE,
+    which hides the real staleness signal for today/tomorrow.
+
+    Silent on disk delete failure — the memory cleanup already
+    happened and a leftover pkl file is cosmetic."""
+    today = _today_eastern_str()
+    with _cache_lock:
+        old = [d for d in list(_slate_cache) if d < today]
+        for d in old:
+            _slate_cache.pop(d, None)
+    if _disk_cache_disabled():
+        return
+    try:
+        if not os.path.exists(_DISK_CACHE_DIR):
+            return
+        for fn in os.listdir(_DISK_CACHE_DIR):
+            # File format: mlb_slate_YYYY-MM-DD.pkl
+            if not (fn.startswith("mlb_slate_") and fn.endswith(".pkl")):
+                continue
+            date_part = fn[len("mlb_slate_"):-len(".pkl")]
+            # ISO YYYY-MM-DD sorts lexicographically, so string < today works
+            if date_part < today:
+                try:
+                    os.remove(os.path.join(_DISK_CACHE_DIR, fn))
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"[mlb.cache] prune failed: {type(e).__name__}: {e}", flush=True)
+
+
 def _rebuild(date_str: str) -> None:
     """Build (or rebuild) the slate for date_str, store in memory, and
     persist to disk so other workers see the fresh data on their next
@@ -223,6 +257,9 @@ def warmer_loop() -> None:
         try:
             today    = _today_eastern_str()
             tomorrow = _tomorrow_eastern_str()
+            # Drop yesterday-and-older entries first so cache-health only
+            # shows dates that actually matter (today + tomorrow).
+            _prune_old_slates()
             for d in (today, tomorrow):
                 _rebuild(d)
                 with _cache_lock:
