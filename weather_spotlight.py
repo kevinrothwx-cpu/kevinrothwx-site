@@ -61,6 +61,33 @@ _THRESHOLD_SCORE = 25
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
+
+# Per-sport lookahead window (in days, inclusive of today) — how far ahead
+# each sport is allowed to feature a game. Kevin's rule (2026-08-06):
+#   MLB plays daily → today only (never feature tomorrow's game while today
+#      still has games happening — confusing)
+#   CFB / NFL games are weekly events → 4 days ahead is fine (Tuesday can
+#      preview a Saturday game since that's the marquee)
+#   Weekly sports (PGA / NASCAR / MLS on Wed-Sat cadence) → 2 days, tighter
+#      than football but wider than daily. Tunable per sport.
+SPORT_LOOKAHEAD_DAYS = {
+    "mlb":    0,   # today only
+    "cfb":    4,   # up to 4 days ahead (Tue → Sat)
+    "nfl":    4,   # up to 4 days ahead
+    "mls":    2,   # small window
+    "pga":    2,
+    "nascar": 2,
+}
+
+
+def _date_strs_for_sport(sport_key: str) -> list[str]:
+    """Return today + lookahead date strings (YYYY-MM-DD) allowed for a
+    given sport's Spotlight candidacy."""
+    days_ahead = SPORT_LOOKAHEAD_DAYS.get(sport_key, 0)
+    base = datetime.now(EASTERN_TZ)
+    return [(base + timedelta(days=i)).strftime("%Y-%m-%d")
+            for i in range(days_ahead + 1)]
+
 # Persisted lock: {"selection_key": str, "locked_until_utc": datetime, "game": dict}
 _lock_state: dict = {}
 _state_lock = threading.Lock()
@@ -175,18 +202,16 @@ def _story_line(f: dict) -> str:
 # ── Sport adapters ──────────────────────────────────────────────────────────
 
 def _mlb_candidates(now_utc: datetime) -> list[dict]:
-    """Pull today's + tomorrow's MLB slate and turn into scorable candidates."""
+    """MLB adapter — Kevin's rule is today-only for baseball (see
+    SPORT_LOOKAHEAD_DAYS["mlb"] = 0)."""
     try:
         import mlb.cache as mlb_cache
     except Exception as e:
         print(f"[spotlight] mlb import failed: {e}", flush=True)
         return []
 
-    today    = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d")
-    tomorrow = (datetime.now(EASTERN_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
-
     out: list[dict] = []
-    for date_str in (today, tomorrow):
+    for date_str in _date_strs_for_sport("mlb"):
         slate, _meta = mlb_cache.get_slate(date_str, allow_build=False)
         if not slate:
             continue
