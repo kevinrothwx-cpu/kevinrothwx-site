@@ -137,6 +137,54 @@
     </div>
   </section>
 
+  {# ── Weather Spotlight ─────────────────────────────────────────────
+     Cross-sport highlight of the day's highest-impact weather game.
+     Locked for up to 6h and released when kickoff arrives; the picker
+     hides itself entirely on boring-weather days (see weather_spotlight.py). #}
+  {% if spotlight %}
+  <section class="home-section" style="padding-top:0.5rem">
+    <div class="container">
+      <a href="{{ spotlight.url_path }}" class="weather-spotlight" aria-label="Weather Spotlight: {{ spotlight.title }}">
+        <div class="weather-spotlight__label-row">
+          <span class="weather-spotlight__label">Weather Spotlight</span>
+          <span class="weather-spotlight__sport">{{ spotlight.sport_label }}</span>
+        </div>
+        <div class="weather-spotlight__body">
+          <div class="weather-spotlight__matchup">
+            <h2 class="weather-spotlight__title">{{ spotlight.title }}</h2>
+            <p class="weather-spotlight__meta">{{ spotlight.venue }}{% if spotlight.venue_city %}, {{ spotlight.venue_city }}{% endif %} · {{ spotlight.kickoff_local_str }}</p>
+          </div>
+          <div class="weather-spotlight__stats">
+            {% set f = spotlight.forecast %}
+            {% if f.temp is not none %}
+            <div class="weather-spotlight__stat">
+              <div class="weather-spotlight__stat-value{% if f.temp >= 95 %} weather-spotlight__stat-value--hot{% elif f.temp <= 32 %} weather-spotlight__stat-value--cold{% endif %}">{{ f.temp|int }}°</div>
+              <div class="weather-spotlight__stat-label">Temp</div>
+            </div>
+            {% endif %}
+            {% if f.wind_speed %}
+            <div class="weather-spotlight__stat">
+              <div class="weather-spotlight__stat-value{% if f.wind_speed >= 20 %} weather-spotlight__stat-value--wind{% endif %}">{{ f.wind_speed|int }}<span style="font-size:0.5em;color:var(--fog);font-weight:500;margin-left:0.15rem">mph</span></div>
+              <div class="weather-spotlight__stat-label">Wind{% if f.wind_deg is not none %} · {{ f.wind_deg|wind_compass }}{% endif %}</div>
+            </div>
+            {% endif %}
+            {% if f.precip_pct is not none %}
+            <div class="weather-spotlight__stat">
+              <div class="weather-spotlight__stat-value{% if f.precip_pct >= 60 %} weather-spotlight__stat-value--rain{% endif %}">{{ f.precip_pct|int }}%</div>
+              <div class="weather-spotlight__stat-label">Rain</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% if spotlight.story %}
+        <p class="weather-spotlight__story">{{ spotlight.story }}</p>
+        {% endif %}
+        <span class="weather-spotlight__cta">See full forecast <span aria-hidden="true">→</span></span>
+      </a>
+    </div>
+  </section>
+  {% endif %}
+
   <section class="home-section">
     <div class="container">
 

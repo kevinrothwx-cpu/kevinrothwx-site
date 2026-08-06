@@ -442,7 +442,16 @@ SITE_URL = "https://kevinrothwx.com"
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    # Weather Spotlight — cross-sport homepage highlight. Returns None on
+    # boring-weather days; template hides the section entirely. Safe to
+    # call every request (in-memory lock, ~6h re-pick cadence).
+    spotlight = None
+    try:
+        import weather_spotlight
+        spotlight = weather_spotlight.get_current()
+    except Exception as e:
+        print(f"[home] weather_spotlight failed (non-fatal): {e}", flush=True)
+    return render_template("index.html", spotlight=spotlight)
 
 
 @app.route("/about")
