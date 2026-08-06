@@ -245,6 +245,15 @@ def _mlb_candidates(now_utc: datetime) -> list[dict]:
             if not f:
                 continue
             park = g.get("park") or {}
+            # Filter out roofed venues — Spotlight is about weather that
+            # matters. Fixed domes are indoors. Retractable roofs close
+            # when weather turns extreme (which is exactly when a
+            # weather-forecast highlight would trigger), so the
+            # advertised extreme condition never affects play. Excluding
+            # both keeps the pick honest.
+            roof_type = park.get("roof_type") or ""
+            if roof_type in ("fixed_dome", "retractable"):
+                continue
             venue_name = park.get("name") or g.get("venue") or "MLB game"
             city       = park.get("city") or ""
             away = g.get("away_name") or g.get("away_abbr") or ""
@@ -257,6 +266,7 @@ def _mlb_candidates(now_utc: datetime) -> list[dict]:
                 "title":       f"{away} @ {home}",
                 "venue":       venue_name,
                 "venue_city":  city,
+                "roof_type":   roof_type,   # empty string for open-air
                 "kickoff_utc": fp,
                 "kickoff_date_label": _friendly_date_str(fp),
                 "kickoff_local_str":  g.get("first_pitch_eastern_str") or "",
@@ -325,11 +335,15 @@ def _refresh_locked_game_forecast(now_utc: datetime) -> None:
 
 
 def _locked_game_still_valid(locked_game: dict) -> bool:
-    """A previously-picked game is still valid IF its kickoff date (in
-    Eastern) is inside the current SPORT_LOOKAHEAD_DAYS window for its
-    sport. Handles the case where policy changed since the lock was set
-    (e.g. we tightened MLB from today+tomorrow to today-only, but the
-    disk still has yesterday's tomorrow-game locked)."""
+    """A previously-picked game is still valid IF:
+      (1) its kickoff date (in Eastern) is inside the current
+          SPORT_LOOKAHEAD_DAYS window for its sport
+      (2) it does NOT have a fixed-dome or retractable roof (those got
+          filtered out by policy update — retractable roofs close on
+          extreme weather, defeating the point of a weather spotlight)
+
+    Older lock files may lack `roof_type` — treat missing as invalid so
+    stale picks from before the roof-filter policy also clear."""
     if not locked_game:
         return False
     sport = locked_game.get("sport")
@@ -341,7 +355,16 @@ def _locked_game_still_valid(locked_game: dict) -> bool:
     except Exception:
         return False
     allowed = _date_strs_for_sport(sport)
-    return kickoff_date_et in allowed
+    if kickoff_date_et not in allowed:
+        return False
+    # Roof check. If roof_type is absent (older lock), we can't verify —
+    # invalidate to force a re-pick with the current policy.
+    if "roof_type" not in locked_game:
+        return False
+    roof_type = locked_game.get("roof_type") or ""
+    if roof_type in ("fixed_dome", "retractable"):
+        return False
+    return True
 
 
 def get_current() -> Optional[dict]:
