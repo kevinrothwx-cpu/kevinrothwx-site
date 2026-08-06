@@ -195,11 +195,30 @@ def _story_line(f: dict) -> str:
         if precip: pieces.append(f"{precip}% rain")
         return " · ".join(pieces)
 
-    # Cap to two clauses so the strip stays scannable
-    return ". ".join(parts[:2]).rstrip('.') + "."
+    # Cap to two clauses so the strip stays scannable. Capitalize the
+    # first char of each clause since they read as sentences separated
+    # by periods ("71% rain..." + "Thunderstorm risk.").
+    clauses = [p[0].upper() + p[1:] if p else "" for p in parts[:2]]
+    return ". ".join(clauses).rstrip('.') + "."
 
 
 # ── Sport adapters ──────────────────────────────────────────────────────────
+
+def _friendly_date_str(kickoff_utc: datetime) -> str:
+    """Return "Today", "Tomorrow", or "Sat, Aug 9" style label based on
+    how far the game is from today (Eastern)."""
+    if not kickoff_utc:
+        return ""
+    kickoff_et = kickoff_utc.astimezone(EASTERN_TZ)
+    today_et   = datetime.now(EASTERN_TZ).date()
+    delta_days = (kickoff_et.date() - today_et).days
+    if delta_days == 0:
+        return "Today"
+    if delta_days == 1:
+        return "Tomorrow"
+    # Day-of-week + month/day, no year (all Spotlight picks are within days)
+    return kickoff_et.strftime("%a, %b %-d")
+
 
 def _mlb_candidates(now_utc: datetime) -> list[dict]:
     """MLB adapter — Kevin's rule is today-only for baseball (see
@@ -239,7 +258,8 @@ def _mlb_candidates(now_utc: datetime) -> list[dict]:
                 "venue":       venue_name,
                 "venue_city":  city,
                 "kickoff_utc": fp,
-                "kickoff_local_str": g.get("first_pitch_eastern_str") or "",
+                "kickoff_date_label": _friendly_date_str(fp),
+                "kickoff_local_str":  g.get("first_pitch_eastern_str") or "",
                 "url_path":    f"/mlb/{date_str}/{slug}" if slug else "/mlb",
                 "forecast":    dict(f),  # copy so we can freeze the picked snapshot
                 "score":       _score_forecast(f),
@@ -304,9 +324,30 @@ def _refresh_locked_game_forecast(now_utc: datetime) -> None:
             return
 
 
+def _locked_game_still_valid(locked_game: dict) -> bool:
+    """A previously-picked game is still valid IF its kickoff date (in
+    Eastern) is inside the current SPORT_LOOKAHEAD_DAYS window for its
+    sport. Handles the case where policy changed since the lock was set
+    (e.g. we tightened MLB from today+tomorrow to today-only, but the
+    disk still has yesterday's tomorrow-game locked)."""
+    if not locked_game:
+        return False
+    sport = locked_game.get("sport")
+    kickoff_utc = locked_game.get("kickoff_utc")
+    if not sport or not kickoff_utc:
+        return False
+    try:
+        kickoff_date_et = kickoff_utc.astimezone(EASTERN_TZ).strftime("%Y-%m-%d")
+    except Exception:
+        return False
+    allowed = _date_strs_for_sport(sport)
+    return kickoff_date_et in allowed
+
+
 def get_current() -> Optional[dict]:
     """Return the currently-featured game dict, or None if the strip should
-    hide. Handles lock TTL, kickoff release, and re-pick automatically."""
+    hide. Handles lock TTL, kickoff release, policy-validity check, and
+    re-pick automatically."""
     now_utc = datetime.now(timezone.utc)
 
     with _state_lock:
@@ -319,6 +360,15 @@ def get_current() -> Optional[dict]:
         if kickoff and kickoff <= now_utc:
             _clear_lock()
             locked_game = None
+
+    # Release the lock if policy changed and the game no longer fits.
+    # This catches: SPORT_LOOKAHEAD_DAYS tightened since the pick was made,
+    # or the locked pick predates today (calendar rollover).
+    if locked_game and not _locked_game_still_valid(locked_game):
+        print(f"[spotlight] locked game no longer valid per current policy — clearing lock",
+              flush=True)
+        _clear_lock()
+        locked_game = None
 
     # Honor the 6-hour lock if still active
     if locked_game and locked_until and now_utc < locked_until:

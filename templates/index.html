@@ -140,7 +140,7 @@
           <a href="{{ spotlight.url_path }}" class="home-featured home-featured--compact home-featured--spotlight" aria-label="Weather Spotlight: {{ spotlight.title }}">
             <div class="home-featured__top">
               <span class="live-badge" style="background:var(--storm)">Weather Spotlight</span>
-              <span class="home-featured__kicker">{{ spotlight.sport_label }} · {{ spotlight.kickoff_local_str }}</span>
+              <span class="home-featured__kicker">{{ spotlight.sport_label }} · {{ spotlight.kickoff_date_label }}{% if spotlight.kickoff_local_str %} · {{ spotlight.kickoff_local_str }}{% endif %}</span>
             </div>
             <h2 class="home-featured__title" style="color:var(--storm)">{{ spotlight.title }}</h2>
             <p class="home-featured__body">
