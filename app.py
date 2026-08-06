@@ -2828,6 +2828,22 @@ def admin_cache_health():
             n = f"err: {type(e).__name__}"
         freeze_counts.append((label, n))
 
+    # Odds-openings tracked counts. Each sport with odds keeps its own
+    # opening-line ledger (immutable first-seen totals). Surfacing the
+    # counts here helps spot: 0 = odds pipeline broken; count that never
+    # grows = fetcher failing silently.
+    odds_openings = []
+    for label, mod_name in [
+        ("MLB", "mlb.odds_storage"),
+        ("CFB", "cfb.odds_storage"),
+    ]:
+        try:
+            mod = __import__(mod_name, fromlist=["_openings"])
+            n = len(getattr(mod, "_openings", {}) or {})
+        except Exception as e:
+            n = f"err: {type(e).__name__}"
+        odds_openings.append((label, n))
+
     # Build the HTML. Small standalone template — no base.html so this
     # page renders even if something's wrong with the shared template.
     style = (
@@ -2909,6 +2925,13 @@ def admin_cache_health():
 <table>
 <thead><tr><th>Sport</th><th>Frozen count</th></tr></thead>
 <tbody>{freeze_html}</tbody>
+</table>
+
+<h2>Odds openings tracked</h2>
+<p class="meta">Immutable first-seen O/U totals per game. Zero = odds pipeline down (check ODDS_API_KEY env var or The Odds API status).</p>
+<table>
+<thead><tr><th>Sport</th><th>Openings tracked</th></tr></thead>
+<tbody>{"".join(f"<tr><td>{label}</td><td>{n}</td></tr>" for label, n in odds_openings)}</tbody>
 </table>
 
 <p class="meta" style="margin-top:2rem">

@@ -74,12 +74,20 @@
 
 
 {# ── Three-column cheat card (v14 design as Jinja) ──────────────────── #}
+{# Design decision 2026-08-06 (locked in mockup review):
+   - Top row: 3 primary numbers only (temp / wind mph / precip %)
+   - Bottom row: 2 items evenly spread (stadium+direction, weather icon)
+   - Removed "rain" text (redundant with icon)
+   - "mph" small inline unit; gust inline as amber "G##" badge
+   - Odds row at bottom (O/U + Opened + ± delta) when game.odds populated
+   - data-sort-* attributes on the <a> for client-side sort on the slate page. #}
 {% macro cfb_cheat_card(game) %}
   {% set f = game.forecast %}
   {% set v = game.venue %}
   {% set away = game.away %}
   {% set home = game.home %}
   {% set neutral = v and v.is_neutral %}
+  {% set o = game.odds %}
   {# Wind severity class for color-tiering temp and stadium arrow #}
   {% set wind_class = '' %}
   {% if f and f.wind_speed %}
@@ -104,7 +112,19 @@
   {# Night detection from kickoff hour (6 PM - 6 AM ET = night) #}
   {% set kh = game.kickoff_eastern.hour if game.kickoff_eastern else 12 %}
   {% set is_night = (kh >= 18 or kh < 6) %}
-  <a href="{{ game.url_path }}" class="cheat-card cheat-card--cfb">
+  {# Sort keys — computed once so JS can just read data-sort-* on click.
+     Missing values become 0 so cards without forecast/odds sort last (default sort still works). #}
+  {% set sort_kickoff = (game.kickoff_utc.isoformat() if game.kickoff_utc else '9999') %}
+  {% set sort_rain    = (f.precip_pct|int if f and f.precip_pct is not none else 0) %}
+  {% set sort_wind    = (f.wind_speed|int if f and f.wind_speed else 0) %}
+  {% set sort_move    = ((o.delta|abs) if o and o.delta is not none else 0) %}
+  {% set sort_total   = (o.current if o and o.current is not none else 0) %}
+  <a href="{{ game.url_path }}" class="cheat-card cheat-card--cfb"
+     data-sort-kickoff="{{ sort_kickoff }}"
+     data-sort-rain="{{ sort_rain }}"
+     data-sort-wind="{{ sort_wind }}"
+     data-sort-movement="{{ sort_move }}"
+     data-sort-total="{{ sort_total }}">
     <div class="cheat-card__rule">
       <span class="cheat-card__time">{{ game.kickoff_eastern_str }}</span>
       <span class="cheat-card__rule-right">
@@ -128,19 +148,38 @@
     <div class="cheat-card__wx">
       <div class="wx-stat">
         <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{{ f.temp|int }}°</div>
-        <div class="wx-stat__secondary">{% if f.feels_like and (f.feels_like|int) != (f.temp|int) %}Feels {{ f.feels_like|int }}°{% endif %}&nbsp;</div>
       </div>
       <div class="wx-stat">
-        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{{ f.wind_speed|int }} <span style="font-size:0.55em;color:var(--ash);font-weight:500;">mph</span></div>
-        <div class="wx-stat__secondary">{{ cfb_stadium_icon(f.wind_deg, wind_class) }}{% if f.gust %} <strong>G{{ f.gust|int }}</strong>{% endif %}</div>
+        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if v and v.roof == 'fixed_dome' %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust and f.gust|int >= (f.wind_speed|int + 5) %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
       </div>
       <div class="wx-stat">
         <div class="wx-stat__primary wx-stat__primary--precip-{{ precip_class }}">{{ f.precip_pct|int }}%</div>
-        <div class="wx-stat__secondary">{{ cfb_weather_icon(f.short_forecast, f.precip_pct, is_night) }}</div>
       </div>
+    </div>
+    <div class="cheat-card__wx-detail">
+      {% if v and v.roof == 'fixed_dome' %}
+        <span class="wx-detail__item">Indoor</span>
+        <span class="wx-detail__item">—</span>
+      {% else %}
+        <span class="wx-detail__item">{{ cfb_stadium_icon(f.wind_deg, wind_class) }}&nbsp;{{ f.wind_deg|wind_compass }}</span>
+        <span class="wx-detail__item">{{ cfb_weather_icon(f.short_forecast, f.precip_pct, is_night) }}</span>
+      {% endif %}
     </div>
     {% else %}
     <div class="cheat-card__wx-missing">Forecast pending</div>
+    {% endif %}
+    {# Odds row — shows only when game.odds is populated. Ordering per Kevin:
+       O/U (current, bold) · Opened · ± delta arrow. NO book name, NO reason text. #}
+    {% if o and o.current is not none %}
+    <div class="cheat-card__odds">
+      <span class="cheat-card__odds-total">O/U {{ o.current }}</span>
+      {% if o.opening is not none %}
+        <span class="cheat-card__odds-open">Opened {{ o.opening }}</span>
+        {% if o.delta is not none and o.delta != 0 %}
+          <span class="cheat-card__odds-delta cheat-card__odds-delta--{% if o.delta > 0 %}up{% else %}down{% endif %}">{% if o.delta > 0 %}↑{% else %}↓{% endif %} {{ o.delta_str or (o.delta|abs) }}</span>
+        {% endif %}
+      {% endif %}
+    </div>
     {% endif %}
   </a>
 {% endmacro %}

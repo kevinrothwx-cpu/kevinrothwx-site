@@ -30,6 +30,8 @@ from zoneinfo import ZoneInfo
 
 from .schedule import get_cfb_week_games
 from .nws_client import fetch_cfb_hourly
+from . import odds as cfb_odds_client
+from . import odds_storage as cfb_odds_storage
 
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import extract_forecast, find_period_for_time
@@ -57,21 +59,88 @@ def build_cfb_slate(start_date: Optional[datetime] = None,
     # Drop stale games — kickoff already in the past by venue-local date.
     games = [g for g in games if not _is_game_stale(g)]
 
+    # Fetch odds ONCE per slate build (one API credit covers the whole
+    # response). Empty list on any failure — slate still builds without odds.
+    odds_list = cfb_odds_client.fetch_cfb_totals()
+
     # Per-venue NWS/WeatherAPI cache shared across the build.
     venue_weather: dict[tuple[float, float], tuple[list[dict], str, Optional[str]]] = {}
     # Separate HRRR cache — HRRR is optional overlay, US CONUS only.
     venue_hrrr: dict[tuple[float, float], list[dict]] = {}
 
+    now_utc = datetime.now(timezone.utc)
     for g in games:
         _attach_weather_to_game(g, venue_weather, venue_hrrr)
+        # Odds attachment — safe to run even when odds_list is empty.
+        g["odds"] = _build_odds_for_game(g, odds_list, now_utc)
 
+    odds_ct = sum(1 for g in games if g.get("odds"))
     print(
         f"[cfb.slate] built slate: {len(games)} games, "
         f"{len(venue_weather)} unique venues fetched, "
-        f"{len(venue_hrrr)} HRRR overlays",
+        f"{len(venue_hrrr)} HRRR overlays, "
+        f"{odds_ct} odds attached",
         flush=True,
     )
     return games
+
+
+def _build_odds_for_game(game: dict, odds_list: list[dict], now_utc: datetime) -> Optional[dict]:
+    """Match a game to its odds entry, record the opening line if new,
+    and return the template-shaped odds dict. See mlb/slate.py's
+    _build_odds_for_game for the shape reference — identical here.
+
+    Returns None if we couldn't match odds for this game (Odds API doesn't
+    always cover every game, especially early week or FCS opponents)."""
+    if not odds_list:
+        return None
+    event_id = game.get("event_id")
+    away = (game.get("away") or {}).get("name") or ""
+    home = (game.get("home") or {}).get("name") or ""
+    kickoff_utc = game.get("kickoff_utc")
+    if not (event_id and away and home and kickoff_utc):
+        return None
+
+    match = cfb_odds_client.match_odds_to_game(odds_list, away, home, kickoff_utc)
+    if not match:
+        return None
+
+    current_total = match["total"]
+    book_display  = match["book_display"]
+    game_started  = kickoff_utc <= now_utc
+
+    # Only record opening for pre-kickoff games. After kickoff the "current"
+    # value from The Odds API is stale/closed — don't accidentally record
+    # that as an opening for a game we started tracking late.
+    if not game_started:
+        cfb_odds_storage.record_opening_if_new(event_id, current_total, book_display)
+
+    opening_rec   = cfb_odds_storage.get_opening(event_id)
+    opening_total = opening_rec["total"] if opening_rec else None
+
+    if opening_total is not None:
+        delta = round(current_total - opening_total, 2)
+    else:
+        delta = None
+
+    if delta is None:
+        delta_str = None
+    elif delta > 0:
+        delta_str = f"+{delta}"
+    elif delta < 0:
+        delta_str = f"{delta}"  # already has minus sign
+    else:
+        delta_str = "0"
+
+    return {
+        "current":      current_total,
+        "opening":      opening_total,
+        "delta":        delta,
+        "delta_str":    delta_str,
+        "book_display": book_display,
+        "book_key":     match.get("book_key", ""),
+        "frozen":       game_started,
+    }
 
 
 def _is_game_stale(game: dict) -> bool:
