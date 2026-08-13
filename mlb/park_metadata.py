@@ -405,10 +405,27 @@ PARK_METADATA = {
         "aliases": [],
     },
 
+    # ── SPECIAL EVENT VENUE: Field of Dreams (Dyersville, IA) ─────────
+    # Annual MLB regular-season game played on a temporary MLB-spec field
+    # adjacent to the movie site. Open-air, weather-relevant. NWS covers
+    # Iowa. The temporary field is rebuilt each year; if the orientation
+    # ever shifts noticeably, update cf_bearing_degrees.
+    "Field of Dreams": {
+        "mlbam_ids": [],             # MLB assigns a temp venue ID each year
+        "city": "Dyersville, IA",
+        "team": None,                # Not any team's home — special event
+        "roof_type": "open_air",
+        "cf_bearing_degrees": 67,    # ENE — verified by Kevin Aug 2026
+        "lat": 42.4967, "lon": -91.1264,
+        "timezone": "America/Chicago",
+        "asos_station": "KDBQ",      # Dubuque Regional, ~25 mi NE — assumed
+        "aliases": [],
+    },
+
     # ── EXCLUDE: SPRING TRAINING / SPECIAL VENUES ────────────────────
     # These are handled by exclusion in the data cleaning step.
     # George M. Steinbrenner Field, Sahlen Field, TD Ballpark,
-    # Field of Dreams, Bristol Motor Speedway, London Stadium,
+    # Bristol Motor Speedway, London Stadium,
     # Estadio de Beisbol Monterrey, Estadio Alfredo Harp Helu,
     # Hiram Bithorn Stadium, Fort Bragg Field, Rickwood Field,
     # Journey Bank Ballpark, Muncy Bank Ballpark, BB&T Ballpark,
@@ -435,7 +452,9 @@ EXCLUDED_VENUES = {
     "Estadio Alfredo Harp Helu",
     "Hiram Bithorn Stadium",
     # Special domestic event venues
-    "Field of Dreams",
+    # NOTE: "Field of Dreams" moved to PARK_METADATA above so its annual
+    # regular-season game (Dyersville, IA) appears on the MLB slate with
+    # a real weather forecast. Keep the exclusion list for other one-offs.
     "Bristol Motor Speedway",
     "Fort Bragg Field",
     "Rickwood Field",
