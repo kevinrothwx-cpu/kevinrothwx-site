@@ -44,8 +44,14 @@ ESPN_NFL_SCOREBOARD_URL = (
     "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 )
 
+# User-Agent: dropped the "nfl" token 2026-08-13. ESPN started returning
+# 403 Forbidden on every NFL scoreboard request while CFB and MLS (which
+# use "kevinrothwx-site/1.0 [sport?] (kevinrothwx@gmail.com)" pattern with
+# no "nfl" token) continued to work. Best guess: ESPN is more protective
+# of NFL scraping and pattern-matches on the sport name in the UA.
+# Matching the CFB pattern exactly to stay under any block heuristic.
 REQUEST_HEADERS = {
-    "User-Agent": "kevinrothwx-site/1.0 nfl (kevinrothwx@gmail.com)",
+    "User-Agent": "kevinrothwx-site/1.0 (kevinrothwx@gmail.com)",
 }
 REQUEST_TIMEOUT_SEC = 15
 

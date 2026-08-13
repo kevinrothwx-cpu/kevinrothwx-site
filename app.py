@@ -2853,6 +2853,53 @@ def admin_cache_health():
             n = f"err: {type(e).__name__}"
         odds_openings.append((label, n))
 
+    # Per-sport slate freshness — the diagnostic that was missing on 2026-08-13
+    # when Kevin asked "why isn't NFL populating?" and we had no per-sport
+    # visibility beyond MLB. Each sport's accessor takes allow_build=False so
+    # we see the cached state without triggering a fresh build.
+    def _slate_row(label: str, accessor, is_window_style: bool = True):
+        """is_window_style=True → accessor returns list of games directly.
+           is_window_style=False → accessor takes a date_str."""
+        try:
+            games, meta = accessor()
+            n_games   = len(games) if games else 0
+            built_at  = meta.get("built_at_utc") if meta else None
+            age_min   = _age_min(built_at) if built_at else None
+            build_err = (meta or {}).get("build_err") or ""
+            cls       = _freshness_class(age_min)
+        except Exception as e:
+            n_games   = 0
+            age_min   = None
+            build_err = f"{type(e).__name__}: {e}"
+            cls       = "stale"
+        return (label, age_min, n_games, cls, build_err[:120])
+
+    slate_rows = []
+    slate_rows.append(_slate_row("NFL",  lambda: get_nfl_slate(allow_build=False)))
+    slate_rows.append(_slate_row("CFB",  lambda: get_cfb_slate(allow_build=False)))
+    slate_rows.append(_slate_row("MLS",  lambda: get_mls_slate(allow_build=False)))
+    try:
+        # PGA has a different signature (returns tuple of pga_slate meta), guard it
+        slate_rows.append(_slate_row("PGA",  lambda: get_pga_slate(allow_build=False)))
+    except Exception as e:
+        slate_rows.append(("PGA", None, 0, "stale", f"accessor err: {type(e).__name__}"))
+    try:
+        slate_rows.append(_slate_row("NASCAR", lambda: get_nascar_slate(allow_build=False)))
+    except Exception as e:
+        slate_rows.append(("NASCAR", None, 0, "stale", f"accessor err: {type(e).__name__}"))
+
+    # Pre-render slate rows HTML — done outside the f-string below to keep
+    # the f-string readable (nested ternaries + quotes were a hazard).
+    _dash = "—"
+    slate_rows_html = "".join(
+        "<tr><td>" + label + "</td>"
+        "<td>" + (str(age_min) + " min" if age_min is not None else _dash) + "</td>"
+        "<td>" + str(n_games) + "</td>"
+        "<td>" + _pill(cls) + "</td>"
+        "<td><code style='font-size:.78rem'>" + (err or "") + "</code></td></tr>"
+        for label, age_min, n_games, cls, err in slate_rows
+    )
+
     # Build the HTML. Small standalone template — no base.html so this
     # page renders even if something's wrong with the shared template.
     style = (
@@ -2928,6 +2975,13 @@ def admin_cache_health():
 <tbody>{"".join(f"<tr><td>{gm['date_str']}</td><td>{gm['matchup']}</td><td style='font-size:.78rem;color:#666'>{gm['venue']}</td><td>{'—' if gm['odds_current'] is None else gm['odds_current']}</td><td>{'—' if gm['odds_opening'] is None else gm['odds_opening']}{' ' + ('🔒' if gm['odds_frozen'] else '') if gm['odds_opening'] is not None else ''}</td><td style='font-weight:600;color:{('#166534' if gm['odds_delta'] and gm['odds_delta'].startswith('+') else ('#b91c1c' if gm['odds_delta'] and gm['odds_delta'].startswith('-') else '#888'))}'>{gm['odds_delta'] or '—'}</td><td style='font-size:.78rem'>{gm['odds_book'] or '—'}</td><td style='font-size:.75rem;color:#666'>{gm['first_seen'] or '—'}</td><td style='font-size:.78rem;color:#666'>{gm['src']}</td></tr>" for gm in mlb_games) or "<tr><td colspan='9' style='color:#888'>no games cached</td></tr>"}</tbody>
 </table>
 <p class="meta" style="font-size:.75rem">🔒 = odds frozen at first pitch. "Book" shows which sportsbook the current line came from — Pinnacle → DraftKings → FanDuel → BetMGM → Caesars → first available.</p>
+
+<h2>Other sport slates</h2>
+<p class="meta">Non-MLB warmers. Each sport warmer runs every ~25 min. Zero games + error message = fetcher or parser failure — check Render logs for the sport's slate module (e.g. `[nfl.slate]`).</p>
+<table>
+<thead><tr><th>Sport</th><th>Age</th><th>Games</th><th>Freshness</th><th>Last build error</th></tr></thead>
+<tbody>{slate_rows_html}</tbody>
+</table>
 
 <h2>Frozen snapshot counts</h2>
 <p class="meta">Frozen forecasts locked at kickoff/first pitch. Should grow through the day and clear overnight.</p>
