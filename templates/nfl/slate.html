@@ -34,21 +34,14 @@
     </div>
   </header>
 
-  {# ── Cheat-sheet row (top, above the fold) — grouped by day ─── #}
+  {# ── Cheat-sheet row (top, above the fold) — flat, no day headers.
+      Cards themselves show the date in the top-right corner already. #}
   {% if games %}
-    {% set ns = namespace(last_date=none) %}
-    {% for g in games %}
-      {% set this_date_key = g.kickoff_eastern.strftime("%Y-%m-%d") if g.kickoff_eastern else "" %}
-      {% set this_date_label = g.kickoff_eastern.strftime("%A, %B %-d") if g.kickoff_eastern else "" %}
-      {% if this_date_key != ns.last_date %}
-        {% if not loop.first %}</div>{% endif %}
-        <h2 class="wc-dayhed" style="margin-top:{% if loop.first %}0{% else %}1.5rem{% endif %}">{{ this_date_label }}</h2>
-        <div class="cheat-row">
-        {% set ns.last_date = this_date_key %}
-      {% endif %}
-      {{ wc_cheat_card(g, link_to_detail=True) }}
-      {% if loop.last %}</div>{% endif %}
-    {% endfor %}
+    <div class="cheat-row">
+      {% for g in games %}
+        {{ wc_cheat_card(g, link_to_detail=True) }}
+      {% endfor %}
+    </div>
   {% else %}
     <section style="max-width:640px;margin:4rem auto;text-align:center;padding:2rem 1.5rem">
       <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:600;margin:0 0 0.6rem;color:var(--ink)">No NFL games scheduled this week</h2>

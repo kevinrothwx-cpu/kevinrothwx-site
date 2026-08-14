@@ -179,6 +179,8 @@
 
       <div class="home-grid">
 
+        {# Card order (2026-08-14): MLB / NFL / PGA / NCAAF / NASCAR / MLS.
+           Tennis stays conditional and appears after MLS when in a Slam window. #}
         <a href="/mlb" class="home-sport-card home-sport-card--mlb">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="MLB baseball weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Today's slate</span><h2 class="home-sport-card__title">MLB Weather</h2></div></div>
           <p class="home-sport-card__body">Every game today and tomorrow, temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
@@ -188,11 +190,29 @@
           </span>
         </a>
 
+        <a href="/nfl" class="home-sport-card home-sport-card--nfl">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="NFL football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">All 32 Stadiums</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
+          <p class="home-sport-card__body">Stadium-specific hourly weather around every kickoff. Indoor venues flagged, retractable-roof toggle for Atlanta, Dallas, Houston, Indianapolis, and Arizona.</p>
+          <span class="home-sport-card__indicator">
+            {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;{{ "game" if sport_counts.nfl == "1" else "games" }} today{% else %}Preseason begins August 7{% endif %}
+            <span class="home-sport-card__arrow">→</span>
+          </span>
+        </a>
+
         <a href="/golf" class="home-sport-card home-sport-card--pga">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="PGA Tour golf weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">This week's event</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
           <p class="home-sport-card__body">Round-by-round outlook for the current tournament. Course-local play hours, all four rounds.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}See this week's tournament{% endif %}
+            <span class="home-sport-card__arrow">→</span>
+          </span>
+        </a>
+
+        <a href="/ncaaf" class="home-sport-card home-sport-card--ncaaf">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="College football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NCAAF Weather</h2></div></div>
+          <p class="home-sport-card__body">Every FBS game, Saturday through Thursday night. Top 25, conference, ranked matchups. Stadium-specific temp, wind, and rain.</p>
+          <span class="home-sport-card__indicator">
+            {% if sport_counts.ncaaf %}<strong>{{ sport_counts.ncaaf }}</strong>&nbsp;games this week{% else %}Coming this fall{% endif %}
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>
@@ -228,24 +248,6 @@
           </span>
         </a>
         {% endif %}
-
-        <a href="/nfl" class="home-sport-card home-sport-card--nfl">
-          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="NFL football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">All 32 Stadiums</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
-          <p class="home-sport-card__body">Stadium-specific hourly weather around every kickoff. Indoor venues flagged, retractable-roof toggle for Atlanta, Dallas, Houston, Indianapolis, and Arizona.</p>
-          <span class="home-sport-card__indicator">
-            {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;{{ "game" if sport_counts.nfl == "1" else "games" }} today{% else %}Preseason begins August 7{% endif %}
-            <span class="home-sport-card__arrow">→</span>
-          </span>
-        </a>
-
-        <a href="/ncaaf" class="home-sport-card home-sport-card--ncaaf">
-          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="College football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NCAAF Weather</h2></div></div>
-          <p class="home-sport-card__body">Every FBS game, Saturday through Thursday night. Top 25, conference, ranked matchups. Stadium-specific temp, wind, and rain.</p>
-          <span class="home-sport-card__indicator">
-            {% if sport_counts.ncaaf %}<strong>{{ sport_counts.ncaaf }}</strong>&nbsp;games this week{% else %}Coming this fall{% endif %}
-            <span class="home-sport-card__arrow">→</span>
-          </span>
-        </a>
 
       </div>
     </div>
