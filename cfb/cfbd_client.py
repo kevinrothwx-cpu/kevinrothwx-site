@@ -123,7 +123,7 @@ def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[d
     Returns raw CFBD game dicts (unparsed). Empty list on failure."""
     headers = _headers()
     if not headers:
-        log.info("[cfb.cfbd] CFBD_API_KEY not set; skipping CFBD fetch")
+        print("[cfb.cfbd] CFBD_API_KEY not set; skipping CFBD fetch", flush=True)
         return []
     try:
         resp = requests.get(
@@ -133,15 +133,15 @@ def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[d
             timeout=REQUEST_TIMEOUT_SEC,
         )
         if resp.status_code != 200:
-            log.warning(f"[cfb.cfbd] returned {resp.status_code}: {resp.text[:200]}")
+            print(f"[cfb.cfbd] returned {resp.status_code}: {resp.text[:200]}", flush=True)
             return []
         data = resp.json()
         if not isinstance(data, list):
-            log.warning(f"[cfb.cfbd] unexpected response type: {type(data).__name__}")
+            print(f"[cfb.cfbd] unexpected response type: {type(data).__name__}", flush=True)
             return []
         return data
     except Exception as e:
-        log.warning(f"[cfb.cfbd] fetch failed: {type(e).__name__}: {e}")
+        print(f"[cfb.cfbd] fetch failed: {type(e).__name__}: {e}", flush=True)
         return []
 
 
@@ -183,7 +183,7 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
 
     # Sort chronologically to match ESPN fetcher's contract
     out.sort(key=lambda g: g["kickoff_utc"])
-    log.info(f"[cfb.cfbd] window {start_utc.date()} +{days_ahead}d: {len(out)} games")
+    print(f"[cfb.cfbd] window {start_utc.date()} +{days_ahead}d: {len(out)} games", flush=True)
     return out
 
 
@@ -233,7 +233,7 @@ def parse_cfbd_game(raw: dict) -> Optional[dict]:
         home_team_id = _lookup_team_id(home_school)
         away_team_id = _lookup_team_id(away_school)
         if home_team_id is None:
-            log.info(f"[cfb.cfbd] skipping game {cfbd_id}: unknown home team {home_school!r}")
+            print(f"[cfb.cfbd] skipping game {cfbd_id}: unknown home team {home_school!r}", flush=True)
             return None
 
         home_team = FBS_TEAMS.get(home_team_id, {})
@@ -275,7 +275,7 @@ def parse_cfbd_game(raw: dict) -> Optional[dict]:
             venue_dict["is_neutral"] = False
 
         if not venue_dict:
-            log.info(f"[cfb.cfbd] skipping game {cfbd_id}: no venue")
+            print(f"[cfb.cfbd] skipping game {cfbd_id}: no venue", flush=True)
             return None
 
         # Kickoff strings + date buckets
@@ -333,7 +333,7 @@ def parse_cfbd_game(raw: dict) -> Optional[dict]:
             "source":               "cfbd",
         }
     except Exception as e:
-        log.warning(f"[cfb.cfbd] parse failed: {type(e).__name__}: {e}")
+        print(f"[cfb.cfbd] parse failed: {type(e).__name__}: {e}", flush=True)
         return None
 
 

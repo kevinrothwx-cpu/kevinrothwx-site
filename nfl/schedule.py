@@ -69,10 +69,35 @@ _SEASON_TYPE_LABELS = {
 
 
 def get_nfl_week_games(start_date: datetime, days_ahead: int = 7) -> list[dict]:
-    """Pull NFL games across a date window. ESPN's NFL scoreboard returns
-    one week of games when no date is passed, or a specific date when
-    `dates=YYYYMMDD` is set. We walk each day individually to cover
-    Sunday + Monday + Thursday + Saturday spread."""
+    """Pull NFL games across a date window.
+
+    Sources (2026-08-14):
+        1. PRIMARY: The Odds API — we already pay for it (ODDS_API_KEY),
+           returns every scheduled NFL game with kickoff time, home team,
+           away team. Flex changes are reflected automatically because
+           books update commence_time when kickoffs move. Never blocked.
+        2. FALLBACK: ESPN scoreboard — currently 403-blocked but kept as
+           backup for the day it un-blocks or Odds API has an outage.
+    """
+    # ── PRIMARY: The Odds API ──────────────────────────────────────────
+    try:
+        from .odds_api_schedule import (
+            fetch_nfl_games_from_odds_api,
+            filter_to_window,
+        )
+        all_odds = fetch_nfl_games_from_odds_api()
+        if all_odds:
+            windowed = filter_to_window(all_odds, start_date, days_ahead=days_ahead)
+            print(f"[nfl.schedule] Odds API returned {len(all_odds)} games, "
+                  f"{len(windowed)} in window — using as primary", flush=True)
+            return windowed
+        print("[nfl.schedule] Odds API returned 0 games — falling back to ESPN",
+              flush=True)
+    except Exception as e:
+        print(f"[nfl.schedule] Odds API raised {type(e).__name__}: {e} — "
+              f"falling back to ESPN", flush=True)
+
+    # ── FALLBACK: ESPN ─────────────────────────────────────────────────
     out: list[dict] = []
     seen_event_ids: set[str] = set()
 
