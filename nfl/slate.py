@@ -28,7 +28,9 @@ from hrrr import get_hrrr_periods
 # NFL game window: 1h before through 4h after kickoff.
 # Football is ~3.5 hours; 4h buffer covers halftime + late TV slate overrun.
 HOURS_BEFORE_KICKOFF = 1
-HOURS_GAME_WINDOW    = 4
+HOURS_GAME_WINDOW    = 4   # how many hours after kickoff the hourly window extends
+HOURS_HIGHLIGHTED    = 3   # how many of those hours get the game-hour shaded highlight
+                            # (typical NFL game runs ~3 hours: kickoff → kickoff+3)
 HOURS_GAME_HIGHLIGHT = 3   # only 3 in-game hours get highlighted, per Kevin
 
 
@@ -180,7 +182,7 @@ def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
                 st = st.replace(tzinfo=timezone.utc)
             if start <= st < end:
                 p2 = dict(p)
-                p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_GAME_WINDOW))
+                p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_HIGHLIGHTED))
                 out.append(p2)
         except (ValueError, AttributeError):
             continue

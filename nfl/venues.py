@@ -29,7 +29,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Highmark Stadium", "city": "Orchard Park, NY",
             "lat": 42.7738, "lon": -78.7870,
             "timezone": "America/New_York",
-            "cap": 71608, "roof_type": "open",
+            "cap": 71608, "field_bearing_degrees": 135, "roof_type": "open",
         },
     },
     15: {
@@ -40,7 +40,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Hard Rock Stadium", "city": "Miami Gardens, FL",
             "lat": 25.9580, "lon": -80.2389,
             "timezone": "America/New_York",
-            "cap": 65326, "roof_type": "open",
+            "cap": 65326, "field_bearing_degrees": 135, "roof_type": "open",
         },
     },
     17: {
@@ -51,7 +51,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Gillette Stadium", "city": "Foxborough, MA",
             "lat": 42.0909, "lon": -71.2643,
             "timezone": "America/New_York",
-            "cap": 65878, "roof_type": "open",
+            "cap": 65878, "field_bearing_degrees": 157.5, "roof_type": "open",
         },
     },
     20: {
@@ -62,7 +62,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "MetLife Stadium", "city": "East Rutherford, NJ",
             "lat": 40.8136, "lon": -74.0744,
             "timezone": "America/New_York",
-            "cap": 82500, "roof_type": "open",
+            "cap": 82500, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
 
@@ -75,7 +75,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "M&T Bank Stadium", "city": "Baltimore, MD",
             "lat": 39.2780, "lon": -76.6227,
             "timezone": "America/New_York",
-            "cap": 71008, "roof_type": "open",
+            "cap": 71008, "field_bearing_degrees": 112.5, "roof_type": "open",
         },
     },
     4: {
@@ -86,7 +86,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Paycor Stadium", "city": "Cincinnati, OH",
             "lat": 39.0955, "lon": -84.5161,
             "timezone": "America/New_York",
-            "cap": 65515, "roof_type": "open",
+            "cap": 65515, "field_bearing_degrees": 135, "roof_type": "open",
         },
     },
     5: {
@@ -97,7 +97,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Huntington Bank Field", "city": "Cleveland, OH",
             "lat": 41.5061, "lon": -81.6995,
             "timezone": "America/New_York",
-            "cap": 67431, "roof_type": "open",
+            "cap": 67431, "field_bearing_degrees": 45, "roof_type": "open",
         },
     },
     23: {
@@ -108,7 +108,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Acrisure Stadium", "city": "Pittsburgh, PA",
             "lat": 40.4468, "lon": -80.0158,
             "timezone": "America/New_York",
-            "cap": 68400, "roof_type": "open",
+            "cap": 68400, "field_bearing_degrees": 157.5, "roof_type": "open",
         },
     },
 
@@ -121,7 +121,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "NRG Stadium", "city": "Houston, TX",
             "lat": 29.6847, "lon": -95.4107,
             "timezone": "America/Chicago",
-            "cap": 72220, "roof_type": "retractable",
+            "cap": 72220, "field_bearing_degrees": 180, "roof_type": "retractable",
             "roof_summer_status": "likely_closed",
         },
     },
@@ -133,7 +133,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Lucas Oil Stadium", "city": "Indianapolis, IN",
             "lat": 39.7601, "lon": -86.1639,
             "timezone": "America/Indiana/Indianapolis",
-            "cap": 67000, "roof_type": "retractable",
+            "cap": 67000, "field_bearing_degrees": 45, "roof_type": "retractable",
             "roof_summer_status": "likely_closed",
         },
     },
@@ -145,7 +145,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "EverBank Stadium", "city": "Jacksonville, FL",
             "lat": 30.3239, "lon": -81.6373,
             "timezone": "America/New_York",
-            "cap": 67838, "roof_type": "open",
+            "cap": 67838, "field_bearing_degrees": 22.5, "roof_type": "open",
         },
     },
     10: {
@@ -156,7 +156,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Nissan Stadium", "city": "Nashville, TN",
             "lat": 36.1665, "lon": -86.7713,
             "timezone": "America/Chicago",
-            "cap": 69143, "roof_type": "open",
+            "cap": 69143, "field_bearing_degrees": 157.5, "roof_type": "open",
         },
     },
 
@@ -169,7 +169,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Empower Field at Mile High", "city": "Denver, CO",
             "lat": 39.7439, "lon": -105.0201,
             "timezone": "America/Denver",
-            "cap": 76125, "roof_type": "open",
+            "cap": 76125, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
     12: {
@@ -180,7 +180,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "GEHA Field at Arrowhead Stadium", "city": "Kansas City, MO",
             "lat": 39.0489, "lon": -94.4839,
             "timezone": "America/Chicago",
-            "cap": 76416, "roof_type": "open",
+            "cap": 76416, "field_bearing_degrees": 135, "roof_type": "open",
         },
     },
     13: {
@@ -191,7 +191,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Allegiant Stadium", "city": "Paradise, NV",
             "lat": 36.0908, "lon": -115.1830,
             "timezone": "America/Los_Angeles",
-            "cap": 65000, "roof_type": "fixed_dome",
+            "cap": 65000, "field_bearing_degrees": None, "roof_type": "fixed_dome",
         },
     },
     24: {
@@ -202,7 +202,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "SoFi Stadium", "city": "Inglewood, CA",
             "lat": 33.9534, "lon": -118.3387,
             "timezone": "America/Los_Angeles",
-            "cap": 70240, "roof_type": "fixed_canopy",
+            "cap": 70240, "field_bearing_degrees": None, "roof_type": "fixed_canopy",
         },
     },
 
@@ -215,7 +215,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "AT&T Stadium", "city": "Arlington, TX",
             "lat": 32.7473, "lon": -97.0945,
             "timezone": "America/Chicago",
-            "cap": 80000, "roof_type": "retractable",
+            "cap": 80000, "field_bearing_degrees": 67.5, "roof_type": "retractable",
             "roof_summer_status": "likely_closed",
         },
     },
@@ -227,7 +227,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "MetLife Stadium", "city": "East Rutherford, NJ",
             "lat": 40.8136, "lon": -74.0744,
             "timezone": "America/New_York",
-            "cap": 82500, "roof_type": "open",
+            "cap": 82500, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
     21: {
@@ -238,7 +238,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Lincoln Financial Field", "city": "Philadelphia, PA",
             "lat": 39.9008, "lon": -75.1675,
             "timezone": "America/New_York",
-            "cap": 69596, "roof_type": "open",
+            "cap": 69596, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
     28: {
@@ -249,7 +249,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Northwest Stadium", "city": "Landover, MD",
             "lat": 38.9078, "lon": -76.8645,
             "timezone": "America/New_York",
-            "cap": 67617, "roof_type": "open",
+            "cap": 67617, "field_bearing_degrees": 135, "roof_type": "open",
         },
     },
 
@@ -262,7 +262,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Soldier Field", "city": "Chicago, IL",
             "lat": 41.8623, "lon": -87.6167,
             "timezone": "America/Chicago",
-            "cap": 61500, "roof_type": "open",
+            "cap": 61500, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
     8: {
@@ -273,7 +273,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Ford Field", "city": "Detroit, MI",
             "lat": 42.3400, "lon": -83.0456,
             "timezone": "America/Detroit",
-            "cap": 65000, "roof_type": "fixed_dome",
+            "cap": 65000, "field_bearing_degrees": None, "roof_type": "fixed_dome",
         },
     },
     9: {
@@ -284,7 +284,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Lambeau Field", "city": "Green Bay, WI",
             "lat": 44.5013, "lon": -88.0622,
             "timezone": "America/Chicago",
-            "cap": 81441, "roof_type": "open",
+            "cap": 81441, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
     16: {
@@ -295,7 +295,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "U.S. Bank Stadium", "city": "Minneapolis, MN",
             "lat": 44.9737, "lon": -93.2581,
             "timezone": "America/Chicago",
-            "cap": 66860, "roof_type": "fixed_dome",
+            "cap": 66860, "field_bearing_degrees": None, "roof_type": "fixed_dome",
         },
     },
 
@@ -308,7 +308,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Mercedes-Benz Stadium", "city": "Atlanta, GA",
             "lat": 33.7553, "lon": -84.4006,
             "timezone": "America/New_York",
-            "cap": 71000, "roof_type": "retractable",
+            "cap": 71000, "field_bearing_degrees": 90, "roof_type": "retractable",
             "roof_summer_status": "likely_closed",
         },
     },
@@ -320,7 +320,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Bank of America Stadium", "city": "Charlotte, NC",
             "lat": 35.2258, "lon": -80.8528,
             "timezone": "America/New_York",
-            "cap": 74867, "roof_type": "open",
+            "cap": 74867, "field_bearing_degrees": 135, "roof_type": "open",
         },
     },
     18: {
@@ -331,7 +331,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Caesars Superdome", "city": "New Orleans, LA",
             "lat": 29.9511, "lon": -90.0812,
             "timezone": "America/Chicago",
-            "cap": 73208, "roof_type": "fixed_dome",
+            "cap": 73208, "field_bearing_degrees": None, "roof_type": "fixed_dome",
         },
     },
     27: {
@@ -342,7 +342,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Raymond James Stadium", "city": "Tampa, FL",
             "lat": 27.9759, "lon": -82.5033,
             "timezone": "America/New_York",
-            "cap": 65890, "roof_type": "open",
+            "cap": 65890, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
 
@@ -355,7 +355,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "State Farm Stadium", "city": "Glendale, AZ",
             "lat": 33.5276, "lon": -112.2626,
             "timezone": "America/Phoenix",
-            "cap": 63400, "roof_type": "retractable",
+            "cap": 63400, "field_bearing_degrees": 135, "roof_type": "retractable",
             "roof_summer_status": "likely_closed",
         },
     },
@@ -367,7 +367,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "SoFi Stadium", "city": "Inglewood, CA",
             "lat": 33.9534, "lon": -118.3387,
             "timezone": "America/Los_Angeles",
-            "cap": 70240, "roof_type": "fixed_canopy",
+            "cap": 70240, "field_bearing_degrees": None, "roof_type": "fixed_canopy",
         },
     },
     25: {
@@ -378,7 +378,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Levi's Stadium", "city": "Santa Clara, CA",
             "lat": 37.4030, "lon": -121.9698,
             "timezone": "America/Los_Angeles",
-            "cap": 68500, "roof_type": "open",
+            "cap": 68500, "field_bearing_degrees": 157.5, "roof_type": "open",
         },
     },
     26: {
@@ -389,7 +389,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "Lumen Field", "city": "Seattle, WA",
             "lat": 47.5952, "lon": -122.3316,
             "timezone": "America/Los_Angeles",
-            "cap": 68740, "roof_type": "open",
+            "cap": 68740, "field_bearing_degrees": 180, "roof_type": "open",
         },
     },
 }

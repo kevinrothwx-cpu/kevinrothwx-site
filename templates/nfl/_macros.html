@@ -9,18 +9,23 @@
      inline sun/cloud set.
 #}
 
-{# ── Phosphor weather icon at any size ───────────────────────────── #}
-{% macro nfl_phosphor_icon(short_forecast, size=32, is_night=false) %}
+{# ── Phosphor weather icon at any size ─────────────────────────────
+   precip_pct is used as a confidence threshold for the storm icon:
+   "chance thunderstorms" at 18% shouldn't show a lightning bolt. Only
+   render cloud-lightning when precip is high enough that a storm is
+   actually likely; otherwise downgrade to a rain cloud. #}
+{% macro nfl_phosphor_icon(short_forecast, size=32, is_night=false, precip_pct=0) %}
   {% set sf = (short_forecast or '')|lower %}
+  {% set pct = precip_pct|int if precip_pct is not none else 0 %}
   {% set name = 'sun' %}
   {% set color = '%23ca8a04' %}
-  {% if 'thunder' in sf or 'storm' in sf %}
+  {% if ('thunder' in sf or 'storm' in sf) and pct >= 50 %}
     {% set name = 'cloud-lightning' %}{% set color = '%23ca8a04' %}
   {% elif 'snow' in sf and ('rain' in sf or 'mix' in sf or 'sleet' in sf) %}
     {% set name = 'cloud-snow' %}{% set color = '%235b21b6' %}
   {% elif 'snow' in sf %}
     {% set name = 'cloud-snow' %}{% set color = '%231e40af' %}
-  {% elif 'rain' in sf or 'shower' in sf or 'drizzle' in sf %}
+  {% elif ('rain' in sf or 'shower' in sf or 'drizzle' in sf or 'thunder' in sf or 'storm' in sf) and pct >= 30 %}
     {% set name = 'cloud-rain' %}{% set color = '%231e40af' %}
   {% elif 'cloud' in sf and ('partly' in sf or 'mostly' in sf or 'few' in sf) %}
     {% set name = 'cloud-sun' %}{% set color = '%231e40af' %}
@@ -35,16 +40,28 @@
 {% endmacro %}
 
 
-{# ── Football-field diagram — reuses the wx-stadium classes already
-      styled in production CSS (via ncaaf). Wind arrow in real compass. ── #}
-{% macro nfl_football_field(forecast) %}
+{# ── Football-field diagram
+   Field graphic stays horizontal (long axis left→right, endzones on the
+   ends). The arrow rotates to show wind direction RELATIVE TO the field,
+   not compass absolute — so a tailwind through the goalposts looks like
+   an arrow pointing along the field regardless of whether the venue
+   actually runs N-S or NE-SW.
+
+   Rotation math:
+     - Field's "far endzone" (right side of graphic) represents the venue's
+       real far endzone, which is at bearing X (field_bearing_degrees).
+     - Wind is blowing TOWARD `wind_to` (= wind_deg + 180) in compass.
+     - Wind direction relative to the field = wind_to - field_bearing.
+     - On the horizontal graphic, "right" = 90° in SVG rotation space.
+     - So arrow rotation = (wind_to - field_bearing + 90) mod 360.
+
+   Falls back to field_bearing=90 (== east == no adjustment) when the
+   venue has no bearing set (older data, missing entries). ── #}
+{% macro nfl_football_field(forecast, field_bearing=90) %}
   {% if forecast %}
     {% set wind_to = (forecast.wind_deg + 180) % 360 %}
-    {% set rot = wind_to %}
-    {% set svg_class = 'wx-stadium' %}
-    {% if forecast.wind_speed >= 25 %}{% set svg_class = svg_class + ' wx-stadium--severe' %}
-    {% elif forecast.wind_speed >= 18 %}{% set svg_class = svg_class + ' wx-stadium--high' %}
-    {% endif %}
+    {% set fb = field_bearing if field_bearing is not none else 90 %}
+    {% set arrow_rot = (wind_to - fb + 90) % 360 %}
     {% set arrow_color = '#15803d' %}
     {% if forecast.wind_speed >= 25 %}{% set arrow_color = '#b91c1c' %}
     {% elif forecast.wind_speed >= 18 %}{% set arrow_color = '#b45309' %}
@@ -57,7 +74,7 @@
         <line x1="8" y1="2" x2="8" y2="22" stroke="#94a190" stroke-width="0.6"/>
         <line x1="32" y1="2" x2="32" y2="22" stroke="#94a190" stroke-width="0.6"/>
         <line x1="20" y1="2.5" x2="20" y2="21.5" stroke="#c8ccc0" stroke-width="0.5" stroke-dasharray="1.2 0.8"/>
-        <g transform="rotate({{ rot }} 20 12)">
+        <g transform="rotate({{ arrow_rot }} 20 12)">
           <line x1="20" y1="18" x2="20" y2="7" stroke="{{ arrow_color }}" stroke-width="1.6" stroke-linecap="round"/>
           <polygon points="20,5 16.5,9.5 23.5,9.5" fill="{{ arrow_color }}"/>
         </g>
@@ -79,12 +96,12 @@
   <div class="game-summary" style="align-self:start">
     {% if f %}
       <div class="game-summary__cell">
-        <div class="game-summary__sky">{{ nfl_phosphor_icon(f.short_forecast, 34) }}</div>
+        <div class="game-summary__sky">{{ nfl_phosphor_icon(f.short_forecast, 34, precip_pct=f.precip_pct) }}</div>
         <span class="game-summary__primary-value">{{ f.temp }}°</span>
         <span class="game-summary__primary-label">At kickoff</span>
       </div>
       <div class="game-summary__cell game-summary__cell--field">
-        {{ nfl_football_field(f) }}
+        {{ nfl_football_field(f, field_bearing=(game.venue.field_bearing_degrees if game.venue else none)) }}
       </div>
       <div class="game-summary__cell">
         <span class="game-summary__primary-value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
@@ -115,7 +132,7 @@
             <th class="hourly__label-col"></th>
             {% for h in hours %}
               <th class="hourly__hour-col {% if h.is_game_hour %}is-game-hour{% endif %}">
-                <div class="hourly__sky">{{ nfl_phosphor_icon(h.short_forecast, 30) }}</div>
+                <div class="hourly__sky">{{ nfl_phosphor_icon(h.short_forecast, 30, precip_pct=h.precip_pct) }}</div>
                 <div class="hourly__time">{{ h.hour_eastern }}</div>
               </th>
             {% endfor %}
