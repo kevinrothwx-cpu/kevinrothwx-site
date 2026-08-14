@@ -37,7 +37,14 @@ from zoneinfo import ZoneInfo
 from .venues import NFL_TEAMS, get_stadium, lookup_international_venue
 
 
-ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds"
+# The Odds API has SEPARATE sport slugs for NFL regular season and
+# preseason. Miss either one and you get an empty slate for that window.
+# Both are 1 credit per fetch (2 credits total per warmer cycle).
+ODDS_API_BASE = "https://api.the-odds-api.com/v4/sports"
+NFL_SPORT_SLUGS = [
+    "americanfootball_nfl",             # regular season + playoffs
+    "americanfootball_nfl_preseason",   # August preseason only
+]
 REQUEST_TIMEOUT_SEC = 12
 
 EASTERN_TZ = ZoneInfo("America/New_York")
@@ -82,19 +89,12 @@ NEUTRAL_SITE_OVERRIDES: dict[tuple[str, str, str], str] = {
 
 # ── Fetch + parse ──────────────────────────────────────────────────────────
 
-def fetch_nfl_games_from_odds_api() -> list[dict]:
-    """Pull upcoming NFL games from The Odds API and transform them into
-    the same game dict shape that nfl/schedule.py's parse_nfl_event
-    produces from ESPN. Returns [] on any failure — caller (schedule.py)
-    falls back to ESPN."""
-    api_key = os.environ.get("ODDS_API_KEY", "").strip()
-    if not api_key:
-        print("[nfl.odds_api] ODDS_API_KEY not set; skipping", flush=True)
-        return []
-
+def _fetch_one_sport(sport_slug: str, api_key: str) -> list[dict]:
+    """Hit The Odds API for one sport slug and return the raw game list.
+    Empty list on any failure — never raises."""
     try:
         resp = requests.get(
-            ODDS_API_URL,
+            f"{ODDS_API_BASE}/{sport_slug}/odds",
             params={
                 "apiKey":     api_key,
                 "regions":    "us",
@@ -105,27 +105,56 @@ def fetch_nfl_games_from_odds_api() -> list[dict]:
             timeout=REQUEST_TIMEOUT_SEC,
         )
         if resp.status_code != 200:
-            print(f"[nfl.odds_api] returned {resp.status_code}: {resp.text[:200]}",
+            print(f"[nfl.odds_api] {sport_slug} returned {resp.status_code}: {resp.text[:200]}",
                   flush=True)
             return []
-        raw_games = resp.json()
+        raw = resp.json()
+        if not isinstance(raw, list):
+            print(f"[nfl.odds_api] {sport_slug} unexpected response type: {type(raw).__name__}",
+                  flush=True)
+            return []
+        return raw
     except Exception as e:
-        print(f"[nfl.odds_api] fetch failed: {type(e).__name__}: {e}", flush=True)
-        return []
-
-    if not isinstance(raw_games, list):
-        print(f"[nfl.odds_api] unexpected response type: {type(raw_games).__name__}",
+        print(f"[nfl.odds_api] {sport_slug} fetch failed: {type(e).__name__}: {e}",
               flush=True)
         return []
 
+
+def fetch_nfl_games_from_odds_api() -> list[dict]:
+    """Pull upcoming NFL games from The Odds API across both regular-season
+    and preseason sport slugs. Transforms into our internal NFL game shape.
+
+    Costs 2 API credits per call (one per slug). Empty list on failure —
+    caller (schedule.py) then falls back to ESPN."""
+    api_key = os.environ.get("ODDS_API_KEY", "").strip()
+    if not api_key:
+        print("[nfl.odds_api] ODDS_API_KEY not set; skipping", flush=True)
+        return []
+
+    raw_games: list[dict] = []
+    for slug in NFL_SPORT_SLUGS:
+        chunk = _fetch_one_sport(slug, api_key)
+        if chunk:
+            print(f"[nfl.odds_api] {slug}: {len(chunk)} raw games", flush=True)
+        raw_games.extend(chunk)
+
+    # De-dupe by game id in case both slugs return the same game (shouldn't
+    # happen for NFL — preseason and regular season are disjoint — but
+    # defensive).
+    seen: set[str] = set()
     out: list[dict] = []
     for g in raw_games:
+        gid = str(g.get("id") or "")
+        if gid and gid in seen:
+            continue
+        seen.add(gid)
         parsed = _parse_odds_api_game(g)
         if parsed is not None:
             out.append(parsed)
 
     out.sort(key=lambda g: g.get("kickoff_utc") or datetime.max.replace(tzinfo=timezone.utc))
-    print(f"[nfl.odds_api] fetched {len(out)} games", flush=True)
+    print(f"[nfl.odds_api] fetched {len(out)} games total (both slugs, deduped)",
+          flush=True)
     return out
 
 
