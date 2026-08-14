@@ -4,10 +4,14 @@
    Design choices per Kevin:
    - Field diagram uses the same wx-stadium shape as CFB cheat cards
      (bowl, endzones, midline, wind arrow), just sized up for the summary
-     panel. Wind arrow rotates in real compass space (north = up).
-   - Weather icons are Phosphor via Iconify (matching CFB), NOT the MLB
-     inline sun/cloud set.
+     panel. Wind arrow rotates relative to field orientation.
+   - Weather icons: reuse MLB's inline SVG set for cross-sport consistency
+     (icon-sun / icon-partly-cloudy / icon-rain / icon-storm — driven purely
+     by precip% via the precip_icon filter, no color variation, no
+     day/night split). See mlb/_macros.html for definitions.
 #}
+
+{% from "mlb/_macros.html" import weather_icon %}
 
 {# ── Phosphor weather icon at any size ─────────────────────────────
    precip_pct is used as a confidence threshold for the storm icon:
@@ -98,7 +102,7 @@
   <div class="game-summary" style="align-self:start">
     {% if f %}
       <div class="game-summary__cell">
-        <div class="game-summary__sky">{{ nfl_phosphor_icon(f.short_forecast, 34, precip_pct=f.precip_pct) }}</div>
+        <div class="game-summary__sky">{{ weather_icon(f.precip_pct|precip_icon, 34) }}</div>
         <span class="game-summary__primary-value">{{ f.temp }}°</span>
         <span class="game-summary__primary-label">At kickoff</span>
       </div>
@@ -138,7 +142,7 @@
             <th class="hourly__label-col"></th>
             {% for h in hours %}
               <th class="hourly__hour-col {% if h.is_game_hour %}is-game-hour{% endif %}">
-                <div class="hourly__sky">{{ nfl_phosphor_icon(h.short_forecast, 30, precip_pct=h.precip_pct) }}</div>
+                <div class="hourly__sky">{{ weather_icon(h.precip_pct|precip_icon, 30) }}</div>
                 <div class="hourly__time">{{ h.hour_eastern }}</div>
               </th>
             {% endfor %}

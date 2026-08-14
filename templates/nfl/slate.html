@@ -34,13 +34,21 @@
     </div>
   </header>
 
-  {# ── Cheat-sheet row (top, above the fold) ─────────────────── #}
+  {# ── Cheat-sheet row (top, above the fold) — grouped by day ─── #}
   {% if games %}
-    <div class="cheat-row">
-      {% for g in games %}
-        {{ wc_cheat_card(g, link_to_detail=True) }}
-      {% endfor %}
-    </div>
+    {% set ns = namespace(last_date=none) %}
+    {% for g in games %}
+      {% set this_date_key = g.kickoff_eastern.strftime("%Y-%m-%d") if g.kickoff_eastern else "" %}
+      {% set this_date_label = g.kickoff_eastern.strftime("%A, %B %-d") if g.kickoff_eastern else "" %}
+      {% if this_date_key != ns.last_date %}
+        {% if not loop.first %}</div>{% endif %}
+        <h2 class="wc-dayhed" style="margin-top:{% if loop.first %}0{% else %}1.5rem{% endif %}">{{ this_date_label }}</h2>
+        <div class="cheat-row">
+        {% set ns.last_date = this_date_key %}
+      {% endif %}
+      {{ wc_cheat_card(g, link_to_detail=True) }}
+      {% if loop.last %}</div>{% endif %}
+    {% endfor %}
   {% else %}
     <section style="max-width:640px;margin:4rem auto;text-align:center;padding:2rem 1.5rem">
       <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:600;margin:0 0 0.6rem;color:var(--ink)">No NFL games scheduled this week</h2>
@@ -71,9 +79,17 @@
       {% endif %}
     </section>
 
-    {# ── Section 3: per-game blocks (summary panel + hourly side-by-side) ─── #}
+    {# ── Section 3: per-game blocks (summary panel + hourly side-by-side)
+        Also day-grouped so multi-day slates read cleanly. #}
     <div class="mlb-hourly-group">
+      {% set ns2 = namespace(last_date=none) %}
       {% for g in games %}
+        {% set this_date_key = g.kickoff_eastern.strftime("%Y-%m-%d") if g.kickoff_eastern else "" %}
+        {% set this_date_label = g.kickoff_eastern.strftime("%A, %B %-d") if g.kickoff_eastern else "" %}
+        {% if this_date_key != ns2.last_date %}
+          <h2 class="wc-dayhed" style="margin:{% if loop.first %}0.25rem{% else %}2rem{% endif %} 0 0.75rem">{{ this_date_label }}</h2>
+          {% set ns2.last_date = this_date_key %}
+        {% endif %}
         {% set has_toggle = g.venue_meta and (g.venue_meta.roof_type == "retractable" or g.venue_meta.roof_type == "fixed_dome") %}
         <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="game-{{ g.slug }}">
           <header class="mlb-game-block__header">
