@@ -2753,6 +2753,9 @@ def admin_cache_health():
             return "warn"
         return "fresh"
 
+    def _pill(cls):
+        return f'<span class="pill pill-{cls}">{cls.upper()}</span>'
+
     # MLB slate cache — inspect the module's private cache dict directly.
     # It's keyed by date_str and each entry has a "built_at_utc" field.
     # Also collect per-game details so we can spot missing doubleheaders or
@@ -2917,8 +2920,7 @@ def admin_cache_health():
         ".alert{background:#fff8e1;border-left:3px solid #f59e0b;padding:.75rem 1rem;margin:1rem 0}"
     )
 
-    def _pill(cls):
-        return f'<span class="pill pill-{cls}">{cls.upper()}</span>'
+    # _pill defined above with _age_min and _freshness_class
 
     mlb_rows_html = ""
     if mlb_rows:
