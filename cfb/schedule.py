@@ -95,8 +95,30 @@ def get_cfb_week_games(start_date: datetime, days_ahead: int = 7) -> list[dict]:
     Returns:
         List of normalized game dicts sorted by kickoff time.
         Games that fail to parse are skipped, not raised.
+
+    Sources (2026-08-14):
+        1. PRIMARY: CollegeFootballData.com — free API, per-season fetch,
+           reliable, never blocked. Requires CFBD_API_KEY env var.
+        2. FALLBACK: ESPN scoreboard — used when CFBD returns nothing
+           (key unset, API down, empty window). Currently 403-blocked
+           by ESPN so this is basically a placeholder unless ESPN un-blocks.
     """
     all_games: list[dict] = []
+
+    # ── PRIMARY: CFBD ──────────────────────────────────────────────────
+    try:
+        from .cfbd_client import get_cfbd_games_in_window
+        cfbd_games = get_cfbd_games_in_window(start_date, days_ahead=days_ahead)
+        if cfbd_games:
+            print(f"[cfb.schedule] CFBD returned {len(cfbd_games)} games — using as primary",
+                  flush=True)
+            return cfbd_games
+        print(f"[cfb.schedule] CFBD returned 0 games — falling back to ESPN", flush=True)
+    except Exception as e:
+        print(f"[cfb.schedule] CFBD raised {type(e).__name__}: {e} — falling back to ESPN",
+              flush=True)
+
+    # ── FALLBACK: ESPN ─────────────────────────────────────────────────
     for offset in range(days_ahead):
         d = (start_date + timedelta(days=offset)).strftime("%Y%m%d")
         raw_events = get_cfb_scoreboard(date_str=d)
