@@ -60,7 +60,9 @@
 {% macro nfl_football_field(forecast, field_bearing=90) %}
   {% if forecast %}
     {% set wind_to = (forecast.wind_deg + 180) % 360 %}
-    {% set fb = field_bearing if field_bearing is not none else 90 %}
+    {# Defensive: accept int, float, or None. Undefined/other falsy → 90 (no adjustment). #}
+    {% set fb = 90 %}
+    {% if field_bearing is number %}{% set fb = field_bearing %}{% endif %}
     {% set arrow_rot = (wind_to - fb + 90) % 360 %}
     {% set arrow_color = '#15803d' %}
     {% if forecast.wind_speed >= 25 %}{% set arrow_color = '#b91c1c' %}
@@ -101,7 +103,11 @@
         <span class="game-summary__primary-label">At kickoff</span>
       </div>
       <div class="game-summary__cell game-summary__cell--field">
-        {{ nfl_football_field(f, field_bearing=(game.venue.field_bearing_degrees if game.venue else none)) }}
+        {# game.venue may be a string (wc-shape) OR a dict (raw shape).
+           When wc-shaped, the real dict lives at game.venue_meta. Prefer
+           that; fall back to game.venue if it happens to be a dict. #}
+        {% set _venue_dict = game.venue_meta if game.venue_meta else (game.venue if game.venue is mapping else none) %}
+        {{ nfl_football_field(f, field_bearing=(_venue_dict.field_bearing_degrees if _venue_dict else none)) }}
       </div>
       <div class="game-summary__cell">
         <span class="game-summary__primary-value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
