@@ -118,13 +118,43 @@ def _headers() -> Optional[dict]:
     }
 
 
+# Module-level cache: {(year, season_type): (fetched_at_utc, games_list)}
+# TTL is 1 hour on Patreon Tier 1 ($1/mo, 5K calls/mo). Math: 1 fetch/hour
+# × 24h × ~30 days = ~720 calls/month regular season, up to ~1440/month
+# in bowl season (Dec-Feb includes postseason). Under 30% of the 5K cap
+# even if OVERcast CFB is also hitting CFBD from a separate process.
+# Kickoff-time flex changes are rare enough that hourly refresh is fine.
+_YEAR_CACHE: dict[tuple, tuple[datetime, list[dict]]] = {}
+_CACHE_TTL_HOURS   = 1
+BACKOFF_ON_429_HOURS = 1   # on Tier 1 (5K/mo), retry hourly after 429; worst-case
+                            # 720 wasted calls/mo if quota stays exhausted, still
+                            # well under cap. On free tier this was 6h.
+
+
 def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[dict]:
-    """Pull the full CFBD games list for a season. One API call per season.
-    Returns raw CFBD game dicts (unparsed). Empty list on failure."""
+    """Pull the full CFBD games list for a season. One API call per season
+    per (up to) 6 hours — module cache prevents warmer cycles from hammering
+    CFBD and blowing the monthly quota. Returns raw CFBD game dicts (unparsed).
+    Empty list on failure — but if we have STALE cached data available, we
+    return the stale data instead so the slate doesn't go empty on transient
+    errors (particularly 429 quota-exceeded)."""
+    now = datetime.now(timezone.utc)
+    key = (year, season_type)
+
+    # Serve from cache if fresh
+    cached = _YEAR_CACHE.get(key)
+    if cached is not None:
+        fetched_at, games = cached
+        age_hours = (now - fetched_at).total_seconds() / 3600
+        if age_hours < _CACHE_TTL_HOURS:
+            # Cache is fresh — no network call needed
+            return games
+
     headers = _headers()
     if not headers:
         print("[cfb.cfbd] CFBD_API_KEY not set; skipping CFBD fetch", flush=True)
-        return []
+        return cached[1] if cached else []
+
     try:
         resp = requests.get(
             f"{CFBD_BASE_URL}/games",
@@ -132,17 +162,36 @@ def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[d
             headers=headers,
             timeout=REQUEST_TIMEOUT_SEC,
         )
+        if resp.status_code == 429:
+            # Monthly quota / rate limit hit. Extend cache TTL so we stop
+            # hammering CFBD. If we have any cached data (even stale),
+            # return it so the slate stays populated.
+            print(f"[cfb.cfbd] 429 quota/rate exceeded — backing off {BACKOFF_ON_429_HOURS}h. "
+                  f"Serving cached data if available.", flush=True)
+            if cached:
+                # Bump the cached timestamp forward so we don't retry for a while
+                _YEAR_CACHE[key] = (now - timedelta(hours=_CACHE_TTL_HOURS - BACKOFF_ON_429_HOURS), cached[1])
+                return cached[1]
+            # Cold cache and 429 — store empty result with backoff TTL so
+            # we don't slam the endpoint on every request
+            _YEAR_CACHE[key] = (now - timedelta(hours=_CACHE_TTL_HOURS - BACKOFF_ON_429_HOURS), [])
+            return []
         if resp.status_code != 200:
             print(f"[cfb.cfbd] returned {resp.status_code}: {resp.text[:200]}", flush=True)
-            return []
+            # Serve stale cache on other errors too
+            return cached[1] if cached else []
         data = resp.json()
         if not isinstance(data, list):
             print(f"[cfb.cfbd] unexpected response type: {type(data).__name__}", flush=True)
-            return []
+            return cached[1] if cached else []
+        # Cache success
+        _YEAR_CACHE[key] = (now, data)
+        print(f"[cfb.cfbd] fetched year={year} {season_type}: {len(data)} raw games (cached {_CACHE_TTL_HOURS}h)",
+              flush=True)
         return data
     except Exception as e:
         print(f"[cfb.cfbd] fetch failed: {type(e).__name__}: {e}", flush=True)
-        return []
+        return cached[1] if cached else []
 
 
 def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
@@ -150,24 +199,20 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
     """Return parsed game dicts (matching our internal shape) for games
     kicking off within [start_utc, start_utc + days_ahead].
 
-    Caches the full-season fetch per year in the passed-in dict so we don't
-    re-fetch when the window straddles a year boundary. Caller can pass
-    the same dict across multiple calls in a single build cycle to reuse.
+    The `cache_by_year` param is deprecated (kept for signature compatibility)
+    — the module-level _YEAR_CACHE now handles cross-cycle caching with
+    a 6-hour TTL. This function stays stateless from the caller's POV.
     """
-    if cache_by_year is None:
-        cache_by_year = {}
-
     end_utc = start_utc + timedelta(days=days_ahead + 1)
     years_needed = {start_utc.year, end_utc.year}
 
+    # Always fetch both season types. Removed the month-based gate on
+    # 2026-08-23: extra 720 calls/month is <15% of the 5K Tier 1 cap and
+    # guarantees late-announced bowls/CFP games can't slip through.
     all_raw: list[dict] = []
     for year in years_needed:
-        # Try regular season and postseason both — postseason for bowls/CFP
         for season_type in ("regular", "postseason"):
-            key = (year, season_type)
-            if key not in cache_by_year:
-                cache_by_year[key] = fetch_cfbd_games_for_year(year, season_type)
-            all_raw.extend(cache_by_year[key])
+            all_raw.extend(fetch_cfbd_games_for_year(year, season_type))
 
     out: list[dict] = []
     for raw in all_raw:
