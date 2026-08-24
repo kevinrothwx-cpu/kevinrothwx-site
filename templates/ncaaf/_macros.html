@@ -3,13 +3,17 @@
   Reusable components for CFB pages. Implements the v14 mockup design:
   - cfb_cheat_card(game): three-column TEMP/WIND/PoP card with stadium
     icon + rotated wind arrow
-  - cfb_weather_icon(short_forecast, pop, hour_of_day): Phosphor SVG via
-    Iconify, color-tiered. Maps NWS/WeatherAPI text to an icon name.
   - cfb_stadium_icon(wind_deg, wind_class): rectangular football field
     silhouette with rotated wind arrow inside. Color tier matches wind.
 
+  Weather icons come from MLB's inline SVG set (weather_icon macro) for
+  cross-sport consistency — same 4 icons NFL/MLB use, driven purely by
+  precip% via the precip_icon filter.
+
   Data shape consumed: cfb/slate.py game dict (schedule + forecast attached).
 #}
+
+{% from "mlb/_macros.html" import weather_icon %}
 
 
 {# ── Stadium icon with rotated wind arrow ──────────────────────────────── #}
@@ -135,13 +139,17 @@
     </div>
     <div class="cheat-card__teams">
       <div class="cheat-card__team">
-        <img class="cheat-card__logo" src="{{ away.logo_url }}" alt="" loading="lazy">
+        {# FCS opponents don't have logos in our FBS_TEAMS lookup; the img
+           renders a broken-image icon otherwise. Only render when we have
+           a real URL, and hide the img gracefully via onerror as a belt +
+           suspenders. #}
+        {% if away.logo_url %}<img class="cheat-card__logo" src="{{ away.logo_url }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
         <span class="cheat-card__abbr">{% if away.rank %}<span class="cheat-card__rank">{{ away.rank }}</span>{% endif %}{{ away.abbrev }}</span>
       </div>
       <span class="cheat-card__at">{% if neutral %}vs{% else %}@{% endif %}</span>
       <div class="cheat-card__team cheat-card__team--right">
         <span class="cheat-card__abbr">{% if home.rank %}<span class="cheat-card__rank">{{ home.rank }}</span>{% endif %}{{ home.abbrev }}</span>
-        <img class="cheat-card__logo" src="{{ home.logo_url }}" alt="" loading="lazy">
+        {% if home.logo_url %}<img class="cheat-card__logo" src="{{ home.logo_url }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
       </div>
     </div>
     {% if f %}
@@ -162,7 +170,7 @@
         <span class="wx-detail__item">—</span>
       {% else %}
         <span class="wx-detail__item">{{ cfb_stadium_icon(f.wind_deg, wind_class) }}&nbsp;{{ f.wind_deg|wind_compass }}</span>
-        <span class="wx-detail__item">{{ cfb_weather_icon(f.short_forecast, f.precip_pct, is_night) }}</span>
+        <span class="wx-detail__item">{{ weather_icon(f.precip_pct|precip_icon, 22) }}</span>
       {% endif %}
     </div>
     {% else %}

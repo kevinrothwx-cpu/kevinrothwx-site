@@ -232,7 +232,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card:hover .cheat-card__time { color: var(--storm); }
 
 .cheat-card__rule { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mist); margin-bottom: 0.75rem; }
-.cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; }
+.cheat-card__time { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); transition: color 0.15s ease; white-space: nowrap; }
 .cheat-card__badge { font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fog); padding: 0.1rem 0.45rem; border: 1px solid var(--smoke); }
 .cheat-card__total { font-family: var(--font-sans); font-size: 0.7rem; font-weight: 600; color: var(--slate); margin-left: auto; letter-spacing: 0.02em; }
 .cheat-card__date { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ash); }
@@ -254,7 +254,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__wind { font-family: var(--font-sans); font-size: 0.75rem; color: var(--slate); display: flex; align-items: center; gap: 0.3rem; }
 .cheat-card__precip { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; }
 .cheat-card__skyicon { width: 32px; height: 32px; }
-.cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
+.cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; display: flex; align-items: center; min-height: 3.1rem; }
 
 /* ============================================================
  * HRRR secondary forecast toggle (PGA + NASCAR)
@@ -945,7 +945,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: white; animation: pulse-live 1.6s ease-in-out infinite; }
 @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-.home-sport-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem 1.3rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; position: relative; min-height: 180px; }
+.home-sport-card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem 1.3rem; background: var(--white); border: 1px solid var(--mist); text-decoration: none; color: var(--ink); transition: border-color 0.15s ease, transform 0.15s ease; position: relative; }
 .home-sport-card:hover { border-color: var(--ink); transform: translateY(-2px); }
 .home-sport-card__head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.15rem; }
 .home-sport-card__icon { width: 40px; height: 40px; flex-shrink: 0; }

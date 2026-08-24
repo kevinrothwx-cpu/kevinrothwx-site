@@ -181,9 +181,12 @@
 
         {# Card order (2026-08-14): MLB / NFL / PGA / NCAAF / NASCAR / MLS.
            Tennis stays conditional and appears after MLS when in a Slam window. #}
+        {# Body paragraphs removed 2026-08-24 per Kevin — cards are now
+           icon + kicker + title + indicator only. Shorter cards, cleaner
+           grid. Body copy carried some keyword filler but the kicker+title
+           still hits the core SEO terms ("MLB Weather", "Today's slate"). #}
         <a href="/mlb" class="home-sport-card home-sport-card--mlb">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="MLB baseball weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Today's slate</span><h2 class="home-sport-card__title">MLB Weather</h2></div></div>
-          <p class="home-sport-card__body">Every game today and tomorrow, temp, wind relative to each park, rain hour-by-hour. Permalinks for every game.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
             <span class="home-sport-card__arrow">→</span>
@@ -192,7 +195,6 @@
 
         <a href="/nfl" class="home-sport-card home-sport-card--nfl">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="NFL football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">All 32 Stadiums</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
-          <p class="home-sport-card__body">Stadium-specific hourly weather around every kickoff. Indoor venues flagged, retractable-roof toggle for Atlanta, Dallas, Houston, Indianapolis, and Arizona.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;{{ "game" if sport_counts.nfl == "1" else "games" }} today{% else %}See this week's slate{% endif %}
             <span class="home-sport-card__arrow">→</span>
@@ -201,7 +203,6 @@
 
         <a href="/golf" class="home-sport-card home-sport-card--pga">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="PGA Tour golf weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">This week's event</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
-          <p class="home-sport-card__body">Round-by-round outlook for the current tournament. Course-local play hours, all four rounds.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}See this week's tournament{% endif %}
             <span class="home-sport-card__arrow">→</span>
@@ -210,7 +211,6 @@
 
         <a href="/ncaaf" class="home-sport-card home-sport-card--ncaaf">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="College football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NCAAF Weather</h2></div></div>
-          <p class="home-sport-card__body">Every FBS game, Saturday through Thursday night. Top 25, conference, ranked matchups. Stadium-specific temp, wind, and rain.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.ncaaf %}<strong>{{ sport_counts.ncaaf }}</strong>&nbsp;games this week{% else %}Coming this fall{% endif %}
             <span class="home-sport-card__arrow">→</span>
@@ -219,7 +219,6 @@
 
         <a href="/nascar" class="home-sport-card home-sport-card--nascar">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/fa6-solid:flag-checkered.svg?color=%231e3a8a" alt="NASCAR race weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Cup Series</span><h2 class="home-sport-card__title">NASCAR</h2></div></div>
-          <p class="home-sport-card__body">Track-specific hourly weather around the green flag, race window highlighted. Storm timing and red-flag risk.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.nascar %}Next race: <strong>{{ sport_counts.nascar }}</strong>{% else %}See upcoming races{% endif %}
             <span class="home-sport-card__arrow">→</span>
@@ -228,7 +227,6 @@
 
         <a href="/mls" class="home-sport-card home-sport-card--mls">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="MLS soccer weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Major League Soccer</span><h2 class="home-sport-card__title">MLS Weather</h2></div></div>
-          <p class="home-sport-card__body">Stadium-specific hourly weather around kickoff. Retractable-roof context for Atlanta and Vancouver; Canadian-venue coverage built in.</p>
           <span class="home-sport-card__indicator">
             {% if sport_counts.mls %}<strong>{{ sport_counts.mls }}</strong>&nbsp;{{ "match" if sport_counts.mls == "1" else "matches" }} today{% else %}See upcoming matches{% endif %}
             <span class="home-sport-card__arrow">→</span>
@@ -241,7 +239,6 @@
         {% if sport_counts.tennis %}
         <a href="/tennis" class="home-sport-card home-sport-card--tennis">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:tennis.svg?color=%231e3a8a" alt="Tennis Grand Slam weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Grand Slam</span><h2 class="home-sport-card__title">Tennis Weather</h2></div></div>
-          <p class="home-sport-card__body">Daily weather for every tournament day. Court and roof context for each venue.</p>
           <span class="home-sport-card__indicator">
             <strong>Live</strong>&nbsp;Grand Slam coverage
             <span class="home-sport-card__arrow">→</span>
