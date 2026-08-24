@@ -1,10 +1,10 @@
-"""mls.schedule — ESPN MLS scoreboard fetcher + normalizer.
+"""mls.schedule — MLS schedule fetcher + normalizer.
 
-ESPN MLS scoreboard:
-    https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard?dates=YYYYMMDD
-
-Each event is a match. Competitors[] has the two clubs. ESPN provides
-kickoff time, venue, status, and team IDs (mapped to mls.venues).
+Primary source: The Odds API (`soccer_usa_mls` slug), via
+mls.odds_api_schedule. ESPN's MLS scoreboard was the original source but
+started 403-blocking our Render IP on 2026-08-24 (same block that hit
+NFL two weeks earlier). The ESPN parser below is kept for reference / in
+case the block lifts, but is no longer wired into get_mls_week_games.
 
 Returns normalized match dicts:
     {
@@ -29,6 +29,10 @@ from zoneinfo import ZoneInfo
 import requests
 
 from .venues import MLS_TEAMS, get_team, get_stadium
+from .odds_api_schedule import (
+    fetch_mls_games_from_odds_api,
+    filter_to_window as _filter_to_window,
+)
 
 log = logging.getLogger(__name__)
 
@@ -49,8 +53,34 @@ EASTERN_TZ = ZoneInfo("America/New_York")
 
 
 def get_mls_week_games(start_date: datetime, days_ahead: int = 7) -> list[dict]:
-    """Pull MLS matches across a date window. Fetches each day separately
-    (ESPN's MLS endpoint returns matches for a single date)."""
+    """Pull MLS matches across a date window.
+
+    Delegates to The Odds API (mls.odds_api_schedule) since ESPN's
+    scoreboard is blocked. The Odds API returns all upcoming games in a
+    single call; we trim to the requested window here.
+    """
+    if start_date.tzinfo is None:
+        start_date = start_date.replace(tzinfo=timezone.utc)
+
+    all_games = fetch_mls_games_from_odds_api()
+    if not all_games:
+        log.warning(f"[mls.schedule] Odds API returned 0 games — check ODDS_API_KEY or quota")
+        return []
+
+    windowed = _filter_to_window(all_games, start_date, days_ahead=days_ahead)
+    log.info(
+        f"[mls.schedule] window {start_date.date()} +{days_ahead}d: "
+        f"{len(windowed)}/{len(all_games)} matches in window"
+    )
+    return windowed
+
+
+def get_mls_week_games_via_espn(start_date: datetime, days_ahead: int = 7) -> list[dict]:
+    """Legacy ESPN path — kept for reference. Not called by production code.
+
+    ESPN's soccer/usa.1/scoreboard endpoint started returning 403 on
+    2026-08-24. If they ever unblock, calling this function again should
+    work without changes (the parser + team-id mapping still match)."""
     out: list[dict] = []
     seen_event_ids: set[str] = set()
 
