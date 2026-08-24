@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, abort, Response,
+    flash, abort, Response, jsonify,
 )
 
 from mlb.cache import get_slate, start_warmer
@@ -436,6 +436,28 @@ def inject_sport_nav():
 # Optional: contact form email destination (set in Render env vars)
 CONTACT_EMAIL = os.environ.get("CONTACT_EMAIL", "kevin@kevinrothwx.com")
 SITE_URL = "https://kevinrothwx.com"
+
+
+# ===== Health check — enables Render zero-downtime deploys =====
+#
+# Render polls this endpoint on new instances during a deploy. Only when
+# it returns 200 does Render route traffic to the new instance and terminate
+# the old one. Without this, deploys just cycle workers and users (+ Googlebot)
+# hit a 30-60s 5xx window.
+#
+# Configure in Render dashboard: Settings → Health Check Path → /health
+#
+# Response is intentionally minimal — no DB calls, no external API calls,
+# no template rendering. Must be sub-millisecond and never fail. If we
+# wanted more, /admin/cache-health is the deep diagnostic page.
+
+@app.route("/health")
+def health():
+    return jsonify({
+        "ok": True,
+        "pid": os.getpid(),
+        "started_at": _APP_STARTED_AT.isoformat(),
+    }), 200
 
 
 # ===== Marketing / static routes =====

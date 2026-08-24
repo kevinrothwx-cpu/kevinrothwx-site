@@ -35,6 +35,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from .venues import FBS_TEAMS
+from persistence import load_json, save_json, parse_dt
 
 log = logging.getLogger(__name__)
 
@@ -118,17 +119,69 @@ def _headers() -> Optional[dict]:
     }
 
 
-# Module-level cache: {(year, season_type): (fetched_at_utc, games_list)}
+# Module-level cache: {(year, season_type): (fetched_at_utc, games_list)}.
+# Also persisted to disk via `persistence.save_json` so it survives Render
+# deploys — otherwise every push resets the cache and forces a fresh
+# CFBD call on the next warmer cycle, blowing quota on deploy churn.
+#
 # TTL is 1 hour on Patreon Tier 1 ($1/mo, 5K calls/mo). Math: 1 fetch/hour
 # × 24h × ~30 days = ~720 calls/month regular season, up to ~1440/month
 # in bowl season (Dec-Feb includes postseason). Under 30% of the 5K cap
 # even if OVERcast CFB is also hitting CFBD from a separate process.
-# Kickoff-time flex changes are rare enough that hourly refresh is fine.
 _YEAR_CACHE: dict[tuple, tuple[datetime, list[dict]]] = {}
 _CACHE_TTL_HOURS   = 1
 BACKOFF_ON_429_HOURS = 1   # on Tier 1 (5K/mo), retry hourly after 429; worst-case
                             # 720 wasted calls/mo if quota stays exhausted, still
                             # well under cap. On free tier this was 6h.
+
+_DISK_CACHE_FILE = "cfbd_year_cache.json"
+
+
+def _load_cache_from_disk() -> None:
+    """Populate _YEAR_CACHE from disk on module import so we don't lose
+    everything across Render deploys. Silently returns if the file is
+    missing or malformed — cold cache just means the first fetch after
+    boot hits CFBD, same as before."""
+    raw = load_json(_DISK_CACHE_FILE, default={})
+    if not isinstance(raw, dict):
+        return
+    for key_str, entry in raw.items():
+        try:
+            # Key was serialized as "year|season_type" since JSON can't have tuple keys
+            year_str, season_type = key_str.split("|", 1)
+            key = (int(year_str), season_type)
+            if not isinstance(entry, dict):
+                continue
+            fetched_at_str = entry.get("fetched_at")
+            games = entry.get("games") or []
+            fetched_at = parse_dt(fetched_at_str)
+            if fetched_at and isinstance(games, list):
+                _YEAR_CACHE[key] = (fetched_at, games)
+        except Exception:
+            continue
+    if _YEAR_CACHE:
+        print(f"[cfb.cfbd] loaded disk cache: {len(_YEAR_CACHE)} entries", flush=True)
+
+
+def _persist_cache_to_disk() -> None:
+    """Serialize _YEAR_CACHE and write atomically. Tuple keys become
+    "year|season_type" strings; datetimes become ISO strings via
+    persistence._json_default."""
+    try:
+        out = {}
+        for (year, season_type), (fetched_at, games) in _YEAR_CACHE.items():
+            key_str = f"{year}|{season_type}"
+            out[key_str] = {
+                "fetched_at": fetched_at.isoformat() if isinstance(fetched_at, datetime) else fetched_at,
+                "games":      games,
+            }
+        save_json(_DISK_CACHE_FILE, out)
+    except Exception as e:
+        print(f"[cfb.cfbd] disk cache save failed: {type(e).__name__}: {e}", flush=True)
+
+
+# Load on import
+_load_cache_from_disk()
 
 
 def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[dict]:
@@ -171,10 +224,12 @@ def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[d
             if cached:
                 # Bump the cached timestamp forward so we don't retry for a while
                 _YEAR_CACHE[key] = (now - timedelta(hours=_CACHE_TTL_HOURS - BACKOFF_ON_429_HOURS), cached[1])
+                _persist_cache_to_disk()
                 return cached[1]
             # Cold cache and 429 — store empty result with backoff TTL so
             # we don't slam the endpoint on every request
             _YEAR_CACHE[key] = (now - timedelta(hours=_CACHE_TTL_HOURS - BACKOFF_ON_429_HOURS), [])
+            _persist_cache_to_disk()
             return []
         if resp.status_code != 200:
             print(f"[cfb.cfbd] returned {resp.status_code}: {resp.text[:200]}", flush=True)
@@ -186,7 +241,8 @@ def fetch_cfbd_games_for_year(year: int, season_type: str = "regular") -> list[d
             return cached[1] if cached else []
         # Cache success
         _YEAR_CACHE[key] = (now, data)
-        print(f"[cfb.cfbd] fetched year={year} {season_type}: {len(data)} raw games (cached {_CACHE_TTL_HOURS}h)",
+        _persist_cache_to_disk()
+        print(f"[cfb.cfbd] fetched year={year} {season_type}: {len(data)} raw games (cached {_CACHE_TTL_HOURS}h, persisted)",
               flush=True)
         return data
     except Exception as e:
@@ -214,17 +270,39 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
         for season_type in ("regular", "postseason"):
             all_raw.extend(fetch_cfbd_games_for_year(year, season_type))
 
+    # Diagnostic: on 2026-08-23 we saw CFBD return 3610 raw games while our
+    # parser produced 0 — v2 API likely changed field names. Dump the first
+    # raw game's keys + values so we can see what CFBD is actually sending.
+    if all_raw:
+        first = all_raw[0]
+        keys_sample = sorted(first.keys())[:20]
+        print(f"[cfb.cfbd] raw sample keys: {keys_sample}", flush=True)
+        # Show a small taste of common fields
+        for probe in ("id", "start_date", "startDate", "home_team", "homeTeam",
+                      "away_team", "awayTeam", "home_classification",
+                      "homeClassification", "start_time_tbd", "startTimeTBD",
+                      "venue", "neutral_site", "neutralSite", "season", "week"):
+            if probe in first:
+                v = first[probe]
+                v_str = repr(v)[:60]
+                print(f"[cfb.cfbd]   {probe}={v_str}", flush=True)
+
     out: list[dict] = []
+    parse_reject_reasons: dict[str, int] = {}
     for raw in all_raw:
-        parsed = parse_cfbd_game(raw)
+        parsed = parse_cfbd_game(raw, reject_stats=parse_reject_reasons)
         if not parsed:
             continue
         kickoff = parsed.get("kickoff_utc")
         if not kickoff:
             continue
         if kickoff < start_utc or kickoff > end_utc:
+            parse_reject_reasons["out_of_window"] = parse_reject_reasons.get("out_of_window", 0) + 1
             continue
         out.append(parsed)
+
+    if parse_reject_reasons:
+        print(f"[cfb.cfbd] parse reject reasons: {parse_reject_reasons}", flush=True)
 
     # Sort chronologically to match ESPN fetcher's contract
     out.sort(key=lambda g: g["kickoff_utc"])
@@ -232,53 +310,57 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
     return out
 
 
-def parse_cfbd_game(raw: dict) -> Optional[dict]:
+def parse_cfbd_game(raw: dict, reject_stats: Optional[dict] = None) -> Optional[dict]:
     """Convert one CFBD game into our normalized shape (matching what
     cfb/schedule.py's parse_cfb_event produces from ESPN). Returns None
     if we can't map required fields (unknown teams, missing kickoff, etc.).
 
-    CFBD game fields we use:
-        id (int), season, week, start_date (ISO str),
-        start_time_tbd (bool), neutral_site (bool),
-        home_team, home_id, away_team, away_id, home_classification,
-        away_classification, venue, venue_id
+    CFBD v1 fields: id, start_date, home_team, home_id, home_classification,
+                    away_team, away_id, away_classification, venue,
+                    start_time_tbd, neutral_site
+    CFBD v2 (camelCase): startDate, homeTeam, homeClassification, etc.
     """
+    def _bump(reason: str):
+        if reject_stats is not None:
+            reject_stats[reason] = reject_stats.get(reason, 0) + 1
+
     try:
-        cfbd_id = raw.get("id")
-        start_date = raw.get("start_date")
+        cfbd_id    = raw.get("id")
+        start_date = raw.get("start_date") or raw.get("startDate")
         home_school = raw.get("home_team") or raw.get("homeTeam") or ""
         away_school = raw.get("away_team") or raw.get("awayTeam") or ""
         if not (cfbd_id and start_date and home_school and away_school):
+            _bump("missing_core_fields")
             return None
 
         # Skip TBD-time games — they'll get a real time when scheduled.
         if raw.get("start_time_tbd") or raw.get("startTimeTBD"):
+            _bump("time_tbd")
             return None
 
         # Parse kickoff (CFBD uses ISO with trailing Z or explicit offset)
         try:
             kickoff_utc = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
         except (ValueError, TypeError):
+            _bump("bad_start_date")
             return None
         if kickoff_utc.tzinfo is None:
             kickoff_utc = kickoff_utc.replace(tzinfo=timezone.utc)
 
-        # Only include games where BOTH teams are FBS. Skip FBS-vs-FCS games
-        # per the current ESPN behavior — we don't have FCS venue data and
-        # they clutter the slate.
+        # Only include games where the HOME team is FBS. Skip games where
+        # home is non-FBS (FCS host); away can be FCS (cupcake games at FBS
+        # venue, still have real weather).
         home_class = (raw.get("home_classification") or raw.get("homeClassification") or "").lower()
-        away_class = (raw.get("away_classification") or raw.get("awayClassification") or "").lower()
         if home_class and home_class != "fbs":
+            _bump(f"home_class_{home_class}")
             return None
-        # away can be FCS as long as home is FBS (traditional cupcake games).
-        # If home is FBS but we know away is FCS, we still show the game since
-        # it's at an FBS venue with real weather. Only skip if home is non-FBS.
 
         # Team lookups
         home_team_id = _lookup_team_id(home_school)
         away_team_id = _lookup_team_id(away_school)
         if home_team_id is None:
-            print(f"[cfb.cfbd] skipping game {cfbd_id}: unknown home team {home_school!r}", flush=True)
+            _bump("unknown_home_team")
+            # Only spam the log once per unique unknown team to avoid noise
             return None
 
         home_team = FBS_TEAMS.get(home_team_id, {})
@@ -320,7 +402,7 @@ def parse_cfbd_game(raw: dict) -> Optional[dict]:
             venue_dict["is_neutral"] = False
 
         if not venue_dict:
-            print(f"[cfb.cfbd] skipping game {cfbd_id}: no venue", flush=True)
+            _bump("no_venue")
             return None
 
         # Kickoff strings + date buckets
@@ -378,6 +460,7 @@ def parse_cfbd_game(raw: dict) -> Optional[dict]:
             "source":               "cfbd",
         }
     except Exception as e:
+        _bump(f"exception_{type(e).__name__}")
         print(f"[cfb.cfbd] parse failed: {type(e).__name__}: {e}", flush=True)
         return None
 
