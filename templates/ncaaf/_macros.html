@@ -92,23 +92,26 @@
   {% set home = game.home %}
   {% set neutral = v and v.is_neutral %}
   {% set o = game.odds %}
+  {# Indoor game — dome venues have no weather-relevant conditions.
+     Blank all wx stats and sort last in any wind/rain sort. #}
+  {% set is_indoor = v and v.roof == 'fixed_dome' %}
   {# Wind severity class for color-tiering temp and stadium arrow #}
   {% set wind_class = '' %}
-  {% if f and f.wind_speed %}
+  {% if f and f.wind_speed and not is_indoor %}
     {% if f.wind_speed >= 25 %}{% set wind_class = 'severe' %}
     {% elif f.wind_speed >= 18 %}{% set wind_class = 'high' %}
     {% endif %}
   {% endif %}
   {# Temp severity class #}
   {% set temp_class = '' %}
-  {% if f and f.temp is not none %}
+  {% if f and f.temp is not none and not is_indoor %}
     {% if f.temp <= 32 %}{% set temp_class = 'cold' %}
     {% elif f.temp >= 88 %}{% set temp_class = 'hot' %}
     {% endif %}
   {% endif %}
   {# Precip severity class #}
   {% set precip_class = 'low' %}
-  {% if f and f.precip_pct is not none %}
+  {% if f and f.precip_pct is not none and not is_indoor %}
     {% if f.precip_pct >= 60 %}{% set precip_class = 'high' %}
     {% elif f.precip_pct >= 30 %}{% set precip_class = 'mid' %}
     {% endif %}
@@ -117,12 +120,13 @@
   {% set kh = game.kickoff_eastern.hour if game.kickoff_eastern else 12 %}
   {% set is_night = (kh >= 18 or kh < 6) %}
   {# Sort keys — computed once so JS can just read data-sort-* on click.
-     Missing values become 0 so cards without forecast/odds sort last (default sort still works). #}
+     Indoor games sort LAST in wind/rain (sentinel -1) because their
+     outdoor conditions are irrelevant. Missing values same. #}
   {% set sort_kickoff = (game.kickoff_utc.isoformat() if game.kickoff_utc else '9999') %}
-  {% set sort_rain    = (f.precip_pct|int if f and f.precip_pct is not none else 0) %}
-  {% set sort_wind    = (f.wind_speed|int if f and f.wind_speed else 0) %}
-  {% set sort_move    = ((o.delta|abs) if o and o.delta is not none else 0) %}
-  {% set sort_total   = (o.current if o and o.current is not none else 0) %}
+  {% set sort_rain    = -1 if is_indoor else (f.precip_pct|int if f and f.precip_pct is not none else -1) %}
+  {% set sort_wind    = -1 if is_indoor else (f.wind_speed|int if f and f.wind_speed else -1) %}
+  {% set sort_move    = ((o.delta|abs) if o and o.delta is not none else -1) %}
+  {% set sort_total   = (o.current if o and o.current is not none else -1) %}
   <a href="{{ game.url_path }}" class="cheat-card cheat-card--cfb"
      data-sort-kickoff="{{ sort_kickoff }}"
      data-sort-rain="{{ sort_rain }}"
@@ -155,17 +159,17 @@
     {% if f %}
     <div class="cheat-card__wx">
       <div class="wx-stat">
-        <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{{ f.temp|int }}°</div>
+        <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.temp|int }}°{% endif %}</div>
       </div>
       <div class="wx-stat">
-        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if v and v.roof == 'fixed_dome' %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust and f.gust|int >= (f.wind_speed|int + 5) %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
+        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust and f.gust|int >= (f.wind_speed|int + 5) %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
       </div>
       <div class="wx-stat">
-        <div class="wx-stat__primary wx-stat__primary--precip-{{ precip_class }}">{{ f.precip_pct|int }}%</div>
+        <div class="wx-stat__primary wx-stat__primary--precip-{{ precip_class }}">{% if is_indoor %}—{% else %}{{ f.precip_pct|int }}%{% endif %}</div>
       </div>
     </div>
     <div class="cheat-card__wx-detail">
-      {% if v and v.roof == 'fixed_dome' %}
+      {% if is_indoor %}
         <span class="wx-detail__item">Indoor</span>
         <span class="wx-detail__item">—</span>
       {% else %}
@@ -176,19 +180,22 @@
     {% else %}
     <div class="cheat-card__wx-missing">Forecast pending</div>
     {% endif %}
-    {# Odds row — shows only when game.odds is populated. Ordering per Kevin:
-       O/U (current, bold) · Opened · ± delta arrow. NO book name, NO reason text. #}
-    {% if o and o.current is not none %}
+    {# Odds row — ALWAYS rendered so card heights stay uniform.
+       When odds haven't been posted yet, the row is present (keeps the
+       border-top separator + spacing) but empty. #}
     <div class="cheat-card__odds">
-      <span class="cheat-card__odds-total">O/U {{ o.current }}</span>
-      {% if o.opening is not none %}
-        <span class="cheat-card__odds-open">Opened {{ o.opening }}</span>
-        {% if o.delta is not none and o.delta != 0 %}
-          <span class="cheat-card__odds-delta cheat-card__odds-delta--{% if o.delta > 0 %}up{% else %}down{% endif %}">{% if o.delta > 0 %}↑{% else %}↓{% endif %} {{ o.delta_str or (o.delta|abs) }}</span>
+      {% if o and o.current is not none %}
+        <span class="cheat-card__odds-total">O/U {{ o.current }}</span>
+        {% if o.opening is not none %}
+          <span class="cheat-card__odds-open">Opened {{ o.opening }}</span>
+          {% if o.delta is not none and o.delta != 0 %}
+            <span class="cheat-card__odds-delta cheat-card__odds-delta--{% if o.delta > 0 %}up{% else %}down{% endif %}">{% if o.delta > 0 %}↑{% else %}↓{% endif %} {{ o.delta_str or (o.delta|abs) }}</span>
+          {% endif %}
         {% endif %}
+      {% else %}
+        <span class="cheat-card__odds-empty">&nbsp;</span>
       {% endif %}
     </div>
-    {% endif %}
   </a>
 {% endmacro %}
 

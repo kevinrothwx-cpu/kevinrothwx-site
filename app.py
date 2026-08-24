@@ -235,18 +235,51 @@ print(
     flush=True,
 )
 
-# Start the slate warmer thread on import (gunicorn imports app:app once per worker)
-start_warmer()
-start_wc_warmer()
-start_golf_warmer()
-start_nascar_warmer()
-start_cws_warmer()
-start_tennis_warmer()
-start_cfb_warmer()
-start_mls_warmer()
-start_nfl_warmer()
-start_horse_warmer()
-start_prem_warmer()
+# Warmer startup — DELAYED + STAGGERED so /health responds instantly
+# during Render's deploy-time health check and we don't OOM on the
+# Starter tier (512MB) by firing 11 warmers concurrently.
+#
+# Sequence per Perplexity's Single-Worker Lockup diagnosis:
+#   1. Sleep 15s   — Render polls /health every ~2-5s and typically needs
+#                    multiple consecutive successes; 15s gives 3-7 clean
+#                    poll cycles before we add any load.
+#   2. Fire warmers 1 at a time, 1 second apart. Each warmer's initial
+#                    fetch happens in its own thread so overall wall time
+#                    is bounded, but the CPU/RAM spike is spread out
+#                    instead of all-at-once.
+#   3. Wrap each start_*_warmer() in try/except so one failing sport
+#                    (e.g., import error or thread-init crash) doesn't
+#                    prevent the other 10 from starting.
+#
+# Missing the first ~30s of any warmer's life has no observable impact
+# on cache freshness — they cycle every 25 min once running.
+def _delayed_start_warmers():
+    import time
+    time.sleep(15)
+    print(f"[app.startup] delayed warmer start firing (staggered)", flush=True)
+    starters = [
+        ("mlb",     start_warmer),
+        ("wc",      start_wc_warmer),
+        ("golf",    start_golf_warmer),
+        ("nascar",  start_nascar_warmer),
+        ("cws",     start_cws_warmer),
+        ("tennis",  start_tennis_warmer),
+        ("cfb",     start_cfb_warmer),
+        ("mls",     start_mls_warmer),
+        ("nfl",     start_nfl_warmer),
+        ("horse",   start_horse_warmer),
+        ("prem",    start_prem_warmer),
+    ]
+    for label, fn in starters:
+        try:
+            fn()
+        except Exception as e:
+            print(f"[app.startup] {label} warmer FAILED to start: "
+                  f"{type(e).__name__}: {e} (continuing)", flush=True)
+        time.sleep(1)  # stagger the initial-fetch load spike
+
+import threading as _threading
+_threading.Thread(target=_delayed_start_warmers, daemon=True, name="delayed-warmer-boot").start()
 
 # Register the JSON API blueprint (docs/FORECAST_API_CONTRACT_v1.md).
 # Consumers: OVERcast NFL + OVERcast CFB. Auth via MSW_API_KEYS env var.
