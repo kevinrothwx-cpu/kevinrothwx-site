@@ -194,7 +194,7 @@
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="NFL football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">All 32 Stadiums</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
           <p class="home-sport-card__body">Stadium-specific hourly weather around every kickoff. Indoor venues flagged, retractable-roof toggle for Atlanta, Dallas, Houston, Indianapolis, and Arizona.</p>
           <span class="home-sport-card__indicator">
-            {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;{{ "game" if sport_counts.nfl == "1" else "games" }} today{% else %}Preseason begins August 7{% endif %}
+            {% if sport_counts.nfl %}<strong>{{ sport_counts.nfl }}</strong>&nbsp;{{ "game" if sport_counts.nfl == "1" else "games" }} today{% else %}See this week's slate{% endif %}
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>

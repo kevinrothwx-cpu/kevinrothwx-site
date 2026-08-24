@@ -16,11 +16,22 @@
       <div>
         <p class="kicker kicker-storm">NFL · Weather</p>
         <h1 class="mlb-page__title">
-          {% if games and games[0].kickoff_eastern and games[-1].kickoff_eastern %}
-            {% if games[0].kickoff_eastern.strftime("%-m/%-d") == games[-1].kickoff_eastern.strftime("%-m/%-d") %}
-              {{ games[0].kickoff_eastern.strftime("%A, %B %-d") }}
+          {# Prefer season_type_label + week when we have them, fall back to
+             a friendly date label otherwise. Beats "Week of Aug 27 to Aug 29"
+             which reads awkward for a 3-day slate that's actually one NFL week. #}
+          {% if games %}
+            {% set stlabel = games[0].season_type_label %}
+            {% set wk = games[0].week %}
+            {% if stlabel %}
+              NFL {{ stlabel }}{% if wk %} · Week {{ wk }}{% endif %}
+            {% elif games[0].kickoff_eastern and games[-1].kickoff_eastern %}
+              {% if games[0].kickoff_eastern.strftime("%-m/%-d") == games[-1].kickoff_eastern.strftime("%-m/%-d") %}
+                {{ games[0].kickoff_eastern.strftime("%A, %B %-d") }}
+              {% else %}
+                NFL Week
+              {% endif %}
             {% else %}
-              Week of {{ games[0].kickoff_eastern.strftime("%b %-d") }} to {{ games[-1].kickoff_eastern.strftime("%b %-d, %Y") }}
+              National Football League weather
             {% endif %}
           {% else %}
             National Football League weather

@@ -98,7 +98,13 @@
         <span class="cheat-card__skyicon">{{ weather_icon(f.precip_pct|precip_icon, 28) }}</span>
       </div>
     {% else %}
-      <div class="cheat-card__wx cheat-card__wx--missing">Forecast pending</div>
+      {# Distinguish "indoor venue — no outdoor weather to forecast" from
+         "forecast not yet available". Same cheat-card shape either way. #}
+      {% if venue and venue.roof_type == "fixed_dome" %}
+        <div class="cheat-card__wx cheat-card__wx--missing">Indoor game</div>
+      {% else %}
+        <div class="cheat-card__wx cheat-card__wx--missing">Forecast pending</div>
+      {% endif %}
     {% endif %}
   </a>
 {% endmacro %}
@@ -126,8 +132,12 @@
         <span class="game-summary__cell-label">Wind</span>
       </div>
     {% else %}
+      {# Same "indoor game" distinction as wc_cheat_card above. #}
+      {% set _v = match.venue_meta if match.venue_meta else (match.venue if match.venue is mapping else none) %}
       <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
-        <span class="game-summary__cell-label">Forecast pending</span>
+        <span class="game-summary__cell-label">
+          {% if _v and _v.roof_type == "fixed_dome" %}Indoor game{% else %}Forecast pending{% endif %}
+        </span>
       </div>
     {% endif %}
   </div>

@@ -163,8 +163,22 @@
   <header class="ncaaf-page__header">
     <p class="kicker kicker-storm">NCAAF Weather · Live Coverage</p>
     <h1 class="ncaaf-page__title">
-      {% if games and games[0].kickoff_eastern and games[-1].kickoff_eastern %}
-        Week of {{ games[0].kickoff_eastern.strftime("%b %-d") }} to {{ games[-1].kickoff_eastern.strftime("%b %-d, %Y") }}
+      {# Prefer "College Football Week N" (or "Bowl Games" for postseason)
+         over "Week of X to Y" which reads weird when all games are one day. #}
+      {% if games %}
+        {% set weeks = games | map(attribute='week') | select | unique | list %}
+        {% set stypes = games | map(attribute='season_type') | select | unique | list %}
+        {% if stypes and 'postseason' in stypes and 'regular' not in stypes %}
+          College Football · Bowl Games
+        {% elif weeks|length == 1 %}
+          College Football · Week {{ weeks[0] }}
+        {% elif weeks|length > 1 %}
+          College Football · Weeks {{ weeks|min }}–{{ weeks|max }}
+        {% elif games[0].kickoff_eastern %}
+          {{ games[0].kickoff_eastern.strftime("%A, %B %-d, %Y") }}
+        {% else %}
+          College football weather
+        {% endif %}
       {% else %}
         College football weather
       {% endif %}
