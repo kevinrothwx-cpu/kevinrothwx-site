@@ -183,7 +183,14 @@ def _attach_weather_to_game(game: dict, venue_cache: dict, hrrr_cache: dict) -> 
     if key in venue_cache:
         periods, source, err = venue_cache[key]
     else:
-        periods, source, err = _fetch_weather_with_fallback(lat, lon)
+        # International neutral-site games (Croke Park Dublin, Wembley,
+        # Estadio Azteca, etc.) can't use NWS — it only covers US
+        # territory. Route straight to WeatherAPI to avoid a guaranteed
+        # NWS failure and its noisy log line.
+        if venue.get("nws_unsupported"):
+            periods, source, err = _fetch_weatherapi_only(lat, lon)
+        else:
+            periods, source, err = _fetch_weather_with_fallback(lat, lon)
         venue_cache[key] = (periods, source, err)
 
     if not periods:
@@ -194,10 +201,11 @@ def _attach_weather_to_game(game: dict, venue_cache: dict, hrrr_cache: dict) -> 
         game["weather_error"] = err
         return
 
-    # Kickoff snapshot.
+    # Kickoff snapshot. NWS + WeatherAPI use different period schemas,
+    # so pick the right accessor based on which source produced them.
     if source == "nws":
         snapshot = find_period_for_time(periods, kickoff_utc)
-    else:  # weatherapi-fallback
+    else:  # weatherapi-fallback OR weatherapi-international
         snapshot = find_weatherapi_period(periods, kickoff_utc)
 
     hourly = _hourly_window(periods, kickoff_utc)
@@ -248,6 +256,20 @@ def _fetch_weather_with_fallback(lat: float, lon: float) -> tuple[list[dict], st
         return [], "all-failed", f"NWS: {nws_err}; WeatherAPI returned empty"
     except Exception as wa_err:
         return [], "all-failed", f"NWS: {nws_err}; WeatherAPI: {wa_err}"
+
+
+def _fetch_weatherapi_only(lat: float, lon: float) -> tuple[list[dict], str, Optional[str]]:
+    """Direct WeatherAPI path for international neutral-site games (Croke
+    Park, Wembley, Estadio Azteca, etc.). NWS only serves US territory
+    so there's no point trying it first — skip the guaranteed failure
+    and the noisy log line."""
+    try:
+        periods = fetch_weatherapi_hourly(lat, lon)
+        if periods:
+            return periods, "weatherapi-international", None
+        return [], "all-failed", "WeatherAPI returned empty for international venue"
+    except Exception as e:
+        return [], "all-failed", f"WeatherAPI (international): {e}"
 
 
 # ── Hourly window extraction ──────────────────────────────────────────────

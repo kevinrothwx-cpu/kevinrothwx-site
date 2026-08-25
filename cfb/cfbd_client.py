@@ -35,6 +35,8 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from .venues import FBS_TEAMS
+from .cfbd_teams import get_logo_for_school as _cfbd_logo_for_school
+from .neutral_venues import lookup_neutral_venue as _lookup_neutral_venue
 from persistence import load_json, save_json, parse_dt
 
 log = logging.getLogger(__name__)
@@ -373,28 +375,45 @@ def parse_cfbd_game(raw: dict, reject_stats: Optional[dict] = None) -> Optional[
             away_logo = f"https://a.espncdn.com/i/teamlogos/ncaa/500/{away_team_id}.png"
             away_color = away_team.get("color") or "#111111"
         else:
-            # FCS opponent — display with the CFBD school name, generic logo
+            # FCS opponent — display with the CFBD school name. We don't
+            # have an ESPN team_id, so fall back to CFBD's /teams endpoint
+            # which returns logo URLs for every division (FBS + FCS + D2/D3).
+            # Empty string means the template hides the img via {% if logo_url %}.
             away_abbrev = away_school[:4].upper()
             away_full = away_school
             away_short = away_school
-            away_logo = ""
+            away_logo = _cfbd_logo_for_school(away_school)
             away_color = "#888888"
 
         home_abbrev = home_team.get("abbrev") or home_school[:4].upper()
         home_full = home_team.get("name") or home_school
         home_short = home_team.get("short") or home_school
+        # Prefer the ESPN CDN URL (matches the existing look-and-feel across
+        # sports). If for any reason the home team lookup misses too — an FBS
+        # gap in FBS_TEAMS — the CFBD fallback keeps the logo populated.
         home_logo = f"https://a.espncdn.com/i/teamlogos/ncaa/500/{home_team_id}.png"
         home_color = home_team.get("color") or "#111111"
 
-        # Venue: use home stadium unless neutral site
+        # Venue resolution for neutral-site games. Three-tier lookup:
+        #   1. NEUTRAL_VENUES table (Croke Park Dublin, AT&T Arlington,
+        #      Mercedes-Benz Atlanta, Cotton Bowl Dallas, etc.) — covers
+        #      international kickoff games + US venues that aren't any
+        #      FBS team's home stadium.
+        #   2. FBS_TEAMS stadium name match — covers bowls at another FBS
+        #      team's home (Rose Bowl = UCLA, Hard Rock = Miami, etc.)
+        #   3. Home team's stadium as a last-resort fallback so we render
+        #      SOMETHING even if the venue name isn't in either table.
+        #      (Add to neutral_venues.py when this fires on a real game —
+        #      the wrong lat/lon means wrong weather.)
         is_neutral = bool(raw.get("neutral_site") or raw.get("neutralSite"))
         if is_neutral:
-            # CFBD tells us the neutral venue name; we don't have coords for
-            # every neutral venue. Try to look up by name in FBS_TEAMS's
-            # stadiums; else fall back to home stadium (imperfect but at
-            # least gives us weather somewhere plausible).
             neutral_name = raw.get("venue") or ""
-            venue_dict = _find_stadium_by_name(neutral_name) or dict(home_team.get("stadium") or {})
+            neutral_city = raw.get("venue_city") or raw.get("venueCity") or ""
+            venue_dict = (
+                _lookup_neutral_venue(neutral_name, neutral_city)
+                or _find_stadium_by_name(neutral_name)
+                or dict(home_team.get("stadium") or {})
+            )
             venue_dict = dict(venue_dict)
             venue_dict["is_neutral"] = True
         else:
