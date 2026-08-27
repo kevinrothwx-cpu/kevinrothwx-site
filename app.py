@@ -360,6 +360,55 @@ def redirect_sport_paths_to_product_site():
     return redirect("https://mysportsweather.com" + suffix, code=301)
 
 
+# ─── Edge-cache Cache-Control policy (2026-08-24) ────────────────────────
+# Why: Render's persistent-disk services can't do zero-downtime deploys.
+# Every push produces a ~10-60s window where /health + user pages 502.
+# Googlebot hitting that window costs us crawl budget and rankings.
+#
+# Fix: Render's Edge Cache serves cached HTML from the CDN when origin is
+# unavailable, but only for responses that carry Cache-Control directives.
+# By default Flask sends no Cache-Control and everything is uncached.
+#
+# Policy per path family:
+#   /health, /admin/*, /api/*  → no-cache (never cache)
+#   /static/*                  → 1h cache (assets rarely change)
+#   Slate/homepage/detail pages → 60s fresh + stale-while-revalidate=600
+#                                 + stale-if-error=3600
+#     Meaning: serve cached HTML for 60s. After that, keep serving stale
+#     for up to 10min while revalidating in the background. If origin
+#     errors (like during deploy 502s), serve stale for up to an hour.
+#
+# Requires: Render dashboard → Service → Settings → Edge Caching → ENABLE.
+# Without that toggle, these headers do nothing bad — they just don't help.
+_NO_CACHE_PREFIXES = ("/health", "/admin", "/api/")
+
+@app.after_request
+def set_cache_control(response):
+    # Never override an explicit Cache-Control set by an endpoint (e.g. the
+    # API blueprint sets no-cache on JSON responses already).
+    if response.headers.get("Cache-Control"):
+        return response
+    # Only cache successful GET responses. Errors, redirects, POSTs stay uncached.
+    if request.method != "GET" or response.status_code >= 400:
+        response.headers["Cache-Control"] = "no-store"
+        return response
+    path = request.path or ""
+    if any(path.startswith(p) for p in _NO_CACHE_PREFIXES):
+        response.headers["Cache-Control"] = "no-store"
+        return response
+    if path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        return response
+    # Everything else = user-facing pages. Short fresh window, longer stale
+    # window so edge cache carries us through deploy 502s.
+    response.headers["Cache-Control"] = (
+        "public, max-age=60, "
+        "stale-while-revalidate=600, "
+        "stale-if-error=3600"
+    )
+    return response
+
+
 @app.context_processor
 def inject_globals():
     """Make a few values available in every template, including the

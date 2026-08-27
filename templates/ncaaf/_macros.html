@@ -157,25 +157,31 @@
       </div>
     </div>
     {% if f %}
+    {# ── v2 layout (2026-08-24):
+         Column 1: LARGE temp, left-aligned, vertically centered in the wx block.
+         Column 2: wind number on top, stadium icon + direction centered below.
+         Column 3: precip % on top, weather icon centered below.
+         All secondary content lives inside its stat cell — no separate detail row. #}
     <div class="cheat-card__wx">
-      <div class="wx-stat">
+      <div class="wx-stat wx-stat--temp">
         <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.temp|int }}°{% endif %}</div>
       </div>
-      <div class="wx-stat">
+      <div class="wx-stat wx-stat--wind">
         <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust and f.gust|int >= (f.wind_speed|int + 5) %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
+        <div class="wx-stat__secondary">
+          {% if is_indoor %}
+            —
+          {% else %}
+            {{ cfb_stadium_icon(f.wind_deg, wind_class) }}<span class="wx-stat__label">{{ f.wind_deg|wind_compass }}</span>
+          {% endif %}
+        </div>
       </div>
-      <div class="wx-stat">
+      <div class="wx-stat wx-stat--precip">
         <div class="wx-stat__primary wx-stat__primary--precip-{{ precip_class }}">{% if is_indoor %}—{% else %}{{ f.precip_pct|int }}%{% endif %}</div>
+        <div class="wx-stat__secondary">
+          {% if is_indoor %}—{% else %}{{ weather_icon(f.precip_pct|precip_icon, 22) }}{% endif %}
+        </div>
       </div>
-    </div>
-    <div class="cheat-card__wx-detail">
-      {% if is_indoor %}
-        <span class="wx-detail__item">Indoor</span>
-        <span class="wx-detail__item">—</span>
-      {% else %}
-        <span class="wx-detail__item">{{ cfb_stadium_icon(f.wind_deg, wind_class) }}&nbsp;{{ f.wind_deg|wind_compass }}</span>
-        <span class="wx-detail__item">{{ weather_icon(f.precip_pct|precip_icon, 22) }}</span>
-      {% endif %}
     </div>
     {% else %}
     <div class="cheat-card__wx-missing">Forecast pending</div>

@@ -995,3 +995,104 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 
 .mlb-page__hed { gap: 0.75rem 1.5rem; align-items: center; }
 .mlb-page__hed > div .kicker { margin-bottom: 0.1rem; }
+
+/* ── CFB cheat-card v2 (2026-08-24) ─────────────────────────────────────
+   The CFB card diverges from the MLB layout — big left temp with two
+   stacked stat columns to its right. Rules are scoped to
+   .cheat-card--cfb so nothing else on the site changes. Preserves the
+   existing severity color modifiers (wx-stat__primary--cold/hot/severe/
+   high/precip-low/mid/high). */
+.cheat-card--cfb .cheat-card__wx {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--mist);
+  margin-top: auto;
+  min-height: 4.5rem;
+}
+.cheat-card--cfb .wx-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.cheat-card--cfb .wx-stat--temp {
+  align-items: flex-start;
+  justify-content: center;
+  padding-left: 0.1rem;
+}
+.cheat-card--cfb .wx-stat__primary {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15rem;
+}
+.cheat-card--cfb .wx-stat--temp .wx-stat__primary {
+  font-size: 2.35rem;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+.cheat-card--cfb .wx-stat__unit {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--slate);
+  margin-left: 0.05rem;
+  letter-spacing: 0.02em;
+}
+.cheat-card--cfb .wx-stat__gust-inline {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #b45309;
+  margin-left: 0.25rem;
+  letter-spacing: 0.02em;
+}
+.cheat-card--cfb .wx-stat__secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  color: var(--slate);
+  line-height: 1;
+  min-height: 1.3rem;
+}
+.cheat-card--cfb .wx-stat__label { letter-spacing: 0.03em; }
+
+/* Severity color modifiers — keep the palette consistent with MLB's */
+.cheat-card--cfb .wx-stat__primary--cold   { color: #1e3a8a; }
+.cheat-card--cfb .wx-stat__primary--hot    { color: #b91c1c; }
+.cheat-card--cfb .wx-stat__primary--high   { color: #b45309; }
+.cheat-card--cfb .wx-stat__primary--severe { color: #b91c1c; }
+.cheat-card--cfb .wx-stat__primary--precip-low  { color: #16a34a; }
+.cheat-card--cfb .wx-stat__primary--precip-mid  { color: #b45309; }
+.cheat-card--cfb .wx-stat__primary--precip-high { color: #b91c1c; }
+
+/* Tablet — tighten the wx block, keep the same proportions */
+@media (max-width: 900px) {
+  .cheat-card--cfb .cheat-card__wx { gap: 0.5rem; min-height: 4.1rem; }
+  .cheat-card--cfb .wx-stat--temp .wx-stat__primary { font-size: 2.05rem; }
+  .cheat-card--cfb .wx-stat__primary { font-size: 1.05rem; }
+}
+
+/* Mobile — go proportionally smaller but preserve the left-heavy layout */
+@media (max-width: 600px) {
+  .cheat-card--cfb .cheat-card__wx {
+    grid-template-columns: 1.35fr 1fr 1fr;
+    gap: 0.4rem;
+    min-height: 3.6rem;
+  }
+  .cheat-card--cfb .wx-stat--temp .wx-stat__primary { font-size: 1.75rem; }
+  .cheat-card--cfb .wx-stat__primary { font-size: 0.95rem; }
+  .cheat-card--cfb .wx-stat__secondary { font-size: 0.62rem; }
+}
