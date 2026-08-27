@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from "mlb/_macros.html" import weather_icon %}
+{% from "ncaaf/_macros.html" import cfb_stadium_icon %}
 
 {% block title %}{{ game.away.short }} at {{ game.home.short }} Weather, {{ pretty_date }} | Kevin Roth{% endblock %}
 {% block description %}{{ game.away.name }} at {{ game.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at kickoff, {{ game.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
@@ -134,32 +136,89 @@
     {% if game.venue.roof_type == "fixed_dome" %} · Domed venue{% endif %}
   </p>
 
-  {# ── Hourly forecast leads the page. Heading gets a small source
-       attribution so the HRRR toggle below makes sense — the user can
-       see they're choosing between NWS (above) and HRRR (below). #}
-  <div class="game-section-h2-row">
+  {# ── Summary panel — 2x2 grid of temp / rain / wind / stadium field.
+       Mirrors the MLB/NFL detail-page pattern so all sports feel cohesive.
+       Only rendered when we actually have a forecast; indoor and no-data
+       cases fall back to the source-note further down. #}
+  {% if game.forecast and game.venue.roof_type != "fixed_dome" %}
+    {% set f = game.forecast %}
+    <div class="game-summary">
+      <div class="game-summary__cell">
+        <div class="game-summary__sky">{{ weather_icon(f.precip_pct|precip_icon, 34) }}</div>
+        <span class="game-summary__primary-value">{{ f.temp|int }}°</span>
+        <span class="game-summary__primary-label">At kickoff</span>
+      </div>
+      <div class="game-summary__cell game-summary__cell--field">
+        {{ cfb_stadium_icon(f.wind_deg, '') }}
+        <span class="game-summary__cell-label">{{ f.wind_deg|wind_compass }}</span>
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct|int }}%</span>
+        <span class="game-summary__cell-label">Rain</span>
+      </div>
+      <div class="game-summary__cell">
+        <span class="game-summary__value">{{ f.wind_speed|int }} <span style="font-size:0.7em;font-weight:500;color:var(--ash)">mph</span></span>
+        <span class="game-summary__cell-label">Wind</span>
+      </div>
+    </div>
+  {% elif game.venue.roof_type == "fixed_dome" %}
+    <div class="game-summary">
+      <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
+        <span class="game-summary__cell-label">Indoor venue — weather has no impact.</span>
+      </div>
+    </div>
+  {% endif %}
+
+  {# ── Hourly forecast. Heading gets a small source attribution so the
+       HRRR toggle below makes sense — the user can see they're choosing
+       between NWS (above) and HRRR (below). Uses the shared .hourly__table
+       styling so this table matches MLB/NFL/MLS visually. #}
+  <div class="game-section-h2-row" style="margin-top:2rem">
     <h2 class="game-section-h2">Hourly forecast</h2>
     <span class="game-section-source">from the National Weather Service</span>
   </div>
 
   {% if game.hourly %}
-    <div class="hourly-table">
-      <table>
+    <div class="hourly">
+      <table class="hourly__table">
         <thead>
           <tr>
-            <th></th>
+            <th class="hourly__label-col"></th>
             {% for p in game.hourly %}
-              <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">
-                {{ p.local_hour_label or p.start_time[11:16] }}
+              <th class="hourly__hour-col {% if p.is_game_hour %}is-game-hour{% endif %}">
+                <div class="hourly__sky">{{ weather_icon(p.precip_pct|precip_icon, 26) }}</div>
+                <div class="hourly__time">{{ p.local_hour_label or p.start_time[11:16] }}</div>
               </th>
             {% endfor %}
           </tr>
         </thead>
         <tbody>
-          <tr><th>Precip</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %} {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</td>{% endfor %}</tr>
-          <tr><th>Temp</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>{% endfor %}</tr>
-          <tr><th>Wind</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>{% endfor %}</tr>
-          <tr><th>Wind dir</th>{% for p in game.hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>{% endfor %}</tr>
+          <tr>
+            <td class="hourly__label">Precip</td>
+            {% for p in game.hourly %}
+              <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">
+                <span class="hourly__precip {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</span>
+              </td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Temp</td>
+            {% for p in game.hourly %}
+              <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind</td>
+            {% for p in game.hourly %}
+              <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>
+            {% endfor %}
+          </tr>
+          <tr>
+            <td class="hourly__label">Wind dir</td>
+            {% for p in game.hourly %}
+              <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>
+            {% endfor %}
+          </tr>
         </tbody>
       </table>
     </div>
@@ -177,25 +236,54 @@
         <span class="hrrr-summary-badge">HRRR</span>
         <span class="hrrr-toggle__meta">3 km · hourly updates</span>
       </summary>
-      <div class="hrrr-section">
-        <div class="hourly-table" style="margin:0;border:none;border-radius:0">
-          <table>
+      <div class="hrrr-section" style="padding:0.4rem 0.6rem">
+        <div class="hourly">
+          <table class="hourly__table">
             <thead>
               <tr>
-                <th></th>
+                <th class="hourly__label-col"></th>
                 {% for p in hrrr_hourly %}
-                  <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.start_time[11:16] }}</th>
+                  <th class="hourly__hour-col {% if p.is_game_hour %}is-game-hour{% endif %}">
+                    <div class="hourly__time">{{ p.start_time[11:16] }}</div>
+                  </th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
-              <tr><th>Precip</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %} {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</td>{% endfor %}</tr>
-              <tr><th>Temp</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>{% endfor %}</tr>
-              <tr><th>Wind</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>{% endfor %}</tr>
+              <tr>
+                <td class="hourly__label">Precip</td>
+                {% for p in hrrr_hourly %}
+                  <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">
+                    <span class="hourly__precip {{ p.precip_pct|precip_color }}">{{ p.precip_pct }}%</span>
+                  </td>
+                {% endfor %}
+              </tr>
+              <tr>
+                <td class="hourly__label">Temp</td>
+                {% for p in hrrr_hourly %}
+                  <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.temp }}°</td>
+                {% endfor %}
+              </tr>
+              <tr>
+                <td class="hourly__label">Wind</td>
+                {% for p in hrrr_hourly %}
+                  <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>
+                {% endfor %}
+              </tr>
               {% if hrrr_hourly[0].gust is defined and hrrr_hourly[0].gust is not none %}
-              <tr><th>Gusts</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.gust }} mph</td>{% endfor %}</tr>
+              <tr>
+                <td class="hourly__label">Gusts</td>
+                {% for p in hrrr_hourly %}
+                  <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.gust }} mph</td>
+                {% endfor %}
+              </tr>
               {% endif %}
-              <tr><th>Wind dir</th>{% for p in hrrr_hourly %}<td class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>{% endfor %}</tr>
+              <tr>
+                <td class="hourly__label">Wind dir</td>
+                {% for p in hrrr_hourly %}
+                  <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_deg|wind_compass }}</td>
+                {% endfor %}
+              </tr>
             </tbody>
           </table>
         </div>

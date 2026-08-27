@@ -105,7 +105,7 @@
   {# Temp severity class #}
   {% set temp_class = '' %}
   {% if f and f.temp is not none and not is_indoor %}
-    {% if f.temp <= 32 %}{% set temp_class = 'cold' %}
+    {% if f.temp <= 40 %}{% set temp_class = 'cold' %}
     {% elif f.temp >= 88 %}{% set temp_class = 'hot' %}
     {% endif %}
   {% endif %}

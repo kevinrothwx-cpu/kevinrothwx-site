@@ -50,7 +50,11 @@
   {% if games %}
     <div class="cheat-row">
       {% for g in games %}
-        {{ wc_cheat_card(g, link_to_detail=True) }}
+        {# link_to_detail=False makes the href a #match-slug anchor.
+           JS below intercepts and smooth-scrolls to the per-game block.
+           The /nfl/DATE/slug detail page still exists for SEO — Google
+           indexes it via sitemap — but no user-facing link goes there. #}
+        {{ wc_cheat_card(g, link_to_detail=False) }}
       {% endfor %}
     </div>
   {% else %}
@@ -95,7 +99,7 @@
           {% set ns2.last_date = this_date_key %}
         {% endif %}
         {% set has_toggle = g.venue_meta and (g.venue_meta.roof_type == "retractable" or g.venue_meta.roof_type == "fixed_dome") %}
-        <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="game-{{ g.slug }}">
+        <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="match-{{ g.slug }}">
           <header class="mlb-game-block__header">
             <div>
               <h2 class="mlb-game-block__matchup">
@@ -179,7 +183,11 @@
 </div>
 
 <script>
-  // Anchor-scroll for cheat cards linking to #game-slug
+  // Anchor-scroll for cheat cards linking to #match-<slug>. When a card's
+  // href starts with #, prevent the browser jump and smooth-scroll to the
+  // matching per-game block instead. Non-anchor hrefs (should be none now)
+  // navigate normally.
+  document.addEventListener('click', function(e) {
     var card = e.target.closest('.cheat-card');
     if (!card) return;
     var href = card.getAttribute('href');
@@ -192,18 +200,26 @@
       }
     }
   });
+
+  // Roof toggle inside per-game blocks (dome / retractable venues). Flips
+  // the .is-roof-closed class on the enclosing .has-roof-toggle article,
+  // which the CSS uses to swap between the roof-closed message and the
+  // outdoor-forecast body.
   document.addEventListener('click', function(e) {
     var btn = e.target.closest('.roof-toggle__option');
     if (!btn) return;
     var toggle = btn.closest('.roof-toggle');
     var block = btn.closest('.has-roof-toggle');
     if (!toggle || !block) return;
-    toggle.querySelectorAll('.roof-toggle__option').forEach(function(o) { o.classList.remove('is-active'); });
+    toggle.querySelectorAll('.roof-toggle__option').forEach(function(o) {
+      o.classList.remove('is-active');
+    });
     btn.classList.add('is-active');
     if (btn.dataset.roof === 'open') {
       block.classList.remove('is-roof-closed');
     } else {
       block.classList.add('is-roof-closed');
     }
+  });
 </script>
 {% endblock %}
