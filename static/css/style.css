@@ -1096,3 +1096,59 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   .cheat-card--cfb .wx-stat__primary { font-size: 0.95rem; }
   .cheat-card--cfb .wx-stat__secondary { font-size: 0.62rem; }
 }
+
+/* ── Mobile-only header + detail-page fixes (2026-08-25) ─────────────
+   Kevin flagged: (a) "By Kevin Roth, Sports Meteorologist" wrapped to 3
+   lines and misaligned with the brand name, (b) MLB game-block header
+   spacing on mobile looked disorganized above the quad-cell summary,
+   (c) NFL matchup header had one team logo getting clipped. All fixes
+   scoped to ≤600px per Kevin's instruction to leave desktop alone. */
+@media (max-width: 600px) {
+  /* Header: stack brand name over the byline, drop the "/" divider,
+     make the byline smaller so "By Kevin Roth, Sports Meteorologist"
+     fits on 2 lines max and left-aligns with the brand name. */
+  .site-header__inner { padding: 0.7rem 0.95rem; align-items: center; }
+  .brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    font-size: 1.1rem;
+    line-height: 1.05;
+    min-width: 0;
+    flex: 1;
+  }
+  .brand__divider { display: none; }
+  .brand__role {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    line-height: 1.25;
+    max-width: 100%;
+  }
+
+  /* MLB / NFL game-block header — tighten spacing above the summary
+     panel so it doesn't feel dumped in with no structure. Slightly
+     smaller matchup heading, tighter row gaps, more distinct border. */
+  .mlb-game-block { margin-bottom: 1.5rem; }
+  .mlb-game-block__header {
+    padding: 0.7rem 0.85rem 0.55rem;
+    gap: 0.2rem 0.6rem;
+    margin-bottom: 0.25rem;
+  }
+  .mlb-game-block__matchup {
+    font-size: 0.95rem;
+    gap: 0.28rem;
+    row-gap: 0.15rem;
+    line-height: 1.15;
+  }
+  /* NFL matchup logo clip fix — smaller logo, prevent it from being
+     the flex item that overflows. `flex: 0 0 auto` keeps it its natural
+     size, `overflow: visible` on the parent stops clip. */
+  .mlb-game-block__matchup .matchup-logo {
+    width: 1.05em;
+    height: 1.05em;
+    flex: 0 0 auto;
+  }
+  .mlb-game-block__matchup .matchup-at { font-size: 0.58em; padding: 0; }
+  .mlb-game-block__venue { font-size: 0.72rem; line-height: 1.4; }
+  .mlb-game-block__body { padding-top: 0.1rem; }
+}

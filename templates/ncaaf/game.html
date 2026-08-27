@@ -117,6 +117,46 @@
     margin: 0 0 1rem; font-size: 0.85rem; color: #777; line-height: 1.6;
   }
   .source-note strong { color: #555; font-weight: 600; }
+
+  /* Analysis paragraph (previously wrapped in .game-summary which is a
+     2x2 grid panel — that broke the layout). Own container: subtle left
+     border, comfortable reading width. */
+  .game-analysis {
+    margin: 1.5rem 0 0.5rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--paper, #fafafa);
+    border-left: 3px solid var(--mist, #e5e5e5);
+    border-radius: 2px;
+  }
+  .game-analysis p {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--ink, #1a1a1a);
+  }
+
+  /* Stadium field icon inside the summary panel — bigger than on the
+     slate cheat card (the slate uses 34x20, we want ~72x44 here so it
+     fills the cell nicely). */
+  .wx-stadium { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; line-height: 0; }
+  .wx-stadium svg { width: 34px; height: 20px; }
+  .wx-stadium__bowl { fill: none; stroke: #9aa0a6; stroke-width: 1; }
+  .wx-stadium__endzone-fill { fill: #f1f3f5; }
+  .wx-stadium__endzone-line { stroke: #b8bcc0; stroke-width: 0.8; }
+  .wx-stadium__midline { stroke: #d4d4d4; stroke-width: 0.5; stroke-dasharray: 1.5 1; }
+  .wx-stadium__arrow line { stroke: #15803d; stroke-width: 2.4; stroke-linecap: round; }
+  .wx-stadium__arrow polygon { fill: #15803d; }
+
+  .game-summary__cell--field { align-items: center; justify-content: center; padding: 0.4rem; }
+  .game-summary__field-icon { line-height: 0; margin-bottom: 0.3rem; }
+  .game-summary__field-icon .wx-stadium svg { width: 68px; height: 40px; }
+
+  @media (max-width: 600px) {
+    .game-summary__field-icon .wx-stadium svg { width: 54px; height: 32px; }
+    .game-analysis { padding: 0.75rem 0.85rem; font-size: 0.9rem; }
+    .game-analysis p { font-size: 0.9rem; line-height: 1.55; }
+  }
 </style>
 {% endblock %}
 
@@ -149,8 +189,9 @@
         <span class="game-summary__primary-label">At kickoff</span>
       </div>
       <div class="game-summary__cell game-summary__cell--field">
-        {{ cfb_stadium_icon(f.wind_deg, '') }}
-        <span class="game-summary__cell-label">{{ f.wind_deg|wind_compass }}</span>
+        <div class="game-summary__field-icon">{{ cfb_stadium_icon(f.wind_deg, '') }}</div>
+        <span class="game-summary__value">{{ f.wind_deg|wind_compass }}</span>
+        <span class="game-summary__cell-label">Wind dir</span>
       </div>
       <div class="game-summary__cell">
         <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct|int }}%</span>
@@ -187,7 +228,7 @@
             {% for p in game.hourly %}
               <th class="hourly__hour-col {% if p.is_game_hour %}is-game-hour{% endif %}">
                 <div class="hourly__sky">{{ weather_icon(p.precip_pct|precip_icon, 26) }}</div>
-                <div class="hourly__time">{{ p.local_hour_label or p.start_time[11:16] }}</div>
+                <div class="hourly__time">{{ p.hour_eastern or p.local_hour_label or p.start_time[11:16] }}</div>
               </th>
             {% endfor %}
           </tr>
@@ -292,7 +333,11 @@
   {% endif %}
 
   {% if analysis and analysis.paragraph %}
-    <div class="game-summary"><p>{{ analysis.paragraph }}</p></div>
+    {# Own class — was previously using .game-summary which is a 2x2 grid
+       panel, so wrapping a single <p> in it distorted the layout badly. #}
+    <div class="game-analysis">
+      <p>{{ analysis.paragraph }}</p>
+    </div>
   {% endif %}
 
   <p class="source-note">

@@ -275,12 +275,18 @@ def _fetch_weatherapi_only(lat: float, lon: float) -> tuple[list[dict], str, Opt
 # ── Hourly window extraction ──────────────────────────────────────────────
 
 def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
-    """Extract 1h before kickoff through 4h after. Game-time entries flagged."""
+    """Extract 1h before kickoff through 4h after. Game-time entries flagged.
+
+    Also adds hour_eastern ("2 PM", "10 AM") so templates can render a
+    human-friendly hour header instead of the 24-hour military time that
+    fell through when local_hour_label was absent."""
     if not periods:
         return []
     kickoff = kickoff_utc.replace(minute=0, second=0, microsecond=0)
     start = kickoff - timedelta(hours=HOURS_BEFORE_KICKOFF)
     end = kickoff + timedelta(hours=HOURS_GAME_WINDOW)
+    from zoneinfo import ZoneInfo as _ZI
+    _ET = _ZI("America/New_York")
     out = []
     for p in periods:
         try:
@@ -291,6 +297,11 @@ def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
             if start <= st < end:
                 p2 = dict(p)
                 p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_GAME_WINDOW))
+                # Human-friendly Eastern hour label — "2 PM", "10 AM"
+                try:
+                    p2["hour_eastern"] = st.astimezone(_ET).strftime("%-I %p").lstrip("0")
+                except Exception:
+                    p2["hour_eastern"] = st.strftime("%H:%M")
                 out.append(p2)
         except (ValueError, AttributeError):
             continue

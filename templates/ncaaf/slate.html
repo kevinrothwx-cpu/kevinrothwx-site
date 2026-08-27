@@ -153,6 +153,30 @@
     .sort-control__trigger { font-size: 0.95rem; }
     .cheat-card__wx-detail { padding: 0.25rem 0.4rem 0.5rem; }
   }
+
+  /* ── Mobile-only slate fixes (2026-08-25) ────────────────────────────
+     - Force 2 cards per row at ≤600px instead of the auto-fill 220px min
+       which drops to 1 column on standard 375-414px mobile viewports.
+     - Extra bottom padding on the wx block so the field + weather icons
+       don't crowd the card's bottom border. #}
+  @media (max-width: 600px) {
+    .ncaaf-page { padding: 0.8rem 0.7rem 3rem; }
+    .cheat-row { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .cheat-card--cfb { padding: 0.55rem 0.5rem 0.65rem; }
+    .cheat-card--cfb .cheat-card__teams { gap: 0.35rem; padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
+    .cheat-card--cfb .cheat-card__logo { width: 20px; height: 20px; }
+    .cheat-card--cfb .cheat-card__abbr { font-size: 0.92rem; }
+    .cheat-card__wx { grid-template-columns: 1fr 1fr 1fr; gap: 0.3rem; padding-bottom: 0.5rem; }
+    .wx-stat__primary { font-size: 1.05rem; }
+    .wx-stat__secondary { font-size: 0.62rem; min-height: 1.5rem; margin-top: 0.35rem; padding-bottom: 0.15rem; }
+    .wx-stadium { width: 26px; height: 15px; }
+    .wx-stadium svg { width: 26px; height: 15px; }
+    .wx-stat__icon { width: 20px; height: 20px; }
+    .cheat-card__odds { padding-top: 0.35rem; font-size: 0.62rem; }
+    .cheat-card__odds-total { font-size: 0.68rem; }
+    .cheat-card__location { font-size: 0.56rem; }
+    .cheat-card--cfb .cheat-card__time { font-size: 0.6rem; }
+  }
 </style>
 {% endblock %}
 

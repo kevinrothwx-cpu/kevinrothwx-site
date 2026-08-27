@@ -35,7 +35,10 @@
     <div class="cheat-row">
       {% for day in days_data %}
         {% for m in day.slate %}
-          {{ wc_cheat_card(m, link_to_detail=True) }}
+          {# link_to_detail=False → href becomes #match-slug anchor.
+             JS at bottom intercepts and smooth-scrolls to the per-match
+             block. Fixed 2026-08-25 — was routing to retired /worldcup URL. #}
+          {{ wc_cheat_card(m, link_to_detail=False) }}
         {% endfor %}
       {% endfor %}
     </div>
