@@ -1008,7 +1008,9 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   gap: 0.65rem;
   align-items: center;
   padding-top: 0.65rem;
-  border-top: 1px solid var(--mist);
+  /* No border here — .cheat-card--cfb .cheat-card__teams already has a
+     border-bottom in ncaaf/slate.html's inline styles; adding a border-top
+     here creates the double-line Kevin flagged 2026-08-25. */
   margin-top: auto;
   min-height: 4.5rem;
 }
