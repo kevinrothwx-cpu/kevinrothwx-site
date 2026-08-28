@@ -1,28 +1,44 @@
 """
-hrrr.py — High-Resolution Rapid Refresh (HRRR) forecast via Open-Meteo.
+hrrr.py — Short-range CONUS forecast via Open-Meteo, backed by NBM.
 
-WHY this exists alongside the NWS module:
-    NWS publishes a blend of operational forecast model output. HRRR is a
-    separate 3-km CONUS model that re-runs every hour with newer data.
-    For short-range (≤48 h) storm timing and surface wind detail, HRRR is
-    often the better read. We surface it as a SECONDARY layer next to the
-    NWS forecast on PGA and NASCAR pages — a toggle reveals it.
+WHAT: NBM (National Blend of Models) is NOAA's operational statistical
+blend of multiple NWP models (HRRR, RAP, GFS, NAM, ensembles). It runs
+hourly, publishes at 2.5-km CONUS resolution, and — critically —
+outputs **ensemble-calibrated probability of precipitation as a native
+variable**, not derived from a deterministic model run.
+
+WHY we switched from HRRR to NBM (2026-08-25):
+    We were previously calling Open-Meteo's `gfs_hrrr` blend and
+    displaying its `precipitation_probability`. HRRR is a deterministic
+    model — it doesn't output POP natively. Open-Meteo was synthesizing
+    a POP from HRRR's deterministic precip amounts, which is
+    systematically low (raw HRRR predicts amounts, not probabilities).
+    Kevin flagged that our "POP" numbers never matched what he saw when
+    checking HRRR directly. Root cause: derivation, not the model.
+
+    NBM fixes this at the source — it's an ensemble product with a real
+    calibrated POP field. Same hourly update cadence, same CONUS
+    coverage, slightly higher resolution than HRRR (2.5 km vs 3 km),
+    and adds native snowfall, freezing-rain probability, and
+    precipitation-type probabilities we can surface later.
+
+    The file is still named hrrr.py and the public function is still
+    get_hrrr_periods() so callers don't need to change. Internal fetch
+    now hits NBM.
 
 DATA SOURCE:
-    Open-Meteo serves HRRR output as clean JSON. Free, no API key.
-    Docs: https://open-meteo.com/en/docs/hrrr-api
+    Open-Meteo, model=ncep_nbm_conus.
+    Docs: https://open-meteo.com/en/docs/gfs-api  (NBM section)
 
 COVERAGE:
-    - Domain: continental US only. Outside CONUS → returns None and the
-      caller should fall back to NWS / WeatherAPI alone.
-    - Horizon: ~48-60 hours via the gfs_hrrr model. Rounds / races more
-      than ~48 h out will have no HRRR coverage and the toggle won't show.
+    - Domain: US + Canada CONUS. Outside → returns None, caller falls
+      back to NWS / WeatherAPI alone. (Same behavior as before.)
+    - Horizon: hourly to 36 h, then 3-hourly to 8 days, 6-hourly to 11
+      days. Longer coverage than HRRR's ~48 h.
 
 OUTPUT FORMAT:
-    Pre-normalized to the same period dict shape as mlb.nws.extract_forecast,
-    so existing _hourly_window / _periods_for_round_day helpers slice the
-    HRRR list interchangeably with NWS. Includes a "gust" field (mph)
-    from wind_gusts_10m, populated when HRRR returns it.
+    Same period dict shape mlb.nws.extract_forecast produces, so
+    existing _hourly_window helpers slice interchangeably.
 """
 
 from __future__ import annotations
@@ -109,12 +125,13 @@ def get_hrrr_periods(lat: float, lon: float) -> Optional[list]:
         "hourly": "temperature_2m,relative_humidity_2m,dewpoint_2m,"
                   "precipitation_probability,wind_speed_10m,"
                   "wind_direction_10m,wind_gusts_10m",
-        # Open-Meteo renamed their HRRR identifier from "hrrr_conus" to
-        # "gfs_hrrr" at some point. The latter is a blended product that
-        # uses HRRR for the first ~48-60 hours within CONUS and returns
-        # null values beyond that horizon (which our parser drops below
-        # where temps[i] is None).
-        "models": "gfs_hrrr",
+        # NBM (National Blend of Models) — see module docstring for the
+        # HRRR→NBM switch rationale (2026-08-25). NBM is an ensemble
+        # blend with a REAL calibrated precipitation_probability field
+        # (unlike HRRR, which is deterministic and where POP has to be
+        # synthesized from precip amounts). Same hourly cadence, 2.5-km
+        # CONUS grid, purpose-built for short-range forecasting.
+        "models": "ncep_nbm_conus",
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
         # forecast_days=3 returns today + next 2 days. HRRR's model

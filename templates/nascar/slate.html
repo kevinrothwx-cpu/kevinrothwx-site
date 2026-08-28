@@ -76,7 +76,7 @@
               <h3 class="mlb-game-block__matchup">
                 Hourly forecast around green flag
                 {% if race.hrrr_hourly %}
-                  <span class="hrrr-badge" style="display:inline-block;margin-left:0.5rem;padding:0.15rem 0.5rem;background:var(--storm);color:var(--white);font-family:var(--font-sans);font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;vertical-align:middle;line-height:1.4" title="High-resolution HRRR model data available for this race">HRRR available</span>
+                  <span class="hrrr-badge" style="display:inline-block;margin-left:0.5rem;padding:0.15rem 0.5rem;background:var(--storm);color:var(--white);font-family:var(--font-sans);font-size:0.62rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-radius:3px;vertical-align:middle;line-height:1.4" title="NBM ensemble forecast data available for this race">NBM available</span>
                 {% endif %}
               </h3>
               <div class="mlb-game-block__venue">
@@ -90,7 +90,7 @@
             {{ race_hourly_table(race) }}
             {% if race.hrrr_hourly %}
               <details class="hrrr-toggle">
-                <summary>Show high-resolution model <span class="hrrr-toggle__meta">HRRR · 3 km · hourly updates</span></summary>
+                <summary>Show high-resolution model <span class="hrrr-toggle__meta">NBM · 2.5 km · hourly updates</span></summary>
                 <div class="hrrr-section">
                   {{ race_hourly_table(race, hours=race.hrrr_hourly) }}
                 </div>
