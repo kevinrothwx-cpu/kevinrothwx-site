@@ -40,11 +40,23 @@ def build_nfl_slate(start_date: Optional[datetime] = None,
 
     Default 8-day window covers Thu→Mon spread + buffer."""
     if start_date is None:
-        start_date = datetime.now(timezone.utc)
+        # Back the window start up 24h so today's already-kicked-off
+        # games stay on the slate all day. Same fix Kevin flagged for
+        # CFB on 2026-08-29: filter_to_window drops games with
+        # kickoff_utc < start_utc, and if start_utc is now() then a
+        # noon-ET Sunday game disappears at 12:01. Now the window
+        # includes today's earlier kickoffs; _is_game_stale below drops
+        # them the next morning by venue-local calendar day.
+        start_date = datetime.now(timezone.utc) - timedelta(hours=24)
 
     games = get_nfl_week_games(start_date, days_ahead=days_ahead)
     if not games:
         return []
+
+    # Drop stale games — kickoff already in the past by venue-local date.
+    # Kept in-window by the 24h backup above; dropped here once the
+    # venue's local calendar has rolled over.
+    games = [g for g in games if not _is_game_stale(g)]
 
     venue_weather: dict[tuple[float, float], tuple[list[dict], str, Optional[str]]] = {}
 
@@ -57,6 +69,26 @@ def build_nfl_slate(start_date: Optional[datetime] = None,
         flush=True,
     )
     return games
+
+
+def _is_game_stale(game: dict) -> bool:
+    """A game is stale when today's local calendar date at the venue is
+    already past the game's local calendar date. Mirrors cfb/slate.py's
+    _is_game_stale. Keeps today's in-progress games visible; drops
+    yesterday's the next morning per venue-local time."""
+    venue = game.get("venue") or {}
+    kickoff_utc = game.get("kickoff_utc")
+    tz_name = venue.get("timezone") or venue.get("tz")
+    if not kickoff_utc or not tz_name:
+        return False
+    try:
+        from zoneinfo import ZoneInfo as _ZI
+        tz = _ZI(tz_name)
+        kickoff_local_date = kickoff_utc.astimezone(tz).date()
+        today_local_date = datetime.now(tz).date()
+        return kickoff_local_date < today_local_date
+    except Exception:
+        return False
 
 
 def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:

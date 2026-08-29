@@ -164,7 +164,11 @@
        don't crowd the card's bottom border. #}
   @media (max-width: 720px) {
     .ncaaf-page { padding: 0.8rem 0.7rem 3rem; }
-    .ncaaf-page .cheat-row { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    /* !important as belt-and-suspenders — we've been fighting inline vs
+       external stylesheet specificity + edge-cached HTML on this rule.
+       Force 2 columns unambiguously so mobile users always get 2 cards
+       per row regardless of cache state. */
+    .ncaaf-page .cheat-row { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
     .cheat-card--cfb { padding: 0.55rem 0.5rem 0.65rem; }
     .cheat-card--cfb .cheat-card__teams { gap: 0.35rem; padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
     .cheat-card--cfb .cheat-card__logo { width: 20px; height: 20px; }

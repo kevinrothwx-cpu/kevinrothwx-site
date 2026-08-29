@@ -50,7 +50,19 @@ def build_cfb_slate(start_date: Optional[datetime] = None,
                     days_ahead: int = 7) -> list[dict]:
     """Build the full weather-attached slate for a date window."""
     if start_date is None:
-        start_date = datetime.now(timezone.utc)
+        # Back the window start up 24h. Was previously "datetime.now(utc)"
+        # which caused already-kicked-off games to drop off the slate the
+        # moment they went past their scheduled time (the CFBD window
+        # filter rejects kickoff < start_utc). Kevin flagged 2026-08-29:
+        # Saturday afternoon slate was missing the noon-ET games because
+        # they'd already started.
+        #
+        # Now: the window includes today's earlier kickoffs, and
+        # _is_game_stale below drops them the next morning based on the
+        # venue's local calendar day. That gives users the natural
+        # "yesterday's games are gone by morning" behavior while keeping
+        # today's in-progress games visible all day.
+        start_date = datetime.now(timezone.utc) - timedelta(hours=24)
 
     games = get_cfb_week_games(start_date, days_ahead=days_ahead)
     if not games:
@@ -65,8 +77,18 @@ def build_cfb_slate(start_date: Optional[datetime] = None,
 
     # Per-venue NWS/WeatherAPI cache shared across the build.
     venue_weather: dict[tuple[float, float], tuple[list[dict], str, Optional[str]]] = {}
-    # Separate HRRR cache — HRRR is optional overlay, US CONUS only.
+    # Separate HRRR/NBM cache — CONUS overlay only.
     venue_hrrr: dict[tuple[float, float], list[dict]] = {}
+
+    # PARALLEL VENUE FETCH (2026-08-25). Was sequential per-game which meant
+    # 50-70 unique venues × ~500-1500ms/fetch = ~40s for a full Saturday
+    # slate. Under Twitter-link traffic this saturated gunicorn threads
+    # (see cfb.cache _build_lock comment). Now we pre-collect unique venues
+    # and fetch weather + NBM in parallel with a bounded worker pool.
+    # After this step the game loop is pure assembly, no I/O.
+    unique_venues = _collect_unique_venues(games)
+    if unique_venues:
+        _parallel_prefetch_venues(unique_venues, venue_weather, venue_hrrr)
 
     now_utc = datetime.now(timezone.utc)
     for g in games:
@@ -78,11 +100,74 @@ def build_cfb_slate(start_date: Optional[datetime] = None,
     print(
         f"[cfb.slate] built slate: {len(games)} games, "
         f"{len(venue_weather)} unique venues fetched, "
-        f"{len(venue_hrrr)} HRRR overlays, "
+        f"{len(venue_hrrr)} NBM overlays, "
         f"{odds_ct} odds attached",
         flush=True,
     )
     return games
+
+
+def _collect_unique_venues(games: list[dict]) -> list[tuple[float, float, bool]]:
+    """Return one entry per unique (lat, lon) across the slate.
+    Third field is nws_unsupported so the parallel fetcher can route to
+    the right provider (WeatherAPI-only for international venues)."""
+    seen: dict[tuple[float, float], bool] = {}
+    for g in games:
+        v = g.get("venue") or {}
+        lat = v.get("lat"); lon = v.get("lon")
+        if lat is None or lon is None:
+            continue
+        key = (round(lat, 4), round(lon, 4))
+        if key in seen:
+            continue
+        seen[key] = bool(v.get("nws_unsupported"))
+    return [(lat, lon, ns) for (lat, lon), ns in seen.items()]
+
+
+def _parallel_prefetch_venues(
+    venues: list[tuple[float, float, bool]],
+    venue_weather: dict,
+    venue_hrrr: dict,
+) -> None:
+    """Fetch weather + NBM for all unique venues in parallel. Populates
+    the two caches in place. Bounded worker pool so we don't slam any
+    single provider (NWS/WeatherAPI/Open-Meteo).
+
+    Fault-tolerant: any single venue's failure is logged and the venue
+    is left absent from the caches; the downstream _attach_weather_to_game
+    will fall through to its own single-venue fetch (which will then hit
+    the empty cache and try synchronously — but only for the failed ones,
+    not the whole slate)."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    def _fetch_one(v):
+        lat, lon, nws_unsupported = v
+        key = (round(lat, 4), round(lon, 4))
+        try:
+            if nws_unsupported:
+                periods, source, err = _fetch_weatherapi_only(lat, lon)
+            else:
+                periods, source, err = _fetch_weather_with_fallback(lat, lon)
+            hrrr = [] if nws_unsupported else (get_hrrr_periods(lat, lon) or [])
+            return key, (periods, source, err), hrrr, None
+        except Exception as e:
+            return key, ([], "parallel-fetch-failed", str(e)), [], str(e)
+
+    # 8 workers = comfortable on NWS (their guidance is <10 concurrent
+    # req/s), and Open-Meteo (free tier is IP-rate-limited but 8 parallel
+    # is well within tolerance). Bumping higher risks 429s.
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = [pool.submit(_fetch_one, v) for v in venues]
+        for fut in as_completed(futures):
+            try:
+                key, weather_tuple, hrrr_list, err = fut.result()
+                venue_weather[key] = weather_tuple
+                venue_hrrr[key] = hrrr_list
+                if err:
+                    print(f"[cfb.slate] parallel fetch failed for {key}: {err}",
+                          flush=True)
+            except Exception as e:
+                print(f"[cfb.slate] parallel worker crashed: {e}", flush=True)
 
 
 def _build_odds_for_game(game: dict, odds_list: list[dict], now_utc: datetime) -> Optional[dict]:

@@ -61,6 +61,15 @@ _cache_lock = threading.Lock()
 _warmer_thread = None
 _warmer_stop = threading.Event()
 
+# Separate lock that serializes actual _rebuild() calls. Without this, a
+# cold-cache burst (fresh deploy + Twitter link) causes every gunicorn
+# worker thread to start its own 40s slate build in parallel, saturating
+# the pool and blocking /health long enough to trip Render's 5s health-
+# check alert. With this lock: only ONE build runs at a time; any other
+# thread that arrives during a build immediately returns whatever's in
+# cache (even empty) instead of stampeding. See 2026-08-25 incident.
+_build_lock = threading.Lock()
+
 # Frozen kickoff snapshots are now handled by cfb.forecast_freeze (disk-backed
 # via persistence module — survives Render restarts). The in-memory dict here
 # was replaced 2026-07-04 to match every other kickoff-sensitive sport.
@@ -90,9 +99,21 @@ def get_cfb_slate(allow_build: bool = True) -> tuple[list, dict | None]:
             needs_rebuild = True
 
     if needs_rebuild and allow_build:
-        _rebuild()
-        with _cache_lock:
-            entry = dict(_slate_cache) if _slate_cache.get("games") is not None else None
+        # Non-blocking acquire — if another thread is already rebuilding,
+        # skip and return whatever's in cache. Prevents the "N threads
+        # all doing the same 40s build" stampede that saturates gunicorn
+        # and blocks /health.
+        acquired = _build_lock.acquire(blocking=False)
+        if acquired:
+            try:
+                _rebuild()
+            finally:
+                _build_lock.release()
+            with _cache_lock:
+                entry = dict(_slate_cache) if _slate_cache.get("games") is not None else None
+        else:
+            print("[cfb.cache] rebuild already in progress in another thread — "
+                  "serving current cache (may be empty)", flush=True)
 
     if entry is None:
         return [], None
@@ -218,7 +239,13 @@ def warmer_loop() -> None:
     print("[cfb.cache] warmer thread started", flush=True)
     while not _warmer_stop.is_set():
         try:
-            _rebuild()
+            # Warmer blocks on _build_lock (unlike request threads which
+            # skip). If a user-triggered rebuild is somehow in progress
+            # when the warmer tick fires, warmer waits its turn instead
+            # of duplicating the work. Bounded wait: the lock is only
+            # ever held for one build.
+            with _build_lock:
+                _rebuild()
             with _cache_lock:
                 n = len(_slate_cache.get("games") or [])
                 err = _slate_cache.get("build_err")
