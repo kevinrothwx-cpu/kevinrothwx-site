@@ -190,18 +190,45 @@ def _build_odds_for_game(game: dict, odds_list: list[dict], now_utc: datetime) -
     if not match:
         return None
 
-    current_total = match["total"]
+    live_total    = match["total"]
     book_display  = match["book_display"]
     game_started  = kickoff_utc <= now_utc
 
     # Only record opening for pre-kickoff games. After kickoff the "current"
-    # value from The Odds API is stale/closed — don't accidentally record
-    # that as an opening for a game we started tracking late.
+    # value from The Odds API is the live in-game total, which is stale
+    # between our 25-min warmer cycles — don't record it as an opening for
+    # a game we started tracking late.
     if not game_started:
-        cfb_odds_storage.record_opening_if_new(event_id, current_total, book_display)
+        cfb_odds_storage.record_opening_if_new(event_id, live_total, book_display)
+        # Also snapshot the CURRENT total each cycle so we have a "last
+        # seen before kickoff" value to freeze at. Overwrites previous
+        # kickoff-line snapshot each time; the final write just before
+        # kickoff is what we lock and display through the game window.
+        cfb_odds_storage.record_kickoff_line(event_id, live_total, book_display)
 
     opening_rec   = cfb_odds_storage.get_opening(event_id)
     opening_total = opening_rec["total"] if opening_rec else None
+
+    # Pick the "current" total to display:
+    #   pre-kickoff  → whatever The Odds API just returned (live movement)
+    #   post-kickoff → the frozen kickoff-line snapshot (stable through
+    #                  the game window; live in-game totals are meaningless
+    #                  because we only poll every 25 min)
+    if game_started:
+        frozen = cfb_odds_storage.get_kickoff_line(event_id)
+        if frozen is not None:
+            current_total = frozen["total"]
+            # Prefer the book that was live when we snapshotted the
+            # kickoff line — usually the same, but be defensive.
+            if frozen.get("book_display"):
+                book_display = frozen["book_display"]
+        else:
+            # No pre-kickoff snapshot exists (game started before we
+            # first tracked it). Fall back to the current live total —
+            # not ideal, but better than showing nothing.
+            current_total = live_total
+    else:
+        current_total = live_total
 
     if opening_total is not None:
         delta = round(current_total - opening_total, 2)

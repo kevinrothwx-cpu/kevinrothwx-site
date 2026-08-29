@@ -98,6 +98,56 @@ def get_opening(event_id: str) -> Optional[dict]:
     return dict(entry) if entry else None
 
 
+def record_kickoff_line(event_id: str, total: float, book_display: str) -> None:
+    """Snapshot the CURRENT (most-recent-seen) total on the opening dict.
+
+    Called every warmer cycle while the game is pre-kickoff. Overwrites
+    the previous value each time — the last write before kickoff is
+    what we want to display for the frozen O/U through the game window.
+
+    Once the game has started, cfb.slate stops calling this so the
+    kickoff-line value stops advancing. See _build_odds_for_game for
+    the gate logic.
+    """
+    if not event_id or total is None:
+        return
+    key = str(event_id)
+    with _lock:
+        entry = _openings.get(key)
+        if entry is None:
+            # No opening recorded yet — shouldn't happen if
+            # record_opening_if_new is called first, but be defensive.
+            _openings[key] = {
+                "total":            float(total),
+                "book_display":     book_display or "",
+                "first_seen_at":    datetime.now(timezone.utc),
+                "kickoff_total":    float(total),
+                "kickoff_book":     book_display or "",
+                "kickoff_snapshot_at": datetime.now(timezone.utc),
+            }
+        else:
+            entry["kickoff_total"]        = float(total)
+            entry["kickoff_book"]         = book_display or ""
+            entry["kickoff_snapshot_at"]  = datetime.now(timezone.utc)
+    _persist()
+
+
+def get_kickoff_line(event_id: str) -> Optional[dict]:
+    """Return {'total', 'book_display', 'snapshot_at'} for the frozen
+    kickoff-line O/U, or None if not yet recorded."""
+    if not event_id:
+        return None
+    with _lock:
+        entry = _openings.get(str(event_id))
+    if not entry or "kickoff_total" not in entry:
+        return None
+    return {
+        "total":         entry["kickoff_total"],
+        "book_display":  entry.get("kickoff_book", ""),
+        "snapshot_at":   entry.get("kickoff_snapshot_at"),
+    }
+
+
 def clear_all() -> None:
     """Test helper — wipe all openings from memory AND disk."""
     with _lock:
