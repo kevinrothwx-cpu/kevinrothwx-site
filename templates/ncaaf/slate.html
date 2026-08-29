@@ -155,19 +155,19 @@
   }
 
   /* ── Mobile-only slate fixes (2026-08-25) ────────────────────────────
-     - Force 2 cards per row at ≤720px (matches the global .cheat-row
-       mobile breakpoint used by every other sport). The base rule above
-       uses auto-fill minmax(220px, 1fr) which drops to 1 column at most
-       phone widths. Selector deliberately bumped to .ncaaf-page .cheat-row
-       to add specificity and win vs. the base .cheat-row rule.
-     - Extra bottom padding on the wx block so the field + weather icons
-       don't crowd the card's bottom border. #}
-  @media (max-width: 720px) {
+     Breakpoint intentionally at 600px, NOT 720px. 720px was too wide —
+     tablets in portrait (iPad ~768px) and narrow desktop windows all
+     stayed >720px but the 720px rule was still firing for some devices
+     Kevin was testing on, forcing 2-column onto viewports where the
+     base auto-fill minmax(220px, 1fr) rule scales nicely to 3-5 cards.
+     600px keeps this scoped to actual phone widths.
+     Also: extra bottom padding on the wx block so the field + weather
+     icons don't crowd the card's bottom border. */
+  @media (max-width: 600px) {
     .ncaaf-page { padding: 0.8rem 0.7rem 3rem; }
     /* !important as belt-and-suspenders — we've been fighting inline vs
        external stylesheet specificity + edge-cached HTML on this rule.
-       Force 2 columns unambiguously so mobile users always get 2 cards
-       per row regardless of cache state. */
+       Force 2 columns unambiguously on phones regardless of cache state. */
     .ncaaf-page .cheat-row { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
     .cheat-card--cfb { padding: 0.55rem 0.5rem 0.65rem; }
     .cheat-card--cfb .cheat-card__teams { gap: 0.35rem; padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
