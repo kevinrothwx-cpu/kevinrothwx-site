@@ -261,3 +261,61 @@ def attach_writeups_to_slate(slate):
     except Exception as _e:
         print(f"[{__name__}] stamp/purge skipped: {type(_e).__name__}: {_e}",
               flush=True)
+
+
+# ── Datetime normalization on load (2026-08-30) ────────────────────────
+# JSON has no datetime type, so updated_at_utc round-trips as an ISO
+# STRING. Five admin templates call .strftime() on it, which raises
+# AttributeError on a str and 500s the page.
+#
+# This was latent for a long time: write-ups rarely outlived a restart,
+# so _MEMORY_STORE almost always held the real datetime objects written
+# by save_writeup in the same process. Once persistence became reliable,
+# every restart reloaded them as strings and the admin pages broke.
+#
+# Fix at the source — coerce back to datetime on load — so the contract
+# templates rely on ("updated_at_utc is a datetime") actually holds.
+
+def _wx_normalize_timestamps() -> int:
+    """Coerce ISO-string timestamps in the store back into datetimes."""
+    from persistence import parse_dt as _wx_parse_dt
+    fixed = 0
+    with _lock:
+        for k, v in list(_MEMORY_STORE.items()):
+            if not isinstance(v, dict):
+                continue
+            ts = v.get("updated_at_utc")
+            if isinstance(ts, str):
+                parsed = _wx_parse_dt(ts)
+                if parsed is not None:
+                    v["updated_at_utc"] = parsed
+                    fixed += 1
+                else:
+                    # Unparseable — drop it rather than leave a landmine
+                    # that blows up .strftime() in a template.
+                    v["updated_at_utc"] = None
+                    fixed += 1
+    return fixed
+
+
+# Repair whatever the import-time _load_from_disk() already put in memory.
+try:
+    _wx_fixed = _wx_normalize_timestamps()
+    if _wx_fixed:
+        print(f"[{__name__}] normalized {_wx_fixed} timestamp(s) on load",
+              flush=True)
+except Exception as _e:
+    print(f"[{__name__}] timestamp normalize skipped: {type(_e).__name__}: {_e}",
+          flush=True)
+
+
+# Wrap _load_from_disk so any later reload normalizes too.
+_wx_orig_load = _load_from_disk
+
+
+def _load_from_disk():
+    _wx_orig_load()
+    try:
+        _wx_normalize_timestamps()
+    except Exception as _e:
+        print(f"[{__name__}] normalize after reload skipped: {_e}", flush=True)
