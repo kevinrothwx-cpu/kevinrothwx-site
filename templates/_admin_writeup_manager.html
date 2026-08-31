@@ -1,0 +1,123 @@
+{# ── Shared write-up manager (2026-08-30) ──────────────────────────────
+   Drop-in panel for every sport's admin page. Lists EVERY stored write-up
+   for that sport — including ones whose game has rolled off the current
+   slate, which the per-page "current write-ups" lists can't reach — and
+   gives each one an Edit and a Delete button.
+
+   Usage, at the bottom of a sport's admin template:
+       {% set admin_sport = 'mlb' %}
+       {% include "_admin_writeup_manager.html" %}
+
+   admin_sport must be the STORAGE MODULE name, not the URL segment.
+   Note ncaaf/admin.html uses 'cfb' because storage lives in cfb/storage.py.
+
+   Data comes from the all_writeups_for() Jinja global registered in
+   app.py, so no per-route changes were needed.
+
+   Edit is pure client-side: the write-up text is already on the page, so
+   the button copies it into the form above, selects the game in the
+   dropdown, and ticks the colour radio. When the game is no longer on the
+   slate its <option> doesn't exist, so Edit is disabled for that row and
+   only Delete is offered.
+#}
+{% set _items = all_writeups_for(admin_sport) %}
+<div class="admin-existing admin-wm">
+  <h3>All stored write-ups
+    <span class="admin-wm__count">{{ _items|length }}</span>
+  </h3>
+
+  {% if not _items %}
+    <p class="admin-wm__empty">No write-ups stored for this sport.</p>
+  {% else %}
+    {% for _id, _w in _items.items() %}
+      <div class="admin-existing-item admin-existing-item--{{ _w.color or 'none' }}"
+           data-wm-id="{{ _id }}"
+           data-wm-color="{{ _w.color or '' }}">
+        <div class="admin-existing-item__head admin-wm__head">
+          <span class="admin-wm__id">{{ _id }}</span>
+          <span class="admin-wm__actions">
+            <button type="button" class="admin-wm__btn admin-wm__btn--edit"
+                    data-wm-edit="{{ _id }}">Edit</button>
+            <form method="POST" action="/admin/writeup-delete" class="admin-wm__delform"
+                  onsubmit="return confirm('Delete this write-up permanently?')">
+              <input type="hidden" name="sport" value="{{ admin_sport }}">
+              <input type="hidden" name="key" value="{{ _id }}">
+              <input type="hidden" name="back" value="{{ request.full_path }}">
+              <button type="submit" class="admin-wm__btn admin-wm__btn--del">Delete</button>
+            </form>
+          </span>
+        </div>
+        <div class="admin-existing-item__body admin-wm__text">{{ _w.text }}</div>
+        <div class="admin-existing-item__meta">
+          Color: {{ _w.color|upper if _w.color else 'none' }}
+          {%- if _w.updated_at_utc %} · updated {{ _w.updated_at_utc }}{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<style>
+  .admin-wm { margin-top: 2.5rem; }
+  .admin-wm__count { display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.45rem;
+    background: var(--mist); color: var(--slate); border-radius: 10px; font-size: 0.7rem; }
+  .admin-wm__empty { color: var(--fog); font-size: 0.9rem; font-style: italic; }
+  .admin-wm__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .admin-wm__id { font-family: monospace; font-size: 0.8rem; color: var(--ash); }
+  .admin-wm__actions { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .admin-wm__delform { margin: 0; display: inline; }
+  .admin-wm__btn { padding: 0.3rem 0.7rem; border: 1px solid var(--mist); background: var(--white);
+    font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em;
+    cursor: pointer; border-radius: 3px; color: var(--slate); }
+  .admin-wm__btn--edit:hover { border-color: var(--ink); color: var(--ink); }
+  .admin-wm__btn--del { color: #b91c1c; border-color: #f0c4c4; }
+  .admin-wm__btn--del:hover { background: #b91c1c; color: #fff; border-color: #b91c1c; }
+  .admin-wm__btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+</style>
+
+<script>
+(function () {
+  // Edit = populate the form above from the row's already-rendered content.
+  // No round-trip, no route changes. If the game isn't on the current
+  // slate the <option> won't exist, so we disable the button up front
+  // rather than silently failing on click.
+  var idField = document.querySelector('[name="game_pk"], [name="event_id"]');
+
+  document.querySelectorAll('[data-wm-edit]').forEach(function (btn) {
+    var row = btn.closest('[data-wm-id]');
+    var id  = btn.getAttribute('data-wm-edit');
+
+    var reachable = false;
+    if (idField && idField.tagName === 'SELECT') {
+      reachable = Array.prototype.some.call(idField.options, function (o) {
+        return o.value === id;
+      });
+    } else if (idField) {
+      reachable = true;  // free-text input, always settable
+    }
+
+    if (!reachable) {
+      btn.disabled = true;
+      btn.title = 'This game is no longer on the loaded slate — delete only.';
+      return;
+    }
+
+    btn.addEventListener('click', function () {
+      if (idField) idField.value = id;
+
+      var text = row.querySelector('.admin-wm__text');
+      var ta = document.querySelector('form.admin-form textarea[name="text"]');
+      if (ta && text) ta.value = text.textContent.trim();
+
+      var color = row.getAttribute('data-wm-color') || '';
+      var radio = document.querySelector(
+        'form.admin-form input[name="color"][value="' + color + '"]');
+      if (radio) radio.checked = true;
+
+      var form = document.querySelector('form.admin-form');
+      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (ta) ta.focus();
+    });
+  });
+})();
+</script>

@@ -993,6 +993,23 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-page__sub { display: none; }
 .mlb-page__datenav a { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
 
+/* Empty-state / no-data message (2026-08-30).
+   Several slate templates were reusing .mlb-page__sub for their "no games
+   this week" copy. That class is display:none site-wide (line above), so
+   those messages rendered invisibly — the PGA page looked like a blank
+   white void instead of saying there's no tournament. This is a dedicated
+   visible class for that copy. */
+.page-empty {
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  color: var(--ash);
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
 .mlb-page__hed { gap: 0.75rem 1.5rem; align-items: center; }
 .mlb-page__hed > div .kicker { margin-bottom: 0.1rem; }
 

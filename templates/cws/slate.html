@@ -119,7 +119,7 @@
       {% elif not showing_multiple %}
         {# Single-day view with no games — keep the legacy empty-state message #}
         <div class="container">
-          <p class="mlb-page__sub" style="text-align:center;padding:2rem 0">
+          <p class="page-empty">
             {% if day.meta and day.meta.build_err %}Slate is rebuilding. Refresh in a moment.
             {% else %}No CWS games scheduled at Omaha for this date.{% endif %}
           </p>

@@ -110,6 +110,11 @@
       {% endfor %}
     </div>
   {% endif %}
+
+  {# Shared manager: every stored write-up for this sport, with Edit
+     + Delete. Reaches entries whose game has rolled off the slate. #}
+  {% set admin_sport = 'golf' %}
+  {% include "_admin_writeup_manager.html" %}
 </div>
 
 <script>

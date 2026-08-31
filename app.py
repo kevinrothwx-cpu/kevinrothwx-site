@@ -2821,6 +2821,182 @@ def admin_nws_health():
     return Response(body, mimetype="text/html")
 
 
+@app.context_processor
+def inject_writeup_helper():
+    """Expose all_writeups_for(sport) to templates.
+
+    Lets _admin_writeup_manager.html read a sport's FULL write-up store
+    without touching any of the nine per-sport admin routes. Argument is
+    the storage module name (note: 'cfb', not 'ncaaf')."""
+    def all_writeups_for(sport):
+        import importlib
+        allowed = {"mlb", "nfl", "cfb", "mls", "nascar",
+                   "golf", "cws", "prem", "worldcup"}
+        if sport not in allowed:
+            return {}
+        try:
+            return importlib.import_module(f"{sport}.storage").list_all_writeups()
+        except Exception as e:
+            print(f"[admin] all_writeups_for({sport}) failed: {e}", flush=True)
+            return {}
+    return {"all_writeups_for": all_writeups_for}
+
+
+@app.route("/admin/writeup-delete", methods=["POST"])
+@_admin_required
+def admin_writeup_delete():
+    """Delete one write-up, then bounce back to the page that posted.
+
+    Shared by the inline Delete buttons on every sport's admin page
+    (see templates/_admin_writeup_manager.html)."""
+    sport = (request.form.get("sport") or "").strip()
+    key = (request.form.get("key") or "").strip()
+    back = (request.form.get("back") or "").strip()
+
+    allowed = {"mlb", "nfl", "cfb", "mls", "nascar",
+               "golf", "cws", "prem", "worldcup"}
+    if sport in allowed and key:
+        try:
+            import importlib
+            removed = importlib.import_module(f"{sport}.storage").delete_writeup(key)
+            flash("Write-up deleted." if removed else "No write-up found for that ID.",
+                  "success" if removed else "error")
+        except Exception as e:
+            flash(f"Delete failed: {type(e).__name__}: {e}", "error")
+    else:
+        flash("Bad delete request.", "error")
+
+    # Only follow same-site relative paths — never an absolute URL from
+    # the form, which would be an open redirect.
+    if back.startswith("/") and not back.startswith("//"):
+        return redirect(back)
+    return redirect(url_for("admin_writeups"))
+
+
+@app.route("/admin/writeups", methods=["GET", "POST"])
+@_admin_required
+def admin_writeups():
+    """Cross-sport write-up manager: list, edit-link, and DELETE.
+
+    Why this exists (2026-08-30): each sport's own admin page only lists
+    games on the currently-viewed slate, so a write-up became unreachable
+    once its game rolled off — invisible in the UI and impossible to
+    delete. This page reads straight from each storage module's full
+    dict, so orphans are always visible and removable.
+    """
+    import importlib
+
+    SPORTS = [
+        ("mlb", "MLB"), ("nfl", "NFL"), ("cfb", "College Football"),
+        ("mls", "MLS"), ("nascar", "NASCAR"), ("golf", "PGA"),
+        ("cws", "College World Series"), ("prem", "Premier League"),
+        ("worldcup", "World Cup"),
+    ]
+
+    def _mod(sport):
+        return importlib.import_module(f"{sport}.storage")
+
+    notice = ""
+    if request.method == "POST":
+        sport = (request.form.get("sport") or "").strip()
+        key = (request.form.get("key") or "").strip()
+        valid = {s for s, _ in SPORTS}
+        if sport in valid and key:
+            try:
+                removed = _mod(sport).delete_writeup(key)
+                notice = (f"Deleted {sport} write-up {key}." if removed
+                          else f"No {sport} write-up found for {key}.")
+            except Exception as e:
+                notice = f"Delete failed: {type(e).__name__}: {e}"
+        else:
+            notice = "Bad request — missing sport or key."
+
+    def _esc(x):
+        return (str(x).replace("&", "&amp;").replace("<", "&lt;")
+                      .replace(">", "&gt;").replace('"', "&quot;"))
+
+    sections, total = [], 0
+    for sport, label in SPORTS:
+        try:
+            items = _mod(sport).list_all_writeups()
+        except Exception as e:
+            sections.append(f"<h2>{_esc(label)}</h2>"
+                            f"<p style='color:#b91c1c'>error: {_esc(e)}</p>")
+            continue
+        total += len(items)
+        if not items:
+            sections.append(f"<h2>{_esc(label)} <span style='color:#999;"
+                            f"font-weight:400;font-size:.8em'>none</span></h2>")
+            continue
+        rows = []
+        for key, w in sorted(items.items()):
+            text = (w.get("text") or "")
+            preview = text if len(text) <= 220 else text[:220] + "…"
+            color = w.get("color") or "none"
+            upd = w.get("updated_at_utc") or ""
+            if hasattr(upd, "strftime"):
+                upd = upd.strftime("%Y-%m-%d %H:%M UTC")
+            rows.append(
+                "<tr>"
+                f"<td style='padding:.5rem .7rem;vertical-align:top;"
+                f"font-family:monospace;font-size:.8rem;color:#555;"
+                f"white-space:nowrap'>{_esc(key)}</td>"
+                f"<td style='padding:.5rem .7rem;vertical-align:top;"
+                f"max-width:42rem'>{_esc(preview)}</td>"
+                f"<td style='padding:.5rem .7rem;vertical-align:top;"
+                f"font-size:.8rem;color:#666;white-space:nowrap'>"
+                f"{_esc(color)}<br>{_esc(upd)}</td>"
+                f"<td style='padding:.5rem .7rem;vertical-align:top'>"
+                f"<form method='post' style='margin:0' "
+                f"onsubmit=\"return confirm('Delete this write-up?')\">"
+                f"<input type='hidden' name='sport' value='{_esc(sport)}'>"
+                f"<input type='hidden' name='key' value='{_esc(key)}'>"
+                f"<button type='submit' style='background:#b91c1c;color:#fff;"
+                f"border:0;padding:.35rem .7rem;border-radius:3px;"
+                f"cursor:pointer;font-size:.8rem'>Delete</button>"
+                f"</form></td>"
+                "</tr>"
+            )
+        sections.append(
+            f"<h2>{_esc(label)} <span style='color:#999;font-weight:400;"
+            f"font-size:.8em'>{len(items)}</span></h2>"
+            "<table style='border-collapse:collapse;width:100%;"
+            "border:1px solid #e5e5e5'>"
+            "<tr style='background:#f6f8fa;text-align:left'>"
+            "<th style='padding:.4rem .7rem;font-size:.75rem'>ID</th>"
+            "<th style='padding:.4rem .7rem;font-size:.75rem'>Text</th>"
+            "<th style='padding:.4rem .7rem;font-size:.75rem'>Color / Updated</th>"
+            "<th style='padding:.4rem .7rem;font-size:.75rem'></th></tr>"
+            + "".join(rows) + "</table>"
+        )
+
+    notice_html = ""
+    if notice:
+        notice_html = (f"<p style='background:#f0f9ff;border-left:4px solid "
+                       f"#1e40af;padding:.7rem 1rem'>{_esc(notice)}</p>")
+
+    body = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<title>Write-ups — admin</title>"
+        "<meta name='robots' content='noindex'>"
+        "<style>body{font-family:system-ui,sans-serif;max-width:1100px;"
+        "margin:2rem auto;padding:0 1rem;line-height:1.5}"
+        "h2{margin-top:2rem;font-size:1.1rem}</style></head><body>"
+        "<h1>All write-ups</h1>"
+        "<p style='color:#666'>Every stored write-up across all sports, "
+        "including ones whose game has rolled off the slate and can no "
+        "longer be reached from that sport's own admin page. "
+        f"<strong>{total}</strong> total.</p>"
+        "<p style='color:#666;font-size:.9rem'>To <em>edit</em>, use the "
+        "sport's admin page (/admin/mlb, /admin/nfl, /admin/cfb, …) while "
+        "the game is still on the slate. Deleting is always available here.</p>"
+        f"{notice_html}"
+        + "".join(sections) +
+        "</body></html>"
+    )
+    return Response(body, mimetype="text/html")
+
+
 @app.route("/admin/persistence", methods=["GET"])
 @_admin_required
 def admin_persistence():

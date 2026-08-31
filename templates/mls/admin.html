@@ -55,5 +55,10 @@
     </div>
     <button type="submit">Save write-up</button>
   </form>
+
+  {# Shared manager: every stored write-up for this sport, with Edit
+     + Delete. Reaches entries whose game has rolled off the slate. #}
+  {% set admin_sport = 'mls' %}
+  {% include "_admin_writeup_manager.html" %}
 </div>
 {% endblock %}
