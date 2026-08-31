@@ -2821,6 +2821,107 @@ def admin_nws_health():
     return Response(body, mimetype="text/html")
 
 
+@app.route("/admin/persistence", methods=["GET"])
+@_admin_required
+def admin_persistence():
+    """Control panel for the disk -> Postgres persistence migration.
+
+    Actions (via ?action= query param):
+        (none)    — show current backend status + key counts
+        migrate   — copy every disk blob into Postgres (skips existing)
+        reverify  — same as migrate but overwrites existing PG keys
+        verify    — structural diff of disk vs Postgres for every blob
+
+    The verify action is the gate for flipping PERSISTENCE_BACKEND to
+    "postgres" and detaching the disk. Do not flip until in_sync is true.
+    """
+    import json as _json
+    import persistence as _p
+
+    action = (request.args.get("action") or "").strip().lower()
+    result = None
+    if action == "migrate":
+        result = _p.migrate_disk_to_pg(overwrite=False)
+    elif action == "reverify":
+        result = _p.migrate_disk_to_pg(overwrite=True)
+    elif action == "verify":
+        result = _p.verify_parity()
+
+    status = _p.backend_status()
+    disk_keys = _p.list_disk_keys()
+    pg_keys = _p.list_pg_keys()
+
+    def _esc(x):
+        return (str(x).replace("&", "&amp;").replace("<", "&lt;")
+                      .replace(">", "&gt;"))
+
+    mode_color = {"disk": "#b45309", "dual": "#1e40af", "postgres": "#15803d"}.get(
+        status["mode"], "#666"
+    )
+
+    rows = "".join(
+        f"<tr><td style='padding:.3rem .8rem;color:#555'>{_esc(k)}</td>"
+        f"<td style='padding:.3rem .8rem'>{_esc(v)}</td></tr>"
+        for k, v in status.items()
+    )
+
+    result_html = ""
+    if result is not None:
+        pretty = _json.dumps(result, indent=2, default=str)
+        banner = ""
+        if action == "verify":
+            if result.get("in_sync"):
+                banner = ("<p style='background:#dcfce7;border-left:4px solid #15803d;"
+                          "padding:.8rem 1rem;font-weight:600;color:#14532d'>"
+                          "IN SYNC — safe to set PERSISTENCE_BACKEND=postgres "
+                          "and detach the disk.</p>")
+            else:
+                banner = ("<p style='background:#fee2e2;border-left:4px solid #b91c1c;"
+                          "padding:.8rem 1rem;font-weight:600;color:#7f1d1d'>"
+                          "NOT in sync — do NOT detach the disk yet. "
+                          "Run migrate, then verify again.</p>")
+        result_html = (
+            f"<h2 style='margin-top:2rem'>Result: {_esc(action)}</h2>{banner}"
+            f"<pre style='background:#f6f8fa;border:1px solid #e5e5e5;padding:1rem;"
+            f"overflow:auto;font-size:.8rem;max-height:24rem'>{_esc(pretty)}</pre>"
+        )
+
+    body = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        "<title>Persistence — admin</title>"
+        "<meta name='robots' content='noindex'>"
+        "<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;"
+        "padding:0 1rem;line-height:1.5}table{border-collapse:collapse}"
+        "a.btn{display:inline-block;margin-right:.5rem;padding:.5rem .9rem;"
+        "background:#111;color:#fff;text-decoration:none;border-radius:4px;"
+        "font-size:.85rem}a.btn.alt{background:#555}</style></head><body>"
+        "<h1>Persistence backend</h1>"
+        f"<p>Mode: <strong style='color:{mode_color}'>{_esc(status['mode'])}</strong></p>"
+        f"<table>{rows}</table>"
+        f"<p style='margin-top:1.5rem'>Disk blobs: <strong>{len(disk_keys)}</strong> · "
+        f"Postgres keys: <strong>{len(pg_keys)}</strong></p>"
+        "<p style='margin-top:1.5rem'>"
+        "<a class='btn' href='?action=migrate'>Migrate disk &rarr; Postgres</a>"
+        "<a class='btn' href='?action=verify'>Verify parity</a>"
+        "<a class='btn alt' href='?action=reverify'>Force re-copy (overwrite)</a>"
+        "</p>"
+        f"{result_html}"
+        "<h2 style='margin-top:2rem'>Migration checklist</h2>"
+        "<ol style='color:#444;font-size:.9rem'>"
+        "<li>Provision Render Postgres, set <code>DATABASE_URL</code>.</li>"
+        "<li>Set <code>PERSISTENCE_BACKEND=dual</code>, deploy.</li>"
+        "<li>Hit <em>Migrate</em> to backfill existing blobs.</li>"
+        "<li>Wait 24&ndash;48h of live warmer cycles, then hit <em>Verify</em>. "
+        "Repeat until it reports IN SYNC.</li>"
+        "<li>Set <code>PERSISTENCE_BACKEND=postgres</code> and "
+        "<code>MLB_DISK_CACHE_DISABLED=1</code>, deploy.</li>"
+        "<li>Detach the disk in Render settings. Zero-downtime deploys unlock.</li>"
+        "</ol>"
+        "</body></html>"
+    )
+    return Response(body, mimetype="text/html")
+
+
 @app.route("/admin/cache-health")
 @_admin_required
 def admin_cache_health():

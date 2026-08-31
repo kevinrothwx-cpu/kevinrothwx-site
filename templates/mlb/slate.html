@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% from "mlb/_macros.html" import cheat_card, hourly_table, game_summary_panel, game_odds_inline %}
 
-{% block title %}MLB Weather Forecast, {{ pretty_date }} | Kevin Roth{% endblock %}
-{% block description %}Free MLB weather forecasts for every ballpark on {{ pretty_date }}: hourly temperature, wind direction relative to center field, precipitation. By sports meteorologist Kevin Roth.{% endblock %}
+{# Evergreen meta tags (2026-08-30) — was previously pinned to {{ pretty_date }}
+   which meant Google's cached SERP snippet showed yesterday's date on any
+   given day, tanking CTR. Static copy is more stable in search, ranks for
+   consistent keywords, and reads as timeless rather than stale. #}
+{% block title %}MLB Weather Forecasts for Every Ballpark | Kevin Roth{% endblock %}
+{% block description %}MLB weather forecasts for every ballpark from a real meteorologist. Built for sports bettors and fantasy players — hourly temp, wind direction relative to center field, and precipitation for every game.{% endblock %}
 
-{% block og_title %}MLB Weather, {{ pretty_date }}{% endblock %}
-{% block og_description %}Every MLB game on {{ pretty_date }}: weather, wind, and rain forecasts at first pitch and through the game.{% endblock %}
+{% block og_title %}MLB Weather Forecasts | Kevin Roth{% endblock %}
+{% block og_description %}Weather forecasts for every MLB game from a real meteorologist. Built for sports bettors and fantasy players.{% endblock %}
 
 {% block content %}
 <div class="mlb-page">

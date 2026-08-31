@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% from "ncaaf/_macros.html" import cfb_cheat_card, cfb_date_header %}
 
-{% block title %}College Football Weather, Forecasts for Every FBS Game | Kevin Roth{% endblock %}
-{% block description %}Free live weather forecasts for every Division I college football game. Saturday slate, Top 25 matchups, conference games. Stadium-specific temp, wind, precipitation. By sports meteorologist Kevin Roth.{% endblock %}
+{# Evergreen meta tags (2026-08-30) — targets fantasy + bettor queries.
+   Kept static so Google's SERP snippet never shows a stale date. #}
+{% block title %}College Football Weather Forecasts | Kevin Roth{% endblock %}
+{% block description %}College football weather forecasts for fantasy sports and sports bettors from an actual meteorologist. Stadium-specific hourly temp, wind, and precipitation for every FBS game.{% endblock %}
 
-{% block og_title %}College Football Weather Forecasts{% endblock %}
-{% block og_description %}Real meteorologist weather forecasts for every FBS game this week. By Kevin Roth.{% endblock %}
+{% block og_title %}College Football Weather Forecasts | Kevin Roth{% endblock %}
+{% block og_description %}College football weather forecasts for fantasy sports and sports bettors from an actual meteorologist.{% endblock %}
 
 {% block extra_head %}
 <style>

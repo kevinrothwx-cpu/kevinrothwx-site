@@ -2,11 +2,13 @@
 {% from "worldcup/_macros.html" import wc_cheat_card %}
 {% from "nfl/_macros.html" import nfl_summary_panel, nfl_hourly_table %}
 
-{% block title %}NFL Weather, Game Forecasts for Every Stadium | Kevin Roth{% endblock %}
-{% block description %}Free live weather forecasts for every NFL game. Stadium-specific hourly temperature, wind, precipitation by sports meteorologist Kevin Roth.{% endblock %}
+{# Evergreen meta tags (2026-08-30) — targets fantasy + bettor queries.
+   Kept static so Google's SERP snippet never shows a stale date. #}
+{% block title %}NFL Weather Forecasts | Kevin Roth{% endblock %}
+{% block description %}NFL weather forecasts for fantasy sports and sports bettors from an actual meteorologist. Stadium-specific hourly temp, wind, and precipitation for every game.{% endblock %}
 
-{% block og_title %}NFL Weather Forecasts{% endblock %}
-{% block og_description %}Real meteorologist weather for every NFL game. By Kevin Roth.{% endblock %}
+{% block og_title %}NFL Weather Forecasts | Kevin Roth{% endblock %}
+{% block og_description %}NFL weather forecasts for fantasy sports and sports bettors from an actual meteorologist.{% endblock %}
 
 {% block content %}
 {% set active_sport = 'nfl' %}

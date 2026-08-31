@@ -1,3 +1,7 @@
 flask>=3.0
 gunicorn>=21.0
 requests>=2.31
+# Postgres driver for persistence.py. -binary ships prebuilt wheels so
+# Render's build needs no libpq/compiler toolchain. Added 2026-08-30 for
+# the disk -> Postgres migration that unlocks zero-downtime deploys.
+psycopg2-binary>=2.9
