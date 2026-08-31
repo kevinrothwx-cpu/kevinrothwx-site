@@ -49,13 +49,31 @@ ROOF_FIXED_DOME  = "fixed_dome"    # Always indoors (Carrier Dome, Tropicana, Ca
 ROOF_CANOPY      = "fixed_canopy"  # Partial cover, weather-affected (rare)
 
 
-def _stadium(name, city, lat, lon, tz, roof=ROOF_OPEN, cap=None):
-    """Helper to build a stadium dict cleanly."""
+def _stadium(name, city, lat, lon, tz, roof=ROOF_OPEN, cap=None, bearing=None):
+    """Helper to build a stadium dict cleanly.
+
+    bearing → field_bearing_degrees: the compass bearing (0-359°) the field
+    runs toward, measured from one endzone to the other. It doesn't matter
+    which endzone you measure from — the axis is symmetric, so 180 and 0
+    describe the same north-south field.
+
+    Used by the wind-arrow overlay so the arrow shows wind direction
+    RELATIVE TO THE FIELD rather than raw compass direction. The field
+    graphic is always drawn horizontally (endzones left and right), so
+    without this correction a "north wind" arrow points the same way at
+    every stadium regardless of how the field actually sits.
+
+    None = not yet measured. The macro falls back to raw compass behavior
+    (identical to pre-2026-08-30 rendering) so unmeasured stadiums are no
+    worse than before. Fill these in from satellite view — see
+    docs/CFB_FIELD_BEARINGS_WORKSHEET.md.
+    """
     return {
         "name": name, "city": city,
         "lat": lat, "lon": lon,
         "tz": tz, "roof": roof,
         "cap": cap,
+        "field_bearing_degrees": bearing,
     }
 
 

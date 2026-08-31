@@ -335,13 +335,25 @@ def parse_dt(s: Optional[str]) -> Optional[datetime]:
 
 def backend_status() -> dict:
     """Snapshot of how persistence is currently wired. Surfaced in admin
-    so we can confirm the mode actually took effect after a deploy."""
+    so we can confirm the mode actually took effect after a deploy.
+
+    psycopg2_version is checked explicitly because the driver import is
+    lazy (it only happens inside _init_pg, which never runs in disk
+    mode). Without this probe you couldn't tell a successful install from
+    a failed one until you flipped to dual and it broke.
+    """
+    try:
+        import psycopg2 as _pg2
+        driver = getattr(_pg2, "__version__", "installed")
+    except Exception as e:
+        driver = f"NOT INSTALLED ({type(e).__name__})"
     return {
-        "mode":            _MODE,
+        "mode":             _MODE,
+        "psycopg2_version": driver,
         "database_url_set": bool(_DATABASE_URL),
-        "postgres_ready":  _pg_ready,
-        "data_dir":        DATA_DIR,
-        "data_dir_exists": os.path.isdir(DATA_DIR),
+        "postgres_ready":   _pg_ready,
+        "data_dir":         DATA_DIR,
+        "data_dir_exists":  os.path.isdir(DATA_DIR),
     }
 
 

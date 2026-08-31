@@ -189,7 +189,7 @@
         <span class="game-summary__primary-label">At kickoff</span>
       </div>
       <div class="game-summary__cell game-summary__cell--field">
-        <div class="game-summary__field-icon">{{ cfb_stadium_icon(f.wind_deg, '') }}</div>
+        <div class="game-summary__field-icon">{{ cfb_stadium_icon(f.wind_deg, '', field_bearing=game.venue.field_bearing_degrees) }}</div>
         <span class="game-summary__value">{{ f.wind_deg|wind_compass }}</span>
         <span class="game-summary__cell-label">Wind dir</span>
       </div>

@@ -17,10 +17,28 @@
 
 
 {# ── Stadium icon with rotated wind arrow ──────────────────────────────── #}
-{% macro cfb_stadium_icon(wind_deg, wind_class='') %}
-  {# wind_deg is "from" direction in degrees (0=N, 90=E, 180=S, 270=W).
-     The arrow shows where wind blows TOWARD, which is +180 from "from". #}
-  {% set rotation = ((wind_deg or 0) + 180) % 360 %}
+{% macro cfb_stadium_icon(wind_deg, wind_class='', field_bearing=none) %}
+  {# wind_deg is the "from" direction in degrees (0=N, 90=E, 180=S, 270=W).
+     The arrow shows where wind blows TOWARD, which is +180 from "from".
+
+     FIELD-RELATIVE ROTATION (2026-08-30, mirrors nfl/_macros.html):
+       The SVG always draws the field horizontally, endzones left and
+       right. So SVG "right" represents the real-world bearing the field
+       runs toward — field_bearing_degrees.
+
+       To show wind relative to the field:
+         arrow_rot = (wind_to - field_bearing + 90) mod 360
+       The +90 accounts for SVG "up" being 90° off from SVG "right",
+       which is our field-axis reference direction.
+
+     Falls back to field_bearing=90 (east) when the stadium hasn't been
+     measured yet, because (wind_to - 90 + 90) == wind_to — i.e. exactly
+     the raw-compass behavior this macro had before. Unmeasured stadiums
+     render no worse than they did previously. #}
+  {% set wind_to = ((wind_deg or 0) + 180) % 360 %}
+  {% set fb = 90 %}
+  {% if field_bearing is number %}{% set fb = field_bearing %}{% endif %}
+  {% set rotation = (wind_to - fb + 90) % 360 %}
   {% set svg_class = 'wx-stadium' %}
   {% if wind_class == 'severe' %}{% set svg_class = svg_class + ' wx-stadium--severe' %}
   {% elif wind_class == 'high' %}{% set svg_class = svg_class + ' wx-stadium--high' %}
@@ -172,7 +190,7 @@
           {% if is_indoor %}
             —
           {% else %}
-            {{ cfb_stadium_icon(f.wind_deg, wind_class) }}<span class="wx-stat__label">{{ f.wind_deg|wind_compass }}</span>
+            {{ cfb_stadium_icon(f.wind_deg, wind_class, field_bearing=(v.field_bearing_degrees if v else none)) }}<span class="wx-stat__label">{{ f.wind_deg|wind_compass }}</span>
           {% endif %}
         </div>
       </div>
