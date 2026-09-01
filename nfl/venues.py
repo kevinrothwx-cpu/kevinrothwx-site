@@ -202,7 +202,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "SoFi Stadium", "city": "Inglewood, CA",
             "lat": 33.9534, "lon": -118.3387,
             "timezone": "America/Los_Angeles",
-            "cap": 70240, "field_bearing_degrees": None, "roof_type": "fixed_canopy",
+            "cap": 70240, "field_bearing_degrees": 158, "roof_type": "fixed_canopy",
         },
     },
 
@@ -367,7 +367,7 @@ NFL_TEAMS: dict[int, dict] = {
             "name": "SoFi Stadium", "city": "Inglewood, CA",
             "lat": 33.9534, "lon": -118.3387,
             "timezone": "America/Los_Angeles",
-            "cap": 70240, "field_bearing_degrees": None, "roof_type": "fixed_canopy",
+            "cap": 70240, "field_bearing_degrees": 158, "roof_type": "fixed_canopy",
         },
     },
     25: {

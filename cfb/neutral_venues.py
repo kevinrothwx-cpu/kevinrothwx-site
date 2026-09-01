@@ -159,6 +159,7 @@ NEUTRAL_VENUES: dict[str, dict] = {
     },
     # SoFi Stadium (Rams/Chargers) — LA Bowl, occasional kickoff games
     "sofi_stadium": {
+        "field_bearing_degrees": 158,
         "name": "SoFi Stadium", "city": "Inglewood, CA",
         "lat": 33.9535, "lon": -118.3392, "tz": "America/Los_Angeles",
         "roof": "fixed_canopy", "cap": 70240,

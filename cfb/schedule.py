@@ -33,6 +33,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from .venues import FBS_TEAMS
+from .neutral_venues import lookup_neutral_venue as _lookup_neutral_venue
 
 
 ESPN_CFB_SCOREBOARD_URL = (
@@ -328,33 +329,43 @@ def _build_venue_record(espn_venue: dict, home_team: dict,
     games (it has lat/lon for weather). For neutral games, use ESPN's venue
     payload with city defaults."""
     if not is_neutral and home_team.get("_in_local_db"):
-        # Home team's stadium from our DB (has weather-ready lat/lon/tz)
+        # Home team's stadium from our DB (has weather-ready lat/lon/tz).
+        #
+        # Copy the WHOLE stadium dict rather than listing fields by hand.
+        # This used to be a hand-written whitelist, which silently dropped
+        # field_bearing_degrees when it was added to venues.py — the arrows
+        # rendered raw compass on every ESPN-path game with no error to show
+        # for it. A pass-through can't fail that way: anything added to
+        # venues.py reaches the template automatically.
         local_team = FBS_TEAMS[home_team["team_id"]]
-        s = local_team["stadium"]
-        return {
-            "name":       s["name"],
-            "city":       s["city"],
-            "lat":        s["lat"],
-            "lon":        s["lon"],
-            "tz":         s["tz"],
-            "roof":       s["roof"],
-            "cap":        s.get("cap"),
-            "is_neutral": False,
-        }
+        venue = dict(local_team["stadium"])
+        venue["is_neutral"] = False
+        return venue
 
-    # Neutral site OR team not in local DB. Use ESPN's venue data.
+    # Neutral site OR team not in local DB. Try our neutral-venue table
+    # first — it has real lat/lon (and sometimes a bearing); ESPN's payload
+    # has neither. Falls through to ESPN's data when we don't know the venue.
     addr = espn_venue.get("address") or {}
     city_str = addr.get("city") or ""
     state = addr.get("state") or ""
     city = f"{city_str}, {state}".strip(", ")
+    espn_name = espn_venue.get("fullName") or ""
+
+    known = _lookup_neutral_venue(espn_name, city)
+    if known:
+        venue = dict(known)
+        venue["is_neutral"] = is_neutral
+        return venue
+
     return {
-        "name":       espn_venue.get("fullName") or "Unknown venue",
+        "name":       espn_name or "Unknown venue",
         "city":       city or "Unknown",
         "lat":        None,  # No lat/lon — slate must look it up or skip weather
         "lon":        None,
         "tz":         "America/New_York",  # safe default
         "roof":       "open",
         "cap":        espn_venue.get("capacity"),
+        "field_bearing_degrees": None,  # unknown venue — never guess
         "is_neutral": is_neutral,
     }
 
