@@ -3015,6 +3015,20 @@ def admin_persistence():
     import persistence as _p
 
     action = (request.args.get("action") or "").strip().lower()
+
+    # Download every blob as one JSON file. Do this BEFORE detaching the
+    # Render disk — detaching destroys it, so this is the offline
+    # recovery path that depends on neither store.
+    if action == "export":
+        payload = _json.dumps(_p.export_all(), indent=2, default=str)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        return Response(
+            payload,
+            mimetype="application/json",
+            headers={"Content-Disposition":
+                     f'attachment; filename="msw-data-backup-{stamp}.json"'},
+        )
+
     result = None
     if action == "migrate":
         result = _p.migrate_disk_to_pg(overwrite=False)
@@ -3081,6 +3095,12 @@ def admin_persistence():
         "<a class='btn' href='?action=verify'>Verify parity</a>"
         "<a class='btn alt' href='?action=reverify'>Force re-copy (overwrite)</a>"
         "</p>"
+        "<p style='margin-top:.5rem'>"
+        "<a class='btn' style='background:#15803d' href='?action=export'>"
+        "&darr; Download backup (all blobs)</a>"
+        "<span style='color:#666;font-size:.85rem;margin-left:.6rem'>"
+        "Do this before detaching the disk &mdash; detaching destroys it."
+        "</span></p>"
         f"{result_html}"
         "<h2 style='margin-top:2rem'>Migration checklist</h2>"
         "<ol style='color:#444;font-size:.9rem'>"

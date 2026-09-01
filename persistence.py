@@ -383,6 +383,25 @@ def list_pg_keys() -> list[str]:
         return []
 
 
+def export_all() -> dict:
+    """Return every stored blob as one plain dict, for download.
+
+    Reads through the ACTIVE backend (whatever load_json currently uses),
+    so the export always reflects what the app itself would see. Intended
+    as a pre-detach safety net: detaching a Render disk destroys it, so
+    grab this first and the cutover has an offline recovery path that
+    doesn't depend on either store.
+    """
+    keys = sorted(set(list_disk_keys()) | set(list_pg_keys()))
+    out = {}
+    for k in keys:
+        try:
+            out[k] = load_json(k, default=None)
+        except Exception as e:
+            out[k] = {"__export_error__": f"{type(e).__name__}: {e}"}
+    return out
+
+
 def migrate_disk_to_pg(overwrite: bool = False) -> dict:
     """One-shot copy of every disk blob into Postgres.
 
