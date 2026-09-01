@@ -106,6 +106,28 @@
         <div class="cheat-card__wx cheat-card__wx--missing">Forecast pending</div>
       {% endif %}
     {% endif %}
+
+    {# Odds row — only renders when the sport actually attaches odds, so
+       MLS / World Cup / Premier League cards are unaffected. Currently
+       NFL. Markup and class names match the CFB card so the two read
+       identically; styles are global in style.css (the CFB copies live
+       in ncaaf/slate.html's inline block and only apply there).
+
+       o.current is the FROZEN kickoff line once a game has started —
+       see nfl/slate.py._build_odds_for_game for why live in-game totals
+       are not shown. #}
+    {% set o = match.odds %}
+    {% if o and o.current is not none %}
+      <div class="cheat-card__odds">
+        <span class="cheat-card__odds-total">O/U {{ o.current }}</span>
+        {% if o.opening is not none %}
+          <span class="cheat-card__odds-open">Opened {{ o.opening }}</span>
+          {% if o.delta is not none and o.delta != 0 %}
+            <span class="cheat-card__odds-delta cheat-card__odds-delta--{% if o.delta > 0 %}up{% else %}down{% endif %}">{% if o.delta > 0 %}&uarr;{% else %}&darr;{% endif %} {{ o.delta_str or (o.delta|abs) }}</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
   </a>
 {% endmacro %}
 

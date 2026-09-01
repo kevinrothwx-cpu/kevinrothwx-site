@@ -1,7 +1,7 @@
 """
-cfb.odds — The Odds API client for CFB game totals (O/U).
+nfl.odds — The Odds API client for NFL game totals (O/U).
 
-Mirrors mlb/odds.py exactly, adapted for college football. See that module
+Mirrors mlb/odds.py exactly, adapted for NFL. See that module
 for the full rationale on book choice, region, and credit budget. Summary:
 
     - Source: api.the-odds-api.com, sport `americanfootball_ncaaf`
@@ -13,10 +13,10 @@ for the full rationale on book choice, region, and credit budget. Summary:
       starts, the line freezes (handled in cfb/slate.py via forecast_freeze).
 
 Credit budget:
-    One fetch = 1 credit (1 market × 1 region × 1 request). CFB has ~130
+    One fetch = 1 credit (1 market × 1 region × 1 request). NFL has ~130
     games per week during the season. Warmer runs every 25 min → 57.6
     credits/day → ~1,730 credits/month. Same budget as MLB. Combined
-    MLB + CFB usage: ~3,460 credits/month, well under Kevin's 20K plan.
+    MLB + NFL usage: ~3,460 credits/month, well under Kevin's 20K plan.
 
 API key comes from the ODDS_API_KEY environment variable (same key used
 by mlb.odds). If unset, this module logs and returns an empty list —
@@ -32,7 +32,14 @@ from datetime import datetime, timezone
 from typing import Optional
 
 
-ODDS_API_URL = "https://api.the-odds-api.com/v4/sports/americanfootball_ncaaf/odds"
+ODDS_API_BASE = "https://api.the-odds-api.com/v4/sports"
+# NFL splits regular season and preseason across two slugs. Fetching
+# only one leaves the other window with no totals at all — same trap
+# nfl/odds_api_schedule.py hit for the schedule itself.
+NFL_SPORT_SLUGS = [
+    "americanfootball_nfl",            # regular season + playoffs
+    "americanfootball_nfl_preseason",  # August preseason only
+]
 
 # Same book priority as MLB. Pinnacle deliberately excluded (not in US region).
 BOOK_PRIORITY = ["draftkings", "fanduel", "betmgm", "williamhill_us"]
@@ -105,39 +112,37 @@ def _set_odds_status(ok: bool, error=None, game_count: int = 0) -> None:
 
 
 def get_last_odds_status() -> dict:
-    """Most recent CFB odds fetch outcome. ok=None means we have not
+    """Most recent NFL odds fetch outcome. ok=None means we have not
     attempted a fetch in this process yet."""
     return dict(_LAST_ODDS_STATUS)
 
 
-def fetch_cfb_totals() -> list[dict]:
-    """Fetch current CFB totals from The Odds API. Returns a list of
+def fetch_nfl_totals() -> list[dict]:
+    """Fetch current NFL totals from The Odds API. Returns a list of
     dicts (one per game) with commence_time, home/away team names +
     normalized versions, total, and book info. Returns [] on any
     failure — never raises. Odds are additive, not critical."""
     api_key = os.environ.get("ODDS_API_KEY", "").strip()
     if not api_key:
-        print("[cfb.odds] ODDS_API_KEY not set; skipping odds fetch", flush=True)
+        print("[nfl.odds] ODDS_API_KEY not set; skipping odds fetch", flush=True)
         _set_odds_status(False, "no ODDS_API_KEY")
         return []
 
-    try:
-        resp = requests.get(
-            ODDS_API_URL,
-            params={
-                "apiKey":     api_key,
-                "regions":    "us",
-                "markets":    "totals",
-                "oddsFormat": "american",
-                "dateFormat": "iso",
-            },
-            timeout=REQUEST_TIMEOUT_SEC,
-        )
-        resp.raise_for_status()
-        raw_games = resp.json()
-    except Exception as e:
-        print(f"[cfb.odds] fetch failed: {type(e).__name__}: {e}", flush=True)
-        _set_odds_status(False, f"{type(e).__name__}: {e}")
+    # NO separate HTTP call here. nfl/odds_api_schedule.py already fetches
+    # this exact endpoint (same slugs, same markets=totals) to build the
+    # schedule, and the response carries the bookmaker data we need. We
+    # reuse its short-TTL cached payload, which halves NFL's Odds API cost
+    # from 4 credits per warmer cycle to 2 (~5,800 calls/month saved).
+    from .odds_api_schedule import fetch_raw_nfl_payload
+    raw_games = fetch_raw_nfl_payload(api_key)
+    if not raw_games:
+        # NOT flagged as an error. fetch_raw_nfl_payload() swallows its own
+        # failures and returns [] — identical to the legitimately-empty
+        # offseason/preseason payload, which is the common case for most of
+        # the year. We can't tell those apart from here, so we report the
+        # honest thing (fetch completed, nothing priced) rather than crying
+        # wolf at consumers every day from February to August.
+        _set_odds_status(True, None, 0)
         return []
 
     out = []
@@ -173,10 +178,10 @@ def fetch_cfb_totals() -> list[dict]:
                 "book_display":      BOOK_DISPLAY_NAMES.get(book_key, book_key.title()),
             })
         except Exception as e:
-            print(f"[cfb.odds] parse failed for one game: {type(e).__name__}: {e}", flush=True)
+            print(f"[nfl.odds] parse failed for one game: {type(e).__name__}: {e}", flush=True)
             continue
 
-    print(f"[cfb.odds] fetched totals for {len(out)} games", flush=True)
+    print(f"[nfl.odds] fetched totals for {len(out)} games", flush=True)
     _set_odds_status(True, None, len(out))
     return out
 
@@ -188,13 +193,13 @@ def match_odds_to_game(
     kickoff_utc: datetime,
     tolerance_hours: float = 6.0,
 ) -> Optional[dict]:
-    """Find the odds entry matching a given CFB game.
+    """Find the odds entry matching a given NFL game.
 
     Match criteria:
         1. Normalized home team name matches
         2. Normalized away team name matches
         3. commence_time within tolerance_hours of kickoff (default 6h to
-           handle CFB kickoff-time uncertainty — early-week the Odds API
+           handle NFL kickoff-time uncertainty — early-week the Odds API
            often uses a placeholder time that shifts as TV windows firm up).
     """
     home_norm = _normalize_team_name(home_team)

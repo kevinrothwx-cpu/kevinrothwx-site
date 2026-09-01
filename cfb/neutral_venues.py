@@ -86,6 +86,7 @@ NEUTRAL_VENUES: dict[str, dict] = {
     },
     # Cotton Bowl (Fair Park) — Red River Rivalry every year
     "cotton_bowl": {
+        "field_bearing_degrees": 135,
         "name": "Cotton Bowl", "city": "Dallas, TX",
         "lat": 32.7796, "lon": -96.7607, "tz": "America/Chicago",
         "roof": "open", "cap": 92100,
@@ -121,6 +122,7 @@ NEUTRAL_VENUES: dict[str, dict] = {
     },
     # Bank of America Stadium (Panthers) — Belk / Duke's Mayo Bowl
     "bank_of_america": {
+        "field_bearing_degrees": 135,
         "name": "Bank of America Stadium", "city": "Charlotte, NC",
         "lat": 35.2258, "lon": -80.8528, "tz": "America/New_York",
         "roof": "open", "cap": 74867,
@@ -128,6 +130,7 @@ NEUTRAL_VENUES: dict[str, dict] = {
     },
     # Yankee Stadium — Pinstripe Bowl
     "yankee_stadium": {
+        "field_bearing_degrees": 45,
         "name": "Yankee Stadium", "city": "Bronx, NY",
         "lat": 40.8296, "lon": -73.9262, "tz": "America/New_York",
         "roof": "open", "cap": 54251,

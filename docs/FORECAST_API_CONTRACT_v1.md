@@ -92,6 +92,7 @@ Same shape as NFL. `game.sport = "cfb"`.
 - `is_frozen`: `true` when the kickoff snapshot has been locked (kickoff is within the freeze window: 1 hour before through 6 hours after). While `is_frozen: true`, `forecast_at_kickoff` values do not change until the release window closes.
 - `frozen_at_utc`: ISO 8601 timestamp when the snapshot was taken. `null` while not frozen.
 - `writeup`: Optional `Writeup` object with Kevin's colored meteorologist note. `null` when no writeup is attached.
+- `odds`: Optional `Odds` object with the game's over/under total. `null` when no book posted a total for this game — see `Odds` below for how to tell that apart from a pipeline failure.
 
 ### `Forecast`
 
@@ -157,13 +158,53 @@ Represents the weather for one hour or the point-in-time snapshot at kickoff.
   "roof_type": "open",
   "capacity": 76416,
   "nws_unsupported": false,
-  "country": "US"
+  "country": "US",
+  "field_bearing_degrees": 135
 }
 ```
 
 - `roof_type`: One of `"open" | "retractable" | "fixed_dome" | "fixed_canopy"`. For fixed_dome venues, `forecast_at_kickoff` is always `null` and `weather_source: "indoor-skip"`.
+- `field_bearing_degrees`: Integer 0-359, or `null`. The compass bearing the field runs, endzone to endzone. `0` = a north/south field, `90` = east/west. Either endzone is a valid reference, so `0` and `180` describe the same field — normalize with `% 180` if you need a canonical axis.
+
+  Field-relative wind, given `wind_deg` (which is the direction wind comes FROM):
+
+  ```
+  wind_to  = (wind_deg + 180) % 360
+  relative = (wind_to - field_bearing_degrees + 90) % 360
+  ```
+
+  `relative` near 0 or 180 is a crosswind; near 90 or 270 the wind runs along the field axis (the kicking-relevant case).
+
+  **`null` means UNKNOWN, not "no wind" — do not coerce it to 0.** Two distinct cases, distinguishable via `roof_type`:
+  - `roof_type: "fixed_dome"` — null is correct and permanent. There is no wind.
+  - Any other `roof_type` — genuinely unmeasured. Skip the wind-relative feature for this game rather than defaulting it.
+
+  Coverage as of 2026-09-01: all 134 CFB home venues are populated (minus 3 fixed domes). 13 neutral-site venues — AT&T, Mercedes-Benz, State Farm, Chase Field, SoFi, Croke Park, Aviva, Wembley, Allianz, Azteca, Fenway, Wrigley, Levi's — are still null. That set includes the Chick-fil-A Kickoff and Red River sites, so the null path is live traffic, not a rare edge case.
 - `nws_unsupported`: `true` for international NFL venues (Tottenham, Estadio Azteca, etc.) that route through WeatherAPI directly. HRRR is also skipped for these.
 - `country`: `"US"` or ISO 3166-1 alpha-2 code for international venues.
+
+### `Odds`
+
+```json
+{
+  "total_current": 44.5,
+  "total_opening": 47.0,
+  "delta": -2.5,
+  "book": "DraftKings",
+  "book_key": "draftkings",
+  "frozen": true
+}
+```
+
+- `total_current`: The total MSW is currently displaying. Before kickoff this is the live number; after kickoff it is the frozen closing line (see `frozen`).
+- `total_opening`: The first total MSW ever recorded for this game. Immutable once written — it is never overwritten, so it is a true opener rather than "the oldest number still in cache."
+- `delta`: `total_current - total_opening`, rounded to 2 decimals. `null` when no opening was captured (game first seen after it started).
+- `book`, `book_key`: Which sportsbook the number came from. MSW picks one book per game by priority, so `book` can differ between games in the same slate and can change between polls if a book drops the market.
+- `frozen`: `true` once kickoff has passed. **This matters.** The Odds API serves LIVE in-game totals after kickoff, and MSW only polls every 25 minutes, so that live number is stale garbage between cycles. MSW snapshots the last pre-kickoff total and serves that for the rest of the game. So `total_current` where `frozen: true` is a genuine closing line suitable for CLV work — not a mid-game number.
+
+  One exception: if MSW first saw the game *after* it had already started, no snapshot exists and `total_current` falls back to the live total. Detect via `frozen: true` with `total_opening: null`.
+
+**`odds: null` is normal.** Books do not price every game — low-major CFB especially. Do not treat null as a failure; check `meta.odds` instead.
 
 ### `Meta`
 
@@ -172,7 +213,13 @@ Represents the weather for one hour or the point-in-time snapshot at kickoff.
   "built_at_utc": "2026-09-08T15:30:12Z",
   "next_refresh_at_utc": "2026-09-08T15:55:12Z",
   "etag": "sha256:9f2a...",
-  "api_version": "v1"
+  "api_version": "v1",
+  "odds": {
+    "ok": true,
+    "error": null,
+    "updated_utc": "2026-09-08T15:30:09Z",
+    "game_count": 61
+  }
 }
 ```
 
@@ -180,6 +227,12 @@ Represents the weather for one hour or the point-in-time snapshot at kickoff.
 - `next_refresh_at_utc`: When MSW's next warmer cycle is scheduled. Clients should time their next poll for shortly after this timestamp.
 - `etag`: SHA-256 hash of the response content. Send back on subsequent requests as `If-None-Match: <etag>`. MSW returns `304 Not Modified` with empty body if unchanged.
 - `api_version`: Always `"v1"` in this contract.
+- `odds`: Odds-pipeline health for this sport. Present on slate and game endpoints. This is how you tell "no book priced that game" (`Game.odds: null` while `ok: true`) from "MSW's odds fetch is broken" (`ok: false`) — only the second is a reason to fall back to your own odds source.
+  - `ok`: `true` fetch succeeded, `false` it failed, `null` this MSW instance has not attempted a fetch yet (freshly booted, serving a warm-boot slate). Treat `null` as unknown, not down.
+  - `error`: `null` on success, else a short diagnostic string (e.g. `"HTTPError: 429"`).
+  - `updated_utc`: When the last odds fetch attempt completed. Distinct from `built_at_utc`, though usually within seconds of it.
+  - `game_count`: How many games came back priced from that fetch, across the whole sport — not the count in this response.
+  - **NFL caveat:** an empty upstream payload reports `ok: true, game_count: 0`. NFL odds share a schedule fetch that swallows its own errors, so a real outage is indistinguishable from the legitimately empty offseason. Sustained `game_count: 0` during the season is the signal worth alerting on, not `ok: false`.
 
 ### `Writeup`
 
@@ -238,6 +291,8 @@ If MSW is up but its own upstream fetches failed (`weather_source: "all-failed"`
 - 2026-07-04 — Initial draft.
 - 2026-07-04 — Added `precip_type` enum to Forecast per OVERcast AI feedback. MSW derives the category once so consumers don't re-parse `short_forecast` text.
 - 2026-07-04 — Contract signed off by MSW + OVERcast. API implementation in progress.
+- 2026-09-01 — Added `Game.odds` (O/U total, opener, delta, book, kickoff freeze) and `Meta.odds` (pipeline health). Additive only — existing fields unchanged, so v1 consumers need no changes to keep working. Lets OVERcast drop its own Odds API calls.
+- 2026-09-01 — Added `Venue.field_bearing_degrees` for field-relative wind. All CFB home venues populated; 13 neutral-site venues still `null`. Additive only.
 
 
 {# EOF-CANARY 2026-07-04-api-contract-draft #}

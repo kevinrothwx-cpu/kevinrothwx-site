@@ -29,6 +29,7 @@ Caveats:
 from __future__ import annotations
 
 import os
+import threading
 import requests
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -89,9 +90,63 @@ NEUTRAL_SITE_OVERRIDES: dict[tuple[str, str, str], str] = {
 
 # ── Fetch + parse ──────────────────────────────────────────────────────────
 
+# Short-TTL cache of the RAW Odds API payload, shared with nfl/odds.py.
+#
+# The schedule and the totals come from the exact same request: this module
+# fetches /americanfootball_nfl/odds?markets=totals to learn kickoff times
+# and teams, and nfl/odds.py needs the bookmaker data in that SAME response
+# to read the O/U. Without this cache a single slate build hit each slug
+# twice — 4 credits per warmer cycle instead of 2, about 5,800 wasted
+# calls a month.
+#
+# 120s is comfortably longer than one slate build (both consumers run
+# seconds apart) and far shorter than the 25-minute warmer cycle, so the
+# next cycle always fetches fresh.
+_RAW_TTL_SECONDS = 120
+_raw_cache: dict[str, tuple[float, list]] = {}
+_raw_lock = threading.Lock()
+
+
 def _fetch_one_sport(sport_slug: str, api_key: str) -> list[dict]:
     """Hit The Odds API for one sport slug and return the raw game list.
+    Cached for _RAW_TTL_SECONDS so schedule + odds share one request.
     Empty list on any failure — never raises."""
+    import time as _time
+    with _raw_lock:
+        hit = _raw_cache.get(sport_slug)
+        if hit and (_time.time() - hit[0]) < _RAW_TTL_SECONDS:
+            return hit[1]
+
+    data = _fetch_one_sport_uncached(sport_slug, api_key)
+    # Cache empty results too. The preseason slug is legitimately empty for
+    # most of the year, and skipping the cache on empty meant it refetched
+    # on every consumer — 3 credits per cycle instead of 2. A 120s window is
+    # far shorter than the 25-minute warmer cycle, so pinning an empty
+    # result briefly costs nothing in freshness.
+    with _raw_lock:
+        _raw_cache[sport_slug] = (_time.time(), data)
+    return data
+
+
+def fetch_raw_nfl_payload(api_key: str) -> list[dict]:
+    """Raw Odds API games across both NFL slugs, de-duped by id.
+
+    Public entry point for nfl/odds.py so both consumers share the cached
+    fetch instead of each paying for its own."""
+    out, seen = [], set()
+    for slug in NFL_SPORT_SLUGS:
+        for g in _fetch_one_sport(slug, api_key):
+            gid = str(g.get("id") or "")
+            if gid and gid in seen:
+                continue
+            if gid:
+                seen.add(gid)
+            out.append(g)
+    return out
+
+
+def _fetch_one_sport_uncached(sport_slug: str, api_key: str) -> list[dict]:
+    """The actual HTTP call. Wrapped by _fetch_one_sport for caching."""
     try:
         resp = requests.get(
             f"{ODDS_API_BASE}/{sport_slug}/odds",

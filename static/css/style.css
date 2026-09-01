@@ -993,6 +993,31 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-page__sub { display: none; }
 .mlb-page__datenav a { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
 
+/* ── Cheat-card odds row (2026-08-31) ────────────────────────────────────
+   Promoted to global so NFL can use it. The CFB versions of these rules
+   live in ncaaf/slate.html's inline <style>, which only applies on that
+   page — NFL renders through worldcup/_macros.html and would otherwise
+   get unstyled text. Values here match the CFB ones so both cards read
+   identically. */
+.cheat-card__odds {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 0.4rem; padding-top: 0.5rem; margin-top: auto;
+  border-top: 1px solid var(--mist);
+  font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog);
+}
+.cheat-card__odds-total { font-weight: 700; color: var(--slate); font-size: 0.78rem; letter-spacing: 0.01em; white-space: nowrap; }
+.cheat-card__odds-open  { color: var(--fog); font-size: 0.7rem; white-space: nowrap; }
+.cheat-card__odds-delta { font-weight: 700; font-size: 0.75rem; white-space: nowrap; }
+.cheat-card__odds-delta--up   { color: #15803d; }
+.cheat-card__odds-delta--down { color: #b91c1c; }
+
+@media (max-width: 600px) {
+  .cheat-card__odds { padding-top: 0.35rem; font-size: 0.62rem; gap: 0.25rem; }
+  .cheat-card__odds-total { font-size: 0.68rem; }
+  .cheat-card__odds-open  { font-size: 0.6rem; }
+  .cheat-card__odds-delta { font-size: 0.66rem; }
+}
+
 /* ── Cheat-card rule row: keep every card's divider aligned (2026-08-31) ──
    Kevin hit this on a Tampa Bay dome game: the row holds the first-pitch
    time, an optional Dome/Roof badge, and an optional O/U. With all three

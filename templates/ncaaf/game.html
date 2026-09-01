@@ -163,6 +163,9 @@
 {% endblock %}
 
 {% block content %}
+{# CFB venue dicts use `roof`; the worldcup/NFL shape uses `roof_type`.
+   Read whichever is present so dome handling can't silently break. #}
+{% set _roof = game.venue.roof or game.venue.roof_type %}
 <article class="game-page">
   <p class="game-page__kicker">NCAAF Weather · {{ pretty_date }}</p>
   <h1 class="game-page__title">
@@ -174,15 +177,15 @@
   </h1>
   <p class="game-page__meta">
     {{ game.venue.name }}, {{ game.venue.city }} · Kickoff {{ game.kickoff_eastern_str }}
-    {% if game.venue.roof_type == "retractable" %} · Retractable roof{% endif %}
-    {% if game.venue.roof_type == "fixed_dome" %} · Domed venue{% endif %}
+    {% if _roof == "retractable" %} · Retractable roof{% endif %}
+    {% if _roof == "fixed_dome" %} · Domed venue{% endif %}
   </p>
 
   {# ── Summary panel — 2x2 grid of temp / rain / wind / stadium field.
        Mirrors the MLB/NFL detail-page pattern so all sports feel cohesive.
        Only rendered when we actually have a forecast; indoor and no-data
        cases fall back to the source-note further down. #}
-  {% if game.forecast and game.venue.roof_type != "fixed_dome" %}
+  {% if game.forecast and _roof != "fixed_dome" %}
     {% set f = game.forecast %}
     <div class="game-summary">
       <div class="game-summary__cell">
@@ -204,7 +207,7 @@
         <span class="game-summary__cell-label">Wind</span>
       </div>
     </div>
-  {% elif game.venue.roof_type == "fixed_dome" %}
+  {% elif _roof == "fixed_dome" %}
     <div class="game-summary">
       <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
         <span class="game-summary__cell-label">Indoor venue — weather has no impact.</span>

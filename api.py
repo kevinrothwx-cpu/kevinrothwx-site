@@ -309,6 +309,39 @@ def serialize_venue(venue: dict) -> dict:
         "capacity": cap,
         "nws_unsupported": bool(venue.get("nws_unsupported", False)),
         "country": venue.get("country") or "US",
+        # Compass bearing the field runs, endzone to endzone. 0 = N/S,
+        # 90 = E/W. Either endzone is valid, so 0 and 180 describe the same
+        # field. Combine with wind_direction_degrees for a field-relative
+        # wind: (wind_to - field_bearing + 90) % 360.
+        #
+        # null means UNKNOWN, not "no wind" — do not treat it as 0. All 134
+        # CFB home venues are covered (3 fixed domes are null because indoor
+        # wind is meaningless), but 13 neutral-site venues are genuinely
+        # unmeasured. Check roof_type to tell the two cases apart.
+        "field_bearing_degrees": venue.get("field_bearing_degrees"),
+    }
+
+
+def serialize_odds(odds: Optional[dict]) -> Optional[dict]:
+    """Translate the internal odds dict to the contract Odds block.
+
+    None when no book posted a total for this game — normal, not an error.
+    Check meta.odds.error to distinguish "unpriced" from "pipeline down".
+
+    `frozen` marks the kickoff snapshot: once a game starts, The Odds API
+    serves LIVE in-game totals, which are stale garbage between our 25-min
+    polls. We freeze the last pre-kickoff total and serve that instead, so
+    `current` stays a genuine closing line rather than drifting mid-game.
+    """
+    if not odds:
+        return None
+    return {
+        "total_current": odds.get("current"),
+        "total_opening": odds.get("opening"),
+        "delta": odds.get("delta"),
+        "book": odds.get("book_display"),
+        "book_key": odds.get("book_key") or None,
+        "frozen": bool(odds.get("frozen")),
     }
 
 
@@ -372,21 +405,58 @@ def serialize_game(game: dict, sport: str, frozen_lookup=None) -> dict:
         "is_frozen": is_frozen,
         "frozen_at_utc": frozen_at_utc,
         "writeup": serialize_writeup(game.get("writeup")),
+        "odds": serialize_odds(game.get("odds")),
     }
 
 
-def build_meta(built_at_utc, refresh_seconds: int = 25 * 60) -> dict:
+def build_odds_meta(sport: str) -> dict:
+    """Odds pipeline health for one sport.
+
+    Lets a consumer tell "no book posted this game" (game.odds is null but
+    ok=true) from "our odds fetch is failing" (ok=false + error), which is
+    the only case where falling back to their own odds source is correct.
+
+    ok=null means this process has not attempted a fetch yet — a freshly
+    booted instance serving a warm-boot slate. Treat as unknown, not down.
+
+    NFL caveat: an empty upstream payload reports ok=true, game_count=0.
+    The schedule fetch it shares swallows its own errors, so a real outage
+    is indistinguishable from the legitimately empty offseason. Sustained
+    game_count=0 during the season is the signal worth alerting on.
+    """
+    try:
+        if sport == "nfl":
+            from nfl.odds import get_last_odds_status
+        else:
+            from cfb.odds import get_last_odds_status
+        st = get_last_odds_status()
+    except Exception:
+        return {"ok": None, "error": None,
+                "updated_utc": None, "game_count": 0}
+    return {
+        "ok": st.get("ok"),
+        "error": st.get("error"),
+        "updated_utc": _iso_utc(st.get("fetched_utc")),
+        "game_count": st.get("game_count") or 0,
+    }
+
+
+def build_meta(built_at_utc, refresh_seconds: int = 25 * 60,
+               sport: Optional[str] = None) -> dict:
     """Assemble the Meta block. etag added by json_response_with_etag."""
     built = built_at_utc if isinstance(built_at_utc, datetime) else None
     if built and built.tzinfo is None:
         built = built.replace(tzinfo=timezone.utc)
     next_refresh = (built + timedelta(seconds=refresh_seconds)) if built else None
-    return {
+    meta = {
         "built_at_utc": _iso_utc(built),
         "next_refresh_at_utc": _iso_utc(next_refresh),
         "etag": None,  # filled by json_response_with_etag
         "api_version": "v1",
     }
+    if sport:
+        meta["odds"] = build_odds_meta(sport)
+    return meta
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────
@@ -412,7 +482,7 @@ def nfl_slate():
     built_at = (meta or {}).get("built_at_utc")
     payload = {
         "games": [serialize_game(g, "nfl", nfl_freeze.get) for g in (games or [])],
-        "meta": build_meta(built_at),
+        "meta": build_meta(built_at, sport="nfl"),
     }
     return json_response_with_etag(payload)
 
@@ -432,7 +502,7 @@ def nfl_game(event_id):
         }), 404
     payload = {
         "game": serialize_game(match, "nfl", nfl_freeze.get),
-        "meta": build_meta((meta or {}).get("built_at_utc")),
+        "meta": build_meta((meta or {}).get("built_at_utc"), sport="nfl"),
     }
     return json_response_with_etag(payload)
 
@@ -447,7 +517,7 @@ def cfb_slate():
     built_at = (meta or {}).get("built_at_utc")
     payload = {
         "games": [serialize_game(g, "cfb", cfb_freeze.get) for g in (games or [])],
-        "meta": build_meta(built_at),
+        "meta": build_meta(built_at, sport="cfb"),
     }
     return json_response_with_etag(payload)
 
@@ -467,7 +537,7 @@ def cfb_game(event_id):
         }), 404
     payload = {
         "game": serialize_game(match, "cfb", cfb_freeze.get),
-        "meta": build_meta((meta or {}).get("built_at_utc")),
+        "meta": build_meta((meta or {}).get("built_at_utc"), sport="cfb"),
     }
     return json_response_with_etag(payload)
 

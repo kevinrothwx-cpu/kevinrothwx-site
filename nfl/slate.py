@@ -18,6 +18,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from .schedule import get_nfl_week_games
+from . import odds as nfl_odds_client
+from . import odds_storage as nfl_odds_storage
 
 from cfb.nws_client import fetch_cfb_hourly
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
@@ -60,15 +62,100 @@ def build_nfl_slate(start_date: Optional[datetime] = None,
 
     venue_weather: dict[tuple[float, float], tuple[list[dict], str, Optional[str]]] = {}
 
+    # Fetch odds ONCE per build (2 API credits — one per NFL slug). Empty
+    # list on any failure; the slate still builds, just without totals.
+    odds_list = nfl_odds_client.fetch_nfl_totals()
+
+    now_utc = datetime.now(timezone.utc)
     for g in games:
         _attach_weather_to_game(g, venue_weather)
+        g["odds"] = _build_odds_for_game(g, odds_list, now_utc)
 
+    odds_ct = sum(1 for g in games if g.get("odds"))
     print(
         f"[nfl.slate] built slate: {len(games)} games, "
-        f"{len(venue_weather)} unique outdoor venues fetched",
+        f"{len(venue_weather)} unique outdoor venues fetched, "
+        f"{odds_ct} odds attached",
         flush=True,
     )
     return games
+
+
+def _build_odds_for_game(game: dict, odds_list: list[dict],
+                         now_utc: datetime) -> Optional[dict]:
+    """Match a game to its odds entry and return the template-shaped dict.
+
+    Mirrors cfb/slate.py._build_odds_for_game, including the kickoff
+    freeze: once a game starts, The Odds API returns LIVE in-game totals,
+    and since we only poll every 25 minutes that number is stale garbage
+    between cycles. So we snapshot the last pre-kickoff total and serve
+    that for the rest of the game instead.
+
+    Returns None when no odds match — books don't post every game.
+    """
+    if not odds_list:
+        return None
+    event_id = game.get("event_id") or game.get("id")
+    away = (game.get("away") or {}).get("name") or ""
+    home = (game.get("home") or {}).get("name") or ""
+    kickoff_utc = game.get("kickoff_utc")
+    if not (event_id and away and home and kickoff_utc):
+        return None
+
+    match = nfl_odds_client.match_odds_to_game(odds_list, away, home, kickoff_utc)
+    if not match:
+        return None
+
+    live_total   = match["total"]
+    book_display = match["book_display"]
+    game_started = kickoff_utc <= now_utc
+
+    if not game_started:
+        # Opening is immutable — first total we ever saw for this game.
+        nfl_odds_storage.record_opening_if_new(event_id, live_total, book_display)
+        # Kickoff line is last-write-wins; the final pre-kickoff write is
+        # what we freeze and display once the game is underway.
+        nfl_odds_storage.record_kickoff_line(event_id, live_total, book_display)
+
+    opening_rec   = nfl_odds_storage.get_opening(event_id)
+    opening_total = opening_rec["total"] if opening_rec else None
+
+    if game_started:
+        frozen = nfl_odds_storage.get_kickoff_line(event_id)
+        if frozen is not None:
+            current_total = frozen["total"]
+            if frozen.get("book_display"):
+                book_display = frozen["book_display"]
+        else:
+            # Game started before we ever tracked it — no snapshot exists.
+            # Live total is imperfect but better than showing nothing.
+            current_total = live_total
+    else:
+        current_total = live_total
+
+    if opening_total is not None:
+        delta = round(current_total - opening_total, 2)
+    else:
+        delta = None
+
+    if delta is None:
+        delta_str = None
+    elif delta > 0:
+        delta_str = f"+{delta}"
+    elif delta < 0:
+        delta_str = f"{delta}"      # already carries the minus sign
+    else:
+        delta_str = "0"
+
+    return {
+        "current":      current_total,
+        "opening":      opening_total,
+        "delta":        delta,
+        "delta_str":    delta_str,
+        "book_display": book_display,
+        "book_key":     match.get("book_key", ""),
+        "frozen":       game_started,
+    }
 
 
 def _is_game_stale(game: dict) -> bool:
