@@ -39,9 +39,12 @@ Serialization:
 
 from __future__ import annotations
 
+from persistence import load_json as _load_json, save_json as _save_json
+
 import os
 import pickle
 import threading
+import threading as _threading
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
@@ -261,7 +264,7 @@ def warmer_loop() -> None:
             # shows dates that actually matter (today + tomorrow).
             _prune_old_slates()
             for d in (today, tomorrow):
-                _rebuild(d)
+                _rebuild_blocking(d)
                 with _cache_lock:
                     n_games = len(_slate_cache[d]["slate"])
                     err     = _slate_cache[d].get("build_err")
@@ -288,3 +291,113 @@ def start_warmer() -> None:
 def stop_warmer() -> None:
     """Stop the warmer (used in tests or graceful shutdown)."""
     _warmer_stop.set()
+
+
+# ── Build lock (2026-08-31) ────────────────────────────────────────────
+# Without this, a cold cache under concurrent load makes EVERY request
+# thread start its own slate rebuild. Gunicorn runs -w 1 --threads 4, so
+# four simultaneous visitors consume all four threads for the length of a
+# full build (tens of seconds), and /health can't get a thread inside
+# Render's 5-second timeout. That fired a "server failure detected" alert
+# on 2026-08-31 right after the disk detach, because removing the MLB
+# pickle cache made MLB rebuild from the API on every boot.
+#
+# Request threads: non-blocking acquire. If a build is already running,
+# skip and serve whatever is cached (possibly empty) rather than piling
+# on. The in-flight build is refreshing the same data anyway.
+#
+# Warmer thread: blocking acquire via _rebuild_blocking, so a scheduled
+# refresh waits its turn instead of being silently dropped.
+_build_lock = _threading.Lock()
+_unlocked_rebuild = _rebuild
+
+
+def _rebuild(*args, **kwargs):
+    """Request-path rebuild. Skips if another build is already running."""
+    if not _build_lock.acquire(blocking=False):
+        print(f"[{__name__}] rebuild already in progress — serving current cache",
+              flush=True)
+        return
+    try:
+        return _unlocked_rebuild(*args, **kwargs)
+    finally:
+        _build_lock.release()
+
+
+def _rebuild_blocking(*args, **kwargs):
+    """Warmer-path rebuild. Waits for any in-flight build to finish."""
+    with _build_lock:
+        return _unlocked_rebuild(*args, **kwargs)
+
+
+# ── Warm boot (2026-08-31) ─────────────────────────────────────────────
+# MLB previously survived restarts via pickle files on the Render disk.
+# That disk is gone (it blocked zero-downtime deploys) and
+# MLB_DISK_CACHE_DISABLED=1 now short-circuits those writes, so every
+# restart forced a full rebuild from the MLB API plus per-park weather —
+# the slow first load, and the thread starvation that tripped Render's
+# health check on 2026-08-31.
+#
+# Same fix as CFB/NFL, but MLB's cache is keyed by date_str, so we
+# snapshot the whole {date: entry} map rather than a single slate.
+_WARM_KEY = "mlb_slate_warm.json"
+
+
+def _save_warm_snapshot() -> None:
+    """Mirror every cached date to Postgres. Best-effort; never raises."""
+    try:
+        with _cache_lock:
+            snap = {d: {"slate": e.get("slate"),
+                        "built_at_utc": e.get("built_at_utc")}
+                    for d, e in _slate_cache.items() if e.get("slate")}
+        if snap:
+            _save_json(_WARM_KEY, snap)
+    except Exception as e:
+        print(f"[mlb.cache] warm snapshot save failed: {type(e).__name__}: {e}",
+              flush=True)
+
+
+def _load_warm_snapshot() -> None:
+    """Restore cached dates from the last snapshot, for dates not already
+    in memory. Never overwrites fresher in-memory data."""
+    try:
+        raw = _load_json(_WARM_KEY, default=None)
+        if not raw:
+            return
+        restored = 0
+        with _cache_lock:
+            for d, e in raw.items():
+                if d in _slate_cache or not e.get("slate"):
+                    continue
+                _slate_cache[d] = {
+                    "slate":        e["slate"],
+                    "built_at_utc": e.get("built_at_utc"),
+                    "build_err":    None,
+                }
+                restored += 1
+        if restored:
+            print(f"[mlb.cache] warm boot: restored {restored} date(s) from snapshot",
+                  flush=True)
+    except Exception as e:
+        print(f"[mlb.cache] warm boot skipped: {type(e).__name__}: {e}", flush=True)
+
+
+_prewarm_rebuild = _rebuild
+
+
+def _rebuild(*args, **kwargs):
+    r = _prewarm_rebuild(*args, **kwargs)
+    _save_warm_snapshot()
+    return r
+
+
+_prewarm_rebuild_blocking = _rebuild_blocking
+
+
+def _rebuild_blocking(*args, **kwargs):
+    r = _prewarm_rebuild_blocking(*args, **kwargs)
+    _save_warm_snapshot()
+    return r
+
+
+_load_warm_snapshot()

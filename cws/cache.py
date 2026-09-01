@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading as _threading
+
 import threading, time, traceback
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -63,7 +65,7 @@ def warmer_loop():
                 today = datetime.now(EASTERN_TZ)
                 for offset in (0, 1, 2):
                     d = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
-                    _rebuild(d)
+                    _rebuild_blocking(d)
                     with _cache_lock:
                         n = len(_cws_cache[d]["slate"])
                         err = _cws_cache[d].get("build_err")
@@ -88,3 +90,40 @@ def start_warmer():
 
 def stop_warmer():
     _warmer_stop.set()
+
+
+# ── Build lock (2026-08-31) ────────────────────────────────────────────
+# Without this, a cold cache under concurrent load makes EVERY request
+# thread start its own slate rebuild. Gunicorn runs -w 1 --threads 4, so
+# four simultaneous visitors consume all four threads for the length of a
+# full build (tens of seconds), and /health can't get a thread inside
+# Render's 5-second timeout. That fired a "server failure detected" alert
+# on 2026-08-31 right after the disk detach, because removing the MLB
+# pickle cache made MLB rebuild from the API on every boot.
+#
+# Request threads: non-blocking acquire. If a build is already running,
+# skip and serve whatever is cached (possibly empty) rather than piling
+# on. The in-flight build is refreshing the same data anyway.
+#
+# Warmer thread: blocking acquire via _rebuild_blocking, so a scheduled
+# refresh waits its turn instead of being silently dropped.
+_build_lock = _threading.Lock()
+_unlocked_rebuild = _rebuild
+
+
+def _rebuild(*args, **kwargs):
+    """Request-path rebuild. Skips if another build is already running."""
+    if not _build_lock.acquire(blocking=False):
+        print(f"[{__name__}] rebuild already in progress — serving current cache",
+              flush=True)
+        return
+    try:
+        return _unlocked_rebuild(*args, **kwargs)
+    finally:
+        _build_lock.release()
+
+
+def _rebuild_blocking(*args, **kwargs):
+    """Warmer-path rebuild. Waits for any in-flight build to finish."""
+    with _build_lock:
+        return _unlocked_rebuild(*args, **kwargs)

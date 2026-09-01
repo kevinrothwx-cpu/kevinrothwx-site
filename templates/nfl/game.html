@@ -13,6 +13,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
+  "image": "{{ site_url }}/static/img/og-default.jpg",
   "name": "{{ game.away.name }} at {{ game.home.name }}",
   "description": "Weather forecast for the {{ game.away.name }} at {{ game.home.name }} NFL game at {{ game.venue }} in {{ game.venue_meta.city if game.venue_meta else '' }} on {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}.",
   "startDate": "{{ game.kickoff_utc.isoformat() }}",
@@ -49,6 +50,7 @@
   },
   "offers": {
     "@type": "Offer",
+    "validFrom": "{{ game.kickoff_utc.isoformat() }}",
     "url": "{{ site_url }}/nfl/{{ date_str }}/{{ game.slug }}",
     "price": "0", "priceCurrency": "USD",
     "availability": "https://schema.org/InStock",

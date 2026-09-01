@@ -993,6 +993,35 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-page__sub { display: none; }
 .mlb-page__datenav a { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
 
+/* ── Cheat-card rule row: keep every card's divider aligned (2026-08-31) ──
+   Kevin hit this on a Tampa Bay dome game: the row holds the first-pitch
+   time, an optional Dome/Roof badge, and an optional O/U. With all three
+   present the O/U wrapped to a second line, which pushed that card's
+   divider down and knocked it out of alignment with every other card in
+   the grid.
+
+   Nothing here was allowed to wrap except the time, so:
+   - nowrap on the badge and total (the two that could break)
+   - flex-shrink: 0 on the right group so it isn't squeezed into wrapping
+   - min-height on the row so a card WITH a badge matches one without,
+     which keeps the dividers on a single line across the whole grid
+   - the total's `margin-left: auto` is neutralized inside the right
+     group; it was written for the old flat row and now fights the gap */
+.cheat-card__badge,
+.cheat-card__total { white-space: nowrap; }
+.cheat-card__rule { min-height: 1.5rem; flex-wrap: nowrap; }
+.cheat-card__rule-right { flex-shrink: 0; margin-left: auto; }
+.cheat-card__rule-right .cheat-card__total { margin-left: 0; }
+
+@media (max-width: 600px) {
+  /* Two cards per row on phones leaves very little width, so shed a few
+     tenths off each piece rather than letting anything wrap. */
+  .cheat-card__rule { min-height: 1.35rem; }
+  .cheat-card__badge { font-size: 0.54rem; padding: 0.06rem 0.34rem; letter-spacing: 0.06em; }
+  .cheat-card__total { font-size: 0.64rem; }
+  .cheat-card__rule-right { gap: 0.28rem; }
+}
+
 /* Empty-state / no-data message (2026-08-30).
    Several slate templates were reusing .mlb-page__sub for their "no games
    this week" copy. That class is display:none site-wide (line above), so

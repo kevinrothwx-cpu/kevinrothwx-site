@@ -107,9 +107,37 @@ def _lock_for(filename: str) -> threading.Lock:
 # ── JSON helpers ────────────────────────────────────────────────────────
 
 def _json_default(obj):
+    """Tag datetimes so they can be revived as datetimes on load.
+
+    JSON has no datetime type. We used to write a bare ISO string, which
+    meant every reload turned datetimes into strings — that's what broke
+    the admin pages (templates calling .strftime() on a str). Tagging
+    them as {"__dt__": "..."} lets _revive() restore real datetime
+    objects, so the round-trip is lossless.
+
+    Backward compatible: previously-stored bare ISO strings are left
+    alone by _revive, and callers still run them through parse_dt().
+    """
     if isinstance(obj, datetime):
-        return obj.isoformat()
+        return {"__dt__": obj.isoformat()}
     raise TypeError(f"Cannot serialize {type(obj).__name__}")
+
+
+def _revive(obj):
+    """Walk a decoded JSON structure and turn {"__dt__": iso} back into
+    datetime objects. Anything else passes through untouched."""
+    if isinstance(obj, dict):
+        if len(obj) == 1 and "__dt__" in obj:
+            v = obj["__dt__"]
+            if isinstance(v, str):
+                try:
+                    return datetime.fromisoformat(v)
+                except Exception:
+                    return None
+        return {k: _revive(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_revive(v) for v in obj]
+    return obj
 
 
 def _sanitize(obj):
@@ -206,7 +234,7 @@ def _pg_load(key: str):
         with conn.cursor() as cur:
             cur.execute("SELECT value FROM kv WHERE key = %s;", (key,))
             row = cur.fetchone()
-    return row[0] if row else None
+    return _revive(row[0]) if row else None
 
 
 def _pg_save(key: str, data: Any) -> None:
@@ -236,7 +264,7 @@ def _disk_load(filename: str, default: Any) -> Any:
     try:
         with _lock_for(filename):
             with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                return _revive(json.load(f))
     except Exception as e:
         print(f"[persistence] failed to load {filename} from disk: {e}", flush=True)
         return default if default is not None else {}
@@ -250,7 +278,11 @@ def _disk_save(filename: str, data: Any) -> None:
     try:
         with _lock_for(filename):
             with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, default=_json_default)
+                # Sanitize here too, not just on the Postgres path, so both
+                # backends produce identical content. Otherwise disk keeps a
+                # raw NaN literal while Postgres stores null, and dual-mode
+                # parity checks report a false mismatch.
+                json.dump(_sanitize(data), f, indent=2, default=_json_default)
             os.replace(tmp, path)
     except Exception as e:
         print(f"[persistence] failed to save {filename} to disk: {e}", flush=True)
@@ -319,10 +351,19 @@ def save_json(filename: str, data: Any) -> None:
         _disk_save(filename, data)
 
 
-def parse_dt(s: Optional[str]) -> Optional[datetime]:
-    """Convert an ISO 8601 string back to a datetime. Used by callers that
-    need datetime objects for comparisons (forecast freeze cleanup, etc.).
+def parse_dt(s) -> Optional[datetime]:
+    """Convert an ISO 8601 string to a datetime.
+
+    IDEMPOTENT: passing a datetime returns it unchanged. There are ~29
+    call sites doing `v["x"] = parse_dt(v["x"])` on load, and now that
+    load_json revives tagged datetimes (see _revive below) those values
+    can already be datetimes. Without this guard every one of them would
+    hit the except branch and silently return None — quietly destroying
+    freeze timestamps and odds openings.
+
     Returns None if input is None, empty, or unparseable."""
+    if isinstance(s, datetime):
+        return s
     if not s:
         return None
     try:

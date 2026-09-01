@@ -60,13 +60,27 @@
       {% endfor %}
     </div>
   {% else %}
+    {# meta is None only when the cache has never been built — a fresh
+       instance mid-first-build. "No games scheduled" would be a confident
+       lie there, so show a loading state and auto-refresh instead. #}
+    {% set _warming = (meta is none) or (meta and meta.build_err) %}
     <section style="max-width:640px;margin:4rem auto;text-align:center;padding:2rem 1.5rem">
-      <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:600;margin:0 0 0.6rem;color:var(--ink)">No NFL games scheduled this week</h2>
-      <p style="color:var(--ash);font-size:1rem;line-height:1.55;margin:0">
-        Stadium-specific hourly weather forecasts appear here when kickoff is within eight days.
-        Preseason runs through August, regular season begins in September.
-      </p>
+      {% if _warming %}
+        <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:600;margin:0 0 0.6rem;color:var(--ink)">Forecasts are loading</h2>
+        <p style="color:var(--ash);font-size:1rem;line-height:1.55;margin:0">
+          Building this week's slate. This page will refresh automatically in a moment.
+        </p>
+      {% else %}
+        <h2 style="font-family:var(--font-serif);font-size:1.4rem;font-weight:600;margin:0 0 0.6rem;color:var(--ink)">No NFL games scheduled this week</h2>
+        <p style="color:var(--ash);font-size:1rem;line-height:1.55;margin:0">
+          Stadium-specific hourly weather forecasts appear here when kickoff is within eight days.
+          Preseason runs through August, regular season begins in September.
+        </p>
+      {% endif %}
     </section>
+    {% if _warming %}
+      <script>setTimeout(function () { location.reload(); }, 12000);</script>
+    {% endif %}
   {% endif %}
 
   {# ── Section 2: writeups + OVERcast tease, OR CTAs when no writeups ─── #}

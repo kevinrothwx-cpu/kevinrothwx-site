@@ -17,6 +17,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
+  "image": "{{ site_url }}/static/img/og-default.jpg",
   "name": "{{ match.away.name }} vs {{ match.home.name }}",
   "description": "Weather forecast for the {{ match.away.name }} vs {{ match.home.name }} 2026 FIFA World Cup match at {{ match.venue }}{% if match.venue_meta %} in {{ match.venue_meta.city }}{% endif %}. Kickoff {{ match.kickoff_eastern_str }}. Includes hourly forecast around match time.",
   "startDate": "{{ match.kickoff_utc_dt.isoformat() }}",
@@ -52,6 +53,7 @@
   },
   "offers": {
     "@type": "Offer",
+    "validFrom": "{{ match.kickoff_utc_dt.isoformat() }}",
     "url": "{{ site_url }}/worldcup/{{ date_str }}/{{ match.slug }}",
     "price": "0",
     "priceCurrency": "USD",

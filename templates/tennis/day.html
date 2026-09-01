@@ -11,6 +11,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
+  "image": "{{ site_url }}/static/img/og-default.jpg",
   "name": "{{ slam.display_name }} — {{ day.date_label }}",
   "description": "Day {{ day.day_num }} of {{ slam.display_name }} at {{ slam.venue.name }} in {{ slam.venue.city }}. {% if summary %}{{ summary.paragraph }}{% else %}Daily weather forecast for the tournament.{% endif %}",
   "startDate": "{{ day.date_local.isoformat() }}",

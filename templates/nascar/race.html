@@ -17,6 +17,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
+  "image": "{{ site_url }}/static/img/og-default.jpg",
   "name": "{{ race.name }}",
   "description": "Weather forecast for the {{ race.name }} NASCAR Cup Series race at {{ race.track }}{% if race.track_meta %} in {{ race.track_meta.city }}{% endif %}. Green flag {{ race.green_flag_eastern_str }}. Hourly forecast around race time by sports meteorologist Kevin Roth.",
   "sport": "Auto racing",

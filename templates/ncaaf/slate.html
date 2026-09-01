@@ -270,11 +270,22 @@
       </div>
     {% endif %}
   {% else %}
+    {# meta is None only when the cache has never been built — i.e. a
+       brand-new instance that hasn't finished its first slate build.
+       Saying "no games scheduled" there is a confident lie that reads as
+       "the season is over", so distinguish it and auto-refresh. #}
     <section class="container-tight" style="text-align: center; padding: 3rem 1.5rem;">
       <p style="font-family: var(--font-serif); font-size: 1.15rem; line-height: 1.55; color: var(--slate);">
-        No FBS college football games scheduled in this window.
+        {% if meta is none or (meta and meta.build_err) %}
+          Forecasts are loading. This page will refresh automatically.
+        {% else %}
+          No FBS college football games scheduled in this window.
+        {% endif %}
       </p>
     </section>
+    {% if meta is none or (meta and meta.build_err) %}
+      <script>setTimeout(function () { location.reload(); }, 12000);</script>
+    {% endif %}
   {% endif %}
 
 </div>

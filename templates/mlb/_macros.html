@@ -120,14 +120,25 @@
   {% else %}
     {% set href = "#game-" ~ game.slug %}
   {% endif %}
+  {# Fixed-dome parks have no weather-relevant outdoor conditions, so the
+     card shows "Indoor game" rather than a temp/wind/rain readout that
+     implies the game is exposed. Matches the CFB and MLS treatment.
+     Retractable roofs still show real weather — the roof may be open, and
+     the detail page has a Closed/Open toggle. #}
+  {% set is_indoor = (roof == "fixed_dome") %}
   <a href="{{ href }}" class="cheat-card" data-game-pk="{{ game.game_pk }}">
     <div class="cheat-card__rule">
       <span class="cheat-card__time">{{ game.first_pitch_eastern_str }}</span>
-      {% if roof == "retractable" %}<span class="cheat-card__badge">Roof</span>{% endif %}
-      {% if roof == "fixed_dome" %}<span class="cheat-card__badge">Dome</span>{% endif %}
-      {% if game.odds and game.odds.current is not none %}
-        <span class="cheat-card__total">O/U {{ game.odds.current }}</span>
-      {% endif %}
+      {# Badge + O/U were previously loose in the flex row alongside the
+         time, so a dome game WITH a total crowded three items into the
+         row and broke the layout. Group them right-aligned like CFB. #}
+      <span class="cheat-card__rule-right">
+        {% if roof == "retractable" %}<span class="cheat-card__badge">Roof</span>{% endif %}
+        {% if is_indoor %}<span class="cheat-card__badge">Dome</span>{% endif %}
+        {% if game.odds and game.odds.current is not none %}
+          <span class="cheat-card__total">O/U {{ game.odds.current }}</span>
+        {% endif %}
+      </span>
     </div>
     <div class="cheat-card__teams">
       <div class="cheat-card__team">
@@ -140,7 +151,9 @@
         {{ mlb_logo(game.home_team_id, game.home_name) }}
       </div>
     </div>
-    {% if f %}
+    {% if is_indoor %}
+      <div class="cheat-card__wx cheat-card__wx--missing">Indoor game</div>
+    {% elif f %}
       <div class="cheat-card__wx">
         <span class="cheat-card__temp">{{ f.temp }}°</span>
         <div class="cheat-card__wxmid">

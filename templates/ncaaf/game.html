@@ -16,6 +16,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SportsEvent",
+  "image": "{{ site_url }}/static/img/og-default.jpg",
   "name": "{{ game.away.name }} at {{ game.home.name }}",
   "description": "Weather forecast for the {{ game.away.name }} at {{ game.home.name }} college football game at {{ game.venue.name }} in {{ game.venue.city }} on {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}. Hourly forecast and stadium-specific context by sports meteorologist Kevin Roth.",
   "startDate": "{{ game.kickoff_utc.isoformat() }}",
@@ -52,6 +53,7 @@
   },
   "offers": {
     "@type": "Offer",
+    "validFrom": "{{ game.kickoff_utc.isoformat() }}",
     "url": "{{ site_url }}/ncaaf/{{ date_str }}/{{ game.slug }}",
     "price": "0",
     "priceCurrency": "USD",
