@@ -252,7 +252,18 @@ def build_stadium_slug_map() -> dict:
     return out
 
 
-STADIUM_SLUG_MAP = build_stadium_slug_map()
+# Built once at import. GUARDED on purpose: app.py imports this module at
+# module scope, so an exception here does not degrade one feature, it stops
+# the whole app from importing and the deploy never passes a health check.
+# Degrading to an empty map costs the 134 stadium pages (they 404) and
+# leaves everything else on the site working, which is recoverable. Losing
+# the site is not.
+try:
+    STADIUM_SLUG_MAP = build_stadium_slug_map()
+except Exception as _e:  # pragma: no cover
+    print(f"[cfb.stadium_facts] slug map build FAILED, stadium pages "
+          f"disabled: {type(_e).__name__}: {_e}", flush=True)
+    STADIUM_SLUG_MAP = {}
 
 
 # ── Next home game at a venue ─────────────────────────────────────────────

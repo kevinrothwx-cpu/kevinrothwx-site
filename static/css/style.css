@@ -1310,8 +1310,8 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .oc-tease:focus-visible { outline: 2px solid var(--storm, #1e3a8a); outline-offset: 2px; }
 
 .oc-tease__shot {
-  flex: 0 0 44%;
-  max-width: 440px;
+  flex: 0 0 50%;
+  max-width: 500px;
   display: block;
   background: #12203a;   /* matches the screenshot header so any
                             letterboxing reads as intentional */
@@ -1325,13 +1325,13 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 1rem 1.25rem;
+  padding: 1.15rem 1.45rem;
   min-width: 0;
 }
 .oc-tease__badge {
   align-self: flex-start;
   font-family: var(--font-sans);
-  font-size: .64rem;
+  font-size: .74rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .07em;
@@ -1344,7 +1344,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 }
 .oc-tease__sub {
   font-family: var(--font-serif);
-  font-size: 1.02rem;
+  font-size: 1.17rem;
   line-height: 1.4;
   color: var(--ink, #111827);
   font-weight: 500;
@@ -1352,7 +1352,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .oc-tease__arrow { margin-left: .35em; color: var(--storm, #1e3a8a); white-space: nowrap; }
 .oc-tease__note {
   font-family: var(--font-sans);
-  font-size: .7rem;
+  font-size: .8rem;
   color: var(--fog, #6b7280);
   margin-top: .5rem;
 }
@@ -1362,6 +1362,6 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 @media (max-width: 600px) {
   .oc-tease { flex-direction: column; }
   .oc-tease__shot { flex: none; max-width: none; width: 100%; }
-  .oc-tease__body { padding: .85rem 1rem 1rem; }
-  .oc-tease__sub { font-size: .95rem; }
+  .oc-tease__body { padding: .98rem 1.15rem 1.15rem; }
+  .oc-tease__sub { font-size: 1.09rem; }
 }

@@ -25,8 +25,10 @@
    the majority of visitors. Hover only lifts the card.
 
    Art direction, not just resizing: the desktop screenshots are wide and
-   unreadable when squeezed into a phone column, so mobile gets Kevin's
-   square mobile capture instead. That is what <picture> + media is for.
+   unreadable squeezed into a phone column, so MLB serves a near-square
+   mobile capture below 600px via <picture> + media. NFL and CFB reuse
+   their wide shots for now; drop in portrait captures and they improve
+   with no template change, just new files at the same names.
 
    The "Example game" line is required, not decoration. The screenshot
    shows real numbers from a real past game, and a reader could easily
@@ -39,7 +41,7 @@
   {% set _wide2x = "/static/img/oc-cfb-wide@2x.jpg" %}
   {% set _narrow = "/static/img/oc-cfb-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-cfb-wide@2x.jpg" %}
-  {% set _w = 420 %}{% set _h = 178 %}
+  {% set _w = 483 %}{% set _h = 205 %}
   {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
   {% set _alt = "OVERcast college football view showing an expanded game with the forecast, how the wind sits relative to the field, weather impact on scoring, passing yards, field goals and fumbles, and how similar games finished against their closing total." %}
 {% elif _sport == "nfl" %}
@@ -47,7 +49,7 @@
   {% set _wide2x = "/static/img/oc-nfl-wide@2x.jpg" %}
   {% set _narrow = "/static/img/oc-nfl-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-nfl-wide@2x.jpg" %}
-  {% set _w = 420 %}{% set _h = 191 %}
+  {% set _w = 483 %}{% set _h = 220 %}
   {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
   {% set _alt = "OVERcast NFL game view showing the forecast, weather impact on total points, pass yards and field goals, and fantasy impact by position." %}
 {% else %}
@@ -55,7 +57,7 @@
   {% set _wide2x = "/static/img/oc-mlb-wide@2x.jpg" %}
   {% set _narrow = "/static/img/oc-mlb-square.jpg" %}
   {% set _narrow2x = "/static/img/oc-mlb-square@2x.jpg" %}
-  {% set _w = 420 %}{% set _h = 150 %}
+  {% set _w = 483 %}{% set _h = 172 %}
   {% set _default_sub = "See how weather impacts runs, home runs and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
   {% set _alt = "OVERcast game view showing the forecast, wind direction relative to the field, and weather impact on runs, home runs and strikeouts." %}
 {% endif %}
