@@ -55,6 +55,7 @@ from ipl.content import (
     TEAM_CONTENT_IPL, TEAM_BY_SLUG_IPL,
     GROUND_CONTENT_IPL, GROUND_BY_SLUG_IPL,
 )
+from landing_index import landing_index_for
 
 from worldcup.cache import get_matchday, start_warmer as start_wc_warmer
 from worldcup.schedule import match_slug as wc_match_slug
@@ -451,6 +452,10 @@ def inject_globals():
         "ga_measurement_id": ga_id,
         "is_wednesday_eastern": is_wednesday_eastern,
         "pga_has_event":    pga_has_event,
+        # Internal-link index for the evergreen landing pages. The index is
+        # built ONCE at import in landing_index.py; this just hands the
+        # lookup function to templates, so the context processor stays free.
+        "landing_index_for": landing_index_for,
         **brand,
     }
 
@@ -2465,12 +2470,15 @@ MYSPORTSWEATHER_STATIC_URLS = [
 ]
 
 
-@app.route("/sitemap.xml")
-def sitemap():
-    """Sitemap is per-hostname. kevinrothwx.com lists only personal pages;
+def _build_sitemap_buckets():
+    """Return (base_url, evergreen_urls, game_urls) for the current host.
+
+    Sitemap is per-hostname. kevinrothwx.com lists only personal pages;
     mysportsweather.com lists sport pages plus the dynamic per-date hubs.
     The same Flask service emits a different sitemap for each domain so
     Google doesn't see duplicate content across the two.
+
+    Split into two buckets 2026-09-02 — see the comment at game_urls below.
     """
     brand = get_site_brand(request.host)
     base_url = brand["site_url"]
@@ -2479,6 +2487,14 @@ def sitemap():
         static_urls = list(MYSPORTSWEATHER_STATIC_URLS)
         # Dynamic MLB date-specific URLs (today + tomorrow)
         dynamic_urls = []
+        # Split buckets (2026-09-02). Evergreen landing pages and
+        # ephemeral per-game URLs go into SEPARATE child sitemaps.
+        # Mixing them meant ~90 URLs churned daily inside the same file
+        # as 380 stable pages, with a large block reporting
+        # lastmod=today every day. Google is documented to discount
+        # lastmod it judges unreliable, and this sitemap went unread
+        # for 10 weeks while 300 new pages sat undiscovered.
+        game_urls = []
         # Evergreen MLB stadium landing pages (one per current park). These
         # are essentially static content, so use a fixed lastmod tied to
         # the batch publication date.
@@ -2553,9 +2569,9 @@ def sitemap():
             slate, _ = get_slate(d, allow_build=False)
             if not slate:
                 continue
-            dynamic_urls.append((f"/mlb/{d}", "0.85", "hourly"))
+            game_urls.append((f"/mlb/{d}", "0.85", "hourly"))
             for g in slate:
-                dynamic_urls.append((f"/mlb/{d}/{g['slug']}", "0.7", "hourly"))
+                game_urls.append((f"/mlb/{d}/{g['slug']}", "0.7", "hourly"))
         # NFL per-game URLs across the 8-day cache window.
         try:
             nfl_games, _ = get_nfl_slate(allow_build=False)
@@ -2564,7 +2580,7 @@ def sitemap():
                     d_iso = g.get("kickoff_date_eastern")
                     slug = g.get("slug")
                     if d_iso and slug:
-                        dynamic_urls.append((f"/nfl/{d_iso}/{slug}", "0.75", "hourly"))
+                        game_urls.append((f"/nfl/{d_iso}/{slug}", "0.75", "hourly"))
         except Exception as e:
             print(f"[sitemap] NFL dynamic URLs failed: {e}", flush=True)
 
@@ -2583,7 +2599,7 @@ def sitemap():
                     d_iso = g.get("kickoff_date_eastern")
                     slug = g.get("slug")
                     if d_iso and slug:
-                        dynamic_urls.append((f"/ncaaf/{d_iso}/{slug}", "0.75", "hourly"))
+                        game_urls.append((f"/ncaaf/{d_iso}/{slug}", "0.75", "hourly"))
         except Exception as e:
             print(f"[sitemap] NCAAF dynamic URLs failed: {e}", flush=True)
 
@@ -2597,7 +2613,7 @@ def sitemap():
                     d_iso = m.get("date_local")
                     slug = m.get("slug")
                     if d_iso and slug:
-                        dynamic_urls.append((f"/prem/{d_iso}/{slug}", "0.7", "hourly"))
+                        game_urls.append((f"/prem/{d_iso}/{slug}", "0.7", "hourly"))
         except Exception as e:
             print(f"[sitemap] Premier League dynamic URLs failed: {e}", flush=True)
 
@@ -2615,7 +2631,7 @@ def sitemap():
                         continue
                     if d_iso not in emitted_dates:
                         emitted_dates.add(d_iso)
-                    dynamic_urls.append((f"/mls/{d_iso}/{slug}", "0.7", "hourly"))
+                    game_urls.append((f"/mls/{d_iso}/{slug}", "0.7", "hourly"))
         except Exception as e:
             print(f"[sitemap] MLS dynamic URLs failed: {e}", flush=True)
 
@@ -2634,18 +2650,24 @@ def sitemap():
                 if slam_slate and slam_slate.get("days"):
                     for day in slam_slate["days"]:
                         d_iso = day["date_local"].isoformat()
-                        dynamic_urls.append(
+                        game_urls.append(
                             (f"/tennis/{slam['slam_id']}/{d_iso}", "0.7", "daily")
                         )
-        all_urls = static_urls + dynamic_urls
+        evergreen_urls = static_urls + dynamic_urls
     else:
         # Personal site — no sport pages, no dynamic.
-        all_urls = list(KEVINROTHWX_STATIC_URLS)
+        evergreen_urls = list(KEVINROTHWX_STATIC_URLS)
+        game_urls = []
 
+    return base_url, evergreen_urls, game_urls
+
+
+def _render_urlset(base_url, urls) -> Response:
+    """Render a <urlset> from (path, priority, changefreq[, lastmod]) rows."""
     today_str = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d")
     xml = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for entry in all_urls:
+    for entry in urls:
         # Entries are either (path, priority, changefreq) — legacy 3-tuple
         # from the dynamic builders — or (path, priority, changefreq, lastmod)
         # from the static tables. lastmod=None means "use today's date."
@@ -2663,6 +2685,64 @@ def sitemap():
         xml.append("  </url>")
     xml.append("</urlset>")
     return Response("\n".join(xml), mimetype="application/xml")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    """Sitemap INDEX pointing at two children (restructured 2026-09-02).
+
+    This URL stays the canonical sitemap — it is what robots.txt declares
+    and what is registered in Search Console, so it must keep working. It
+    now returns a <sitemapindex> rather than a <urlset>; Google supports
+    either at any URL, and the child URLs below carry the same pages as
+    before, so nothing is lost in the transition.
+
+    Why split:
+      - The evergreen child holds ~380 stadium/team/course landing pages
+        with honest, rarely-changing lastmod values.
+      - The games child holds ~90 per-game URLs that turn over weekly and
+        legitimately report lastmod=today.
+    Keeping them together meant a large block of entries claimed to change
+    every single day, which is the pattern Google says makes it discount
+    lastmod wholesale. Separated, the stable file can be trusted and the
+    volatile one can be deprioritised without dragging the rest down.
+    """
+    base_url, evergreen_urls, game_urls = _build_sitemap_buckets()
+    today_str = datetime.now(EASTERN_TZ).strftime("%Y-%m-%d")
+
+    children = [("/sitemap-evergreen.xml", today_str)]
+    # Only advertise the games child when it actually has URLs. An empty
+    # urlset is valid XML but tells Google nothing, and in the off-season
+    # every sport's slate is empty.
+    if game_urls:
+        children.append(("/sitemap-games.xml", today_str))
+
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, lastmod in children:
+        xml.append("  <sitemap>")
+        xml.append(f"    <loc>{base_url}{path}</loc>")
+        xml.append(f"    <lastmod>{lastmod}</lastmod>")
+        xml.append("  </sitemap>")
+    xml.append("</sitemapindex>")
+    return Response("\n".join(xml), mimetype="application/xml")
+
+
+@app.route("/sitemap-evergreen.xml")
+def sitemap_evergreen():
+    """Stable pages: hubs, guides, and every stadium/team/course landing
+    page. lastmod here reflects real publication dates, not today."""
+    base_url, evergreen_urls, _ = _build_sitemap_buckets()
+    return _render_urlset(base_url, evergreen_urls)
+
+
+@app.route("/sitemap-games.xml")
+def sitemap_games():
+    """Ephemeral per-game URLs. These 404 once the game ages out of the
+    slate window, and they are removed from here the moment that happens —
+    the list is generated from the live slate, never from an archive."""
+    base_url, _, game_urls = _build_sitemap_buckets()
+    return _render_urlset(base_url, game_urls)
 
 
 @app.route("/robots.txt")

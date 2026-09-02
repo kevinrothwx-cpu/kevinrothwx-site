@@ -1,0 +1,43 @@
+{# _landing_index.html — internal-link block for evergreen landing pages.
+
+   WHY: the ~350 stadium/team/track/course landing pages were orphans —
+   nothing on the site linked to them, so Google discovered them from the
+   sitemap and then left them in "Discovered - currently not indexed".
+   This block gives every one of them a real internal link from a sport
+   hub, which is a page that IS crawled regularly.
+
+   USAGE (bottom of a sport hub template, inside the content block):
+     {% include "_landing_index.html" with context %}
+   The including template must set `landing_sport`, e.g.
+     {% set landing_sport = "ncaaf" %}
+
+   Renders nothing at all when the sport has no landing pages, so it is
+   safe to include unconditionally.
+
+   Every URL here is verified to return 200 by the generator in
+   landing_index.py, which only emits rows for content that exists —
+   CFB has 134 teams but 25 stadium pages, and linking the other 109
+   would manufacture internal 404s. #}
+
+{% set _sections = landing_index_for(landing_sport) %}
+{% if _sections %}
+<section class="landing-index" aria-labelledby="landing-index-heading">
+  <div class="container">
+    <h2 id="landing-index-heading" class="landing-index__title">Weather guides by venue and team</h2>
+    <p class="landing-index__lead">
+      Climate, wind, and roof detail for every venue we cover — written by
+      Kevin, updated as venues change.
+    </p>
+    {% for section in _sections %}
+    <div class="landing-index__group">
+      <h3 class="landing-index__subtitle">{{ section.heading }}</h3>
+      <ul class="landing-index__list">
+        {% for row in section.rows %}
+        <li><a href="{{ row.url }}">{{ row.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

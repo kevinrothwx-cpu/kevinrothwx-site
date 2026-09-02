@@ -8,6 +8,23 @@
 {% block og_description %}{{ pretty_date }} · {{ game.venue }} · First pitch {{ game.first_pitch_eastern_str }}{% endblock %}
 
 {% block extra_head %}
+{# Time-limited indexing (added 2026-09-02).
+
+   These game URLs 404 once the game ages out of the slate window, so
+   without this Google keeps them in the index and keeps crawling into
+   dead links — 404 churn out of a sitemap lowers Google's trust in that
+   sitemap, which is part of what we just spent a day fixing.
+
+   unavailable_after tells Google exactly when to drop the page instead.
+   Dated to kickoff + 2 days: all meaningful search demand for a weather
+   forecast is BEFORE kickoff, and 2 days leaves room for day-after
+   traffic without outliving the URL itself.
+
+   Falls back to rendering nothing when kickoff_utc is missing, rather
+   than emitting a malformed or absent date. #}
+{%- if game.kickoff_utc %}
+<meta name="googlebot" content="unavailable_after: {{ (game.kickoff_utc + timedelta(days=2)).strftime('%d-%b-%Y %H:%M:%S %Z') or '' }}">
+{%- endif %}
 {# Schema.org SportsEvent. Fills every field Google Search Console asks for:
    endDate, offers, description, performer, organizer. Weather data is
    exposed as additionalProperty so AI crawlers can extract structured
