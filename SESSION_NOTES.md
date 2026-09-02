@@ -172,9 +172,43 @@ The 60 MLB pages (stadiums + teams) have some earlier-drafted numeric climate cl
 | Tennis | yes (Wimbledon live) | no landing pages | WeatherAPI (international) | per-day detail pages, ESPN match schedule, analysis paragraph | ATP/WTA endpoints return overlapping events — dedup by competition.id |
 | MLS | yes | no landing pages | ESPN + NWS | per-match detail, freeze | active season |
 
-## Outstanding pending items (future sessions)
+## ACTIVE list — Sept 2026 (use these numbers when talking to Kevin)
 
-In rough priority order:
+Kevin refers to these as 1-12. The task-tool IDs in parentheses are
+auto-assigned and meaningless to him — don't surface them.
+
+Ordered by priority. 1-2 are calendar-driven, 3-5 are NFL launch,
+6-7 unlock once affiliates approve, 8-12 are quality + infra.
+
+| # | Task | tool id |
+|---|------|---------|
+| 1 | Apply for DraftKings + FanDuel affiliates | #59 |
+| 2 | Stop pruning the odds closing-line archive (168h) | #68 |
+| 3 | NFL per-game detail pages: polish or redirect | #56 |
+| 4 | Full mobile formatting pass across all sports | #58 |
+| 5 | OVERcast promo card on MLB/NFL/CFB slates | #57 |
+| 6 | Hyperlink O/U totals to sportsbook (click-to-bet) | #61 |
+| 7 | GA4 event tracking on outbound + CTA clicks | #60 |
+| 8 | Evaluate whether NBM is additive vs NWS | #62 |
+| 9 | Copy cleanup: stale admin text + NASCAR meta tags | #64 |
+| 10 | Editorial workflow smoke test across all sports | #65 |
+| 11 | Automate the Postgres backup export | #66 |
+| 12 | Regenerate sitemap when a write-up is published | #67 |
+
+**Why 1 and 2 are urgent (both are pure calendar, not difficulty):**
+- #1: affiliate approval takes 2-4 weeks. Applying in September means
+  approval around Week 3-4; every week of delay eats the NFL window,
+  which is the only stretch where football traffic actually converts.
+- #2: the 168h prune permanently deletes closing lines. Can't be
+  backfilled. Now more valuable since the API exposes total_opening +
+  the kickoff-frozen total, so OVERcast can consume CLV data live.
+
+**Business context driving all of it:** Kevin is deciding whether to end
+a $3,000/mo PropFinder contract that requires keeping his written
+forecasts OFF MSW. If he ends it, NFL content lives here — so NFL launch
+readiness (3, 4, 5) is what makes that decision safe.
+
+## Older backlog (pre-Sept, still open)
 
 1. **WeatherAPI fallback for MLB/NASCAR/CWS** (#79) — resilience, ~45min
 2. **World Cup freeze at kickoff** (#81) — apply existing pattern, ~30min

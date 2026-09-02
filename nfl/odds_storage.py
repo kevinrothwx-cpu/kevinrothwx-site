@@ -57,14 +57,27 @@ def _load_from_disk() -> None:
 
 
 def _persist() -> None:
-    """Atomic write to disk. Prunes entries older than _KEEP_AFTER_HOURS."""
+    """Atomic write of the hot store. Entries older than _KEEP_AFTER_HOURS
+    are moved to the permanent archive — NOT deleted. See the archive
+    section below for why the hot store stays bounded."""
     cutoff = datetime.now(timezone.utc) - timedelta(hours=_KEEP_AFTER_HOURS)
+    evicted = {}
     with _lock:
         for event_id in list(_openings.keys()):
             ts = _openings[event_id].get("first_seen_at")
             if ts and ts < cutoff:
-                del _openings[event_id]
+                evicted[event_id] = _openings[event_id]
         snapshot = dict(_openings)
+
+    # Archive BEFORE dropping from the hot store. If the archive write
+    # raises, we keep the records in memory and retry next cycle rather
+    # than losing them — the whole point of this change.
+    if evicted and _archive_records(evicted):
+        with _lock:
+            for event_id in evicted:
+                _openings.pop(event_id, None)
+            snapshot = dict(_openings)
+
     save_json(_DISK_FILE, snapshot)
 
 
@@ -153,3 +166,92 @@ def clear_all() -> None:
     with _lock:
         _openings.clear()
     save_json(_DISK_FILE, {})
+
+
+# ── Closing-line archive ──────────────────────────────────────────────────
+#
+# WHY THIS EXISTS (2026-09-01):
+#     _persist() used to DELETE entries older than _KEEP_AFTER_HOURS. That
+#     silently destroyed the opening/closing-line history — the exact
+#     dataset OVERcast wants for CLV work, and the one thing here that
+#     cannot be backfilled. Once a game's line is gone, it is gone.
+#
+# WHY WE STILL EVICT FROM THE HOT STORE:
+#     _openings is fully resident in memory and rewritten whole on every
+#     save, and _persist() fires once per game per warmer cycle. Letting
+#     it grow unbounded would turn a ~30KB write into a multi-MB one every
+#     cycle, forever. So the hot store stays bounded — but evicted records
+#     are APPENDED to an archive instead of dropped.
+#
+#     Net effect: per-cycle write cost is unchanged, history is permanent.
+#     The archive is only touched when a game ages out (rare, and small).
+
+_ARCHIVE_FILE = "nfl_odds_archive.json"
+
+
+def _archive_records(evicted: dict) -> bool:
+    """Append aged-out records to the permanent archive. Never overwrites
+    an existing archived entry — the first write for a game wins, same
+    immutability rule as the opening line itself.
+
+    Returns True if the records are safely archived (caller may now drop
+    them from the hot store), False if the write failed (caller must keep
+    them). Never raises."""
+    if not evicted:
+        return True
+    try:
+        archive = load_json(_ARCHIVE_FILE, default={}) or {}
+        added = 0
+        for key, rec in evicted.items():
+            k = str(key)
+            if k in archive:
+                continue
+            out = dict(rec)
+            out["archived_at"] = datetime.now(timezone.utc)
+            archive[k] = out
+            added += 1
+        if added:
+            save_json(_ARCHIVE_FILE, archive)
+            print(f"[nfl.odds_storage] archived {added} closing line(s); "
+                  f"archive now {len(archive)} games", flush=True)
+    except Exception as e:
+        # Archiving must never break the live odds path — odds are additive,
+        # and _persist() runs inside the slate build. Raising here would turn
+        # a failed archive write into a blank slate.
+        #
+        # So: log loudly and return False. The caller keeps the records in
+        # the hot store and retries next cycle. Nothing is lost, nothing
+        # breaks. A sustained failure shows up as this line repeating every
+        # warmer cycle, which is the alert.
+        print(f"[nfl.odds_storage] archive write FAILED (records retained, "
+              f"will retry): {type(e).__name__}: {e}", flush=True)
+        return False
+    return True
+
+
+def get_archived(event_key) -> Optional[dict]:
+    """Look up a game's archived record. Returns None if not archived."""
+    if event_key is None:
+        return None
+    archive = load_json(_ARCHIVE_FILE, default={}) or {}
+    rec = archive.get(str(event_key))
+    return dict(rec) if rec else None
+
+
+def all_records() -> dict:
+    """Every record we hold — archive plus the hot store. Hot entries win
+    on key collision since they are the more recent state. This is the
+    full closing-line dataset for export/analysis."""
+    out = dict(load_json(_ARCHIVE_FILE, default={}) or {})
+    with _lock:
+        for k, v in _openings.items():
+            out[str(k)] = dict(v)
+    return out
+
+
+def archive_stats() -> dict:
+    """Counts for the admin page — how much history we are holding."""
+    archive = load_json(_ARCHIVE_FILE, default={}) or {}
+    with _lock:
+        hot = len(_openings)
+    return {"hot": hot, "archived": len(archive), "total": hot + len(archive)}
