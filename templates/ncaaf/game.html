@@ -372,4 +372,12 @@
 
   <a href="/ncaaf" class="game-page__back">← All NCAAF games</a>
 </article>
+
+{# OVERcast tease. Detail pages get one too, but the CTA row above the
+   slate is the higher-traffic slot; this is secondary placement. #}
+{% set tease_sport = "cfb" %}
+{% set tease_coming_soon = true %}
+{% set tease_placement = "ncaaf-game" %}
+{% include "_overcast_tease.html" with context %}
+
 {% endblock %}

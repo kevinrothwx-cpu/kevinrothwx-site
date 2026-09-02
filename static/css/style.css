@@ -1283,3 +1283,85 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   .landing-index__list { columns: 2 140px; }
   .landing-index__list li { font-size: 12.5px; }
 }
+
+/* ── OVERcast tease with product screenshot (added 2026-09-02) ────────────
+   Replaces the old two-up PropFinder/OVERcast CTA row. Sized to occupy no
+   more vertical space than that row did, so nothing below it moves down.
+   Image and text render together, never hover-to-reveal: hover does not
+   exist on touchscreens and most traffic here is mobile. */
+.oc-tease {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--mist, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  margin: 0 0 2rem;
+  transition: box-shadow .14s ease, transform .14s ease, border-color .14s ease;
+}
+.oc-tease:hover,
+.oc-tease:focus-visible {
+  box-shadow: 0 4px 18px rgba(0,0,0,.10);
+  transform: translateY(-1px);
+  border-color: #c9d4e2;
+}
+.oc-tease:focus-visible { outline: 2px solid var(--storm, #1e3a8a); outline-offset: 2px; }
+
+.oc-tease__shot {
+  flex: 0 0 44%;
+  max-width: 440px;
+  display: block;
+  background: #12203a;   /* matches the screenshot header so any
+                            letterboxing reads as intentional */
+  line-height: 0;
+}
+.oc-tease__shot picture,
+.oc-tease__shot img { display: block; width: 100%; height: 100%; }
+.oc-tease__shot img { object-fit: cover; }
+
+.oc-tease__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem 1.25rem;
+  min-width: 0;
+}
+.oc-tease__badge {
+  align-self: flex-start;
+  font-family: var(--font-sans);
+  font-size: .64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  padding: .16rem .42rem;
+  margin-bottom: .45rem;
+}
+.oc-tease__sub {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  line-height: 1.4;
+  color: var(--ink, #111827);
+  font-weight: 500;
+}
+.oc-tease__arrow { margin-left: .35em; color: var(--storm, #1e3a8a); white-space: nowrap; }
+.oc-tease__note {
+  font-family: var(--font-sans);
+  font-size: .7rem;
+  color: var(--fog, #6b7280);
+  margin-top: .5rem;
+}
+
+/* Stack on narrow screens. Mobile swaps to the square capture via
+   <picture>, which stays legible at full column width. */
+@media (max-width: 600px) {
+  .oc-tease { flex-direction: column; }
+  .oc-tease__shot { flex: none; max-width: none; width: 100%; }
+  .oc-tease__body { padding: .85rem 1rem 1rem; }
+  .oc-tease__sub { font-size: .95rem; }
+}

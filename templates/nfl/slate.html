@@ -81,6 +81,16 @@
     {% if _warming %}
       <script>setTimeout(function () { location.reload(); }, 12000);</script>
     {% endif %}
+
+    {# Show the tease in the empty state too, but NOT while warming — a
+       promo next to "forecasts are loading" reads as the page being broken.
+       The CTA row lives inside {% if games %} further down, so without this
+       /nfl carries no OVERcast link at all in the week before Week 1, which
+       is exactly when football interest peaks. #}
+    {% if not _warming %}
+      {% set tease_placement = "nfl-empty" %}
+      {% include "nfl/_ctas.html" %}
+    {% endif %}
   {% endif %}
 
   {# ── Section 2: writeups + OVERcast tease, OR CTAs when no writeups ─── #}

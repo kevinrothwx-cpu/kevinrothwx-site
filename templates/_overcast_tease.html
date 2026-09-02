@@ -1,0 +1,89 @@
+{# _overcast_tease.html — OVERcast promo with product screenshot.
+
+   USAGE (set tease_sport to "mlb" or "nfl", then include this file with
+   context). The literal syntax is omitted here on purpose: Jinja comments
+   do NOT nest, so an inner comment would close this block early and the
+   example would execute as real template code, which self-includes and
+   blows the recursion limit.
+
+   Optional overrides: tease_sub, tease_coming_soon, tease_placement.
+
+   tease_placement tags the outbound link with UTM parameters. Every
+   OVERcast link on the site currently points at the same bare URL, so
+   there is no way to tell whether a subscription came from the slate, a
+   game page, or the footer. Tagging costs nothing and makes the question
+   answerable in GA.
+
+   DESIGN NOTES
+
+   Whole card is a single <a>. No nested anchor (invalid HTML, browsers
+   recover from it unpredictably).
+
+   Screenshot and text render TOGETHER, never hover-to-reveal. Hover does
+   not exist on touchscreens and most of this site's traffic is someone
+   checking a forecast on a phone, so a reveal would hide the pitch from
+   the majority of visitors. Hover only lifts the card.
+
+   Art direction, not just resizing: the desktop screenshots are wide and
+   unreadable when squeezed into a phone column, so mobile gets Kevin's
+   square mobile capture instead. That is what <picture> + media is for.
+
+   The "Example game" line is required, not decoration. The screenshot
+   shows real numbers from a real past game, and a reader could easily
+   take them for today's. Saying so plainly is the honest thing and it
+   costs nothing. #}
+
+{% set _sport = tease_sport | default("mlb") %}
+{% if _sport == "cfb" %}
+  {% set _wide = "/static/img/oc-cfb-wide.jpg" %}
+  {% set _wide2x = "/static/img/oc-cfb-wide@2x.jpg" %}
+  {% set _narrow = "/static/img/oc-cfb-wide.jpg" %}
+  {% set _narrow2x = "/static/img/oc-cfb-wide@2x.jpg" %}
+  {% set _w = 420 %}{% set _h = 178 %}
+  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
+  {% set _alt = "OVERcast college football view showing an expanded game with the forecast, how the wind sits relative to the field, weather impact on scoring, passing yards, field goals and fumbles, and how similar games finished against their closing total." %}
+{% elif _sport == "nfl" %}
+  {% set _wide = "/static/img/oc-nfl-wide.jpg" %}
+  {% set _wide2x = "/static/img/oc-nfl-wide@2x.jpg" %}
+  {% set _narrow = "/static/img/oc-nfl-wide.jpg" %}
+  {% set _narrow2x = "/static/img/oc-nfl-wide@2x.jpg" %}
+  {% set _w = 420 %}{% set _h = 191 %}
+  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
+  {% set _alt = "OVERcast NFL game view showing the forecast, weather impact on total points, pass yards and field goals, and fantasy impact by position." %}
+{% else %}
+  {% set _wide = "/static/img/oc-mlb-wide.jpg" %}
+  {% set _wide2x = "/static/img/oc-mlb-wide@2x.jpg" %}
+  {% set _narrow = "/static/img/oc-mlb-square.jpg" %}
+  {% set _narrow2x = "/static/img/oc-mlb-square@2x.jpg" %}
+  {% set _w = 420 %}{% set _h = 150 %}
+  {% set _default_sub = "See how weather impacts runs, home runs and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
+  {% set _alt = "OVERcast game view showing the forecast, wind direction relative to the field, and weather impact on runs, home runs and strikeouts." %}
+{% endif %}
+
+{% set _sub = tease_sub or _default_sub %}
+{% set _place = tease_placement | default(_sport ~ "-tease") %}
+{% set _href = "https://app.kevinrothwx.com/?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_tease&utm_content=" ~ _place %}
+
+<a href="{{ _href }}" class="oc-tease" rel="noopener">
+  <span class="oc-tease__shot">
+    <picture>
+      <source media="(max-width: 600px)" srcset="{{ _narrow }} 1x, {{ _narrow2x }} 2x">
+      <img src="{{ _wide }}" srcset="{{ _wide }} 1x, {{ _wide2x }} 2x"
+           width="{{ _w }}" height="{{ _h }}" loading="lazy" decoding="async"
+           alt="{{ _alt }}">
+    </picture>
+  </span>
+  <span class="oc-tease__body">
+    {% if tease_coming_soon %}
+      <span class="oc-tease__badge">Coming soon</span>
+    {% endif %}
+    <span class="oc-tease__sub">{{ _sub }}<span class="oc-tease__arrow">&rarr;</span></span>
+    <span class="oc-tease__note">
+      {%- if tease_coming_soon -%}
+        Example slate. {{ _sport | upper }} coverage on OVERcast launches shortly; MLB is available now.
+      {%- else -%}
+        Example game. Not today's data.
+      {%- endif -%}
+    </span>
+  </span>
+</a>

@@ -223,4 +223,12 @@
 
   <a href="/nfl" class="game-page__back">← All NFL games</a>
 </article>
+
+{# OVERcast tease. Detail pages get one too, but the CTA row above the
+   slate is the higher-traffic slot; this is secondary placement. #}
+{% set tease_sport = "nfl" %}
+{% set tease_coming_soon = true %}
+{% set tease_placement = "nfl-game" %}
+{% include "_overcast_tease.html" with context %}
+
 {% endblock %}

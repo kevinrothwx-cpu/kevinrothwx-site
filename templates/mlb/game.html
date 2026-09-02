@@ -237,6 +237,13 @@
 
   <a href="/mlb/{{ date_str }}" class="game-page__back">← All games on {{ pretty_date }}</a>
 </article>
+
+{# OVERcast tease. Detail pages get one too, but the CTA row above the
+   slate is the higher-traffic slot; this is secondary placement. #}
+{% set tease_sport = "mlb" %}
+{% set tease_placement = "mlb-game" %}
+{% include "_overcast_tease.html" with context %}
+
 {% endblock %}
 
 {# EOF-CANARY 2026-07-04-polish-batch #}

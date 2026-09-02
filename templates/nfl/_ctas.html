@@ -1,21 +1,15 @@
-{# NFL section CTA pair. OVERcast is Kevin's premium product (MLB-focused
-   today, but relevant brand awareness). PropFinder link points to the
-   general weather section since there's no NFL column yet. #}
-<div class="mlb-ctas">
-  <a href="https://propfinder.app/weather" class="mlb-cta" rel="noopener">
-    <span class="mlb-cta__kicker">Kevin's written analysis · Updated daily</span>
-    <span class="mlb-cta__title">
-      Kevin's daily weather column on PropFinder
-      <span class="mlb-cta__arrow">→</span>
-    </span>
-    <span class="mlb-cta__sub">Notes on the games that matter, written by a real meteorologist.</span>
-  </a>
-  <a href="https://app.kevinrothwx.com" class="mlb-cta" rel="noopener">
-    <span class="mlb-cta__kicker">Detailed impact data</span>
-    <span class="mlb-cta__title">
-      Weather-tuned MLB scoring on OVERcast
-      <span class="mlb-cta__arrow">→</span>
-    </span>
-    <span class="mlb-cta__sub">Wind, weather, and park-tuned run and HR projections.</span>
-  </a>
-</div>
+{# NFL call-to-action block.
+
+   2026-09-02: replaced the two-up PropFinder + OVERcast row with the
+   OVERcast tease, same as MLB.
+
+   Flagged as "Coming soon": OVERcast NFL is not purchasable yet. The
+   screenshot is real and the product is days away, but presenting it as
+   buyable today would be a promise the checkout cannot keep, and someone
+   who clicks through to an MLB-only sales page after being shown NFL
+   numbers has been misled. The badge is what keeps that honest. Remove
+   tease_coming_soon the day NFL goes on sale. #}
+{% set tease_sport = "nfl" %}
+{% set tease_coming_soon = true %}
+{% set tease_placement = cta_placement | default("nfl-ctas") %}
+{% include "_overcast_tease.html" with context %}

@@ -288,6 +288,16 @@
     {% endif %}
   {% endif %}
 
+  {# CFB had no CTA row at all, unlike MLB and NFL. Sits after the last
+     cheat-card row, which is CFB's equivalent of the MLB slot between the
+     cards and the per-game blocks (CFB has no per-game blocks; games link
+     out to detail pages). Flagged coming soon: OVERcast CFB is not
+     purchasable yet. #}
+  {% set tease_sport = "cfb" %}
+  {% set tease_coming_soon = true %}
+  {% set tease_placement = "ncaaf-slate" %}
+  {% include "_overcast_tease.html" with context %}
+
 </div>
 
 {% if games %}
