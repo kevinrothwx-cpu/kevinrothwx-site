@@ -70,7 +70,12 @@ def build_landing_index() -> dict:
     from mlb.team_content import TEAM_CONTENT
     from nfl.stadium_content import STADIUM_CONTENT as NFL_STADIUM_CONTENT
     from nfl.team_content import TEAM_CONTENT_NFL
-    from cfb.stadium_content import STADIUM_CONTENT_CFB
+    from cfb.stadium_facts import STADIUM_SLUG_MAP as CFB_STADIUM_SLUG_MAP
+    # Stadium names that repeat across FBS. Four schools share "Memorial
+    # Stadium"; without the team in the label the link list would show four
+    # identical entries and a reader could not tell which is which.
+    _names = [v["name"].lower() for v in CFB_STADIUM_SLUG_MAP.values()]
+    _CFB_DUPES = {n for n in _names if _names.count(n) > 1}
     from nascar.track_content import TRACK_CONTENT
     from golf.course_content import COURSE_CONTENT
     from mls.content import TEAM_CONTENT_MLS, STADIUM_CONTENT_MLS
@@ -91,9 +96,18 @@ def build_landing_index() -> dict:
             {"heading": "NFL team weather guides",
              "rows": _rows(TEAM_CONTENT_NFL, "/nfl/team")},
         ],
+        # CFB uses the full slug map (all 134 FBS venues), not the 25
+        # hand-written entries. Shape differs from the other CONTENT dicts
+        # — it is already keyed by slug — so it is built inline rather than
+        # through _rows().
         "ncaaf": [
             {"heading": "College football stadium weather guides",
-             "rows": _rows(STADIUM_CONTENT_CFB, "/ncaaf/stadium")},
+             "rows": sorted(
+                 ({"label": v["name"] if v["name"].lower() not in _CFB_DUPES
+                            else f"{v['name']} ({v['team_short']})",
+                   "url": f"/ncaaf/stadium/{slug}"}
+                  for slug, v in CFB_STADIUM_SLUG_MAP.items()),
+                 key=lambda r: r["label"].lower())},
         ],
         "nascar": [
             {"heading": "NASCAR track weather guides",

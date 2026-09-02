@@ -40,6 +40,13 @@ from golf.courses import PGA_COURSES
 from golf.course_content import COURSE_CONTENT, COURSE_BY_SLUG
 from cfb.venues import FBS_TEAMS
 from cfb.stadium_content import STADIUM_CONTENT_CFB, STADIUM_BY_SLUG_CFB
+from cfb.stadium_facts import (
+    STADIUM_SLUG_MAP as CFB_STADIUM_SLUG_MAP,
+    build_facts as cfb_build_facts,
+    build_sections as cfb_build_sections,
+    wind_reading_rows as cfb_wind_reading_rows,
+    next_home_game as cfb_next_home_game,
+)
 from mls.venues import MLS_TEAMS
 from mls.content import (
     TEAM_CONTENT_MLS, TEAM_BY_SLUG_MLS,
@@ -1381,39 +1388,82 @@ def golf_course_page(slug):
 
 @app.route("/ncaaf/stadium/<slug>")
 def ncaaf_stadium_page(slug):
-    entry = STADIUM_BY_SLUG_CFB.get(slug)
+    """CFB stadium weather guide.
+
+    Expanded 2026-09-02 from 25 hand-written stadiums to all 134 FBS
+    venues. The other 109 are NOT filled with written copy — see
+    cfb/stadium_facts.py for why. Their content is generated from the
+    verified field bearing, roof state and location, so every sentence is
+    a measured fact or a geometric consequence of one. Hand-written copy
+    is still used wherever it exists, and existing slugs are preserved so
+    no indexed URL changes.
+    """
+    entry = CFB_STADIUM_SLUG_MAP.get(slug)
     if not entry:
         abort(404)
-    stadium_name, content = entry
-    # Look up the stadium data by matching team
-    stadium_data = None
-    team_name = content.get("team", "")
-    for t in FBS_TEAMS.values():
-        if t.get("name") == team_name:
-            stadium_data = t.get("stadium", {})
-            break
-    if not stadium_data:
-        stadium_data = {}
-    facts = [
-        ("Team", content["team"]),
-        ("City", stadium_data.get("city", "")),
-        ("Roof", {"open": "Open-air", "retractable": "Retractable",
-                  "fixed_dome": "Fixed dome", "fixed_canopy": "Fixed canopy"}
-                 .get(stadium_data.get("roof"), "Open-air")),
-        ("Capacity", f"{stadium_data.get('cap', 0):,}" if stadium_data.get('cap') else ""),
-    ]
-    sections = [
-        ("Overview", content["intro"]),
-        ("Weather angle", content["angle"]),
-    ]
+
+    stadium_data = entry["stadium"] or {}
+    stadium_name = entry["name"]
+    hw = entry["hand_written"]
+
+    facts = cfb_build_facts(stadium_data, entry["team"])
+    sections = cfb_build_sections(stadium_data, stadium_name, hw)
+    wind_rows = cfb_wind_reading_rows(stadium_data.get("field_bearing_degrees")) \
+        if (stadium_data.get("roof") or "") != "fixed_dome" else []
+
+    title = (hw or {}).get("headline") or \
+        f"{stadium_name} Weather: {entry['team_short']} Home Game Forecasts"
+
+    # What the visitor actually came for.
+    #
+    # Someone landing here from a search wants the forecast, not the field
+    # geometry. Two sources, in order of usefulness:
+    #
+    #   1. The live slate — has a real forecast, but only covers ~7 days,
+    #      so it is empty for most stadiums most of the year.
+    #   2. The season schedule — covers the whole year and is already
+    #      disk-cached for the slate builder, so it costs nothing extra.
+    #      Gives a date and opponent but NO forecast, deliberately: a
+    #      forecast six weeks out would be worse than none.
+    #
+    # Without this the page ranks, someone clicks, and there is nothing
+    # they came for.
+    next_game, next_when, upcoming = None, None, None
+    try:
+        games, _ = get_cfb_slate(allow_build=False)
+        for g in (games or []):
+            v = g.get("venue") or {}
+            if v.get("name") == stadium_name:
+                next_game = {
+                    "matchup": f"{(g.get('away') or {}).get('short','')} at "
+                               f"{(g.get('home') or {}).get('short','')}",
+                    "venue": stadium_name,
+                    "time_str": g.get("kickoff_eastern_str"),
+                    "forecast": g.get("forecast"),
+                    "url": g.get("url_path") or "/ncaaf",
+                }
+                next_when = g.get("kickoff_date_eastern")
+                break
+    except Exception:
+        pass
+
+    if not next_game:
+        try:
+            upcoming = cfb_next_home_game(entry["team"])
+        except Exception:
+            upcoming = None
+
     return render_template(
         "_shared/landing.html",
         kicker="NCAAF Stadium Weather Guide",
         back_url="/ncaaf", back_label="NCAAF Weather",
-        title=content["headline"],
-        facts=facts, sections=sections,
+        title=title,
+        facts=facts, sections=sections, wind_rows=wind_rows,
+        next_game=next_game, next_when=next_when,
+        upcoming=upcoming, upcoming_team=entry["team_short"],
         cta_url="/ncaaf",
-        cta_label="See this weekend's CFB weather forecast",
+        cta_label=(f"See the forecast for {entry['team_short']}'s next home game"
+                   if upcoming else "See this weekend's CFB weather forecast"),
         breadcrumb_hub_url="/ncaaf",
         breadcrumb_hub_label="NCAAF Weather",
         breadcrumb_entity=stadium_name,
@@ -2528,10 +2578,14 @@ def _build_sitemap_buckets():
             dynamic_urls.append(
                 (f"/golf/course/{content['slug']}", "0.75", "monthly", "2026-07-02")
             )
-        # Evergreen NCAAF top-25 stadium landing pages.
-        for content in STADIUM_CONTENT_CFB.values():
+        # Evergreen NCAAF stadium landing pages. Expanded 2026-09-02 from
+        # the 25 hand-written venues to all 134 FBS stadiums; the other 109
+        # are generated from verified field bearing + roof + location
+        # rather than written copy. lastmod is the expansion date for the
+        # generated ones and stays honest thereafter.
+        for slug in CFB_STADIUM_SLUG_MAP:
             dynamic_urls.append(
-                (f"/ncaaf/stadium/{content['slug']}", "0.75", "monthly", "2026-07-02")
+                (f"/ncaaf/stadium/{slug}", "0.75", "monthly", "2026-09-02")
             )
         # Evergreen MLS team + stadium landing pages.
         for content in TEAM_CONTENT_MLS.values():
@@ -3593,8 +3647,8 @@ def _msw_all_url_paths() -> list[str]:
         paths.append(f"/nascar/track/{content['slug']}")
     for content in COURSE_CONTENT.values():
         paths.append(f"/golf/course/{content['slug']}")
-    for content in STADIUM_CONTENT_CFB.values():
-        paths.append(f"/ncaaf/stadium/{content['slug']}")
+    for slug in CFB_STADIUM_SLUG_MAP:
+        paths.append(f"/ncaaf/stadium/{slug}")
     for content in TEAM_CONTENT_MLS.values():
         paths.append(f"/mls/team/{content['slug']}")
     for content in STADIUM_CONTENT_MLS.values():

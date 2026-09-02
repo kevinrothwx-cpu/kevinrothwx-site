@@ -51,6 +51,15 @@
   .landing-byline a { color: var(--storm); text-decoration: none; }
   .landing-byline a:hover { text-decoration: underline; }
   .landing-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; background: #fafafa; border: 1px solid var(--mist); border-radius: 6px; padding: 1rem 1.25rem; margin: 0 0 2rem; }
+  .landing-upcoming { background: #f7faf7; border: 1px solid #d7e5d7; border-left: 3px solid var(--storm, #166534); border-radius: 6px; padding: 1rem 1.25rem; margin: 0 0 1.75rem; }
+  .landing-upcoming__label { font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fog); margin: 0 0 0.3rem; }
+  .landing-upcoming__game { font-family: var(--font-serif); font-size: 1.18rem; margin: 0 0 0.4rem; font-weight: 600; }
+  .landing-upcoming__note { font-family: var(--font-sans); font-size: 0.85rem; color: var(--fog); margin: 0 0 0.6rem; line-height: 1.45; }
+  .landing-upcoming__link { font-family: var(--font-sans); font-size: 0.92rem; color: var(--storm); text-decoration: none; font-weight: 500; }
+  .landing-wind { width: 100%; border-collapse: collapse; margin: 0.75rem 0 2rem; font-family: var(--font-sans); font-size: 0.9rem; }
+  .landing-wind th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fog); border-bottom: 1px solid var(--mist); padding: 0.4rem 0.6rem 0.4rem 0; font-weight: 600; }
+  .landing-wind td { padding: 0.42rem 0.6rem 0.42rem 0; border-bottom: 1px solid #f0f0f0; }
+  .landing-wind td:first-child { font-weight: 500; white-space: nowrap; }
   .landing-fact__label { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.15rem; }
   .landing-fact__value { font-family: var(--font-serif); font-size: 1rem; color: var(--ink); font-weight: 500; }
   .landing-section-h2 { font-family: var(--font-serif); font-size: 1.35rem; margin: 2rem 0 0.75rem; color: var(--ink); }
@@ -72,6 +81,26 @@
     By <a href="/about">Kevin Roth</a>, sports meteorologist. Weather guide
     for {{ byline_audience|default("DFS players and bettors") }}.
   </p>
+
+  {# When there is no game inside the live slate window, show the next
+     scheduled home game with a route to the forecast. Someone arriving
+     from a search wants the forecast; leading with venue trivia and
+     making them hunt for it is how a page becomes an SEO trap that
+     helps nobody. No forecast numbers here on purpose — the game can be
+     weeks out, and a forecast at that range would be worse than none. #}
+  {% if upcoming and not next_game %}
+    <div class="landing-upcoming">
+      <p class="landing-upcoming__label">Next home game here</p>
+      <p class="landing-upcoming__game">
+        {{ upcoming.date }} vs {{ upcoming.opponent }}
+      </p>
+      <p class="landing-upcoming__note">
+        The hourly forecast for this stadium appears on our college football
+        page in the week before kickoff.
+      </p>
+      <a class="landing-upcoming__link" href="/ncaaf">See this week's college football forecasts →</a>
+    </div>
+  {% endif %}
 
   {% if facts %}
     <div class="landing-facts">
@@ -109,6 +138,31 @@
     <h2 class="landing-section-h2">{{ h2 }}</h2>
     <p class="landing-para">{{ paragraph }}</p>
   {% endfor %}
+
+  {# Optional wind-orientation table. Pure geometry: how a wind from each
+     direction sits relative to THIS field. It makes no claim about what
+     the wind will actually do on a given date, and no claim about which
+     direction is common here. Prevailing-wind climatology says nothing
+     about one Saturday, so we do not print it. #}
+  {% if wind_rows %}
+    <h2 class="landing-section-h2">Reading wind direction at this stadium</h2>
+    <p class="landing-para">
+      Forecast wind direction is the direction the wind is blowing
+      <em>from</em>. This table converts that into how the wind sits
+      relative to this particular field. It describes the geometry of the
+      venue only, not what conditions are likely on any given date.
+    </p>
+    <table class="landing-wind">
+      <thead>
+        <tr><th scope="col">Forecast direction</th><th scope="col">Relative to this field</th></tr>
+      </thead>
+      <tbody>
+        {% for row in wind_rows %}
+        <tr><td>{{ row.direction }}</td><td>{{ row.effect }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
 
   <div class="landing-cta">
     <p class="landing-cta__label">Live forecast</p>
