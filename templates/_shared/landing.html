@@ -51,6 +51,10 @@
   .landing-byline a { color: var(--storm); text-decoration: none; }
   .landing-byline a:hover { text-decoration: underline; }
   .landing-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; background: #fafafa; border: 1px solid var(--mist); border-radius: 6px; padding: 1rem 1.25rem; margin: 0 0 2rem; }
+  /* Whole next-game card is one clickable link. */
+  .landing-nextgame { display: block; margin: 0 0 2rem; padding: 1.25rem 1.4rem; background: #fff; border: 2px solid var(--storm); border-radius: 8px; text-decoration: none; color: inherit; transition: background 0.12s ease, box-shadow 0.12s ease; }
+  .landing-nextgame:hover, .landing-nextgame:focus-visible { background: #fbfdfb; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+  .landing-nextgame:focus-visible { outline: 2px solid var(--storm); outline-offset: 2px; }
   .landing-upcoming { background: #f7faf7; border: 1px solid #d7e5d7; border-left: 3px solid var(--storm, #166534); border-radius: 6px; padding: 1rem 1.25rem; margin: 0 0 1.75rem; }
   .landing-upcoming__label { font-family: var(--font-sans); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fog); margin: 0 0 0.3rem; }
   .landing-upcoming__game { font-family: var(--font-serif); font-size: 1.18rem; margin: 0 0 0.4rem; font-weight: 600; }
@@ -113,8 +117,13 @@
   {# Optional inline "next game" forecast card for landing pages.
      Deliver the "Yankees weather today" search intent right on the
      landing page instead of just a link. #}
+  {# The WHOLE card is the link, not just the line at the bottom. It looks
+     clickable, so it should be clickable. Rendered as a single <a> rather
+     than a div with a nested link, because nesting an <a> inside an <a> is
+     invalid HTML and browsers recover from it unpredictably. The bottom
+     line is therefore a <span> styled to look like the link it used to be. #}
   {% if next_game %}
-    <section style="margin: 0 0 2rem; padding: 1.25rem 1.4rem; background: #fff; border: 2px solid var(--storm); border-radius: 8px;">
+    <a href="{{ next_game.url }}" class="landing-nextgame">
       <div style="display:flex; align-items:center; justify-content:space-between; gap: 1.25rem; margin-bottom: 1rem; flex-wrap: wrap;">
         <div>
           <p style="font-family: var(--font-sans); font-size: 0.72rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.3rem;">{{ next_when }}{% if next_game.time_str %} · {{ next_game.time_str }}{% endif %}</p>
@@ -130,8 +139,8 @@
           </div>
         {% endif %}
       </div>
-      <a href="{{ next_game.url }}" style="display:inline-block; font-family: var(--font-serif); font-size: 0.97rem; color: var(--storm); text-decoration: none; padding-top: 0.5rem; border-top: 1px solid var(--mist); width: 100%;">See the full forecast with hourly breakdown →</a>
-    </section>
+      <span style="display:inline-block; font-family: var(--font-serif); font-size: 0.97rem; color: var(--storm); padding-top: 0.5rem; border-top: 1px solid var(--mist); width: 100%;">See the full forecast with hourly breakdown →</span>
+    </a>
   {% endif %}
 
   {% for h2, paragraph in sections %}

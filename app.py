@@ -1431,9 +1431,27 @@ def ncaaf_stadium_page(slug):
     next_game, next_when, upcoming = None, None, None
     try:
         games, _ = get_cfb_slate(allow_build=False)
+        want_lat = stadium_data.get("lat")
+        want_lon = stadium_data.get("lon")
         for g in (games or []):
             v = g.get("venue") or {}
-            if v.get("name") == stadium_name:
+            # Match on COORDINATES, not on stadium name.
+            #
+            # Four schools share the name "Memorial Stadium" (Lincoln NE,
+            # Champaign IL, Clemson SC, Bloomington IN). Matching on name
+            # alone put "UAB at Illinois" on Indiana's page — the same
+            # collision that produced wrong field bearings, reintroduced
+            # here. Coordinates are unique per venue and also handle
+            # neutral-site games correctly, which a home-team match would
+            # not.
+            v_lat, v_lon = v.get("lat"), v.get("lon")
+            same_place = (
+                want_lat is not None and want_lon is not None
+                and v_lat is not None and v_lon is not None
+                and abs(float(v_lat) - float(want_lat)) < 0.01
+                and abs(float(v_lon) - float(want_lon)) < 0.01
+            )
+            if same_place:
                 next_game = {
                     "matchup": f"{(g.get('away') or {}).get('short','')} at "
                                f"{(g.get('home') or {}).get('short','')}",
