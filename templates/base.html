@@ -99,8 +99,16 @@
       <button id="mobile-menu-btn" class="mobile-toggle" aria-label="Menu">Menu</button>
     </div>
     <nav id="mobile-menu" class="mobile-nav">
+      {# NFL + College Football added 2026-09-01. They were reachable only
+         from the sport-strip, not the site-wide menu, so the two highest-
+         value football pages got no persistent internal link from every
+         page on the site. Anchor text is the head term deliberately
+         ("NFL Weather", "College Football Weather"), matching the
+         existing MLB/PGA/NASCAR pattern. #}
       {% if is_product_site %}
         <a href="/mlb">MLB Weather</a>
+        <a href="/nfl">NFL Weather</a>
+        <a href="/ncaaf">College Football Weather</a>
         <a href="/golf">PGA Tour Weather</a>
         <a href="/nascar">NASCAR Weather</a>
         <a href="/about">About Kevin</a>
@@ -108,6 +116,8 @@
         <a href="/contact">Contact</a>
       {% else %}
         <a href="https://mysportsweather.com/mlb">MLB Weather</a>
+        <a href="https://mysportsweather.com/nfl">NFL Weather</a>
+        <a href="https://mysportsweather.com/ncaaf">College Football Weather</a>
         <a href="https://mysportsweather.com/golf">PGA Tour Weather</a>
         <a href="https://mysportsweather.com/nascar">NASCAR Weather</a>
         <a href="/about">About</a>

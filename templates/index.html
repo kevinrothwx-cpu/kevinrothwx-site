@@ -1,7 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}{% if is_product_site %}Free MLB, PGA, NASCAR Weather Forecasts | MySportsWeather{% else %}Kevin Roth, Sports Meteorologist{% endif %}{% endblock %}
-{% block description %}{% if is_product_site %}Free live weather forecasts for every MLB game, NFL game, PGA Tour round, NASCAR race, and MLS match. Updated continuously from NWS data. Built by sports meteorologist Kevin Roth.{% else %}Kevin Roth is a professional sports meteorologist with 15+ years on the beat. Founder of OVERcast. Daily MLB Weather columnist on PropFinder. Daily forecasts at MySportsWeather.com.{% endif %}{% endblock %}
+{# Homepage title/description rewritten 2026-09-01 for football season.
+   The old title was "Free MLB, PGA, NASCAR Weather Forecasts" — it named
+   neither NFL nor college football, the two head terms we most want, so
+   the homepage could not rank for either. The old description was long
+   enough that Google truncated it and padded the SERP snippet with our
+   own nav text ("MLB baseball weather. Today's slate.").
+
+   Constraints these are written against:
+     - Title stays under ~60 chars so Google doesn't truncate or rewrite.
+     - Description stays under ~155 chars for the same reason.
+     - Both lead with the exact query phrases ("NFL ... Weather Forecasts",
+       "College Football ... Weather Forecasts") rather than brand, since
+       the domain already renders above the title in the SERP.
+
+   Do NOT make these seasonal/dynamic. Title instability is itself a
+   ranking negative — Google needs a stable string to trust. MLB keeps
+   its own head-term pages at /mlb and /mlb-weather. #}
+{% block title %}{% if is_product_site %}Free NFL, College Football & MLB Weather Forecasts{% else %}Kevin Roth, Sports Meteorologist{% endif %}{% endblock %}
+{% block description %}{% if is_product_site %}Hourly forecasts for every NFL and college football game, built for fantasy players and sports bettors by meteorologist Kevin Roth. Free and stadium-specific.{% else %}Kevin Roth is a professional sports meteorologist with 15+ years on the beat. Founder of OVERcast. Daily MLB Weather columnist on PropFinder. Daily forecasts at MySportsWeather.com.{% endif %}{% endblock %}
+
+{# The homepage had no og/twitter overrides, so every share of the root URL
+   fell back to base.html's generic "Kevin Roth, Sports Meteorologist" —
+   which says nothing about football. Every other sport hub already sets
+   these. Social cards are also increasingly what LLM crawlers read first. #}
+{% block og_title %}{% if is_product_site %}Free NFL, College Football & MLB Weather Forecasts{% else %}{{ site_name }}, {{ site_subtitle }}{% endif %}{% endblock %}
+{% block og_description %}{% if is_product_site %}Hourly, stadium-specific forecasts for every NFL and college football game — wind relative to the field, not just a compass reading. By meteorologist Kevin Roth.{% else %}Sports meteorologist. Founder of OVERcast.{% endif %}{% endblock %}
+{% block twitter_title %}{% if is_product_site %}Free NFL & College Football Weather Forecasts{% else %}{{ site_name }}, {{ site_subtitle }}{% endif %}{% endblock %}
+{% block twitter_description %}{% if is_product_site %}Every NFL and college football game, forecast by a real meteorologist. Built for fantasy players and bettors.{% else %}Sports meteorologist. Founder of OVERcast.{% endif %}{% endblock %}
 
 {% block content %}
 

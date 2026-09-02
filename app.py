@@ -2568,6 +2568,25 @@ def sitemap():
         except Exception as e:
             print(f"[sitemap] NFL dynamic URLs failed: {e}", flush=True)
 
+        # NCAAF per-game URLs across the cache window.
+        #
+        # These were MISSING entirely until 2026-09-01 — MLB, NFL, Prem and
+        # MLS all emitted per-game URLs and CFB did not, so ~87 game pages a
+        # week were discoverable only by crawling internal links from the
+        # /ncaaf hub. That is the single largest indexation gap on the site
+        # during football season, and it maps directly to the long-tail
+        # "<team> vs <team> weather" queries we want.
+        try:
+            cfb_games, _ = get_cfb_slate(allow_build=False)
+            if cfb_games:
+                for g in cfb_games:
+                    d_iso = g.get("kickoff_date_eastern")
+                    slug = g.get("slug")
+                    if d_iso and slug:
+                        dynamic_urls.append((f"/ncaaf/{d_iso}/{slug}", "0.75", "hourly"))
+        except Exception as e:
+            print(f"[sitemap] NCAAF dynamic URLs failed: {e}", flush=True)
+
         # Premier League per-match URLs. Slate covers ~7 days; emit a
         # /prem/<date>/<slug> URL per match so each is independently
         # indexable. Off-season returns an empty list, which is fine.
@@ -2733,14 +2752,29 @@ def llms_txt():
         f"- [NASCAR Cup Series]({base}/nascar): Race-day forecasts for every Cup round.\n"
         f"- [MLS]({base}/mls): Major League Soccer match weather for all 29 venues, with retractable-roof flags for Atlanta and Vancouver.\n"
         f"- [Grand Slam Tennis]({base}/tennis): Wimbledon, US Open, Australian Open, Roland-Garros — only active during Slam weeks.\n"
-        f"- [College Football]({base}/ncaaf): FBS coverage launching August 29, 2026 (Week 1).\n"
-        f"- [NFL]({base}/nfl): Game-day forecasts for every preseason, regular-season, and playoff game across all 32 stadiums. Indoor venues flagged; retractable-roof toggles for Atlanta, Dallas, Houston, Indianapolis, Arizona.\n\n"
+        f"- [College Football]({base}/ncaaf): Every FBS game, all 134 teams. Kickoff-hour temperature, wind, and precipitation at each stadium, plus wind direction relative to that field's actual compass orientation. Domes flagged. Over/under totals with opening-line movement.\n"
+        f"- [NFL]({base}/nfl): Game-day forecasts for every preseason, regular-season, and playoff game across all 32 stadiums. Indoor venues flagged; retractable-roof toggles for Atlanta, Dallas, Houston, Indianapolis, Arizona. Wind shown relative to field orientation, and over/under totals frozen at kickoff.\n\n"
         "## About\n\n"
         f"- [About Kevin Roth]({base}/about): Background, credentials, press citations.\n"
         f"- [OVERcast]({base}/overcast): Kevin's professional sports betting app with park-tuned weather impact scoring.\n\n"
+        "## What makes these forecasts different\n\n"
+        "Most sports-weather pages print a temperature and a rain percentage "
+        "pulled from a generic weather API at the venue's zip code. These "
+        "forecasts differ in three specific ways:\n\n"
+        "1. **Wind is field-relative.** Every stadium's true compass orientation "
+        "is stored, so a 15 mph wind is reported as a crosswind or as blowing "
+        "toward a specific end zone — not just \"WNW 15.\" Direction relative to "
+        "the field is what actually affects kicking and passing; raw compass "
+        "direction is not.\n"
+        "2. **Forecasts freeze at kickoff.** The number shown for a game in "
+        "progress is the last pre-kickoff forecast, not a live reading that "
+        "drifts, so it stays comparable to the line that was bet.\n"
+        "3. **A meteorologist writes the notes.** Kevin adds written analysis "
+        "when weather will actually change a game, and does not manufacture a "
+        "narrative when it will not.\n\n"
         "## Evergreen Reference\n\n"
         f"- [MLB Weather Guide]({base}/mlb-weather): How weather affects baseball.\n"
-        f"- [NFL Weather Guide]({base}/nfl-weather): How weather affects football.\n"
+        f"- [NFL Weather Guide]({base}/nfl-weather): How weather affects football — wind thresholds for the passing and kicking game, cold-weather ball behavior, dome-to-outdoor splits.\n"
         f"- [PGA Weather Guide]({base}/pga-weather): How weather affects golf.\n\n"
         "## Author\n\n"
         "Kevin Roth is a professional sports meteorologist. "
@@ -3516,6 +3550,21 @@ def _msw_all_url_paths() -> list[str]:
                     paths.append(f"/nfl/{d_iso}/{slug}")
     except Exception as e:
         print(f"[indexnow] NFL dynamic URLs failed: {e}", flush=True)
+
+    # NCAAF per-game URLs — same gap as the sitemap had (fixed 2026-09-01).
+    # IndexNow is how Bing/Yandex learn about a URL within minutes instead
+    # of waiting for a crawl, which matters most for game pages that are
+    # only relevant for a few days.
+    try:
+        cfb_games, _ = get_cfb_slate(allow_build=False)
+        if cfb_games:
+            for g in cfb_games:
+                d_iso = g.get("kickoff_date_eastern")
+                slug = g.get("slug")
+                if d_iso and slug:
+                    paths.append(f"/ncaaf/{d_iso}/{slug}")
+    except Exception as e:
+        print(f"[indexnow] NCAAF dynamic URLs failed: {e}", flush=True)
 
     # Premier League per-match URLs
     try:
