@@ -426,10 +426,31 @@ def inject_globals():
     # (e.g. Wednesday PGA prime slot on the homepage — Wednesday is our
     # tournament-preview day since PGA Tour rounds start Thursday).
     is_wednesday_eastern = datetime.now(EASTERN_TZ).weekday() == 2
+
+    # Is there actually a PGA tournament to preview?
+    #
+    # The Wednesday prime slot used to be gated on the weekday ALONE, so on
+    # an off week it advertised "This week's PGA Tour weather preview" and
+    # linked to an empty page. The Tour has bye weeks and a long off-season,
+    # so that fires often and looks broken.
+    #
+    # allow_build=False on purpose: this runs on EVERY page render via the
+    # context processor. Triggering a synchronous slate rebuild here would
+    # put a golf API fetch in the critical path of every request on the
+    # site. The warmer keeps the cache fresh; a cold cache just hides the
+    # slot for one cycle, which is the safe direction to fail.
+    pga_has_event = False
+    try:
+        _golf_slate, _ = get_pga_slate(allow_build=False)
+        pga_has_event = bool(_golf_slate)
+    except Exception:
+        pass
+
     return {
         "current_year":     datetime.utcnow().year,
         "ga_measurement_id": ga_id,
         "is_wednesday_eastern": is_wednesday_eastern,
+        "pga_has_event":    pga_has_event,
         **brand,
     }
 

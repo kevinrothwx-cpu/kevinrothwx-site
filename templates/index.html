@@ -93,10 +93,17 @@
        Cup used to occupy during the World Cup run. Toggled by
        is_wednesday_eastern from the inject_globals context processor
        (America/New_York). PGA rounds start Thursday, so Wednesday is
-       when a tournament-preview lift has the most user value. #}
+       when a tournament-preview lift has the most user value.
+
+       pga_has_event is the second half of the gate and is NOT optional:
+       the Tour has bye weeks and an off-season, and this slot used to
+       show on any Wednesday regardless — advertising "this week's
+       preview" and linking to an empty page. When there is no
+       tournament we fall through to the spotlight / single-column
+       hero below, exactly as on a non-Wednesday. #}
   <section class="home-hero">
     <div class="container">
-      {% if is_wednesday_eastern %}
+      {% if is_wednesday_eastern and pga_has_event %}
       <div class="home-hero__row">
         <div class="home-hero__intro">
           <p class="kicker kicker-storm">Free · Updated continuously · National Weather Service data</p>
@@ -124,8 +131,9 @@
         </aside>
       </div>
       {% elif spotlight %}
-      {# Weather Spotlight takes the right slot on non-Wednesday days.
-         On Wednesdays the PGA prime slot wins (above). If no spotlight
+      {# Weather Spotlight takes the right slot on non-Wednesday days, and
+         on Wednesdays during a PGA bye week. On Wednesdays WITH a
+         tournament the PGA prime slot wins (above). If no spotlight was
          picked (boring-weather day), fall through to the single-column
          hero below. #}
       <div class="home-hero__row">
