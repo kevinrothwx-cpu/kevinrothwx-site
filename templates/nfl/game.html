@@ -115,18 +115,46 @@
 {% set is_retractable = game.venue_meta and game.venue_meta.roof_type == "retractable" %}
 <article class="game-page">
   <p class="game-page__kicker">NFL Weather · {{ pretty_date }}</p>
+  {# Each team wrapped in .matchup-team (MLB already did this) so the logo can
+     never be orphaned onto a different line from its own team name, and the
+     at/@ lives INSIDE the away team so it stays on that line when mobile
+     stacks one team per row. Desktop renders identically — it is all
+     inline-flex in a single wrapping row either way. #}
   <h1 class="game-page__title">
-    {% if game.away.logo %}<img class="matchup-logo" src="{{ game.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
-    <span>{{ game.away.short }}</span>
-    <span class="matchup-at">at</span>
-    {% if game.home.logo %}<img class="matchup-logo" src="{{ game.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
-    <span>{{ game.home.short }}</span>
+    <span class="matchup-team">
+      {% if game.away.logo %}<img class="matchup-logo" src="{{ game.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
+      <span>{{ game.away.short }}</span>
+      <span class="matchup-at"><span class="matchup-at__word">at</span><span class="matchup-at__sym">@</span></span>
+    </span>
+    <span class="matchup-team">
+      {% if game.home.logo %}<img class="matchup-logo" src="{{ game.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
+      <span>{{ game.home.short }}</span>
+    </span>
   </h1>
+  {# Meta line split into spans so mobile can drop the parts that the fact
+     row below now covers, without touching what desktop shows. #}
   <p class="game-page__meta">
-    {{ game.venue }}, {{ game.venue_meta.city if game.venue_meta else "" }} · Kickoff {{ game.kickoff_eastern_str }}
+    <span class="gp-meta__venue">{{ game.venue }}, {{ game.venue_meta.city if game.venue_meta else "" }}</span><span class="gp-meta__rest"> · Kickoff {{ game.kickoff_eastern_str }}
     {% if is_retractable %} · Retractable roof{% endif %}
-    {% if is_dome %} · Indoor venue{% endif %}
+    {% if is_dome %} · Indoor venue{% endif %}</span>
   </p>
+  {# Kickoff / Total / Venue, matching the layout Kevin picked.
+     game.odds IS available here (the detail route does out = dict(g), so it
+     survives the wc-shape aliasing) even though this page never rendered it
+     before. Shows the real total when a book posted one and a dash when not,
+     so the cell holds its place either way rather than the row reflowing
+     between two and three cells. #}
+  {% set gp_facts = [
+       {"label": "Kickoff", "value": game.kickoff_eastern_str},
+       {"label": "Total",
+        "value": (game.odds.current if game.odds and game.odds.current else "—"),
+        "sub": ("Opened " ~ game.odds.opening ~ (" " ~ game.odds.delta_str if game.odds.delta_str and game.odds.delta_str != "0" else "")
+                if game.odds and game.odds.opening else none)},
+       {"label": "Venue",
+        "value": ("Fixed dome" if is_dome else ("Retractable" if is_retractable else "Open-air")),
+        "sub": ("Weather has no effect" if is_dome else none)},
+     ] %}
+  {% include "_game_facts.html" with context %}
 
   {% if is_dome %}
     <section class="stadium-notes">

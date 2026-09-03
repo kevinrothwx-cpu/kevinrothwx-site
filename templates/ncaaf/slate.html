@@ -29,7 +29,16 @@
   .date-header__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); font-weight: 500; }
 
   /* CFB-specific cheat-card overrides on top of existing .cheat-card styles */
+  /* minmax(0, 1fr) not 1fr.
+     A bare `1fr` will not shrink a column below its content's min-content
+     width, so a single wide card drags the whole grid open. That is what
+     made the Saturday rows sit wider and off-centre versus every other
+     day: Saturday is the only day with DOME games, and a dome card packs
+     time + DOME badge + city on one nowrap line (min-content 209px vs
+     ~152px for a normal card). minmax(0, …) lets the column hold its
+     share and forces the content to ellipsis instead. */
   .cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; align-items: start; }
+  .cheat-row > * { min-width: 0; }
   .cheat-card--cfb {
     display: flex; flex-direction: column;
     background: var(--white); border: 1px solid var(--mist);
@@ -170,7 +179,7 @@
     /* !important as belt-and-suspenders — we've been fighting inline vs
        external stylesheet specificity + edge-cached HTML on this rule.
        Force 2 columns unambiguously on phones regardless of cache state. */
-    .ncaaf-page .cheat-row { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
+    .ncaaf-page .cheat-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 0.5rem !important; }
     .cheat-card--cfb { padding: 0.55rem 0.5rem 0.65rem; }
     .cheat-card--cfb .cheat-card__teams { gap: 0.35rem; padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
     .cheat-card--cfb .cheat-card__logo { width: 20px; height: 20px; }
@@ -365,11 +374,15 @@
 </script>
 {% endif %}
 
-{# Internal-link block for this sport's evergreen landing pages.
-   Added 2026-09-02: those pages were orphans (nothing on the site linked
-   to them), so Google discovered them from the sitemap and then left them
-   in "Discovered - currently not indexed". See landing_index.py. #}
-{% set landing_sport = "ncaaf" %}
-{% include "_landing_index.html" with context %}
+{# The 134-venue link block was REMOVED from this page 2026-09-02 per Kevin:
+   134 links at ~15px row height is a bad tap target and a very long scroll
+   on a phone, and it earns its keep as pages people find via Google rather
+   than as a directory readers browse.
+
+   The pages themselves are unaffected — still live, still in the sitemap,
+   still in IndexNow. If Search Console shows them stalling in "Discovered,
+   currently not indexed", the orphan problem is back and the fix is a
+   smaller curated set of links (a handful of notable venues), not dumping
+   all 134 back onto the slate. #}
 
 {% endblock %}

@@ -1432,3 +1432,244 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   color: var(--fog, #6b7280);
   letter-spacing: .01em;
 }
+
+/* ── Mobile sport-nav: guarantee the core four fit (2026-09-02) ───────────
+   At 375px the nav measured 747px wide against a 375px viewport. It has
+   overflow-x:auto so it scrolled, but with no visible affordance — so on a
+   phone only MLB/NFL/PGA/NCAAF were reachable and the rest were invisible
+   rather than merely off-screen.
+
+   Kevin's call: the core four matter more than the tail, so DON'T shrink
+   them to make room. Instead tighten horizontal padding just enough that
+   all four clear a 360px viewport, keep the rest scrollable, and add a
+   right-edge fade so the scroll is discoverable.
+
+   Deliberately not hiding NASCAR/MLS/Tennis: the mobile menu does not list
+   MLS or Tennis, so hiding them here would make those sections
+   unreachable on a phone entirely. */
+@media (max-width: 600px) {
+  .sport-nav {
+    position: relative;
+  }
+  .sport-nav__inner {
+    padding: 0 0.85rem;
+    /* Fade the right edge to signal more content. mask keeps the fade
+       tied to the scroller itself, so it does not sit over page content
+       and cannot intercept taps. */
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+            mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+  }
+  .sport-nav__item {
+    padding: 0.85rem 0.62rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.045em;
+  }
+  .sport-nav__count {
+    margin-left: 0.28rem;
+    padding: 0.05rem 0.34rem;
+    font-size: 0.64rem;
+  }
+}
+
+/* ── Mobile: CFB card type sizes (2026-09-02) ─────────────────────────────
+   Measured on the live page at 375px, these were rendering at:
+     kickoff time   9.6px   <- primary information
+     venue / city   8.96px
+     wind + precip  9.92px
+     O/U total      10.88px
+   Under ~11px is uncomfortable on a phone. Kevin wants 2 cards per row
+   kept, so the card stays ~184px wide and the fix is type, not layout.
+   Bumped modestly and only where it does not force a reflow: the wx row
+   keeps nowrap, so anything too large would clip rather than wrap. */
+@media (max-width: 600px) {
+  .ncaaf-page .cheat-card--cfb .cheat-card__time { font-size: 0.76rem; }
+  .ncaaf-page .cheat-card__location { font-size: 0.7rem; }
+  .ncaaf-page .wx-stat__secondary { font-size: 0.8rem; }
+  .ncaaf-page .cheat-card__odds { font-size: 0.76rem; }
+  .ncaaf-page .cheat-card__odds-total { font-size: 0.86rem; }
+  .ncaaf-page .cheat-card__odds-open { font-size: 0.74rem; }
+  .ncaaf-page .cheat-card--cfb .cheat-card__badge { font-size: 0.62rem; }
+  /* Slightly tighter card padding buys back the height the larger type
+     costs, so rows do not get taller overall. */
+  .ncaaf-page .cheat-card--cfb { padding: 0.6rem 0.7rem 0.7rem; }
+}
+
+/* ── Game-page header: mobile layout (2026-09-02) ─────────────────────────
+   MOBILE ONLY, by Kevin's explicit instruction. Desktop was fine; the
+   phone header was the problem — venue + city + kickoff + roof ran together
+   as one sentence, and header height jumped depending on whether the team
+   names wrapped to two lines or one, which also shoved the logos around.
+
+   Layout below 600px:
+     one team per line, logo locked to its own team name
+     a stylised @ after the away team, on that same line
+     kickoff / total / venue as a labelled 3-cell row
+   Desktop keeps the single wrapping matchup row and the full meta line. */
+
+/* Desktop: the @ is hidden, "at" shows, fact row is not rendered at all. */
+.matchup-at__sym { display: none; }
+.gp-facts { display: none; }
+
+@media (max-width: 600px) {
+  .game-page__title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.05rem;
+    /* Smaller than the desktop clamp floor. The desktop clamp bottoms out
+       at 1.85rem, which is too large for "San Francisco 49ers" to sit on
+       one line at 375px. */
+    font-size: 1.32rem;
+    line-height: 1.22;
+    margin: 0.45rem 0 0.4rem;
+  }
+  /* nowrap on .matchup-team (already set globally) is what keeps the logo
+     bound to its team. Long names shrink via the font-size above rather
+     than wrapping, which is what caused the ragged two-line headers. */
+  .game-page__title .matchup-team { max-width: 100%; }
+  .matchup-logo { width: 1.25em; height: 1.25em; }
+
+  /* Stylised @ — slightly larger than the words either side, per Kevin. */
+  .matchup-at__word { display: none; }
+  .matchup-at__sym {
+    display: inline;
+    font-family: var(--font-serif);
+    font-size: 1.15em;
+    font-weight: 400;
+    color: var(--fog);
+    letter-spacing: 0;
+    line-height: 1;
+    margin-left: 0.12em;
+    vertical-align: -0.04em;
+  }
+  .matchup-at { padding: 0; }
+
+  /* Meta line keeps the venue only; kickoff + roof move to the fact row. */
+  .gp-meta__rest { display: none; }
+  .game-page__meta {
+    font-size: 0.88rem;
+    margin-bottom: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 0;
+  }
+
+  .gp-facts {
+    display: flex;
+    border-top: 1px solid var(--mist);
+    border-bottom: 1px solid var(--mist);
+    margin: 0 0 1.5rem;
+    padding: 0.7rem 0;
+  }
+  .gp-facts__cell {
+    flex: 1 1 0;
+    min-width: 0;          /* so a long value ellipsises instead of forcing
+                              the row wider than the viewport */
+    padding: 0 0.7rem;
+  }
+  .gp-facts__cell:first-child { padding-left: 0; }
+  .gp-facts__cell:last-child { padding-right: 0; }
+  .gp-facts__cell + .gp-facts__cell { border-left: 1px solid var(--mist); }
+  .gp-facts__lbl {
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fog);
+    margin: 0 0 0.22rem;
+  }
+  .gp-facts__val {
+    font-family: var(--font-serif);
+    font-size: 1.0rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gp-facts__sub {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    color: var(--ash);
+    margin: 0.12rem 0 0;
+    line-height: 1.3;
+  }
+}
+
+/* ── Mobile: fit the hourly table without a scrollbar (2026-09-02) ────────
+   Measured at 375px: .hourly had 327px available but 353px of content, so
+   the last column clipped and you had to scroll a table you could almost
+   see all of.
+
+   Arithmetic: the label column ("WIND DIR", nowrap) took ~70px, and each
+   hour column had min-width 56px. Six hour columns = 406px. Tightening the
+   label column to ~52px and hour columns to 42px puts six columns at
+   ~304px, which fits.
+
+   overflow-x: auto is deliberately KEPT. Seven or more hour columns cannot
+   fit at any reasonable width, so longer windows still scroll rather than
+   clip. Kevin's call was "no scroll if it can be done stylishly" — this
+   removes it for the common case and degrades gracefully past that. */
+@media (max-width: 600px) {
+  .hourly__table { font-size: 0.78rem; }
+  .hourly__label-col,
+  .hourly__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    padding: 0.4rem 0.45rem 0.4rem 0;
+  }
+  .hourly__hour-col {
+    min-width: 42px;
+    padding: 0.45rem 0.18rem 0.35rem;
+  }
+  .hourly__cell { padding: 0.36rem 0.18rem; }
+  .hourly__sky svg,
+  .hourly__sky img { width: 24px; height: 24px; }
+  .hourly__time { font-size: 0.68rem; }
+}
+
+/* ── Mobile: shorter footer (2026-09-02) ──────────────────────────────────
+   Measured 579px tall at 375px — close to a full screen of chrome under
+   every page. The height came from a 6rem top margin plus 3rem top padding
+   plus 2rem grid gaps, all sized for the desktop three-column layout that
+   does not apply below 640px anyway. */
+@media (max-width: 600px) {
+  .site-footer { margin-top: 2.5rem; }
+  .site-footer__inner {
+    padding: 1.6rem 1.25rem 1.1rem;
+    gap: 1.15rem;
+    font-size: 0.86rem;
+  }
+  .site-footer h4 { margin-bottom: 0.45rem; font-size: 0.7rem; }
+  .site-footer p { margin-bottom: 0.35rem; line-height: 1.5; }
+  .site-footer li { margin-bottom: 0.5rem; }   /* up slightly: tap targets */
+  .site-footer__copy { padding: 0.8rem 1.25rem; }
+}
+
+/* ── Mobile: "Example" stamp on the OVERcast screenshot (2026-09-02) ──────
+   The caption under the shot is easy to scroll past on a phone, and the
+   numbers in the screenshot are real, so a reader could reasonably take
+   them for today's game. A diagonal watermark across the image would be
+   ugly and would obscure the product; a small corner pill reads clearly
+   without covering anything that matters. The caption stays as well —
+   this is belt and braces, not a replacement. */
+@media (max-width: 600px) {
+  .oc-tease__shot { position: relative; }
+  .oc-tease__shot::after {
+    content: "Example";
+    position: absolute;
+    top: calc(.5rem + 6px);
+    left: calc(.55rem + 6px);
+    font-family: var(--font-sans);
+    font-size: .58rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(17, 24, 39, .72);
+    border-radius: 3px;
+    padding: .16rem .38rem;
+    line-height: 1.25;
+    pointer-events: none;
+  }
+}

@@ -185,18 +185,39 @@
 {% set _roof = game.venue.roof or game.venue.roof_type %}
 <article class="game-page">
   <p class="game-page__kicker">NCAAF Weather · {{ pretty_date }}</p>
+  {# Each team wrapped in .matchup-team (MLB already did this) so the logo can
+     never be orphaned onto a different line from its own team name, and the
+     at/@ lives INSIDE the away team so it stays on that line when mobile
+     stacks one team per row. Desktop renders identically. #}
   <h1 class="game-page__title">
-    {% if game.away.logo_url %}<img class="matchup-logo" src="{{ game.away.logo_url }}" alt="" loading="lazy">{% endif %}
-    <span>{{ game.away.short }}</span>
-    <span class="matchup-at">at</span>
-    {% if game.home.logo_url %}<img class="matchup-logo" src="{{ game.home.logo_url }}" alt="" loading="lazy">{% endif %}
-    <span>{{ game.home.short }}</span>
+    <span class="matchup-team">
+      {% if game.away.logo_url %}<img class="matchup-logo" src="{{ game.away.logo_url }}" alt="" loading="lazy">{% endif %}
+      <span>{{ game.away.short }}</span>
+      <span class="matchup-at"><span class="matchup-at__word">at</span><span class="matchup-at__sym">@</span></span>
+    </span>
+    <span class="matchup-team">
+      {% if game.home.logo_url %}<img class="matchup-logo" src="{{ game.home.logo_url }}" alt="" loading="lazy">{% endif %}
+      <span>{{ game.home.short }}</span>
+    </span>
   </h1>
+  {# Meta line split so mobile can drop what the fact row below covers,
+     without altering what desktop shows. #}
   <p class="game-page__meta">
-    {{ game.venue.name }}, {{ game.venue.city }} · Kickoff {{ game.kickoff_eastern_str }}
+    <span class="gp-meta__venue">{{ game.venue.name }}, {{ game.venue.city }}</span><span class="gp-meta__rest"> · Kickoff {{ game.kickoff_eastern_str }}
     {% if _roof == "retractable" %} · Retractable roof{% endif %}
-    {% if _roof == "fixed_dome" %} · Domed venue{% endif %}
+    {% if _roof == "fixed_dome" %} · Domed venue{% endif %}</span>
   </p>
+  {% set gp_facts = [
+       {"label": "Kickoff", "value": game.kickoff_eastern_str},
+       {"label": "Total",
+        "value": (game.odds.current if game.odds and game.odds.current else "—"),
+        "sub": ("Opened " ~ game.odds.opening ~ (" " ~ game.odds.delta_str if game.odds.delta_str and game.odds.delta_str != "0" else "")
+                if game.odds and game.odds.opening else none)},
+       {"label": "Venue",
+        "value": ("Fixed dome" if _roof == "fixed_dome" else ("Retractable" if _roof == "retractable" else "Open-air")),
+        "sub": ("Weather has no effect" if _roof == "fixed_dome" else none)},
+     ] %}
+  {% include "_game_facts.html" with context %}
 
   {# ── Summary panel — 2x2 grid of temp / rain / wind / stadium field.
        Mirrors the MLB/NFL detail-page pattern so all sports feel cohesive.
