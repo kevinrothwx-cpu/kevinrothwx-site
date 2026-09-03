@@ -30,6 +30,18 @@
    their wide shots for now; drop in portrait captures and they improve
    with no template change, just new files at the same names.
 
+   IT MUST READ AS AN AD. Kevin's wife pointed out that the card looked
+   like part of the page, which is deceptive even though the product is
+   Kevin's own: a reader should never click something believing it is site
+   content and land on a paywall. Three things carry that, and none of
+   them should be quietly removed later:
+     - an explicit "Ad" label chip
+     - a tinted background and heavier border, so it reads as a distinct
+       unit rather than an article section
+     - the destination domain stated in the small print, plus an outbound
+       arrow rather than the inline one used elsewhere on the site
+   tease_label overrides the chip wording if "Ad" ever feels wrong.
+
    The "Example game" line is required, not decoration. The screenshot
    shows real numbers from a real past game, and a reader could easily
    take them for today's. Saying so plainly is the honest thing and it
@@ -41,7 +53,7 @@
   {% set _wide2x = "/static/img/oc-cfb-wide@2x.jpg" %}
   {% set _narrow = "/static/img/oc-cfb-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-cfb-wide@2x.jpg" %}
-  {% set _w = 483 %}{% set _h = 205 %}
+  {% set _w = 555 %}{% set _h = 236 %}
   {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
   {% set _alt = "OVERcast college football view showing an expanded game with the forecast, how the wind sits relative to the field, weather impact on scoring, passing yards, field goals and fumbles, and how similar games finished against their closing total." %}
 {% elif _sport == "nfl" %}
@@ -49,7 +61,7 @@
   {% set _wide2x = "/static/img/oc-nfl-wide@2x.jpg" %}
   {% set _narrow = "/static/img/oc-nfl-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-nfl-wide@2x.jpg" %}
-  {% set _w = 483 %}{% set _h = 220 %}
+  {% set _w = 555 %}{% set _h = 252 %}
   {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
   {% set _alt = "OVERcast NFL game view showing the forecast, weather impact on total points, pass yards and field goals, and fantasy impact by position." %}
 {% else %}
@@ -57,7 +69,7 @@
   {% set _wide2x = "/static/img/oc-mlb-wide@2x.jpg" %}
   {% set _narrow = "/static/img/oc-mlb-square.jpg" %}
   {% set _narrow2x = "/static/img/oc-mlb-square@2x.jpg" %}
-  {% set _w = 483 %}{% set _h = 172 %}
+  {% set _w = 555 %}{% set _h = 198 %}
   {% set _default_sub = "See how weather impacts runs, home runs and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
   {% set _alt = "OVERcast game view showing the forecast, wind direction relative to the field, and weather impact on runs, home runs and strikeouts." %}
 {% endif %}
@@ -66,7 +78,8 @@
 {% set _place = tease_placement | default(_sport ~ "-tease") %}
 {% set _href = "https://app.kevinrothwx.com/?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_tease&utm_content=" ~ _place %}
 
-<a href="{{ _href }}" class="oc-tease" rel="noopener">
+<a href="{{ _href }}" class="oc-tease" rel="noopener"
+   aria-label="OVERcast, Kevin's subscription app. {{ _sub }} Opens app.kevinrothwx.com.">
   <span class="oc-tease__shot">
     <picture>
       <source media="(max-width: 600px)" srcset="{{ _narrow }} 1x, {{ _narrow2x }} 2x">
@@ -76,16 +89,24 @@
     </picture>
   </span>
   <span class="oc-tease__body">
-    {% if tease_coming_soon %}
-      <span class="oc-tease__badge">Coming soon</span>
-    {% endif %}
-    <span class="oc-tease__sub">{{ _sub }}<span class="oc-tease__arrow">&rarr;</span></span>
+    {# Eyebrow makes it unmistakable that this is a promo for a paid
+       product, not another forecast panel. Deliberately NOT labelled
+       "Sponsored" or "Ad": this is Kevin's own product, and those words
+       imply paid third-party placement, which would be inaccurate in the
+       other direction. Naming the product and the fact that it costs
+       money is the honest version. #}
+    <span class="oc-tease__eyebrow">
+      <span class="oc-tease__eyebrow-label">OVERcast &middot; Kevin's subscription app</span>
+      {% if tease_coming_soon %}<span class="oc-tease__badge">Coming soon</span>{% endif %}
+    </span>
+    <span class="oc-tease__sub">{{ _sub }}<span class="oc-tease__arrow" aria-hidden="true">&#8599;</span></span>
     <span class="oc-tease__note">
       {%- if tease_coming_soon -%}
         Example slate. {{ _sport | upper }} coverage on OVERcast launches shortly; MLB is available now.
       {%- else -%}
         Example game. Not today's data.
       {%- endif -%}
+      <span class="oc-tease__domain">app.kevinrothwx.com</span>
     </span>
   </span>
 </a>

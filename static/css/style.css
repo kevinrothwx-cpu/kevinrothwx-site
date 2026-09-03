@@ -1295,10 +1295,15 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   border: 1px solid var(--mist, #e5e7eb);
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  /* Tinted, not white. The card previously matched the page background
+     exactly, which is what made it read as another content panel rather
+     than a promo. A tint plus the accent bar below is the minimum that
+     says "this is an ad and it leaves the site". */
+  background: #f7f9fc;
   text-decoration: none;
   color: inherit;
   margin: 0 0 2rem;
+  position: relative;
   transition: box-shadow .14s ease, transform .14s ease, border-color .14s ease;
 }
 .oc-tease:hover,
@@ -1310,28 +1315,35 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .oc-tease:focus-visible { outline: 2px solid var(--storm, #1e3a8a); outline-offset: 2px; }
 
 .oc-tease__shot {
-  flex: 0 0 50%;
-  max-width: 500px;
+  flex: 0 0 57%;
+  max-width: 580px;
   display: block;
-  background: #12203a;   /* matches the screenshot header so any
-                            letterboxing reads as intentional */
+  /* Transparent so the card's own tint runs edge to edge. This used to
+     be dark navy to match the screenshot's header, which worked while the
+     image was cropped edge-to-edge by object-fit:cover. Once we switched
+     to `contain` to stop cropping the data, that dark block became visible
+     letterboxing above and below the shot and made the card look like two
+     mismatched halves. */
+  background: transparent;
   line-height: 0;
+  padding: .85rem 0 .85rem .85rem;
+  box-sizing: border-box;
 }
-.oc-tease__shot picture,
-.oc-tease__shot img { display: block; width: 100%; height: 100%; }
-.oc-tease__shot img { object-fit: cover; }
+.oc-tease__shot picture { display: flex; align-items: center; width: 100%; height: 100%; }
+.oc-tease__shot img { display: block; width: 100%; height: auto; border-radius: 6px; }
+.oc-tease__shot img { object-fit: contain; }
 
 .oc-tease__body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 1.15rem 1.45rem;
+  padding: 1.3rem 1.65rem;
   min-width: 0;
 }
 .oc-tease__badge {
   align-self: flex-start;
   font-family: var(--font-sans);
-  font-size: .74rem;
+  font-size: .85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .07em;
@@ -1344,7 +1356,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 }
 .oc-tease__sub {
   font-family: var(--font-serif);
-  font-size: 1.17rem;
+  font-size: 1.34rem;
   line-height: 1.4;
   color: var(--ink, #111827);
   font-weight: 500;
@@ -1352,7 +1364,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .oc-tease__arrow { margin-left: .35em; color: var(--storm, #1e3a8a); white-space: nowrap; }
 .oc-tease__note {
   font-family: var(--font-sans);
-  font-size: .8rem;
+  font-size: .92rem;
   color: var(--fog, #6b7280);
   margin-top: .5rem;
 }
@@ -1362,6 +1374,40 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 @media (max-width: 600px) {
   .oc-tease { flex-direction: column; }
   .oc-tease__shot { flex: none; max-width: none; width: 100%; }
-  .oc-tease__body { padding: .98rem 1.15rem 1.15rem; }
-  .oc-tease__sub { font-size: 1.09rem; }
+  .oc-tease__body { padding: 1.1rem 1.3rem 1.3rem; }
+  .oc-tease__sub { font-size: 1.25rem; }
 }
+
+/* Promo labelling (added 2026-09-02 after feedback that the card read as
+   page content rather than an ad). Three signals, all small:
+     1. eyebrow naming the product and that it is a paid subscription
+     2. an outbound arrow instead of a forward arrow
+     3. the destination domain printed in the small print
+   Not labelled "Sponsored": this is Kevin's own product, and that word
+   implies paid third-party placement. */
+.oc-tease__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .5rem;
+}
+.oc-tease__eyebrow-label {
+  font-family: var(--font-sans);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--storm, #1e3a8a);
+  background: #e8eefb;
+  border-radius: 3px;
+  padding: .2rem .5rem;
+}
+.oc-tease__domain {
+  display: block;
+  margin-top: .18rem;
+  font-size: .95em;
+  color: var(--fog, #6b7280);
+}
+.oc-tease__domain::before { content: "\2197\00a0"; }
+

@@ -174,39 +174,59 @@ The 60 MLB pages (stadiums + teams) have some earlier-drafted numeric climate cl
 
 ## ACTIVE list — Sept 2026 (use these numbers when talking to Kevin)
 
-Kevin refers to these as 1-12. The task-tool IDs in parentheses are
-auto-assigned and meaningless to him — don't surface them.
+The task tool's list was wiped mid-session on 2026-09-02. THIS FILE is the
+source of truth now. Keep it current; do not rely on the task tool.
 
-Ordered by priority. 1-2 are calendar-driven, 3-5 are NFL launch,
-6-7 unlock once affiliates approve, 8-12 are quality + infra.
+Ordered by priority.
 
-| # | Task | tool id |
-|---|------|---------|
-| 1 | Apply for DraftKings + FanDuel affiliates | #59 |
-| 2 | Stop pruning the odds closing-line archive (168h) | #68 |
-| 3 | NFL per-game detail pages: polish or redirect | #56 |
-| 4 | Full mobile formatting pass across all sports | #58 |
-| 5 | OVERcast promo card on MLB/NFL/CFB slates | #57 |
-| 6 | Hyperlink O/U totals to sportsbook (click-to-bet) | #61 |
-| 7 | GA4 event tracking on outbound + CTA clicks | #60 |
-| 8 | Evaluate whether NBM is additive vs NWS | #62 |
-| 9 | Copy cleanup: stale admin text + NASCAR meta tags | #64 |
-| 10 | Editorial workflow smoke test across all sports | #65 |
-| 11 | Automate the Postgres backup export | #66 |
-| 12 | Regenerate sitemap when a write-up is published | #67 |
+| # | Task | Owner |
+|---|------|-------|
+| 1 | Apply for DK + FD affiliates / prediction markets | Kevin |
+| 2 | Full mobile formatting pass across all sports | Claude |
+| 3 | NFL per-game detail pages: polish or redirect | Claude |
+| 4 | Structured data on slate hub pages (/ncaaf, /nfl, /mlb) | Claude |
+| 5 | /college-football-weather evergreen guide | Claude |
+| 6 | Send OVERcast Live the NWS handoff doc | Kevin |
+| 7 | Verify indexation in Search Console (check ~Sept 5 and ~Sept 16) | Kevin |
+| 8 | Hyperlink O/U totals to sportsbook (blocked on #1) | Claude |
+| 9 | GA4 event tracking on outbound + CTA clicks | Claude |
+| 10 | Evaluate whether NBM is additive vs NWS | Claude |
+| 11 | Editorial workflow smoke test across all sports | Claude |
+| 12 | Copy cleanup: stale admin text + NASCAR meta tags | Claude |
+| 13 | Automate the Postgres backup export | Claude |
+| 14 | Regenerate sitemap when a write-up is published | Claude |
+| 15 | Review the 19 "Not found (404)" URLs in Search Console | Kevin |
 
-**Why 1 and 2 are urgent (both are pure calendar, not difficulty):**
-- #1: affiliate approval takes 2-4 weeks. Applying in September means
-  approval around Week 3-4; every week of delay eats the NFL window,
-  which is the only stretch where football traffic actually converts.
-- #2: the 168h prune permanently deletes closing lines. Can't be
-  backfilled. Now more valuable since the API exposes total_opening +
-  the kickoff-frozen total, so OVERcast can consume CLV data live.
+**#1 is calendar-driven.** Affiliate approval takes 2-4 weeks, so every
+week of delay eats the NFL window. NOTE: DK and FD launched CFTC-regulated
+prediction markets that are separate standalone apps, so an existing
+sportsbook user does NOT have a Predicts account — that materially improves
+the conversion case vs the sportsbook affiliate programs. Sports contracts
+are only live in ~17-18 states though; confirm TX and CA before building a
+plan around the geographic argument.
 
-**Business context driving all of it:** Kevin is deciding whether to end
-a $3,000/mo PropFinder contract that requires keeping his written
-forecasts OFF MSW. If he ends it, NFL content lives here — so NFL launch
-readiness (3, 4, 5) is what makes that decision safe.
+**Realistic expectation on #1:** affiliate revenue on this traffic is likely
+a few hundred a month, not PropFinder-replacement money. OVERcast
+subscriptions are the thing that closes that gap.
+
+## COMPLETED 2026-09-02 (long session)
+
+- **Postgres/SEO indexation crisis found and fixed.** GSC showed 45 indexed
+  pages against ~500 live. Sitemap had been submitted 2026-06-17 and NEVER
+  re-read — 10 weeks, status "Success" the whole time. Manual resubmit took
+  discovered pages 55 -> 528. NOTE: on a domain property the sitemap must be
+  submitted as a FULL URL; a relative path returns "invalid".
+- **CFB game URLs were in neither sitemap nor IndexNow.** MLB/NFL/Prem/MLS
+  all emitted per-game URLs; CFB emitted none. ~87 pages/week invisible.
+- **~350 evergreen landing pages were orphans** — sport hubs and homepage
+  linked to zero of them. Built landing_index.py + _landing_index.html.
+- **Sitemap split** into an index + evergreen/games children.
+- **CFB stadium pages 25 -> 134**, generated from verified field bearings
+  rather than written copy (see cfb/stadium_facts.py for the reasoning and
+  the no-climatology rule).
+- **OVERcast promo** replacing the PropFinder CTA row.
+- **Odds archive** now archives instead of deleting at 168h.
+- **Homepage title/description** rewritten for football head terms.
 
 ## Older backlog (pre-Sept, still open)
 
