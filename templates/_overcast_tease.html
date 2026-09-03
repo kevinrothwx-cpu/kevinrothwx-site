@@ -54,7 +54,7 @@
   {% set _narrow = "/static/img/oc-cfb-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-cfb-wide@2x.jpg" %}
   {% set _w = 555 %}{% set _h = 236 %}
-  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
+  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. Not AI." %}
   {% set _alt = "OVERcast college football view showing an expanded game with the forecast, how the wind sits relative to the field, weather impact on scoring, passing yards, field goals and fumbles, and how similar games finished against their closing total." %}
 {% elif _sport == "nfl" %}
   {% set _wide = "/static/img/oc-nfl-wide.jpg" %}
@@ -62,7 +62,7 @@
   {% set _narrow = "/static/img/oc-nfl-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-nfl-wide@2x.jpg" %}
   {% set _w = 555 %}{% set _h = 252 %}
-  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
+  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. Not AI." %}
   {% set _alt = "OVERcast NFL game view showing the forecast, weather impact on total points, pass yards and field goals, and fantasy impact by position." %}
 {% else %}
   {% set _wide = "/static/img/oc-mlb-wide.jpg" %}
@@ -70,7 +70,7 @@
   {% set _narrow = "/static/img/oc-mlb-square.jpg" %}
   {% set _narrow2x = "/static/img/oc-mlb-square@2x.jpg" %}
   {% set _w = 555 %}{% set _h = 198 %}
-  {% set _default_sub = "See how weather impacts runs, home runs and more with OVERcast. Real stats, real weather, real data. No A.I. slop." %}
+  {% set _default_sub = "See how weather impacts runs, home runs and more with OVERcast. Real stats, real weather, real data. Not AI." %}
   {% set _alt = "OVERcast game view showing the forecast, wind direction relative to the field, and weather impact on runs, home runs and strikeouts." %}
 {% endif %}
 
@@ -87,24 +87,22 @@
            width="{{ _w }}" height="{{ _h }}" loading="lazy" decoding="async"
            alt="{{ _alt }}">
     </picture>
+    <span class="oc-tease__caption">Example game. Not today's data.</span>
   </span>
   <span class="oc-tease__body">
     {# Eyebrow makes it unmistakable that this is a promo for a paid
        product, not another forecast panel. Deliberately NOT labelled
        "Sponsored" or "Ad": this is Kevin's own product, and those words
        imply paid third-party placement, which would be inaccurate in the
-       other direction. Naming the product and the fact that it costs
-       money is the honest version. #}
+       other direction. #}
     <span class="oc-tease__eyebrow">
       <span class="oc-tease__eyebrow-label">OVERcast &middot; Kevin's subscription app</span>
       {% if tease_coming_soon %}<span class="oc-tease__badge">Coming soon</span>{% endif %}
     </span>
-    <span class="oc-tease__sub">{{ _sub }}<span class="oc-tease__arrow" aria-hidden="true">&#8599;</span></span>
+    <span class="oc-tease__sub">{{ _sub }}</span>
     <span class="oc-tease__note">
       {%- if tease_coming_soon -%}
-        Example slate. {{ _sport | upper }} coverage on OVERcast launches shortly; MLB is available now.
-      {%- else -%}
-        Example game. Not today's data.
+        {{ _sport | upper }} coverage launches shortly; MLB is available now.
       {%- endif -%}
       <span class="oc-tease__domain">app.kevinrothwx.com</span>
     </span>

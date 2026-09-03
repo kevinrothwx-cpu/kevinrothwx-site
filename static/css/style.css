@@ -1302,7 +1302,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   background: #f7f9fc;
   text-decoration: none;
   color: inherit;
-  margin: 0 0 2rem;
+  margin: 0 0 1.6rem;
   position: relative;
   transition: box-shadow .14s ease, transform .14s ease, border-color .14s ease;
 }
@@ -1326,10 +1326,16 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
      mismatched halves. */
   background: transparent;
   line-height: 0;
-  padding: .85rem 0 .85rem .85rem;
+  padding: .5rem 0 .5rem .55rem;
   box-sizing: border-box;
+  /* Column, not just a block: the caption now lives in here under the
+     image. line-height stays 0 on the container to kill inline-image
+     whitespace, and the caption resets it for itself. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-.oc-tease__shot picture { display: flex; align-items: center; width: 100%; height: 100%; }
+.oc-tease__shot picture { display: block; width: 100%; }
 .oc-tease__shot img { display: block; width: 100%; height: auto; border-radius: 6px; }
 .oc-tease__shot img { object-fit: contain; }
 
@@ -1337,7 +1343,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 1.3rem 1.65rem;
+  padding: .9rem 1.35rem;
   min-width: 0;
 }
 .oc-tease__badge {
@@ -1357,7 +1363,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .oc-tease__sub {
   font-family: var(--font-serif);
   font-size: 1.34rem;
-  line-height: 1.4;
+  line-height: 1.28;
   color: var(--ink, #111827);
   font-weight: 500;
 }
@@ -1366,7 +1372,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   font-family: var(--font-sans);
   font-size: .92rem;
   color: var(--fog, #6b7280);
-  margin-top: .5rem;
+  margin-top: .35rem;
 }
 
 /* Stack on narrow screens. Mobile swaps to the square capture via
@@ -1374,7 +1380,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 @media (max-width: 600px) {
   .oc-tease { flex-direction: column; }
   .oc-tease__shot { flex: none; max-width: none; width: 100%; }
-  .oc-tease__body { padding: 1.1rem 1.3rem 1.3rem; }
+  .oc-tease__body { padding: .85rem 1.1rem 1rem; }
   .oc-tease__sub { font-size: 1.25rem; }
 }
 
@@ -1388,9 +1394,9 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .oc-tease__eyebrow {
   display: flex;
   align-items: center;
-  gap: .5rem;
+  gap: .45rem;
   flex-wrap: wrap;
-  margin-bottom: .5rem;
+  margin-bottom: .35rem;
 }
 .oc-tease__eyebrow-label {
   font-family: var(--font-sans);
@@ -1411,3 +1417,18 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 }
 .oc-tease__domain::before { content: "\2197\00a0"; }
 
+
+/* Caption sits under the screenshot rather than in the writeup: it
+   describes the graphic, so it belongs with the graphic. Deliberately tiny
+   — it is a disclosure, not a selling point — but it stays present because
+   the numbers in the shot are real and a reader could otherwise take them
+   for today's. */
+.oc-tease__caption {
+  display: block;
+  line-height: 1.3;
+  padding: .3rem .2rem 0;
+  font-family: var(--font-sans);
+  font-size: .64rem;
+  color: var(--fog, #6b7280);
+  letter-spacing: .01em;
+}
