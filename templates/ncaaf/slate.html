@@ -29,6 +29,22 @@
   .date-header__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); font-weight: 500; }
 
   /* CFB-specific cheat-card overrides on top of existing .cheat-card styles */
+  /* NOT FIXED — deliberately. See docs/MOBILE_PASS notes.
+     Saturday's card rows sit wider and off-centre than other days because
+     a bare `1fr` will not shrink a column below its content's min-content
+     width, and Saturday is the only day with DOME games (a dome card packs
+     kickoff time + DOME badge + city on one nowrap line: 209px min-content
+     vs ~152px normal).
+
+     The obvious fix, minmax(0, 1fr), WAS tried and measured on the live
+     page. It aligns the columns but narrows cards from ~185px to ~158px,
+     at which point 25 odds rows clip — the same spillover that forced the
+     revert. Making the odds row wrap avoids the clipping but grows odds
+     cards by 38px and leaves heights ragged (173-218px).
+
+     So this is a real trade-off, not an oversight: aligned columns OR
+     uniform card heights, not both, unless the odds row content shrinks.
+     Left alone pending Kevin's call. */
   .cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; align-items: start; }
   .cheat-card--cfb {
     display: flex; flex-direction: column;
@@ -365,11 +381,18 @@
 </script>
 {% endif %}
 
-{# Internal-link block for this sport's evergreen landing pages.
-   Added 2026-09-02: those pages were orphans (nothing on the site linked
-   to them), so Google discovered them from the sitemap and then left them
-   in "Discovered - currently not indexed". See landing_index.py. #}
-{% set landing_sport = "ncaaf" %}
-{% include "_landing_index.html" with context %}
+{# The 134-venue link block was REMOVED from this page per Kevin: 134 links
+   at ~15px row height is a poor tap target and a very long scroll on a
+   phone, and those pages earn their keep by being found in Google rather
+   than browsed from here. Same call as the NFL slate.
+
+   The pages themselves are unaffected — still live, still in sitemap.xml,
+   still pushed via IndexNow.
+
+   Trade-off accepted: they go back to being orphans internally, which is
+   the condition that left ~450 pages undiscovered before the 2026-09-02
+   sitemap resubmit. If Search Console shows them stalling in "Discovered -
+   currently not indexed", the fix is a short curated list of notable
+   venues, NOT restoring all 134 links here. #}
 
 {% endblock %}

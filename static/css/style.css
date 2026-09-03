@@ -1432,3 +1432,209 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   color: var(--fog, #6b7280);
   letter-spacing: .01em;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE PASS — 2026-09-02 (reapplied after revert)
+
+   The first attempt was reverted because one item, raising CFB slate card
+   type sizes, made data spill out of the cards. Those cards are ~184px
+   wide at two-up on a 375px phone and the wind/precip row is
+   white-space: nowrap, so larger text clipped instead of wrapping.
+   THAT ITEM IS DELIBERATELY NOT REAPPLIED. Small type is the cost of
+   two cards per row; the only real lever would be showing less per card.
+
+   Everything below is independently deletable by block title.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Sport nav: guarantee the core four fit ───────────────────────────────
+   Measured: .sport-nav__inner was 747px wide in a 375px viewport. It has
+   overflow-x: auto so it scrolled, but with no fade or scrollbar, so only
+   MLB / NFL / PGA / NCAAF were reachable and the rest were invisible
+   rather than merely off-screen.
+
+   Kevin's call: the core four matter more than the tail, so do NOT shrink
+   them to make room. All sports kept — the mobile menu does not list MLS
+   or Tennis, so hiding them here would strand those sections on phones.
+   Core four now measure ~179px of a 360px viewport. */
+@media (max-width: 600px) {
+  .sport-nav { position: relative; }
+  .sport-nav__inner {
+    padding: 0 0.85rem;
+    -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+            mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+  }
+  .sport-nav__item {
+    padding: 0.85rem 0.62rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.045em;
+  }
+  .sport-nav__count {
+    margin-left: 0.28rem;
+    padding: 0.05rem 0.34rem;
+    font-size: 0.64rem;
+  }
+}
+
+/* ── Hourly table: fit without a scrollbar ────────────────────────────────
+   Measured: .hourly had 327px available at 375px but 353px of content, so
+   the last column clipped and you had to scroll a table you could almost
+   see all of. The label column ("WIND DIR", nowrap) took ~70px and each
+   hour column had min-width 56px — six columns = 406px.
+
+   NOTE: this reduces column widths, it does NOT raise any font size. The
+   cell text is short ("60%", "89°", "7 mph", "N") and 42px holds it.
+   Verify after deploy that nothing clips, since a clipped table would be
+   the same class of failure as the card spill.
+
+   overflow-x: auto is KEPT on purpose: 7+ columns cannot fit at any sane
+   width, so longer windows still scroll rather than clip. */
+@media (max-width: 600px) {
+  .hourly__table { font-size: 0.78rem; }
+  .hourly__label-col,
+  .hourly__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    padding: 0.4rem 0.45rem 0.4rem 0;
+  }
+  .hourly__hour-col {
+    min-width: 42px;
+    padding: 0.45rem 0.18rem 0.35rem;
+  }
+  .hourly__cell { padding: 0.36rem 0.18rem; }
+  .hourly__sky svg,
+  .hourly__sky img { width: 24px; height: 24px; }
+  .hourly__time { font-size: 0.68rem; }
+
+  /* SPECIFICITY: .mlb-game-block__hourly .hourly__hour-col is (0,2,0) and
+     is declared THREE times in this file (min-width 52px, then 56px, then
+     a padding-only rule). A bare .hourly__hour-col at (0,1,0) loses to it,
+     so the rules above never applied on the MLB and NFL slate pages —
+     measured on the live page, the fix moved overflow from 68px to only
+     65px. These matching-specificity rules are what actually do the work
+     on the slates. */
+  .mlb-game-block__hourly .hourly__hour-col {
+    min-width: 40px;
+    padding: 0.45rem 0.15rem 0.35rem;
+  }
+  .mlb-game-block__hourly .hourly__cell {
+    padding: 0.34rem 0.15rem;
+    font-size: 0.76rem;
+  }
+  .mlb-game-block__hourly .hourly__label,
+  .mlb-game-block__hourly .hourly__label-col {
+    padding: 0.34rem 0.3rem 0.34rem 0.35rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
+  }
+  .mlb-game-block__hourly .hourly__sky .wx-icon { width: 22px; height: 22px; }
+
+  /* EACH GAME HAS TWO HOURLY TABLES. The main NWS one lives under
+     .mlb-game-block__hourly; a second one lives inside the collapsible NBM
+     panel at .mlb-game-block__hrrr-body, which has its own (0,2,0) rule
+     (min-width: 52px, line ~594). The rules above do not reach it, so the
+     NBM table kept scrolling 36px while the main table was fixed —
+     measured on the live page, 7 of 7. */
+  .mlb-game-block__hrrr-body .hourly__hour-col {
+    min-width: 40px;
+    padding: 0.45rem 0.15rem 0.35rem;
+  }
+  .mlb-game-block__hrrr-body .hourly__cell {
+    padding: 0.34rem 0.15rem;
+    font-size: 0.76rem;
+  }
+  .mlb-game-block__hrrr-body .hourly__label,
+  .mlb-game-block__hrrr-body .hourly__label-col {
+    padding: 0.34rem 0.3rem 0.34rem 0.35rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
+  }
+  .mlb-game-block__hrrr-body .hourly__sky .wx-icon { width: 22px; height: 22px; }
+}
+
+/* ── Shorter footer ───────────────────────────────────────────────────────
+   Measured 579px tall at 375px, close to a full screen of chrome under
+   every page. The height came from desktop spacing that mobile inherited:
+   the three-column layout does not even apply below 640px. */
+@media (max-width: 600px) {
+  .site-footer { margin-top: 2.5rem; }
+  .site-footer__inner {
+    padding: 1.6rem 1.25rem 1.1rem;
+    gap: 1.15rem;
+    font-size: 0.86rem;
+  }
+  .site-footer h4 { margin-bottom: 0.45rem; font-size: 0.7rem; }
+  .site-footer p { margin-bottom: 0.35rem; line-height: 1.5; }
+  .site-footer li { margin-bottom: 0.5rem; }   /* increased: tap targets */
+  .site-footer__copy { padding: 0.8rem 1.25rem; }
+}
+
+/* ── "Example" stamp on the OVERcast screenshot ───────────────────────────
+   The caption under the shot is easy to scroll past on a phone and the
+   numbers in it are real, so a reader could take them for today's game.
+   A diagonal watermark was rejected — ugly, and it would obscure the
+   numbers that make the screenshot worth showing. Corner pill instead.
+   The caption underneath stays: belt and braces, not a replacement. */
+@media (max-width: 600px) {
+  .oc-tease__shot { position: relative; }
+  .oc-tease__shot::after {
+    content: "Example";
+    position: absolute;
+    top: calc(.5rem + 6px);
+    left: calc(.55rem + 6px);
+    font-family: var(--font-sans);
+    font-size: .58rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(17, 24, 39, .72);
+    border-radius: 3px;
+    padding: .16rem .38rem;
+    line-height: 1.25;
+    pointer-events: none;
+  }
+}
+
+/* ── Slate per-game block header: mobile tidy ─────────────────────────────
+   This is the header above each hourly table on the NFL and MLB SLATE
+   pages — not the game detail page. (An earlier attempt rebuilt the detail
+   page header instead, which is why Kevin saw no change.)
+
+   Complaints being fixed: team names wrapping to two lines sometimes and
+   one other times, the logo getting shoved around when they did, and the
+   roof badge trailing the venue text as an inline afterthought so it wraps
+   onto its own line looking like debris.
+
+   NO FONT SIZES ARE CHANGED HERE. The problem is structural. Raising type
+   in a fixed-width box is what caused the card spill that forced the
+   revert, and it is not needed for any of this.
+
+   The matchup fix is mostly in the markup: each team is now wrapped in
+   .matchup-team (inline-flex, nowrap), which is the mechanism style.css
+   already documents but the slate blocks never used. */
+@media (max-width: 600px) {
+  .mlb-game-block__header {
+    gap: 0.15rem 0.7rem;
+  }
+  .mlb-game-block__matchup {
+    gap: 0.28rem 0.5rem;
+    line-height: 1.2;
+  }
+  /* Venue and its roof badge sit on one baseline and wrap together as a
+     unit, instead of the badge trailing the text with a margin-left. */
+  .mlb-game-block__venue {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.22rem;
+    line-height: 1.35;
+  }
+  .mlb-game-block__venue .venue-roof-flag { margin-left: 0; }
+  /* Kickoff gets its own row rather than competing for the first line. */
+  .mlb-game-block__time {
+    flex: 1 1 100%;
+    margin-top: 0.15rem;
+    color: var(--slate);
+  }
+}

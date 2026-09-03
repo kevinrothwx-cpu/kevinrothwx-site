@@ -128,12 +128,21 @@
         <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="match-{{ g.slug }}">
           <header class="mlb-game-block__header">
             <div>
+              {# Each team wrapped in .matchup-team so the logo cannot be
+                 orphaned onto a different line from its own team name —
+                 the exact failure the comment beside .matchup-team in
+                 style.css describes. MLB's DETAIL page already used this;
+                 the slate blocks never did. #}
               <h2 class="mlb-game-block__matchup">
-                <img class="matchup-logo" src="{{ g.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-                <span>{{ g.away.name }}</span>
+                <span class="matchup-team">
+                  <img class="matchup-logo" src="{{ g.away.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                  <span>{{ g.away.name }}</span>
+                </span>
                 <span class="matchup-at">at</span>
-                <img class="matchup-logo" src="{{ g.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-                <span>{{ g.home.name }}</span>
+                <span class="matchup-team">
+                  <img class="matchup-logo" src="{{ g.home.logo }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                  <span>{{ g.home.name }}</span>
+                </span>
               </h2>
               <div class="mlb-game-block__venue">
                 {{ g.venue }} · {{ g.venue_meta.city if g.venue_meta else "" }}
@@ -249,11 +258,19 @@
   });
 </script>
 
-{# Internal-link block for this sport's evergreen landing pages.
-   Added 2026-09-02: those pages were orphans (nothing on the site linked
-   to them), so Google discovered them from the sitemap and then left them
-   in "Discovered - currently not indexed". See landing_index.py. #}
-{% set landing_sport = "nfl" %}
-{% include "_landing_index.html" with context %}
+{# The 62-link venue/team block was REMOVED from this page 2026-09-02 per
+   Kevin, same call as the CFB slate: it is a long, low-value scroll for a
+   reader and the pages earn their keep by being found in Google, not by
+   being browsed from here.
+
+   The pages themselves are unaffected — /nfl/stadium/* and /nfl/team/* are
+   still live, still in sitemap.xml, still pushed via IndexNow.
+
+   Trade-off being accepted: those pages go back to being orphans (nothing
+   internally links to them), which is the condition that likely left ~450
+   pages sitting undiscovered before the 2026-09-02 sitemap resubmit. If
+   Search Console shows them stalling in "Discovered - currently not
+   indexed", the fix is a short curated list of notable venues, NOT
+   restoring all 62 links here. #}
 
 {% endblock %}

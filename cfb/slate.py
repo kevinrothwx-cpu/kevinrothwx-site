@@ -42,6 +42,12 @@ from hrrr import get_hrrr_periods
 
 HOURS_BEFORE_KICKOFF = 1
 HOURS_GAME_WINDOW    = 4   # buffer past kickoff to cover ~3.5h game + halftime
+HOURS_HIGHLIGHTED    = 3   # how many of those hours get the shaded highlight.
+                           # Separate from the window on purpose: the window is
+                           # how much forecast we SHOW, the highlight is which
+                           # hours are actually the game. CFB used
+                           # HOURS_GAME_WINDOW for both and shaded 4. NFL already
+                           # splits these; MLB uses HOURS_GAME = 3.
 
 
 # ── Public entry point ───────────────────────────────────────────────────
@@ -408,7 +414,7 @@ def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
                 st = st.replace(tzinfo=timezone.utc)
             if start <= st < end:
                 p2 = dict(p)
-                p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_GAME_WINDOW))
+                p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_HIGHLIGHTED))
                 # Human-friendly Eastern hour label — "2 PM", "10 AM"
                 try:
                     p2["hour_eastern"] = st.astimezone(_ET).strftime("%-I %p").lstrip("0")
