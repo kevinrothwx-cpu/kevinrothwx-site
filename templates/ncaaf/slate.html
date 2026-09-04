@@ -29,22 +29,23 @@
   .date-header__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); font-weight: 500; }
 
   /* CFB-specific cheat-card overrides on top of existing .cheat-card styles */
-  /* NOT FIXED — deliberately. See docs/MOBILE_PASS notes.
-     Saturday's card rows sit wider and off-centre than other days because
-     a bare `1fr` will not shrink a column below its content's min-content
-     width, and Saturday is the only day with DOME games (a dome card packs
-     kickoff time + DOME badge + city on one nowrap line: 209px min-content
-     vs ~152px normal).
+  /* Equal columns across every day.
+     Measured on the live page: each day's grid sized itself to THAT day's
+     widest card, so Thursday was 185px, Saturday 210px (it has the dome
+     games, whose kickoff + DOME badge + city sit on one nowrap line) and
+     Monday 160px (one game, short venue name). A bare `1fr` will not
+     shrink a track below its content's min-content width, which is why.
 
-     The obvious fix, minmax(0, 1fr), WAS tried and measured on the live
-     page. It aligns the columns but narrows cards from ~185px to ~158px,
-     at which point 25 odds rows clip — the same spillover that forced the
-     revert. Making the odds row wrap avoids the clipping but grows odds
-     cards by 38px and leaves heights ragged (173-218px).
+     minmax(0, 1fr) forces equal tracks, but that narrows cards to ~159px
+     where the content box is 142px — and the odds row needs 170px, so 24
+     of them clipped. That is the spillover that forced the 2026-09-02
+     revert, so it is not acceptable.
 
-     So this is a real trade-off, not an oversight: aligned columns OR
-     uniform card heights, not both, unless the odds row content shrinks.
-     Left alone pending Kevin's call. */
+     Fix: hide "Opened 51.5" on mobile only. The odds row is three parts —
+     "O/U 53.5" (47px), "Opened 51.5" (66px), "↑ +2.0" (41px). Dropping the
+     middle one is information-preserving: the opener is derivable from the
+     current total minus the delta. Result measured: all five days 159px,
+     zero clipping, card heights 173-180px. */
   .cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.7rem; align-items: start; }
   .cheat-card--cfb {
     display: flex; flex-direction: column;
@@ -186,7 +187,12 @@
     /* !important as belt-and-suspenders — we've been fighting inline vs
        external stylesheet specificity + edge-cached HTML on this rule.
        Force 2 columns unambiguously on phones regardless of cache state. */
-    .ncaaf-page .cheat-row { grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
+    .ncaaf-page .cheat-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 0.5rem !important; }
+    .ncaaf-page .cheat-row > * { min-width: 0; }
+    /* See the comment above .cheat-row: the opener is derivable from
+       total minus delta, so hiding it costs no information and is what
+       lets the columns be equal without the odds row clipping. */
+    .ncaaf-page .cheat-card__odds-open { display: none; }
     .cheat-card--cfb { padding: 0.55rem 0.5rem 0.65rem; }
     .cheat-card--cfb .cheat-card__teams { gap: 0.35rem; padding-bottom: 0.4rem; margin-bottom: 0.45rem; }
     .cheat-card--cfb .cheat-card__logo { width: 20px; height: 20px; }
