@@ -76,18 +76,12 @@ def _lookup_team_id(name: str) -> Optional[int]:
     return _TEAM_NAME_INDEX.get(name.lower().strip())
 
 
-# ── Neutral-site override list ─────────────────────────────────────────────
-# The Odds API doesn't flag international games. Format each entry as:
-#   (kickoff_date_ymd_str, home_team_abbrev, away_team_abbrev) → venue_key_from_INTERNATIONAL_VENUES
-# Add new games here each year in preseason. If a game isn't in the list,
-# it defaults to the home team's US stadium.
-NEUTRAL_SITE_OVERRIDES: dict[tuple[str, str, str], str] = {
-    # 2026 international slate. Date is the EASTERN calendar date of kickoff,
-    # not the local date at the venue — a Melbourne game kicking at 8:35 PM ET
-    # Thursday is Friday morning locally, and the key is built from
-    # kickoff_eastern below, so Eastern is what matches.
-    ("2026-09-10", "LAR", "SF"): "melbourne",
-}
+# ── Neutral-site override list ─────────────────────────────────
+# The table now lives in nfl/venues.py so that nfl/slate.py can apply it to
+# whichever schedule source won — Odds API or the ESPN fallback. Re-exported
+# here so this parser keeps resolving the venue on its own path too; add new
+# games to nfl/venues.py, not here.
+from .venues import NEUTRAL_SITE_OVERRIDES  # noqa: E402
 
 
 # ── Fetch + parse ──────────────────────────────────────────────────────────

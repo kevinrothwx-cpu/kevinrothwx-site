@@ -501,3 +501,40 @@ def lookup_international_venue(fullname, city, country=None) -> Optional[dict]:
 
 
 # EOF-CANARY 2026-07-04-cfb-recovery
+
+
+# ── Neutral-site / international overrides (2026-09-06) ────────────────
+# Single source of truth for "this game is not at the home team's stadium."
+#
+# Keyed by (kickoff_date_eastern, home_abbrev, away_abbrev). The date is the
+# EASTERN calendar date we address the game by on the site, not the local
+# date at the venue — a Melbourne game kicking at 8:35 PM ET on Sep 10 is
+# already Sep 11 in Australia, but we file it under 2026-09-10.
+#
+# This table lives here, not in odds_api_schedule.py, because the schedule
+# can come from either The Odds API or the ESPN fallback. An override that
+# only exists on one of those paths silently does nothing when the other
+# one runs — which is exactly how SoFi Stadium weather ended up on the
+# Rams' Melbourne game. nfl/slate.py applies this AFTER the schedule is
+# assembled, so it cannot be bypassed by the source that happened to win.
+NEUTRAL_SITE_OVERRIDES: dict[tuple[str, str, str], str] = {
+    ("2026-09-10", "LAR", "SF"): "melbourne",
+}
+
+
+def resolve_neutral_site(date_ymd: str, home_abbrev: str, away_abbrev: str):
+    """Return the override venue dict for this matchup, or None.
+
+    Never raises — a bad lookup must not blank the slate."""
+    try:
+        key = (
+            (date_ymd or "").strip(),
+            (home_abbrev or "").strip().upper(),
+            (away_abbrev or "").strip().upper(),
+        )
+        venue_key = NEUTRAL_SITE_OVERRIDES.get(key)
+        if not venue_key:
+            return None
+        return lookup_international_venue(venue_key, "", "")
+    except Exception:
+        return None

@@ -18,6 +18,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from .schedule import get_nfl_week_games
+from .venues import resolve_neutral_site
 from . import odds as nfl_odds_client
 from . import odds_storage as nfl_odds_storage
 
@@ -54,6 +55,12 @@ def build_nfl_slate(start_date: Optional[datetime] = None,
     games = get_nfl_week_games(start_date, days_ahead=days_ahead)
     if not games:
         return []
+
+    # Neutral-site / international venue overrides. Applied HERE, after the
+    # schedule is assembled, because get_nfl_week_games can return games from
+    # either The Odds API or the ESPN fallback. An override that lives inside
+    # only one of those parsers does nothing on the day the other one wins.
+    _apply_neutral_site_overrides(games)
 
     # Drop stale games — kickoff already in the past by venue-local date.
     # Kept in-window by the 24h backup above; dropped here once the
@@ -156,6 +163,46 @@ def _build_odds_for_game(game: dict, odds_list: list[dict],
         "book_key":     match.get("book_key", ""),
         "frozen":       game_started,
     }
+
+
+def _apply_neutral_site_overrides(games: list[dict]) -> None:
+    """Swap in the real venue for games not played at the home team's stadium.
+
+    Mutates in place. Never raises: a failure here must degrade to the home
+    stadium, not blank the slate."""
+    for g in games:
+        try:
+            date_ymd = g.get("kickoff_date_eastern")
+            if not date_ymd:
+                ke = g.get("kickoff_eastern")
+                date_ymd = ke.strftime("%Y-%m-%d") if ke else ""
+            home_ab = ((g.get("home") or {}).get("abbrev")) or ""
+            away_ab = ((g.get("away") or {}).get("abbrev")) or ""
+            venue = resolve_neutral_site(date_ymd, home_ab, away_ab)
+            if not venue:
+                continue
+            old = (g.get("venue") or {}).get("name") or "?"
+            if old == venue.get("name"):
+                continue
+            g["venue"] = venue
+            g["is_neutral_site"] = True
+
+            # kickoff_local / date_local were computed against the home
+            # stadium's timezone. Recompute them or the game reads as
+            # 5:35 AM Los Angeles time on a Melbourne field.
+            ko_utc = g.get("kickoff_utc")
+            tz_name = venue.get("timezone")
+            if ko_utc and tz_name:
+                from zoneinfo import ZoneInfo as _ZI
+                ko_local = ko_utc.astimezone(_ZI(tz_name))
+                g["kickoff_local"] = ko_local
+                g["date_local"] = ko_local.strftime("%Y-%m-%d")
+            print(f"[nfl.slate] NEUTRAL SITE: {away_ab} at {home_ab} {date_ymd} "
+                  f"-> {venue.get('name')}, {venue.get('city')} "
+                  f"(was {old})", flush=True)
+        except Exception as e:
+            print(f"[nfl.slate] neutral-site override failed for "
+                  f"{g.get('id')}: {type(e).__name__}: {e}", flush=True)
 
 
 def _is_game_stale(game: dict) -> bool:
