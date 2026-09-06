@@ -280,3 +280,120 @@ def _make_slug(away_abbrev: str, home_abbrev: str) -> str:
 
 
 # EOF-CANARY 2026-07-04-cfb-recovery
+
+
+# ── International venue discovery (added 2026-09-06) ──────────────────────
+#
+# WHY THIS EXISTS
+#     The Odds API is the primary schedule source because it also carries the
+#     totals, but it returns NO venue at all. odds_api_schedule.py therefore
+#     falls back to "home team's stadium", which is wrong for every
+#     international game. The Rams' 2026 Melbourne game rendered a SoFi
+#     Stadium forecast — Los Angeles weather for a game in Australia — because
+#     NEUTRAL_SITE_OVERRIDES had never been populated.
+#
+#     A hand-maintained override list is fine until someone forgets to add a
+#     row, and then the failure is silent and confidently wrong. ESPN's
+#     scoreboard DOES carry venue with a country field, and this module
+#     already parses it for the ESPN fallback path. So: fetch ESPN purely as
+#     a venue authority and let it fill the gap automatically.
+#
+# DESIGN
+#     - Manual overrides still win. They are the path that works even when
+#       ESPN is down or rate-limiting us.
+#     - This runs once per slate build, cached, and never blocks: any failure
+#       leaves the map empty and the manual overrides carry on.
+#     - When ESPN says a game is international but we have no matching entry
+#       in INTERNATIONAL_VENUES, that is logged loudly. That log line is the
+#       signal to add a venue, and it is far better than silently showing the
+#       home stadium's weather.
+
+_intl_map_cache: dict = {"built_at": None, "map": {}}
+_INTL_MAP_TTL_SEC = 3600
+
+
+def fetch_international_venue_map(start_date: Optional[datetime] = None,
+                                  days_ahead: int = 8) -> dict:
+    """{(date_ymd_eastern, home_abbrev, away_abbrev): venue_dict} for games
+    ESPN reports at a non-US venue.
+
+    Cached for an hour. Never raises."""
+    from datetime import datetime as _dt, timezone as _tz
+    now = _dt.now(_tz.utc)
+    built = _intl_map_cache["built_at"]
+    if built and (now - built).total_seconds() < _INTL_MAP_TTL_SEC:
+        return _intl_map_cache["map"]
+
+    if start_date is None:
+        start_date = now - timedelta(hours=24)
+
+    out: dict = {}
+    unmapped: list[str] = []
+    try:
+        for offset in range(days_ahead + 1):
+            d = start_date + timedelta(days=offset)
+            try:
+                resp = requests.get(
+                    ESPN_NFL_SCOREBOARD_URL,
+                    params={"dates": d.strftime("%Y%m%d")},
+                    headers=REQUEST_HEADERS,
+                    timeout=REQUEST_TIMEOUT_SEC,
+                )
+                if resp.status_code != 200:
+                    continue
+                data = resp.json()
+            except Exception:
+                continue
+
+            for event in (data.get("events") or []):
+                comp = (event.get("competitions") or [{}])[0]
+                venue = comp.get("venue") or {}
+                addr = venue.get("address") or {}
+                country = (addr.get("country") or "").strip()
+                if not country or country.upper() in ("US", "USA", "UNITED STATES"):
+                    continue
+
+                home_ab = away_ab = None
+                for c in (comp.get("competitors") or []):
+                    rec = _build_team_record(c)
+                    if not rec:
+                        continue
+                    if c.get("homeAway") == "home":
+                        home_ab = rec.get("abbrev")
+                    elif c.get("homeAway") == "away":
+                        away_ab = rec.get("abbrev")
+                if not (home_ab and away_ab):
+                    continue
+
+                start_raw = event.get("date") or ""
+                try:
+                    ko = datetime.fromisoformat(start_raw.replace("Z", "+00:00"))
+                except Exception:
+                    continue
+                date_ymd = ko.astimezone(EASTERN_TZ).strftime("%Y-%m-%d")
+
+                resolved = lookup_international_venue(
+                    venue.get("fullName") or "", addr.get("city") or "", country)
+                if resolved:
+                    out[(date_ymd, home_ab, away_ab)] = resolved
+                else:
+                    unmapped.append(
+                        f"{away_ab} at {home_ab} {date_ymd} — "
+                        f"{venue.get('fullName')!r}, {addr.get('city')!r} ({country})")
+    except Exception as e:
+        print(f"[nfl.schedule] international venue scan failed: "
+              f"{type(e).__name__}: {e}", flush=True)
+        return _intl_map_cache["map"] or {}
+
+    if unmapped:
+        for u in unmapped:
+            print(f"[nfl.schedule] UNMAPPED INTERNATIONAL VENUE — {u}. "
+                  f"Add it to nfl.venues.INTERNATIONAL_VENUES or the forecast "
+                  f"will fall back to the home team's US stadium.", flush=True)
+    if out:
+        print(f"[nfl.schedule] international venue map: {len(out)} game(s) "
+              f"auto-detected from ESPN", flush=True)
+
+    _intl_map_cache["map"] = out
+    _intl_map_cache["built_at"] = now
+    return out

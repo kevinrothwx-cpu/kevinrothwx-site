@@ -22,6 +22,23 @@
     letter-spacing: -0.015em; line-height: 1.1; margin: 0.3rem 0 0;
   }
 
+  /* Week divider.
+     The slate is a rolling 7-day window, so midweek it reaches into the
+     next week and picks up that Thursday opener. Rather than hide those
+     games or mislabel the page, mark where the week changes. Quiet on
+     purpose: it is a signpost, not a section heading competing with the
+     date headers. */
+  .week-divider {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 2.25rem 0 1.5rem; color: var(--fog);
+    font-family: var(--font-sans); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .week-divider::before, .week-divider::after {
+    content: ""; flex: 1 1 auto; height: 1px; background: var(--mist);
+  }
+  .week-divider span { flex: 0 0 auto; }
+
   /* Date section + cheat-row */
   .date-section { margin-bottom: 1.75rem; }
   .date-header { display: flex; align-items: baseline; gap: 0.65rem; padding-bottom: 0.6rem; margin-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
@@ -228,7 +245,12 @@
         {% elif weeks|length == 1 %}
           College Football · Week {{ weeks[0] }}
         {% elif weeks|length > 1 %}
-          College Football · Weeks {{ weeks|min }}–{{ weeks|max }}
+          {# The slate is a rolling 7-day window, so midweek it spills past
+             the week boundary and picks up next week's Thursday opener.
+             "Weeks 1 and 2" oversold that: the page is all of Week 1 plus
+             one stray game. Name the week most of the slate belongs to;
+             the stray still appears below under a week divider. #}
+          College Football · Week {{ dominant_week or weeks|min }}
         {% elif games[0].kickoff_eastern %}
           {{ games[0].kickoff_eastern.strftime("%A, %B %-d, %Y") }}
         {% else %}
@@ -264,11 +286,16 @@
 {# NB: the {% if games %} block continues below — we just needed the sort bar rendered above it #}
 {% if games %}
     {# Group games by date (kickoff_date_eastern) and render a section per date. #}
-    {% set ns = namespace(current_date=None, current_games=[]) %}
+    {% set ns = namespace(current_date=None, current_games=[], last_week=None) %}
     {% for g in games %}
       {% if g.kickoff_date_eastern != ns.current_date %}
         {% if ns.current_games %}
           {# Flush the previous date's section #}
+          {% set _wk = ns.current_games[0].week %}
+          {% if _wk and ns.last_week and _wk != ns.last_week %}
+            <div class="week-divider"><span>Week {{ _wk }}</span></div>
+          {% endif %}
+          {% set ns.last_week = _wk or ns.last_week %}
           <div class="date-section">
             {{ cfb_date_header(ns.current_games[0].kickoff_eastern.strftime("%A, %b %-d"), ns.current_games|length) }}
             <div class="cheat-row">
@@ -284,6 +311,10 @@
     {% endfor %}
     {# Flush the final date #}
     {% if ns.current_games %}
+      {% set _wk = ns.current_games[0].week %}
+      {% if _wk and ns.last_week and _wk != ns.last_week %}
+        <div class="week-divider"><span>Week {{ _wk }}</span></div>
+      {% endif %}
       <div class="date-section">
         {{ cfb_date_header(ns.current_games[0].kickoff_eastern.strftime("%A, %b %-d"), ns.current_games|length) }}
         <div class="cheat-row">

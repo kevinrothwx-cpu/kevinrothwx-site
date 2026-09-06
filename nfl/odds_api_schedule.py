@@ -82,9 +82,11 @@ def _lookup_team_id(name: str) -> Optional[int]:
 # Add new games here each year in preseason. If a game isn't in the list,
 # it defaults to the home team's US stadium.
 NEUTRAL_SITE_OVERRIDES: dict[tuple[str, str, str], str] = {
-    # Example (leave commented until confirmed):
-    # ("2026-10-05", "JAX", "MIN"): "wembley",
-    # ("2026-11-09", "CAR", "NYG"): "allianz_munich",
+    # 2026 international slate. Date is the EASTERN calendar date of kickoff,
+    # not the local date at the venue — a Melbourne game kicking at 8:35 PM ET
+    # Thursday is Friday morning locally, and the key is built from
+    # kickoff_eastern below, so Eastern is what matches.
+    ("2026-09-10", "LAR", "SF"): "melbourne",
 }
 
 
@@ -268,9 +270,33 @@ def _parse_odds_api_game(raw: dict) -> Optional[dict]:
         date_ymd = kickoff_eastern.strftime("%Y-%m-%d")
         override_key = (date_ymd, home_rec["abbrev"], away_rec["abbrev"])
         venue = None
+
+        # 1. Manual override wins. It is the path that still works when ESPN
+        #    is down or throttling, so it stays authoritative.
         if override_key in NEUTRAL_SITE_OVERRIDES:
             venue_key = NEUTRAL_SITE_OVERRIDES[override_key]
             venue = lookup_international_venue(venue_key, "", "")
+
+        # 2. Otherwise ask ESPN, which reports a venue country the Odds API
+        #    does not carry at all. This is what stops a forgotten override
+        #    from silently rendering the home team's US weather for a game
+        #    played overseas — the failure that put a SoFi Stadium forecast
+        #    on the Rams' Melbourne game.
+        if not venue:
+            try:
+                from .schedule import fetch_international_venue_map
+                venue = fetch_international_venue_map().get(override_key)
+                if venue:
+                    print(f"[nfl.odds_api] {away_rec['abbrev']} at "
+                          f"{home_rec['abbrev']} {date_ymd}: international venue "
+                          f"auto-detected from ESPN -> {venue.get('name')}",
+                          flush=True)
+            except Exception as e:
+                print(f"[nfl.odds_api] international venue lookup failed "
+                      f"({type(e).__name__}: {e}) — falling back to home stadium",
+                      flush=True)
+
+        # 3. Fall back to the home team's stadium.
         if not venue:
             venue = get_stadium(home_id)
         if not venue:

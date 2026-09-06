@@ -1836,6 +1836,28 @@ def ipl_ground_page(slug):
     )
 
 
+def _cfb_dominant_week(games: list):
+    """The week most of the slate belongs to, or None if it can't be told.
+
+    The slate is a rolling 7-day window, so midweek it spills past the week
+    boundary and picks up next week's Thursday opener. That made the title
+    read "Weeks 1 and 2" when the page is really all of Week 1 plus one
+    stray game, which oversells what is on the page.
+
+    Returning the most common week lets the title say "Week 1" while the
+    stray game still renders under its own date header, with a week divider
+    above it so nothing is hidden.
+    """
+    counts: dict[int, int] = {}
+    for g in games or []:
+        wk = g.get("week")
+        if wk is not None:
+            counts[wk] = counts.get(wk, 0) + 1
+    if not counts:
+        return None
+    return max(counts, key=lambda w: (counts[w], -w))
+
+
 @app.route("/ncaaf")
 def ncaaf_root():
     """CFB slate for the current week. During the off-season (kickoff > 7 days
@@ -1849,6 +1871,7 @@ def ncaaf_root():
         return render_template(
             "ncaaf/slate.html",
             games=games, meta=meta,
+            dominant_week=_cfb_dominant_week(games),
             canonical_path="/ncaaf",
         )
 
