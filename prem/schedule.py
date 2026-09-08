@@ -1,4 +1,20 @@
-"""prem.schedule — ESPN Premier League scoreboard fetcher.
+"""prem.schedule — Premier League fixtures.
+
+PRIMARY SOURCE: The Odds API, via prem/odds_api_schedule.py.
+
+    ESPN's eng.1 scoreboard 403-blocks our Render IP. It hit NFL on
+    2026-08-14 and MLS on 2026-08-24; both were migrated to The Odds API
+    then. prem/ was missed, so from that point /prem rendered "No Premier
+    League matches scheduled in the next 7 days" on every request while
+    ESPN returned fixtures normally to any other network. Found and fixed
+    2026-09-08 while building ucl/.
+
+    The ESPN parser below is kept for reference, exactly as mls/schedule.py
+    keeps its own. It is NOT called by production code. Do not restore it
+    as a fallback: a fallback that always 403s just hides the real failure
+    behind a second empty result.
+
+Original ESPN notes follow.
 
 ESPN EPL scoreboard endpoint:
     https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=YYYYMMDD
@@ -52,9 +68,28 @@ EASTERN_TZ = ZoneInfo("America/New_York")
 
 
 def get_epl_week_matches(start_date: datetime, days_ahead: int = 7) -> list[dict]:
-    """Pull EPL matches across a date window. ESPN's scoreboard accepts
-    a dates=YYYYMMDD param. We walk each day individually so the Fri/Sat/
-    Sun/Mon EPL spread all lands cleanly."""
+    """EPL fixtures kicking off within the window. Empty list on failure.
+
+    Delegates to The Odds API. See the module docstring for why ESPN is no
+    longer used."""
+    from .odds_api_schedule import (
+        fetch_epl_matches_from_odds_api,
+        filter_to_window,
+    )
+    all_matches = fetch_epl_matches_from_odds_api()
+    if not all_matches:
+        print("[prem.schedule] no fixtures returned from Odds API", flush=True)
+        return []
+    windowed = filter_to_window(all_matches, start_date, days_ahead=days_ahead)
+    print(f"[prem.schedule] {len(all_matches)} fixtures upcoming, "
+          f"{len(windowed)} in {days_ahead}d window", flush=True)
+    return windowed
+
+
+def _get_epl_week_matches_espn(start_date: datetime, days_ahead: int = 7) -> list[dict]:
+    """LEGACY ESPN path — kept for reference. Not called by production code.
+
+    ESPN's soccer/eng.1/scoreboard endpoint 403s from Render."""
     out: list[dict] = []
     seen: set[str] = set()
 

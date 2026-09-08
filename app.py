@@ -155,6 +155,18 @@ from prem.storage import (
     attach_writeups_to_slate as prem_attach_writeups,
 )
 
+from ucl.cache import (
+    get_ucl_slate,
+    start_warmer as start_ucl_warmer,
+    find_match_in_slate as find_ucl_match,
+    frozen_count as ucl_frozen_count,
+)
+from ucl.storage import (
+    save_writeup as ucl_save_writeup,
+    get_writeup as ucl_get_writeup,
+    attach_writeups_to_slate as ucl_attach_writeups,
+)
+
 from indexnow import INDEXNOW_KEY, notify as indexnow_notify
 from nws_health import snapshot as nws_health_snapshot
 
@@ -277,6 +289,7 @@ def _delayed_start_warmers():
         ("nfl",     start_nfl_warmer),
         ("horse",   start_horse_warmer),
         ("prem",    start_prem_warmer),
+        ("ucl",     start_ucl_warmer),
     ]
     for label, fn in starters:
         try:
@@ -307,7 +320,7 @@ MYSPORTSWEATHER_HOSTS = {"mysportsweather.com", "www.mysportsweather.com"}
 
 # Sport sections that live on mysportsweather.com going forward. Requests
 # for these on kevinrothwx.com get 301-redirected.
-SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/golf", "/nascar", "/nfl", "/ncaaf", "/mls")
+SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/golf", "/nascar", "/nfl", "/ncaaf", "/mls", "/ucl")
 SPORT_PATH_EXACT = {"/mlb-weather", "/nfl-weather", "/pga-weather"}
 
 
@@ -544,6 +557,26 @@ def inject_sport_nav():
 
     # NFL — no badge during off-season (cleaner header).
     # The sport tab still shows; just no countdown number next to it.
+
+    # Champions League — the tab itself is conditional on this count, the
+    # same way CWS and Tennis are. The league phase plays eight Tuesdays and
+    # Wednesdays between September and January, so a permanent tab would sit
+    # dead for most of the year and crowd the mobile nav for nothing. Count
+    # matches in the next 3 days rather than just today, so the tab appears
+    # ahead of a matchweek instead of only on the day.
+    try:
+        ucl_matches, _ = get_ucl_slate(allow_build=False)
+        if ucl_matches:
+            soon = 0
+            horizon = datetime.now(timezone.utc) + timedelta(days=3)
+            for m in ucl_matches:
+                ko = m.get("kickoff_utc")
+                if ko and ko <= horizon:
+                    soon += 1
+            if soon > 0:
+                counts["ucl"] = str(soon)
+    except Exception:
+        pass
 
     return {"sport_counts": counts}
 
@@ -1608,6 +1641,57 @@ def tennis_venue_page(slug):
 
 # ===== Premier League team + stadium landing pages =====
 
+@app.route("/ucl")
+@app.route("/championsleague")
+def ucl_root():
+    """Champions League slate hub.
+
+    Grouped by the VENUE's local date, not a single league timezone the way
+    /prem groups by UK time. The league phase spans Europe/Lisbon through
+    Asia/Baku, so a 21:00 kickoff in Portugal and a 21:00 kickoff in
+    Azerbaijan are four hours apart in real time but belong on the same
+    matchday. Grouping on venue-local date keeps them together.
+    """
+    matches, meta = get_ucl_slate(allow_build=True)
+    ucl_attach_writeups(matches)
+
+    # Reference "today" is Central European time — where most of the
+    # competition actually plays.
+    cet_today = datetime.now(ZoneInfo("Europe/Brussels")).date()
+    grouped: dict[str, list[dict]] = {}
+    for m in matches:
+        d = m.get("date_local")
+        if not d:
+            continue
+        grouped.setdefault(d, []).append(m)
+
+    days_data = []
+    for date_str in sorted(grouped.keys()):
+        try:
+            d = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        day_matches = sorted(grouped[date_str], key=lambda m: m.get("kickoff_utc"))
+        days_data.append({
+            "date_str":    date_str,
+            "pretty_date": d.strftime("%A, %B %-d"),
+            "is_today":    (d == cet_today),
+            "is_tomorrow": (d == cet_today + timedelta(days=1)),
+            "matches":     day_matches,
+            "slate":       day_matches,
+            "match_count": len(day_matches),
+        })
+
+    return render_template(
+        "ucl/slate.html",
+        days_data=days_data,
+        showing_multiple=(len(days_data) > 1),
+        total_matches=len(matches),
+        meta=meta,
+        canonical_path="/ucl",
+    )
+
+
 @app.route("/prem")
 def prem_root():
     """Premier League slate hub. Groups matches by venue-local date (UK) and
@@ -2546,6 +2630,7 @@ MYSPORTSWEATHER_STATIC_URLS = [
     ("/nfl",                              "0.9",  "hourly",  None),
     ("/mls",                              "0.85", "hourly",  None),
     ("/prem",                             "0.9",  "hourly",  None),
+    ("/ucl",                              "0.9",  "hourly",  None),
     ("/prem/guides",                      "0.75", "monthly", "2026-07-03"),
     ("/ipl",                              "0.8",  "monthly", "2026-07-03"),
     ("/horse",                            "0.85", "daily",   None),

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Champions League Weather, Matchday Forecast | Kevin Roth{% endblock %}
+{% block description %}Free live weather forecasts for every UEFA Champions League match. Stadium-specific temperature, wind and rain at kickoff, from Athens to Baku. By sports meteorologist Kevin Roth.{% endblock %}
+
+{% block og_title %}Champions League Weather Forecasts{% endblock %}
+{% block og_description %}Real meteorologist forecasts for every UEFA Champions League match. By Kevin Roth.{% endblock %}
+
+{% block extra_head %}
+<style>
+  .ucl-hero { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.5rem 0.5rem; }
+  .ucl-hero .kicker { color: var(--fog); font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 0.35rem; }
+  .ucl-hero__title { font-family: var(--font-serif); font-size: clamp(1.4rem, 2vw + 0.4rem, 2rem); line-height: 1.15; margin: 0 0 0.5rem; color: var(--ink); }
+  .ucl-hero__sub { font-family: var(--font-sans); font-size: 0.9rem; color: var(--slate); margin: 0; }
+
+  .ucl-day-section { max-width: 1100px; margin: 0 auto 2rem; padding: 0 1.5rem; }
+  .ucl-day-section__header { display: flex; align-items: baseline; gap: 0.65rem; padding-bottom: 0.55rem; margin-bottom: 0.85rem; border-bottom: 2px solid var(--ink); }
+  .ucl-day-section__title { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 600; margin: 0; }
+  .ucl-day-section__count { font-family: var(--font-sans); font-size: 0.78rem; color: var(--ash); }
+
+  .ucl-cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.7rem; align-items: start; }
+
+  .ucl-match { background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.95rem; }
+  .ucl-match__kickoff { display: flex; justify-content: space-between; align-items: baseline; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .ucl-match__time-uk { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
+  .ucl-match__time-et { font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); }
+  .ucl-match__venue { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); margin-bottom: 0.55rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+
+  .ucl-match__teams { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
+  .ucl-match__team { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
+  .ucl-match__team--home { justify-content: flex-start; }
+  .ucl-match__team--away { justify-content: flex-end; }
+  .ucl-match__abbr { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .ucl-match__logo { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+  .ucl-match__vs { font-family: var(--font-sans); font-size: 0.68rem; font-weight: 700; color: var(--fog); letter-spacing: 0.08em; flex-shrink: 0; }
+
+  .ucl-match__wx { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--mist); }
+  .ucl-match__wx-cell { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .ucl-match__wx-val { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; line-height: 1; color: var(--ink); }
+  .ucl-match__wx-lbl { font-family: var(--font-sans); font-size: 0.62rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.3rem; }
+  .ucl-match__wx-val.precip-hi { color: #b91c1c; }
+  .ucl-match__wx-val.precip-mid { color: #b45309; }
+  .ucl-match__wx-val.precip-lo { color: #15803d; }
+
+  .ucl-writeup { padding: 0.6rem 0.75rem; margin-top: 0.6rem; border-left: 3px solid var(--mist); background: #fafafa; font-family: var(--font-serif); font-size: 0.85rem; line-height: 1.45; color: var(--slate); }
+  .ucl-writeup--green  { border-left-color: #15803d; }
+  .ucl-writeup--yellow { border-left-color: #ca8a04; }
+  .ucl-writeup--orange { border-left-color: #ea580c; }
+  .ucl-writeup--red    { border-left-color: #b91c1c; }
+  .ucl-writeup__head { font-family: var(--font-sans); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog); margin-bottom: 0.25rem; }
+
+  .ucl-match__link { display: block; margin-top: 0.65rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--storm); text-decoration: none; text-align: center; padding-top: 0.5rem; border-top: 1px solid var(--mist); }
+  .ucl-match__link:hover { text-decoration: underline; }
+  .ucl-match__total { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); text-align: center; margin-top: 0.55rem; padding-top: 0.5rem; border-top: 1px solid var(--mist); }
+
+  .ucl-empty { max-width: 32rem; margin: 3rem auto; padding: 2.5rem 1.5rem; text-align: center; border: 1px dashed var(--mist); border-radius: 8px; }
+  .ucl-empty p { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.55; color: var(--slate); margin: 0 0 0.4rem; }
+  .ucl-empty small { font-family: var(--font-sans); font-size: 0.78rem; color: var(--fog); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mlb-page">
+  <header class="ucl-hero">
+    <p class="kicker">Champions League Weather · Live coverage</p>
+    <h1 class="ucl-hero__title">This week's Champions League matches</h1>
+    <p class="ucl-hero__sub">
+      Kickoff-time weather at every league-phase ground, all 36 clubs, 15 countries. Stadium local time first, US Eastern second.
+      Free forecasts by sports meteorologist <a href="/about" style="color:var(--storm);text-decoration:none">Kevin Roth</a>.
+    </p>
+  </header>
+
+  {% if not days_data %}
+    <div class="ucl-empty">
+      <p>No Champions League matches scheduled in the next 7 days.</p>
+      <small>The league phase runs Tuesdays and Wednesdays from September through January, then the knockout rounds begin in February.</small>
+    </div>
+  {% else %}
+    {% for day in days_data %}
+      <section class="ucl-day-section">
+        <div class="ucl-day-section__header">
+          <h2 class="ucl-day-section__title">{{ day.pretty_date }}</h2>
+          <span class="ucl-day-section__count">{{ day.match_count }} match{{ 'es' if day.match_count != 1 else '' }}</span>
+        </div>
+        <div class="ucl-cheat-row">
+          {% for m in day.matches %}
+            <article class="ucl-match">
+              <div class="ucl-match__kickoff">
+                <span class="ucl-match__time-uk">{{ m.kickoff_local_str }}</span>
+                <span class="ucl-match__time-et">{{ m.kickoff_eastern_str }}</span>
+              </div>
+              <div class="ucl-match__venue">{{ m.venue.name }} · {{ m.venue.city }}{% if m.venue.country %}, {{ m.venue.country }}{% endif %}</div>
+
+              <div class="ucl-match__teams">
+                <div class="ucl-match__team ucl-match__team--home">
+                  {% if m.home.logo_url %}<img class="ucl-match__logo" src="{{ m.home.logo_url }}" alt="" loading="lazy">{% endif %}
+                  <span class="ucl-match__abbr">{{ m.home.abbrev }}</span>
+                </div>
+                <span class="ucl-match__vs">v</span>
+                <div class="ucl-match__team ucl-match__team--away">
+                  <span class="ucl-match__abbr">{{ m.away.abbrev }}</span>
+                  {% if m.away.logo_url %}<img class="ucl-match__logo" src="{{ m.away.logo_url }}" alt="" loading="lazy">{% endif %}
+                </div>
+              </div>
+
+              {% set f = m.forecast %}
+              {% if f %}
+                <div class="ucl-match__wx">
+                  <div class="ucl-match__wx-cell">
+                    <div class="ucl-match__wx-val">{{ f.temp }}°</div>
+                    <div class="ucl-match__wx-lbl">Temp</div>
+                  </div>
+                  <div class="ucl-match__wx-cell">
+                    <div class="ucl-match__wx-val">{{ f.wind_speed }}</div>
+                    <div class="ucl-match__wx-lbl">mph wind</div>
+                  </div>
+                  <div class="ucl-match__wx-cell">
+                    <div class="ucl-match__wx-val {% if f.precip_pct >= 60 %}precip-hi{% elif f.precip_pct >= 30 %}precip-mid{% else %}precip-lo{% endif %}">{{ f.precip_pct }}%</div>
+                    <div class="ucl-match__wx-lbl">Rain</div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {% if m.total %}
+                <div class="ucl-match__total">O/U {{ m.total }} goals</div>
+              {% endif %}
+
+              {% if m.writeup %}
+                <div class="ucl-writeup ucl-writeup--{{ m.writeup.color or 'none' }}">
+                  <div class="ucl-writeup__head">Kevin's note</div>
+                  {{ m.writeup.text }}
+                </div>
+              {% endif %}
+
+              {# "Full forecast" deep-link removed 2026-07-23 for UX consistency
+                 with MLB — per-match page doesn't add info beyond this slate.
+                 Page kept in sitemap for SEO discovery. See mlb/slate.html for
+                 the full rationale. #}
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  {% endif %}
+</div>
+
+
+{% endblock %}
+
+{# EOF-CANARY 2026-09-08-ucl-build #}

@@ -1,5 +1,5 @@
 {# Sport-tab strip, below site header on /sport/* pages.
-   `active_sport` is a string like "mlb", "worldcup", "nfl", "ncaaf", "pga", "nascar", "cws", "tennis", "mls"
+   `active_sport` is a string like "mlb", "worldcup", "nfl", "ncaaf", "pga", "nascar", "cws", "tennis", "mls", "ucl"
    `sport_counts` is an optional dict with the "today" indicator per sport.
    CWS and Tennis are conditional: they only render when their sport_counts
    key is set (which the context_processor sets only when in window).
@@ -42,6 +42,12 @@
     <a href="/cws" class="sport-nav__item {% if active_sport == 'cws' %}is-active{% endif %}">
       CWS
       <span class="sport-nav__count">{{ sport_counts.cws }}</span>
+    </a>
+    {% endif %}
+    {% if sport_counts and sport_counts.ucl %}
+    <a href="/ucl" class="sport-nav__item {% if active_sport == 'ucl' %}is-active{% endif %}">
+      UCL
+      <span class="sport-nav__count">{{ sport_counts.ucl }}</span>
     </a>
     {% endif %}
     {% if sport_counts and sport_counts.tennis %}
