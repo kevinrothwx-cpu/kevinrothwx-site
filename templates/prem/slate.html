@@ -21,10 +21,11 @@
   .prem-cheat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.7rem; align-items: start; }
 
   .prem-match { background: var(--white); border: 1px solid var(--mist); padding: 0.85rem 1rem 0.95rem; }
-  .prem-match__kickoff { display: flex; justify-content: space-between; align-items: baseline; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .prem-match__kickoff { display: flex; justify-content: space-between; align-items: baseline; gap: 0.4rem; margin-bottom: 0.3rem; }
   .prem-match__time-uk { font-family: var(--font-sans); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); }
   .prem-match__time-et { font-family: var(--font-sans); font-size: 0.68rem; color: var(--fog); }
-  .prem-match__venue { font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); margin-bottom: 0.55rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--mist); }
+  .prem-match__head { background: rgba(59, 130, 246, 0.055); border-bottom: 1px solid rgba(59, 130, 246, 0.16); margin: -0.85rem -1rem 0.8rem; padding: 0.7rem 1rem 0.55rem; }
+  .prem-match__venue { font-family: var(--font-sans); font-size: 0.7rem; color: var(--ash); margin: 0; }
 
   .prem-match__teams { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
   .prem-match__team { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
@@ -55,6 +56,32 @@
   .prem-empty { max-width: 32rem; margin: 3rem auto; padding: 2.5rem 1.5rem; text-align: center; border: 1px dashed var(--mist); border-radius: 8px; }
   .prem-empty p { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.55; color: var(--slate); margin: 0 0 0.4rem; }
   .prem-empty small { font-family: var(--font-sans); font-size: 0.78rem; color: var(--fog); }
+  /* Mobile: two cards per row (matches the CFB slate treatment). Values
+     below were measured in a real 375px viewport, not derived on paper —
+     the kickoff row is the tight one because Premier League renders
+     "12:30 PM BST" alongside "10:00 AM ET". At these sizes that row has
+     ~25px of slack in a 151px card. Shrink anything here and re-measure
+     before shipping; the 2026-09-02 card-spill came from bumping type
+     without checking. */
+  @media (max-width: 700px) {
+    .prem-day-section { padding: 0 0.75rem; }
+    .prem-cheat-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.5rem; }
+    .prem-cheat-row > * { min-width: 0; }
+    .prem-match { padding: 0.6rem 0.6rem 0.65rem; }
+    .prem-match__head { margin: -0.6rem -0.6rem 0.6rem; padding: 0.5rem 0.6rem 0.45rem; }
+    .prem-match__kickoff { margin-bottom: 0.2rem; gap: 0.25rem; }
+    .prem-match__time-uk { font-size: 0.63rem; letter-spacing: 0; }
+    .prem-match__time-et { font-size: 0.56rem; }
+    .prem-match__venue { font-size: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prem-match__teams { gap: 0.3rem; margin-bottom: 0.55rem; }
+    .prem-match__abbr { font-size: 0.95rem; }
+    .prem-match__logo { width: 18px; height: 18px; }
+    .prem-match__vs { font-size: 0.58rem; }
+    .prem-match__wx { gap: 0.2rem; padding-top: 0.45rem; }
+    .prem-match__wx-val { font-size: 0.95rem; }
+    .prem-match__wx-lbl { font-size: 0.55rem; letter-spacing: 0.02em; margin-top: 0.2rem; }
+    .prem-writeup { font-size: 0.72rem; padding: 0.45rem 0.5rem; margin-top: 0.45rem; }
+  }
 </style>
 {% endblock %}
 
@@ -84,11 +111,13 @@
         <div class="prem-cheat-row">
           {% for m in day.matches %}
             <article class="prem-match">
-              <div class="prem-match__kickoff">
-                <span class="prem-match__time-uk">{{ m.kickoff_local_str }}</span>
-                <span class="prem-match__time-et">{{ m.kickoff_eastern_str }}</span>
+              <div class="prem-match__head">
+                <div class="prem-match__kickoff">
+                  <span class="prem-match__time-uk">{{ m.kickoff_local_str }}</span>
+                  <span class="prem-match__time-et">{{ m.kickoff_eastern_str }}</span>
+                </div>
+                <div class="prem-match__venue">{{ m.venue.name }} · {{ m.venue.city }}</div>
               </div>
-              <div class="prem-match__venue">{{ m.venue.name }} · {{ m.venue.city }}</div>
 
               <div class="prem-match__teams">
                 <div class="prem-match__team prem-match__team--home">

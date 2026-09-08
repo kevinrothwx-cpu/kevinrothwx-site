@@ -5,14 +5,16 @@
    key is set (which the context_processor sets only when in window).
 
    NOTE: "More sports" dropdown (Horse Racing, Premier League, Cricket)
-   was removed on 2026-07-04. Those modules exist but aren't ready for
-   public traffic yet — surfacing them prematurely undercuts the
-   meteorologist-byline credibility. Re-add the <details class="sport-nav__more">
-   block once those sports have real content behind them.
+   was removed on 2026-07-04 because those modules weren't ready for public
+   traffic. Premier League came back on 2026-09-08 once its ESPN 403 was
+   fixed and it served real fixtures again; it and UCL now sit at the END of
+   the strip as conditional tabs. Horse Racing and Cricket are still hidden.
 #}
 <nav class="sport-nav" aria-label="Sport navigation">
-  {# Sport order (2026-08-14): MLB / NFL / PGA / NCAAF / NASCAR / MLS.
-     CWS + Tennis stay conditional (only render when in season). #}
+  {# Sport order (2026-09-08): MLB / NFL / PGA / NCAAF / NASCAR / MLS,
+     then conditionals CWS / Tennis / EPL / UCL.
+     Core four lead. Soccer is deliberately LAST — secondary sports must not
+     push the football tabs down, especially on mobile. #}
   <div class="sport-nav__inner">
     <a href="/mlb/today" class="sport-nav__item {% if active_sport == 'mlb' %}is-active{% endif %}">
       MLB
@@ -44,16 +46,27 @@
       <span class="sport-nav__count">{{ sport_counts.cws }}</span>
     </a>
     {% endif %}
-    {% if sport_counts and sport_counts.ucl %}
-    <a href="/ucl" class="sport-nav__item {% if active_sport == 'ucl' %}is-active{% endif %}">
-      UCL
-      <span class="sport-nav__count">{{ sport_counts.ucl }}</span>
-    </a>
-    {% endif %}
     {% if sport_counts and sport_counts.tennis %}
     <a href="/tennis" class="sport-nav__item {% if active_sport == 'tennis' %}is-active{% endif %}">
       Tennis
       <span class="sport-nav__count">{{ sport_counts.tennis }}</span>
+    </a>
+    {% endif %}
+    {# Soccer sits last on purpose. Per Kevin 2026-09-08: these are
+       secondary sports and must never appear ahead of NFL, CFB, PGA or the
+       other core tabs. Both are conditional on a live count, so they drop
+       out entirely during international breaks and the summer, which also
+       keeps the mobile strip from overflowing. #}
+    {% if sport_counts and sport_counts.prem %}
+    <a href="/prem" class="sport-nav__item {% if active_sport == 'prem' %}is-active{% endif %}">
+      EPL
+      <span class="sport-nav__count">{{ sport_counts.prem }}</span>
+    </a>
+    {% endif %}
+    {% if sport_counts and sport_counts.ucl %}
+    <a href="/ucl" class="sport-nav__item {% if active_sport == 'ucl' %}is-active{% endif %}">
+      UCL
+      <span class="sport-nav__count">{{ sport_counts.ucl }}</span>
     </a>
     {% endif %}
   </div>

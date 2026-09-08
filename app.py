@@ -578,6 +578,25 @@ def inject_sport_nav():
     except Exception:
         pass
 
+    # Premier League — same conditional treatment. The tab was pulled from
+    # the nav on 2026-07-04 when the module wasn't ready; it's back now that
+    # the ESPN 403 is fixed and /prem serves real fixtures again. Counting a
+    # 3-day horizon means the tab shows from Thursday for a Saturday slate
+    # and disappears during international breaks.
+    try:
+        prem_matches, _ = get_prem_slate(allow_build=False)
+        if prem_matches:
+            soon = 0
+            horizon = datetime.now(timezone.utc) + timedelta(days=3)
+            for m in prem_matches:
+                ko = m.get("kickoff_utc")
+                if ko and ko <= horizon:
+                    soon += 1
+            if soon > 0:
+                counts["prem"] = str(soon)
+    except Exception:
+        pass
+
     return {"sport_counts": counts}
 
 
