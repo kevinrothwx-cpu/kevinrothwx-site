@@ -39,6 +39,7 @@
   .ucl-match__wx-cell { text-align: center; display: flex; flex-direction: column; align-items: center; }
   .ucl-match__wx-val { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 600; line-height: 1; color: var(--ink); }
   .ucl-match__wx-lbl { font-family: var(--font-sans); font-size: 0.62rem; color: var(--fog); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.3rem; }
+  .ucl-match__wx-lbl--temp { text-transform: none; letter-spacing: 0.02em; }
   .ucl-match__wx-val.precip-hi { color: #b91c1c; }
   .ucl-match__wx-val.precip-mid { color: #b45309; }
   .ucl-match__wx-val.precip-lo { color: #15803d; }
@@ -136,9 +137,13 @@
               {% set f = m.forecast %}
               {% if f %}
                 <div class="ucl-match__wx">
+                  {# Celsius leads, Fahrenheit follows. Every ground in this
+                     competition is in a metric country, but the audience is
+                     mostly US. The F value takes the label slot rather than
+                     adding a line, so the card height is unchanged. #}
                   <div class="ucl-match__wx-cell">
-                    <div class="ucl-match__wx-val">{{ f.temp }}°</div>
-                    <div class="ucl-match__wx-lbl">Temp</div>
+                    <div class="ucl-match__wx-val">{{ f.temp|celsius }}°C</div>
+                    <div class="ucl-match__wx-lbl ucl-match__wx-lbl--temp">{{ f.temp }}°F</div>
                   </div>
                   <div class="ucl-match__wx-cell">
                     <div class="ucl-match__wx-val">{{ f.wind_speed }}</div>

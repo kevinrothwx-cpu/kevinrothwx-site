@@ -17,9 +17,10 @@ Data source:
     Auth: apiKey query param (ODDS_API_KEY, shared with MLB/NFL/CFB/MLS/UCL)
 
 API BUDGET
-    /prem displays no odds — only kickoff time, venue and weather. So this
-    module needs The Odds API purely as a FIXTURE feed, and fixtures move
-    on a scale of days (TV reschedules), not minutes. Refresh is therefore
+    /prem shows a goals total but nothing that moves minute to minute, so
+    this module is effectively a FIXTURE feed with a slow-moving line
+    attached. Fixtures move on a scale of days (TV reschedules) and a
+    Premier League goals total barely moves at all. Refresh is therefore
     3 hours when a match is inside 72h and 12 hours otherwise, which is
     roughly 8 credits/day in season instead of the ~58 a 25-minute warmer
     would cost. prem/slate.py keeps its own 25-minute WEATHER cycle on top,
@@ -260,11 +261,36 @@ def _parse_match(raw: dict, unresolved: list[str]) -> Optional[dict]:
             "date_local_pretty":   kickoff_local.strftime("%A, %B %-d"),
             "status":              "pre",
             "slug":                _slug(home["abbrev"], away["abbrev"]),
+            "total":               _extract_total(raw),
             "source":              "odds_api",
         }
     except Exception as e:
         print(f"[prem.odds_api] parse failed for {raw.get('id')}: "
               f"{type(e).__name__}: {e}", flush=True)
+        return None
+
+
+def _extract_total(raw: dict) -> Optional[float]:
+    """Consensus goals total, if any book posted one. None otherwise.
+
+    We were already paying for the totals market on every request (see the
+    markets param above) and then throwing the result away, so /prem showed
+    no O/U while /ucl did. Same median-across-books approach as ucl/."""
+    try:
+        points = []
+        for bk in (raw.get("bookmakers") or []):
+            for mk in (bk.get("markets") or []):
+                if mk.get("key") != "totals":
+                    continue
+                for oc in (mk.get("outcomes") or []):
+                    p = oc.get("point")
+                    if isinstance(p, (int, float)):
+                        points.append(float(p))
+        if not points:
+            return None
+        points.sort()
+        return points[len(points) // 2]
+    except Exception:
         return None
 
 

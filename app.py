@@ -181,6 +181,23 @@ app.jinja_env.filters["precip_icon"]  = precip_icon
 app.jinja_env.filters["wind_compass"] = wind_compass
 
 
+def to_celsius(temp_f):
+    """Fahrenheit to Celsius, rounded. Returns None if unusable.
+
+    Added 2026-09-09 for /prem and /ucl. Every ground in those two
+    competitions is in a metric country, so Celsius leads and Fahrenheit
+    follows for the US audience. WeatherAPI hands us temp_f (see
+    mlb/weatherapi.py), so the conversion has to happen at render time
+    rather than being stored."""
+    try:
+        return round((float(temp_f) - 32.0) * 5.0 / 9.0)
+    except (TypeError, ValueError):
+        return None
+
+
+app.jinja_env.filters["celsius"] = to_celsius
+
+
 def md_bold(text):
     """Lightweight Markdown bold filter for writeup bodies.
 
