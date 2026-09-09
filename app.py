@@ -320,6 +320,11 @@ MYSPORTSWEATHER_HOSTS = {"mysportsweather.com", "www.mysportsweather.com"}
 
 # Sport sections that live on mysportsweather.com going forward. Requests
 # for these on kevinrothwx.com get 301-redirected.
+# How many days before round 1 the homepage PGA preview card may appear.
+# 3 keeps it to the tournament's own week: a Thursday start becomes
+# eligible on Monday, which is when "rounds start Thursday" is true.
+PGA_CARD_LEAD_DAYS = 3
+
 SPORT_PATH_PREFIXES = ("/mlb", "/cws", "/golf", "/nascar", "/nfl", "/ncaaf", "/mls", "/ucl")
 SPORT_PATH_EXACT = {"/mlb-weather", "/nfl-weather", "/pga-weather"}
 
@@ -460,10 +465,30 @@ def inject_globals():
     # put a golf API fetch in the critical path of every request on the
     # site. The warmer keeps the cache fresh; a cold cache just hides the
     # slot for one cycle, which is the safe direction to fail.
+    #
+    # 2026-09-09: bool(_golf_slate) was not enough. The slate holds UPCOMING
+    # tournaments, not just this week's, so on Sep 9 it contained the
+    # Biltmore Championship whose first round was Sep 17. The card still
+    # rendered and told visitors "rounds start Thursday" about a tournament
+    # eight days out. Gate on the first round's DATE, not on existence.
     pga_has_event = False
     try:
         _golf_slate, _ = get_pga_slate(allow_build=False)
-        pga_has_event = bool(_golf_slate)
+        _today_et = datetime.now(EASTERN_TZ).date()
+        for _ev in (_golf_slate or []):
+            _rounds = _ev.get("rounds") or []
+            if not _rounds:
+                continue
+            _first = min(r.get("date_local") for r in _rounds
+                         if r.get("date_local") is not None)
+            # The card's copy promises rounds starting this week. Show it
+            # only while that is true: from the Monday of the tournament
+            # week through the final round.
+            _last = max(r.get("date_local") for r in _rounds
+                        if r.get("date_local") is not None)
+            if (_first - _today_et).days <= PGA_CARD_LEAD_DAYS and _today_et <= _last:
+                pga_has_event = True
+                break
     except Exception:
         pass
 
@@ -526,15 +551,15 @@ def inject_sport_nav():
     except Exception:
         pass
 
-    # NFL — count games whose Eastern date is today. Off-season returns 0
-    # naturally and the badge stays hidden.
+    # NFL — count the whole slate, the way NCAAF does above, NOT just today.
+    # NFL is a weekly sport: the slate is one Thu-through-Mon week. Counting
+    # only today's games made the badge read "1" on a Wednesday with a
+    # 16-game week ahead, which undersells the page it links to. Off-season
+    # returns 0 naturally and the badge stays hidden.
     try:
         nfl_games, _ = get_nfl_slate(allow_build=False)
         if nfl_games:
-            today_nfl = sum(1 for g in nfl_games
-                            if g.get("kickoff_date_eastern") == today_str)
-            if today_nfl > 0:
-                counts["nfl"] = str(today_nfl)
+            counts["nfl"] = str(len(nfl_games))
     except Exception:
         pass
 
