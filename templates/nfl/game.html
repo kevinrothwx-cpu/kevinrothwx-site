@@ -193,7 +193,8 @@
                 <tr>
                   <th></th>
                   {% for p in hrrr_hourly %}
-                    <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.start_time[11:16] }}</th>
+                    {# Same UTC-vs-ET mismatch the CFB page had. #}
+                    <th class="{% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.hour_eastern or p.local_hour_label or p.start_time[11:16] }}</th>
                   {% endfor %}
                 </tr>
               </thead>

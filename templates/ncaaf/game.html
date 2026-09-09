@@ -307,7 +307,10 @@
                 <th class="hourly__label-col"></th>
                 {% for p in hrrr_hourly %}
                   <th class="hourly__hour-col {% if p.is_game_hour %}is-game-hour{% endif %}">
-                    <div class="hourly__time">{{ p.start_time[11:16] }}</div>
+                    {# Match the NWS table above. This used to slice the raw
+                       ISO string, which is UTC, so the panel showed "23:00"
+                       directly beneath a table showing "7 PM". #}
+                    <div class="hourly__time">{{ p.hour_eastern or p.local_hour_label or p.start_time[11:16] }}</div>
                   </th>
                 {% endfor %}
               </tr>

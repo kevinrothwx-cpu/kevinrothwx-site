@@ -166,11 +166,11 @@
            a real URL, and hide the img gracefully via onerror as a belt +
            suspenders. #}
         {% if away.logo_url %}<img class="cheat-card__logo" src="{{ away.logo_url }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
-        <span class="cheat-card__abbr">{% if away.rank %}<span class="cheat-card__rank">{{ away.rank }}</span>{% endif %}{{ away.abbrev }}</span>
+        <span class="cheat-card__abbr{% if (away.abbrev or '')|length >= 4 %} cheat-card__abbr--long{% endif %}">{% if away.rank %}<span class="cheat-card__rank">{{ away.rank }}</span>{% endif %}{{ away.abbrev }}</span>
       </div>
       <span class="cheat-card__at">{% if neutral %}vs{% else %}@{% endif %}</span>
       <div class="cheat-card__team cheat-card__team--right">
-        <span class="cheat-card__abbr">{% if home.rank %}<span class="cheat-card__rank">{{ home.rank }}</span>{% endif %}{{ home.abbrev }}</span>
+        <span class="cheat-card__abbr{% if (home.abbrev or '')|length >= 4 %} cheat-card__abbr--long{% endif %}">{% if home.rank %}<span class="cheat-card__rank">{{ home.rank }}</span>{% endif %}{{ home.abbrev }}</span>
         {% if home.logo_url %}<img class="cheat-card__logo" src="{{ home.logo_url }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% endif %}
       </div>
     </div>

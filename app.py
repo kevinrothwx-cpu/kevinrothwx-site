@@ -3631,6 +3631,8 @@ def admin_cache_health():
     slate_rows.append(_slate_row("NFL",  lambda: get_nfl_slate(allow_build=False)))
     slate_rows.append(_slate_row("CFB",  lambda: get_cfb_slate(allow_build=False)))
     slate_rows.append(_slate_row("MLS",  lambda: get_mls_slate(allow_build=False)))
+    slate_rows.append(_slate_row("EPL",  lambda: get_prem_slate(allow_build=False)))
+    slate_rows.append(_slate_row("UCL",  lambda: get_ucl_slate(allow_build=False)))
     try:
         # PGA has a different signature (returns tuple of pga_slate meta), guard it
         slate_rows.append(_slate_row("PGA",  lambda: get_pga_slate(allow_build=False)))
@@ -3652,6 +3654,57 @@ def admin_cache_health():
         "<td><code style='font-size:.78rem'>" + (err or "") + "</code></td></tr>"
         for label, age_min, n_games, cls, err in slate_rows
     )
+
+    # ── Data integrity (2026-09-09) ──────────────────────────────────
+    # Freshness alone does not catch a slate that builds happily while
+    # quietly dropping games. Two failures got past the freshness table:
+    # /prem served an empty slate for two weeks after ESPN started 403ing,
+    # and CFB dropped 24 games because four FBS home teams were missing
+    # from cfb/venues.py. Both were visible in the logs and nowhere else.
+    integrity = []
+    try:
+        from cfb.cfbd_client import get_parse_health
+        ph = get_parse_health()
+        checked = ph.get("checked_at_utc")
+        unknown = ph.get("unknown_schools") or []
+        reasons = ph.get("reject_reasons") or {}
+        dropped = sum(v for k, v in reasons.items() if k != "out_of_window")
+        if checked is None:
+            integrity.append(("CFB parse", "warn",
+                              "No CFBD parse recorded yet this boot."))
+        elif unknown:
+            integrity.append(("CFB parse", "stale",
+                              f"{len(unknown)} unknown home team(s) dropping games: "
+                              f"{', '.join(unknown)} — add to cfb/venues.py FBS_TEAMS"))
+        else:
+            integrity.append(("CFB parse", "fresh",
+                              f"{ph.get('parsed_games')} of {ph.get('raw_games')} raw games kept, "
+                              f"{dropped} dropped for reasons other than window"))
+    except Exception as e:
+        integrity.append(("CFB parse", "warn", f"unavailable: {type(e).__name__}: {e}"))
+
+    # In-season sport serving an empty slate — the /prem failure mode.
+    for _label, _getter in (("NFL", lambda: get_nfl_slate(allow_build=False)),
+                            ("CFB", lambda: get_cfb_slate(allow_build=False)),
+                            ("MLS", lambda: get_mls_slate(allow_build=False)),
+                            ("EPL", lambda: get_prem_slate(allow_build=False)),
+                            ("UCL", lambda: get_ucl_slate(allow_build=False))):
+        try:
+            _games, _meta = _getter()
+            _built = (_meta or {}).get("built_at_utc")
+            if _built and not _games:
+                integrity.append((f"{_label} slate", "stale",
+                                  "Built successfully but returned ZERO games. "
+                                  "If this sport is in season, the fetcher is failing "
+                                  "silently and the page is serving an empty state."))
+        except Exception as e:
+            integrity.append((f"{_label} slate", "warn", f"{type(e).__name__}: {e}"))
+
+    integrity_html = "".join(
+        "<tr><td>" + n + "</td><td>" + _pill(c) + "</td>"
+        "<td style='font-size:.82rem'>" + d + "</td></tr>"
+        for n, c, d in integrity
+    ) or "<tr><td colspan='3' style='color:#888'>no checks ran</td></tr>"
 
     # Build the HTML. Small standalone template — no base.html so this
     # page renders even if something's wrong with the shared template.
@@ -3727,6 +3780,13 @@ def admin_cache_health():
 <tbody>{"".join(f"<tr><td>{gm['date_str']}</td><td>{gm['matchup']}</td><td style='font-size:.78rem;color:#666'>{gm['venue']}</td><td>{'—' if gm['odds_current'] is None else gm['odds_current']}</td><td>{'—' if gm['odds_opening'] is None else gm['odds_opening']}{' ' + ('🔒' if gm['odds_frozen'] else '') if gm['odds_opening'] is not None else ''}</td><td style='font-weight:600;color:{('#166534' if gm['odds_delta'] and gm['odds_delta'].startswith('+') else ('#b91c1c' if gm['odds_delta'] and gm['odds_delta'].startswith('-') else '#888'))}'>{gm['odds_delta'] or '—'}</td><td style='font-size:.78rem'>{gm['odds_book'] or '—'}</td><td style='font-size:.75rem;color:#666'>{gm['first_seen'] or '—'}</td><td style='font-size:.78rem;color:#666'>{gm['src']}</td></tr>" for gm in mlb_games) or "<tr><td colspan='9' style='color:#888'>no games cached</td></tr>"}</tbody>
 </table>
 <p class="meta" style="font-size:.75rem">🔒 = odds frozen at first pitch. "Book" shows which sportsbook the current line came from — Pinnacle → DraftKings → FanDuel → BetMGM → Caesars → first available.</p>
+
+<h2>Data integrity</h2>
+<p class="meta">Catches slates that build "successfully" while dropping games or returning nothing. A RED row here means the page is live and wrong, which freshness alone will not show.</p>
+<table>
+<thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>{integrity_html}</tbody>
+</table>
 
 <h2>Other sport slates</h2>
 <p class="meta">Non-MLB warmers. Each sport warmer runs every ~25 min. Zero games + error message = fetcher or parser failure — check Render logs for the sport's slate module (e.g. `[nfl.slate]`).</p>

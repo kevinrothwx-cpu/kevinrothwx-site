@@ -67,6 +67,42 @@ def _build_team_name_index() -> dict[str, int]:
 _TEAM_NAME_INDEX: dict[str, int] = _build_team_name_index()
 
 
+# ── Parse health (2026-09-09) ─────────────────────────────────────────────
+# parse_cfbd_game already counted every reason it rejected a game, but the
+# counts were printed and discarded. That is how four missing FBS home
+# teams (Oregon State, Washington State, Sacramento State, North Dakota
+# State) silently ate 24 games across the season: the evidence existed in
+# the Render log from Week 1 and nothing surfaced it.
+#
+# This keeps the last run's counts in memory AND records the actual school
+# names behind "unknown_home_team", which is the part that makes the number
+# actionable. /admin/cache-health renders it.
+_PARSE_HEALTH: dict = {
+    "checked_at_utc":  None,
+    "raw_games":       0,
+    "parsed_games":    0,
+    "reject_reasons":  {},
+    "unknown_schools": [],
+}
+
+
+def record_parse_health(raw_count: int, parsed_count: int,
+                        reasons: dict, unknown: set) -> None:
+    from datetime import datetime as _dt, timezone as _tz
+    _PARSE_HEALTH.update({
+        "checked_at_utc":  _dt.now(_tz.utc),
+        "raw_games":       raw_count,
+        "parsed_games":    parsed_count,
+        "reject_reasons":  dict(reasons or {}),
+        "unknown_schools": sorted(unknown or []),
+    })
+
+
+def get_parse_health() -> dict:
+    """Snapshot of the last CFBD parse. Never raises."""
+    return dict(_PARSE_HEALTH)
+
+
 # Manual overrides for known CFBD name mismatches. CFBD uses school names
 # that occasionally differ from what FBS_TEAMS has stored. Add entries as
 # they come up.
@@ -291,8 +327,10 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
 
     out: list[dict] = []
     parse_reject_reasons: dict[str, int] = {}
+    unknown_schools: set = set()
     for raw in all_raw:
-        parsed = parse_cfbd_game(raw, reject_stats=parse_reject_reasons)
+        parsed = parse_cfbd_game(raw, reject_stats=parse_reject_reasons,
+                                 unknown_schools=unknown_schools)
         if not parsed:
             continue
         kickoff = parsed.get("kickoff_utc")
@@ -305,6 +343,10 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
 
     if parse_reject_reasons:
         print(f"[cfb.cfbd] parse reject reasons: {parse_reject_reasons}", flush=True)
+    if unknown_schools:
+        print(f"[cfb.cfbd] UNKNOWN HOME TEAMS (add to cfb/venues.py FBS_TEAMS): "
+              f"{sorted(unknown_schools)}", flush=True)
+    record_parse_health(len(all_raw), len(out), parse_reject_reasons, unknown_schools)
 
     # Sort chronologically to match ESPN fetcher's contract
     out.sort(key=lambda g: g["kickoff_utc"])
@@ -312,7 +354,8 @@ def get_cfbd_games_in_window(start_utc: datetime, days_ahead: int = 7,
     return out
 
 
-def parse_cfbd_game(raw: dict, reject_stats: Optional[dict] = None) -> Optional[dict]:
+def parse_cfbd_game(raw: dict, reject_stats: Optional[dict] = None,
+                    unknown_schools: Optional[set] = None) -> Optional[dict]:
     """Convert one CFBD game into our normalized shape (matching what
     cfb/schedule.py's parse_cfb_event produces from ESPN). Returns None
     if we can't map required fields (unknown teams, missing kickoff, etc.).
@@ -362,6 +405,8 @@ def parse_cfbd_game(raw: dict, reject_stats: Optional[dict] = None) -> Optional[
         away_team_id = _lookup_team_id(away_school)
         if home_team_id is None:
             _bump("unknown_home_team")
+            if unknown_schools is not None and home_school:
+                unknown_schools.add(home_school)
             # Only spam the log once per unique unknown team to avoid noise
             return None
 

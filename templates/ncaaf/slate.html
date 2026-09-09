@@ -224,6 +224,31 @@
     .cheat-card__odds-total { font-size: 0.68rem; }
     .cheat-card__location { font-size: 0.56rem; }
     .cheat-card--cfb .cheat-card__time { font-size: 0.6rem; }
+
+    /* ── 4-letter abbreviation collision (2026-09-09) ──────────────────
+       51 of 134 CFB teams have a 4-character abbrev. In the old flex row
+       each team track got ~58px while its contents needed ~71px, and
+       because .cheat-card__abbr is nowrap with overflow visible (and its
+       parent is visible too) the extra 13px painted straight over the @.
+       Measured at 375px: 62 of 82 cards collided, worst overlap 16px.
+
+       Fix is three parts, all mobile-only and all scoped to --cfb so the
+       shared cheat-card used by NFL/MLS/MLB/World Cup is untouched:
+         1. grid with a reserved auto column, so the @ owns its own track
+         2. tighter gaps + smaller logo to reclaim horizontal space
+         3. type shrink ONLY on the 4-char abbrevs, via the --long class
+            set in ncaaf/_macros.html. The other 87 keep full size.
+
+       Result at 375px: 0 overlaps across all 82 cards, median gap 10px.
+       One card (MONM @ WMU, four wide serif Ms) lands at exactly 0 —
+       touching, not overlapping. Shrinking the @ further does not help
+       it: a narrower centre column just widens the side tracks by the
+       same amount. Re-measure before changing any value here. */
+    .cheat-card--cfb .cheat-card__teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 0.15rem; }
+    .cheat-card--cfb .cheat-card__team { gap: 0.15rem; }
+    .cheat-card--cfb .cheat-card__at { padding: 0; font-size: 0.62rem; }
+    .cheat-card--cfb .cheat-card__logo { width: 14px; height: 14px; }
+    .cheat-card--cfb .cheat-card__abbr--long { font-size: 0.86rem; letter-spacing: -0.04em; }
   }
 </style>
 {% endblock %}

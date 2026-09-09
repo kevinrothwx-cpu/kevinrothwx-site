@@ -30,6 +30,9 @@ from hrrr import get_hrrr_periods
 
 # NFL game window: 1h before through 4h after kickoff.
 # Football is ~3.5 hours; 4h buffer covers halftime + late TV slate overrun.
+from zoneinfo import ZoneInfo as _ZI_LABEL
+_ET_LABEL = _ZI_LABEL("America/New_York")   # hour_eastern labels only
+
 HOURS_BEFORE_KICKOFF = 1
 HOURS_GAME_WINDOW    = 4   # how many hours after kickoff the hourly window extends
 HOURS_HIGHLIGHTED    = 3   # how many of those hours get the game-hour shaded highlight
@@ -349,6 +352,15 @@ def _hourly_window(periods: list[dict], kickoff_utc: datetime) -> list[dict]:
             if start <= st < end:
                 p2 = dict(p)
                 p2["is_game_hour"] = (kickoff <= st < kickoff + timedelta(hours=HOURS_HIGHLIGHTED))
+                # Human-friendly Eastern hour label — "7 PM", "10 AM".
+                # cfb/slate.py's _hourly_window has always produced this;
+                # NFL's did not, so the HRRR panel on the game page fell
+                # back to slicing the raw ISO string and rendered UTC
+                # ("23:00") directly under a table showing "7 PM".
+                try:
+                    p2["hour_eastern"] = st.astimezone(_ET_LABEL).strftime("%-I %p").lstrip("0")
+                except Exception:
+                    p2["hour_eastern"] = st.strftime("%H:%M")
                 out.append(p2)
         except (ValueError, AttributeError):
             continue

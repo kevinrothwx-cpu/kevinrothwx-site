@@ -40,6 +40,7 @@ SBC  = "SBC"   # Sun Belt
 CUSA = "CUSA"  # Conference USA
 MAC  = "MAC"
 IND  = "IND"   # Independents
+PAC  = "PAC"   # Pac-12 (rebuilt for 2026)
 
 
 # ── Roof types ────────────────────────────────────────────────────────────
@@ -779,6 +780,57 @@ FBS_TEAMS.update({
                                 42.28600, -85.60075, "America/Detroit", cap=30200, bearing=45)),
 })
 
+
+
+# ── Missing FBS hosts, added 2026-09-09 ───────────────────────────────────
+# Found because Texas Tech at Oregon State (Sat Sep 12) never appeared on
+# the slate. A game's venue comes from its HOME team, so a home team that
+# isn't in this dict makes cfb/schedule.py drop the game silently.
+#
+# Diffing every FBS home team on ESPN's 2026 schedule against this file
+# turned up four, and they are two distinct stories:
+#   Oregon State + Washington State — the Pac-12 holdouts. They were FBS
+#     the whole time; the original 134-team list simply missed them when
+#     the Pac-12 collapsed and they were briefly conference-less.
+#   Sacramento State + North Dakota State — FCS programs that moved up to
+#     FBS for 2026, so no list built before then would include them.
+#
+# Cost of the gap: 24 home games across the season, three of which had
+# already been played before this was caught.
+#
+# short= must be the full spelled-out "State", not ESPN's "Oregon St".
+# CFBD sends "Oregon State" and cfbd_client._build_team_name_index keys
+# on name+short only, so an abbreviated short here fails to match and
+# the game is dropped exactly as before — a fix that looks applied and
+# does nothing. Every other State school in this file spells it out.
+#
+# bearing is deliberately None on all four. _stadium() documents None as
+# "not yet measured" and the wind macro falls back to raw compass, which
+# is correct-but-plain. A guessed bearing would render a confidently wrong
+# crosswind arrow, which is worse than none. Measure from satellite and
+# fill these in — see docs/CFB_FIELD_BEARINGS_WORKSHEET.md.
+FBS_TEAMS.update({
+    204:  dict(name="Oregon State Beavers", short="Oregon State", abbrev="ORST",
+              conf=PAC, color="#DC4405",
+              stadium=_stadium("Reser Stadium", "Corvallis, OR",
+                               44.5590, -123.2820, "America/Los_Angeles",
+                               cap=35548, bearing=None)),
+    265:  dict(name="Washington State Cougars", short="Washington State", abbrev="WSU",
+              conf=PAC, color="#A60F2D",
+              stadium=_stadium("Martin Stadium", "Pullman, WA",
+                               46.7319, -117.1633, "America/Los_Angeles",
+                               cap=32952, bearing=None)),
+    16:   dict(name="Sacramento State Hornets", short="Sacramento State", abbrev="SAC",
+              conf=IND, color="#00573C",
+              stadium=_stadium("Hornet Stadium", "Sacramento, CA",
+                               38.5563, -121.4227, "America/Los_Angeles",
+                               cap=21195, bearing=None)),
+    2449: dict(name="North Dakota State Bison", short="North Dakota State", abbrev="NDSU",
+              conf=IND, color="#01402A",
+              stadium=_stadium("Fargodome", "Fargo, ND",
+                               46.8917, -96.8028, "America/Chicago",
+                               roof=ROOF_FIXED_DOME, cap=18700, bearing=None)),
+})
 
 # ── Patch conference for teams that moved from IND to G5 ──────────────────
 # Army joined AAC in 2024 (was IND in the initial P4+IND coverage).
