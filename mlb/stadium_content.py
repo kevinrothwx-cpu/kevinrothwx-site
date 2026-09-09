@@ -199,9 +199,9 @@ STADIUM_CONTENT = {
         "headline": "Progressive Field Weather: Lake Erie Effect, Cleveland Summers",
         "climate": (
             "Progressive Field is in downtown Cleveland about six blocks from "
-            "the Cuyahoga and less than ake Erie. April and early "
+            "the Cuyahoga and about a mile from Lake Erie. April and early "
             "May games regularly play in the 40s and 50s with lake-influenced "
-            "wind. Midsummer runs warm with typical summer humiditys, cooler "
+            "wind. Midsummer runs warm with typical summer humidity, cooler "
             "than most Midwest cities because of the lake."
         ),
         "wind": (
@@ -249,7 +249,7 @@ STADIUM_CONTENT = {
         "headline": "Kauffman Stadium Weather: Kansas City Heat, 2025 Fence Changes",
         "climate": (
             "Kauffman sits east of downtown Kansas City on the plains. Summer "
-            "weather is hot with Summer conditions are typical of the region and "
+            "weather is hot with high humidity and "
             "dew points regularly in the upper 60s. Afternoon and evening "
             "thunderstorms from cold-front passages are common."
         ),
@@ -297,7 +297,7 @@ STADIUM_CONTENT = {
         "headline": "Minute Maid Park Weather: Retractable Roof and Houston Heat",
         "climate": (
             "Minute Maid sits in downtown Houston. Summer conditions are extreme: "
-            "July averages around 94 degrees with typical summer humiditys. That combination pushes heat index above 100 through most "
+            "July averages around 94 degrees with typical summer humidity. That combination pushes heat index above 100 through most "
             "of June, July, and August afternoons and evenings."
         ),
         "wind": (
@@ -327,7 +327,7 @@ STADIUM_CONTENT = {
         "climate": (
             "Angel Stadium sits in Anaheim about 12 miles inland from Huntington "
             "Beach. Summer weather is warm and dry: July averages around 85 "
-            "degrees with typical summer humiditys. Marine-layer clouds and "
+            "degrees with typical summer humidity. Marine-layer clouds and "
             "onshore flow keep evenings cool relative to inland Southern "
             "California cities."
         ),
@@ -374,9 +374,9 @@ STADIUM_CONTENT = {
         "slug": "t-mobile-park",
         "headline": "T-Mobile Park Weather: Seattle's Retractable Roof and Marine Climate",
         "climate": (
-            "T-Mobile Park sits in downtown Seattle lliott "
+            "T-Mobile Park sits in downtown Seattle a few blocks from Elliott "
             "Bay. Summer weather is mild and often dry: July averages around 78 "
-            "degrees at Sea-Tac with typical summer humiditys. Marine "
+            "degrees at Sea-Tac with typical summer humidity. Marine "
             "air keeps carry lower than warmer humid parks even on clear nights."
         ),
         "wind": (
@@ -404,8 +404,7 @@ STADIUM_CONTENT = {
         "slug": "globe-life-field",
         "headline": "Globe Life Field Weather: Texas Heat and a Retractable Roof",
         "climate": (
-            "Globe Life Field opened in 2020 in Arlington. Summer heat is extreme: "
-            "Summer conditions are typical of the region with typical summer humiditys. "
+            "Globe Life Field opened in 2020 in Arlington. Summer heat is extreme. "
             "The old open-air Globe Life Park nearby saw 100-plus heat index "
             "regularly. The new park was built with a retractable roof to allow "
             "climate control for those conditions."
@@ -436,7 +435,7 @@ STADIUM_CONTENT = {
         "climate": (
             "Truist Park sits in Cumberland north of downtown Atlanta. Summer "
             "conditions run hot and humid: July averages around 89 degrees at "
-            "Hartsfield with typical summer humiditys. Afternoon "
+            "Hartsfield with typical summer humidity. Afternoon "
             "thunderstorms from the southern Appalachians reach the park through "
             "early evening from June through August."
         ),
@@ -547,7 +546,7 @@ STADIUM_CONTENT = {
         "climate": (
             "The Phillies' park sits in South Philadelphia about three miles "
             "from the Delaware River. Summer weather is hot and humid: July "
-            "averages around 87 degrees at PHL with typical summer humiditys. Afternoon thunderstorms are common in June, July, and "
+            "averages around 87 degrees at PHL with typical summer humidity. Afternoon thunderstorms are common in June, July, and "
             "August."
         ),
         "wind": (
@@ -570,7 +569,7 @@ STADIUM_CONTENT = {
         "headline": "Nationals Park Weather: DC Humidity, the Anacostia River",
         "climate": (
             "Nationals Park sits on the north bank of the Anacostia in Southeast "
-            "DC. Summer conditions are hot and humid: Summer conditions are typical of the region with typical summer humiditys. Afternoon "
+            "DC. Summer conditions are hot and humid. Afternoon "
             "thunderstorm risk is high through July and August."
         ),
         "wind": (
@@ -592,7 +591,7 @@ STADIUM_CONTENT = {
         "headline": "Great American Ball Park Weather: Ohio River Wind, Cincinnati Summers",
         "climate": (
             "GABP sits on the north bank of the Ohio River in downtown "
-            "Cincinnati. Summer weather is warm and humid: Summer conditions are typical of the region with typical summer humiditys."
+            "Cincinnati. Summer weather is warm and humid."
         ),
         "wind": (
             "Center field is to the northeast. Southwest wind, the summer "
@@ -644,9 +643,9 @@ STADIUM_CONTENT = {
         "slug": "american-family-field",
         "headline": "American Family Field Weather: Milwaukee Wind, Retractable Roof",
         "climate": (
-            "American Family Field sits in Milwaukee"
-            "Lake Michigan. Summer weather is cool relative to inland Midwest: "
-            "Summer conditions are typical of the region with typical summer humiditys. Lake breeze is common in the afternoon."
+            "American Family Field sits in Milwaukee about four miles west of "
+            "Lake Michigan. Summer weather is cool relative to the inland Midwest. "
+            "Lake breeze is common in the afternoon."
         ),
         "wind": (
             "With the roof closed, no wind. With the roof open, prevailing "
@@ -674,7 +673,7 @@ STADIUM_CONTENT = {
         "headline": "PNC Park Weather: Allegheny River Wind, Pittsburgh Summers",
         "climate": (
             "PNC Park sits on the north bank of the Allegheny in downtown "
-            "Pittsburgh. Summer weather is warm and humid: Summer conditions are typical of the region with typical summer humiditys."
+            "Pittsburgh. Summer weather is warm and humid."
         ),
         "wind": (
             "Center field is to the northeast (bearing 55 degrees). Southwest "
@@ -696,8 +695,8 @@ STADIUM_CONTENT = {
         "slug": "busch-stadium",
         "headline": "Busch Stadium Weather: St. Louis Heat, Mississippi Valley Setting",
         "climate": (
-            "Busch Stadium sits in downtown St. Louis"
-            "the Mississippi. Summer weather is hot and humid: Summer conditions are typical of the region with typical summer humiditys. "
+            "Busch Stadium sits in downtown St. Louis a few blocks west of "
+            "the Mississippi. Summer weather is hot and humid. "
             "Afternoon thunderstorms from cold-front passages are common."
         ),
         "wind": (
@@ -754,7 +753,7 @@ STADIUM_CONTENT = {
         "climate": (
             "Dodger Stadium sits in Chavez Ravine north of downtown Los "
             "Angeles. Summer weather is warm and dry: July averages around "
-            "84 degrees at Downtown LA with typical summer humiditys. Marine "
+            "84 degrees at Downtown LA with typical summer humidity. Marine "
             "layer influences morning and evening conditions from May through "
             "August."
         ),
@@ -777,9 +776,9 @@ STADIUM_CONTENT = {
         "slug": "petco-park",
         "headline": "Petco Park Weather: San Diego Marine Layer, Bay Air",
         "climate": (
-            "Petco Park sits in downtown San Diego he bay. "
+            "Petco Park sits in downtown San Diego a few blocks from the bay. "
             "Summer weather is mild and dry: July averages around 76 degrees "
-            "at San Diego Airport with typical summer humiditys. Marine "
+            "at San Diego Airport with typical summer humidity. Marine "
             "layer cloud cover extends into afternoon on many days from May "
             "through August."
         ),
@@ -804,7 +803,7 @@ STADIUM_CONTENT = {
         "climate": (
             "Oracle Park sits on the south side of downtown San Francisco "
             "directly on the bay. Summer weather is cold and windy: July "
-            "averages around 68 degrees at SFO with typical summer humiditys. Marine-layer fog and stratus are common through morning "
+            "averages around 68 degrees at SFO with typical summer humidity. Marine-layer fog and stratus are common through morning "
             "and afternoon and often persist into evening games."
         ),
         "wind": (
@@ -831,7 +830,7 @@ STADIUM_CONTENT = {
         "climate": (
             "Sutter Health Park sits in West Sacramento about 90 miles inland "
             "from the Bay. Summer weather is dry and hot: July averages around "
-            "94 degrees with typical summer humiditys. Delta breeze from the west "
+            "94 degrees with typical summer humidity. Delta breeze from the west "
             "arrives in the afternoon and evening, dropping temperatures and "
             "picking up wind."
         ),

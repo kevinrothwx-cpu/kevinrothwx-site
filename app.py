@@ -559,41 +559,31 @@ def inject_sport_nav():
     # The sport tab still shows; just no countdown number next to it.
 
     # Champions League — the tab itself is conditional on this count, the
-    # same way CWS and Tennis are. The league phase plays eight Tuesdays and
-    # Wednesdays between September and January, so a permanent tab would sit
-    # dead for most of the year and crowd the mobile nav for nothing. Count
-    # matches in the next 3 days rather than just today, so the tab appears
-    # ahead of a matchweek instead of only on the day.
+    # same way CWS and Tennis are, so a competition that plays eight
+    # Tuesdays and Wednesdays a year doesn't hold a dead tab for the other
+    # 124 days.
+    #
+    # Count EVERY match the slate holds, not a narrower sub-window. The
+    # slate is already capped at 7 days by DEFAULT_WINDOW_DAYS, so its
+    # contents are exactly "fixtures this week". An earlier version filtered
+    # to 3 days on top of that and hid the Premier League tab for most of
+    # the week: EPL plays Saturday, so from Monday through Wednesday the
+    # next fixture is 4+ days out and the count came back zero.
     try:
         ucl_matches, _ = get_ucl_slate(allow_build=False)
         if ucl_matches:
-            soon = 0
-            horizon = datetime.now(timezone.utc) + timedelta(days=3)
-            for m in ucl_matches:
-                ko = m.get("kickoff_utc")
-                if ko and ko <= horizon:
-                    soon += 1
-            if soon > 0:
-                counts["ucl"] = str(soon)
+            counts["ucl"] = str(len(ucl_matches))
     except Exception:
         pass
 
     # Premier League — same conditional treatment. The tab was pulled from
     # the nav on 2026-07-04 when the module wasn't ready; it's back now that
-    # the ESPN 403 is fixed and /prem serves real fixtures again. Counting a
-    # 3-day horizon means the tab shows from Thursday for a Saturday slate
-    # and disappears during international breaks.
+    # the ESPN 403 is fixed and /prem serves real fixtures again. Same
+    # whole-slate count as UCL above, for the reason documented there.
     try:
         prem_matches, _ = get_prem_slate(allow_build=False)
         if prem_matches:
-            soon = 0
-            horizon = datetime.now(timezone.utc) + timedelta(days=3)
-            for m in prem_matches:
-                ko = m.get("kickoff_utc")
-                if ko and ko <= horizon:
-                    soon += 1
-            if soon > 0:
-                counts["prem"] = str(soon)
+            counts["prem"] = str(len(prem_matches))
     except Exception:
         pass
 

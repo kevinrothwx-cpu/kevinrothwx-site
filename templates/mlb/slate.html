@@ -17,7 +17,15 @@
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">MLB Weather</p>
-        <h1 class="mlb-page__title">{{ pretty_date }}</h1>
+        <h1 class="mlb-page__title">MLB Weather Forecasts</h1>
+        {# Date demoted from the H1 on 2026-09-08. The H1 is a top-tier
+           ranking signal and a bare date wastes it, and a date in the H1 is
+           what Google caches into the SERP headline, which is how a
+           "Thursday" snippet ended up showing on a Friday. Still rendered
+           here server-side, so it can never go stale. #}
+        <p class="sport-dateline">
+          {{ pretty_date }}{% if is_today %} · Today's slate{% elif is_tomorrow %} · Tomorrow's slate{% elif is_past %} · Archived{% endif %}
+        </p>
         <p class="mlb-page__sub">
           {% if is_today %}Today's slate. {% elif is_tomorrow %}Tomorrow's slate. {% elif is_past %}Archived. {% endif %}
           All times Eastern.

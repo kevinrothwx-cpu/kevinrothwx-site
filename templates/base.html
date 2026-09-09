@@ -60,12 +60,50 @@
     "name": "{{ site_name }}{% if is_product_site %} — Sports Weather Forecasts{% else %}, Sports Meteorologist{% endif %}",
     "url": "{{ site_url }}/",
     "publisher": {
+{%- if is_product_site %}
+      "@id": "https://mysportsweather.com/#organization"
+{%- else %}
       "@type": "Person",
       "@id": "https://kevinrothwx.com/about#kevin-roth",
       "name": "Kevin Roth"
+{%- endif %}
     }
   }
   </script>
+{%- if is_product_site %}
+  {# MySportsWeather as a first-class Organization (2026-09-08).
+     Before this, the only entity either domain declared was Kevin himself,
+     anchored on kevinrothwx.com, and his machine-readable "worksFor" named
+     a TV station. Nothing anywhere stated that MySportsWeather is a thing
+     Kevin founded and publishes. This block says so, in both directions:
+     the Organization names Kevin as founder, and about.html's Person names
+     the Organization in worksFor. Same @id on both sides so search engines
+     merge them into one node rather than two.
+     It also lists the OVERcast app under sameAs, which is the cheap way to
+     associate app.kevinrothwx.com with this brand without migrating it. #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://mysportsweather.com/#organization",
+    "name": "MySportsWeather",
+    "url": "https://mysportsweather.com/",
+    "logo": "https://mysportsweather.com/static/img/og-default.jpg",
+    "description": "Free sports weather forecasts for every MLB, NFL, college football, PGA, NASCAR and soccer event, written by a working meteorologist.",
+    "founder": {
+      "@type": "Person",
+      "@id": "https://kevinrothwx.com/about#kevin-roth",
+      "name": "Kevin Roth"
+    },
+    "knowsAbout": ["MLB weather","NFL weather","College football weather","PGA weather","NASCAR weather","Sports betting weather","Daily fantasy sports"],
+    "sameAs": [
+      "https://kevinrothwx.com/",
+      "https://app.kevinrothwx.com/",
+      "https://x.com/KevinRothWx"
+    ]
+  }
+  </script>
+{%- endif %}
   {% block extra_head %}{% endblock %}
 </head>
 <body>

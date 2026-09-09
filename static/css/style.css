@@ -216,6 +216,12 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .mlb-page__hed { display: flex; align-items: baseline; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
 .mlb-page__title { font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.75rem, 3vw + 0.5rem, 2.75rem); letter-spacing: -0.02em; line-height: 1.1; margin: 0.4rem 0 0; }
 .mlb-page__sub { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); margin-top: 0.75rem; }
+/* Dateline under a sport hub H1 (2026-09-08). The week/date used to BE the
+   H1 on /nfl, /ncaaf and /mlb, which wasted the strongest on-page signal
+   after <title> and put a cacheable date in the SERP headline. The head
+   term moved into the H1; this carries the date. It needs its own class
+   because .mlb-page__sub above is display:none further down this file. */
+.sport-dateline { font-family: var(--font-sans); font-size: 0.95rem; color: var(--ash); margin: 0.35rem 0 0; }
 .mlb-page__datenav { display: flex; gap: 0.5rem; align-items: center; }
 .mlb-page__datelink { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ash); text-decoration: none; padding: 0.4rem 0.8rem; border: 1px solid var(--mist); transition: all 0.15s ease; }
 .mlb-page__datelink:hover { color: var(--ink); border-color: var(--ash); }

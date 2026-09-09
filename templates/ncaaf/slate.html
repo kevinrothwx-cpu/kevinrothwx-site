@@ -234,32 +234,20 @@
 
   <header class="ncaaf-page__header">
     <p class="kicker kicker-storm">NCAAF Weather · Live Coverage</p>
-    <h1 class="ncaaf-page__title">
-      {# Prefer "College Football Week N" (or "Bowl Games" for postseason)
-         over "Week of X to Y" which reads weird when all games are one day. #}
-      {% if games %}
-        {% set weeks = games | map(attribute='week') | select | unique | list %}
-        {% set stypes = games | map(attribute='season_type') | select | unique | list %}
-        {% if stypes and 'postseason' in stypes and 'regular' not in stypes %}
-          College Football · Bowl Games
-        {% elif weeks|length == 1 %}
-          College Football · Week {{ weeks[0] }}
-        {% elif weeks|length > 1 %}
-          {# The slate is a rolling 7-day window, so midweek it spills past
-             the week boundary and picks up next week's Thursday opener.
-             "Weeks 1 and 2" oversold that: the page is all of Week 1 plus
-             one stray game. Name the week most of the slate belongs to;
-             the stray still appears below under a week divider. #}
-          College Football · Week {{ dominant_week or weeks|min }}
-        {% elif games[0].kickoff_eastern %}
-          {{ games[0].kickoff_eastern.strftime("%A, %B %-d, %Y") }}
-        {% else %}
-          College football weather
-        {% endif %}
-      {% else %}
-        College football weather
-      {% endif %}
-    </h1>
+    <h1 class="ncaaf-page__title">College Football Weather Forecasts</h1>
+    {# Week label demoted from the H1 on 2026-09-08, same reasoning as nfl/. #}
+    {% if games %}<p class="sport-dateline">
+      {%- if games %}
+        {%- set weeks = games | map(attribute='week') | select | unique | list %}
+        {%- set stypes = games | map(attribute='season_type') | select | unique | list %}
+        {%- if stypes and 'postseason' in stypes and 'regular' not in stypes %}Bowl Games
+        {%- elif weeks|length == 1 %}Week {{ weeks[0] }}
+        {%- elif weeks|length > 1 %}Week {{ dominant_week or weeks|min }}
+        {%- elif games[0].kickoff_eastern %}{{ games[0].kickoff_eastern.strftime("%A, %B %-d, %Y") }}
+        {%- endif %}
+        {%- if games|length %} · {{ games|length }} {{ "game" if games|length == 1 else "games" }} this week{% endif %}
+      {%- endif %}
+    </p>{% endif %}
   </header>
 
   {% if games %}

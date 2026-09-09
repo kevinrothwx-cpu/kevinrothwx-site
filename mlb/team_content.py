@@ -203,7 +203,7 @@ TEAM_CONTENT = {
         "home_park": "Progressive Field",
         "headline": "Cleveland Guardians Weather Playbook: Lake Erie Cool, Division Handicapping",
         "home_advantage": (
-            "Progressive Field sits less than ake Erie. "
+            "Progressive Field sits about a mile from Lake Erie. "
             "Lake-influenced wind and cool spring temperatures make April "
             "and early May games routinely play in the 40s and 50s. "
             "Midsummer is cooler than most inland Midwest cities. North "
@@ -433,7 +433,7 @@ TEAM_CONTENT = {
         "headline": "Atlanta Braves Weather Playbook: Summer Humidity, Cobb County Setting",
         "home_advantage": (
             "Truist Park sits in Cumberland north of downtown Atlanta. "
-            "Southern summer humidity with typical summer humiditys "
+            "Southern summer humidity with typical summer humidity "
             "combines with south wind out to center and right for strong "
             "carry conditions. Afternoon and evening thunderstorm risk "
             "from June through August is the main weather variance."
@@ -657,7 +657,7 @@ TEAM_CONTENT = {
         "home_park": "Busch Stadium",
         "headline": "St. Louis Cardinals Weather Playbook: Midwest Heat, Mississippi Valley Setting",
         "home_advantage": (
-            "Busch Stadium sits in downtown St. Louis"
+            "Busch Stadium sits in downtown St. Louis a few blocks west of "
             "the Mississippi. Summer conditions are hot and humid with "
             "July averages around 90 degrees. South and southwest wind "
             "blows out to center and right. River-valley setting means "
