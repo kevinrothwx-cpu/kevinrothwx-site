@@ -1,55 +1,95 @@
 {% extends "base.html" %}
 
-{% block title %}OVERcast, Weather-Driven MLB Analysis | Kevin Roth{% endblock %}
-{% block description %}OVERcast is the subscription weather-impact tool for MLB bettors and daily fantasy players, built by sports meteorologist Kevin Roth. NFL coverage in development.{% endblock %}
+{# Two-sport sales page as of 2026-09-11. Was MLB-only with a "NFL coverage
+   launching soon" line; OVERcast NFL shipped on its own host that day.
+
+   The two products live on different subdomains (app. for MLB, nfl. for
+   NFL) but the MARKETING lives here, on mysportsweather.com, on purpose.
+   Every link and citation this page earns builds authority on the domain
+   we are trying to rank rather than on a subdomain nobody searches for.
+
+   NFL feature copy below is lifted from the product's own homepage and
+   from the promo card Kevin already approved. Nothing here is invented.
+   The "Why weather matters" section is MLB-only for now: that prose is in
+   Kevin's voice and an NFL counterpart needs to be his words, not a
+   manufactured imitation. Add it when he writes it. #}
+
+{% block title %}OVERcast, Weather-Driven MLB and NFL Analysis | Kevin Roth{% endblock %}
+{% block description %}OVERcast is the subscription weather-impact tool for MLB and NFL bettors and daily fantasy players, built by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block extra_head %}
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "OVERcast",
-  "url": "https://app.kevinrothwx.com/",
-  "sameAs": "https://www.wikidata.org/wiki/Q139939392",
-  "applicationCategory": "SportsApplication",
-  "operatingSystem": "Web",
-  "creator": {"@type":"Person","@id":"https://kevinrothwx.com/about#kevin-roth","name":"Kevin Roth"},
-  "description": "Weather-driven Major League Baseball analysis tool for bettors and daily fantasy players. NFL coverage in development."
-}
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "OVERcast MLB",
+    "url": "https://app.kevinrothwx.com/",
+    "sameAs": "https://www.wikidata.org/wiki/Q139939392",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Web",
+    "creator": {"@type":"Person","@id":"https://kevinrothwx.com/about#kevin-roth","name":"Kevin Roth"},
+    "publisher": {"@id":"https://mysportsweather.com/#organization"},
+    "description": "Weather-driven Major League Baseball analysis tool for bettors and daily fantasy players."
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "OVERcast NFL",
+    "url": "https://nfl.kevinrothwx.com/",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Web",
+    "creator": {"@type":"Person","@id":"https://kevinrothwx.com/about#kevin-roth","name":"Kevin Roth"},
+    "publisher": {"@id":"https://mysportsweather.com/#organization"},
+    "description": "Weather impact statistics for every outdoor NFL game, for bettors and daily fantasy players."
+  }
+]
 </script>
 {% endblock %}
 
 {% block content %}
+{% set _utm = "?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_page&utm_content=" %}
 <section class="section">
   <div class="container-tight">
     <p class="kicker kicker-storm" style="margin-bottom: 0.75rem;">Product</p>
     <h1 class="display" style="margin-bottom: 1.5rem;">OVERcast</h1>
-    <p class="lead">Weather-driven MLB analysis built by a sports meteorologist. Every game, every day, with the weather impact already calculated for you.</p>
+    <p class="lead">Weather-driven MLB and NFL analysis built by a sports meteorologist. Every game, with the weather impact already calculated for you.</p>
     <div class="hero__cta" style="margin-top: 2rem;">
-      <a href="https://app.kevinrothwx.com/" class="btn btn-storm">Subscribe →</a>
+      <a href="https://app.kevinrothwx.com/{{ _utm }}hero-mlb" class="btn btn-storm" rel="noopener">Subscribe to MLB →</a>
+      <a href="https://nfl.kevinrothwx.com/{{ _utm }}hero-nfl" class="btn btn-storm" rel="noopener">Subscribe to NFL →</a>
       <a href="/about" class="btn btn-secondary">About the meteorologist</a>
     </div>
+
     <hr class="rule">
-    <h2 class="h3" style="margin-bottom: 1.25rem;">What you get</h2>
+    <h2 class="h3" style="margin-bottom: 1.25rem;">OVERcast MLB</h2>
     <ul class="press-list">
       <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Full slate weather impact for every MLB game, home runs, runs, and strikeouts adjusted for conditions vs. park and league average.</span></li>
       <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Wind, temperature, humidity, and precipitation analysis on a game-by-game basis.</span></li>
       <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Updated multiple times daily, all season long.</span></li>
-      <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Built and maintained by Kevin Roth, former Chief Meteorologist at RotoGrinders.com.</span></li>
-      {# Was "NFL coverage launching soon" until 2026-09-11. It shipped, so
-         the line had to stop being a promise and start being a link. #}
-      <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">NFL coverage is live at <a href="https://nfl.kevinrothwx.com/?utm_source=mysportsweather&amp;utm_medium=referral&amp;utm_campaign=overcast_page&amp;utm_content=overcast-whatyouget" rel="noopener">nfl.kevinrothwx.com</a>, weather impact statistics for every outdoor game.</span></li>
     </ul>
+
+    <h2 class="h3" style="margin: 2rem 0 1.25rem;">OVERcast NFL</h2>
+    <ul class="press-list">
+      <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Weather impact statistics for every outdoor game.</span></li>
+      <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">How conditions affect scoring, passing, field goals and target depth.</span></li>
+      <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Fantasy impact broken out by position.</span></li>
+      <li><span style="font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Real stats, real weather, real data. Not AI.</span></li>
+    </ul>
+
+    <p style="margin-top: 1.75rem; font-family: var(--font-serif); font-size: 1.15rem; color: var(--ink);">Both are built and maintained by Kevin Roth, former Chief Meteorologist at RotoGrinders.com.</p>
+
     <hr class="rule">
     <h2 class="h2" style="margin-bottom: 1.5rem;">Why weather matters in MLB</h2>
     <div class="prose">
       <p>A 10 mph swirling wind at Wrigley can take an extra base off every fly ball in the park. Coors Field's altitude is well-known, but the humidor's effect changes with the day's actual humidity. Cool damp air at Fenway suppresses home runs more than dry cold. These edges compound across a 162-game season, and they're the kind of thing the standard projections systems don't account for.</p>
       <p>OVERcast quantifies them. Game by game.</p>
     </div>
+
     <div class="callout" style="margin-top: 3rem;">
       <p class="callout__title">Try OVERcast</p>
-      <p class="callout__body">Weather-impact analysis for every MLB game, every day.</p>
-      <a href="https://app.kevinrothwx.com/" class="btn btn-storm">Subscribe at app.kevinrothwx.com →</a>
+      <p class="callout__body">Weather-impact analysis for every MLB game, every day, and every outdoor NFL game.</p>
+      <a href="https://app.kevinrothwx.com/{{ _utm }}footer-mlb" class="btn btn-storm" rel="noopener">MLB at app.kevinrothwx.com →</a>
+      <a href="https://nfl.kevinrothwx.com/{{ _utm }}footer-nfl" class="btn btn-storm" rel="noopener">NFL at nfl.kevinrothwx.com →</a>
     </div>
   </div>
 </section>
