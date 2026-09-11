@@ -10,6 +10,8 @@
    numbers has been misled. The badge is what keeps that honest. Remove
    tease_coming_soon the day NFL goes on sale. #}
 {% set tease_sport = "nfl" %}
-{% set tease_coming_soon = true %}
+{# OVERcast NFL went on sale 2026-09-11 at nfl.kevinrothwx.com, so the
+   "Coming soon" badge is gone and the card links to the live product. #}
+{% set tease_coming_soon = false %}
 {% set tease_placement = cta_placement | default("nfl-ctas") %}
 {% include "_overcast_tease.html" with context %}

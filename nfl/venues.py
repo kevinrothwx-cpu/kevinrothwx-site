@@ -25,11 +25,21 @@ NFL_TEAMS: dict[int, dict] = {
         "name": "Buffalo Bills", "short": "Bills", "abbrev": "BUF",
         "conf": "AFC", "div": "East", "color": "#00338D",
         "nws_unsupported": False,
+        # Updated 2026-09-11 for the NEW Highmark Stadium, which opened for
+        # the 2026 season roughly 430m west of the old ground (the old field
+        # is tagged demolished in OSM). Every value in this block was stale
+        # and described the previous stadium:
+        #   lat/lon  pointed at the old site
+        #   bearing  was 135 (SE); Kevin measured the new field at SSE
+        #   cap      was 71608; the new stadium holds 60108
+        # Bearing comes from Kevin's own satellite measurement of the new
+        # field, which is the same method used for the 134 CFB bearings.
+        # 158 deg is SSE; the axis is symmetric so 158 and 338 are equivalent.
         "stadium": {
             "name": "Highmark Stadium", "city": "Orchard Park, NY",
-            "lat": 42.7738, "lon": -78.7870,
+            "lat": 42.7731, "lon": -78.7922,
             "timezone": "America/New_York",
-            "cap": 71608, "field_bearing_degrees": 135, "roof_type": "open",
+            "cap": 60108, "field_bearing_degrees": 158, "roof_type": "open",
         },
     },
     15: {

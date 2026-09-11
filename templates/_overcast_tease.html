@@ -76,10 +76,17 @@
 
 {% set _sub = tease_sub or _default_sub %}
 {% set _place = tease_placement | default(_sport ~ "-tease") %}
-{% set _href = "https://app.kevinrothwx.com/?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_tease&utm_content=" ~ _place %}
+{# Destination is per-sport (2026-09-11). OVERcast NFL went live on its own
+   host, nfl.kevinrothwx.com, so an NFL card must not send people to the
+   MLB app: someone who just read NFL numbers and lands on an MLB-only
+   product has been misled, which is the same reason the "Coming soon"
+   badge existed until today. MLB and anything else still go to app.
+   CFB has no product yet, so it keeps the badge and the app link. #}
+{% set _domain = "nfl.kevinrothwx.com" if _sport == "nfl" else "app.kevinrothwx.com" %}
+{% set _href = "https://" ~ _domain ~ "/?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_tease&utm_content=" ~ _place %}
 
 <a href="{{ _href }}" class="oc-tease" rel="noopener"
-   aria-label="OVERcast, Kevin's subscription app. {{ _sub }} Opens app.kevinrothwx.com.">
+   aria-label="OVERcast, Kevin's subscription app. {{ _sub }} Opens {{ _domain }}.">
   <span class="oc-tease__shot">
     <picture>
       <source media="(max-width: 600px)" srcset="{{ _narrow }} 1x, {{ _narrow2x }} 2x">
@@ -104,7 +111,7 @@
       {%- if tease_coming_soon -%}
         {{ _sport | upper }} coverage launches shortly; MLB is available now.
       {%- endif -%}
-      <span class="oc-tease__domain">app.kevinrothwx.com</span>
+      <span class="oc-tease__domain">{{ _domain }}</span>
     </span>
   </span>
 </a>

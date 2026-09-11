@@ -228,7 +228,9 @@
 {# OVERcast tease. Detail pages get one too, but the CTA row above the
    slate is the higher-traffic slot; this is secondary placement. #}
 {% set tease_sport = "nfl" %}
-{% set tease_coming_soon = true %}
+{# OVERcast NFL went on sale 2026-09-11 at nfl.kevinrothwx.com, so the
+   "Coming soon" badge is gone and the card links to the live product. #}
+{% set tease_coming_soon = false %}
 {% set tease_placement = "nfl-game" %}
 {% include "_overcast_tease.html" with context %}
 
