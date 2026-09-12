@@ -236,9 +236,9 @@
         </a>
 
         <a href="/golf" class="home-sport-card home-sport-card--pga">
-          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="PGA Tour golf weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">This week's event</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="PGA Tour golf weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">{% if pga_event_is_upcoming %}Next tournament{% else %}This week's event{% endif %}</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
           <span class="home-sport-card__indicator">
-            {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}See this week's tournament{% endif %}
+            {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}{% if pga_event_is_upcoming %}See the next tournament{% else %}See this week's tournament{% endif %}{% endif %}
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>

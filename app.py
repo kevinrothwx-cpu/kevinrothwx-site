@@ -489,6 +489,7 @@ def inject_globals():
     # rendered and told visitors "rounds start Thursday" about a tournament
     # eight days out. Gate on the first round's DATE, not on existence.
     pga_has_event = False
+    pga_days_to_first_round = None
     try:
         _golf_slate, _ = get_pga_slate(allow_build=False)
         _today_et = datetime.now(EASTERN_TZ).date()
@@ -503,17 +504,34 @@ def inject_globals():
             # week through the final round.
             _last = max(r.get("date_local") for r in _rounds
                         if r.get("date_local") is not None)
-            if (_first - _today_et).days <= PGA_CARD_LEAD_DAYS and _today_et <= _last:
+            if _today_et > _last:
+                continue                      # tournament already finished
+            _days = (_first - _today_et).days
+            if pga_days_to_first_round is None or _days < pga_days_to_first_round:
+                pga_days_to_first_round = _days
+            if _days <= PGA_CARD_LEAD_DAYS:
                 pga_has_event = True
-                break
     except Exception:
         pass
+
+    # Copy guard (2026-09-11). The health check caught /golf and the homepage
+    # tile both saying "this week" above a tournament whose first round was
+    # seven days out, with no forecast data on the page because that is well
+    # beyond the NWS horizon. pga_has_event already gated the Wednesday
+    # preview card correctly; these two spots were separate hardcoded
+    # strings. True = the soonest unfinished event is NOT this week.
+    pga_event_is_upcoming = (
+        pga_days_to_first_round is not None
+        and pga_days_to_first_round > PGA_CARD_LEAD_DAYS
+    )
 
     return {
         "current_year":     datetime.utcnow().year,
         "ga_measurement_id": ga_id,
         "is_wednesday_eastern": is_wednesday_eastern,
         "pga_has_event":    pga_has_event,
+        "pga_event_is_upcoming": pga_event_is_upcoming,
+        "pga_days_to_first_round": pga_days_to_first_round,
         # Internal-link index for the evergreen landing pages. The index is
         # built ONCE at import in landing_index.py; this just hands the
         # lookup function to templates, so the context processor stays free.
@@ -3699,6 +3717,23 @@ def admin_cache_health():
                               f"{dropped} dropped for reasons other than window"))
     except Exception as e:
         integrity.append(("CFB parse", "warn", f"unavailable: {type(e).__name__}: {e}"))
+
+    # Soccer club names the Odds API sent that we could not map. Added
+    # 2026-09-11: a missing UCL fixture could not be diagnosed without this,
+    # because an unmapped name and an absent fixture look identical from
+    # outside. A name here means add an alias; nothing here means the feed
+    # never carried the match.
+    for _label, _getter in (("UCL clubs", "ucl.odds_api_schedule"),
+                            ("EPL clubs", "prem.odds_api_schedule")):
+        try:
+            _mod = __import__(_getter, fromlist=["get_unmapped_clubs"])
+            _unmapped = _mod.get_unmapped_clubs()
+            if _unmapped:
+                integrity.append((_label, "stale",
+                                  f"Odds API sent {len(_unmapped)} club name(s) we cannot map, "
+                                  f"so their fixtures are dropped: {', '.join(_unmapped)}"))
+        except Exception as e:
+            integrity.append((_label, "warn", f"{type(e).__name__}: {e}"))
 
     # In-season sport serving an empty slate — the /prem failure mode.
     for _label, _getter in (("NFL", lambda: get_nfl_slate(allow_build=False)),

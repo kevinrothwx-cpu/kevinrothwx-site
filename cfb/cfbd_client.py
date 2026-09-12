@@ -34,6 +34,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
+import unicodedata
+
 from .venues import FBS_TEAMS
 from .cfbd_teams import get_logo_for_school as _cfbd_logo_for_school
 from .neutral_venues import lookup_neutral_venue as _lookup_neutral_venue
@@ -50,21 +52,62 @@ EASTERN_TZ = ZoneInfo("America/New_York")
 
 # ── Team name lookup ────────────────────────────────────────────────────
 
+def _norm(v: str) -> str:
+    """Lowercase, strip accents, collapse whitespace.
+
+    Added 2026-09-11. CFBD sends "San Jose State" some weeks and the
+    accented "San Jose State" others; the raw lower() compare treated those
+    as different schools and dropped the game. Normalising both sides makes
+    the accent irrelevant for every school, not just this one."""
+    if not v:
+        return ""
+    decomposed = unicodedata.normalize("NFKD", v)
+    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
+    return " ".join(stripped.lower().replace("'", "'").split())
+
+
 def _build_team_name_index() -> dict[str, int]:
-    """Build case-insensitive team-name → ESPN team_id map from FBS_TEAMS.
-    Handles both `name` (full: "Alabama Crimson Tide") and `short` ("Alabama").
-    CFBD returns short names like "Alabama", "Ohio State" — that's the primary
-    match key."""
+    """Build team-name → ESPN team_id map from FBS_TEAMS.
+
+    Indexes `name` ("Alabama Crimson Tide"), `short` ("Alabama") and
+    `abbrev` ("BAMA"), all accent-normalised."""
     idx: dict[str, int] = {}
     for team_id, team in FBS_TEAMS.items():
-        for key in ("name", "short"):
+        for key in ("name", "short", "abbrev"):
             v = team.get(key)
             if v:
-                idx[v.lower().strip()] = team_id
+                idx[_norm(v)] = team_id
     return idx
 
 
+def _build_school_prefix_index() -> dict[str, int]:
+    """School-name-without-mascot → team_id, for names CFBD sends that our
+    `short` field doesn't happen to match.
+
+    The 2026-09-11 health check found three games silently dropped, and an
+    audit of all 138 FBS schools found six: East Carolina, Florida Atlantic,
+    Jacksonville State, San Jose State, South Florida and UL Monroe. In every
+    case `short` is the ABBREVIATION ("ECU", "FAU", "USF") while CFBD sends
+    the school name ("East Carolina"). Alias entries would fix those six and
+    leave the next one to be found by a missing game.
+
+    So instead: for each team, take `name` and drop trailing words one at a
+    time, registering each prefix. "East Carolina Pirates" registers "east
+    carolina pirates" and "east carolina". A prefix is only kept if exactly
+    ONE team claims it, which is what stops "miami" from resolving
+    ambiguously between Miami Hurricanes and Miami (OH) RedHawks. Ambiguous
+    prefixes are dropped entirely and the caller logs an unknown school,
+    which is the safe direction to fail."""
+    counts: dict[str, set] = {}
+    for team_id, team in FBS_TEAMS.items():
+        words = _norm(team.get("name") or "").split()
+        for cut in range(1, len(words)):
+            counts.setdefault(" ".join(words[:cut]), set()).add(team_id)
+    return {k: next(iter(v)) for k, v in counts.items() if len(v) == 1}
+
+
 _TEAM_NAME_INDEX: dict[str, int] = _build_team_name_index()
+_SCHOOL_PREFIX_INDEX: dict[str, int] = _build_school_prefix_index()
 
 
 # ── Parse health (2026-09-09) ─────────────────────────────────────────────
@@ -108,16 +151,20 @@ def get_parse_health() -> dict:
 # they come up.
 _CFBD_NAME_OVERRIDES: dict[str, str] = {
     # cfbd_school_lower: local_short_or_name_lower
-    "app state":            "appalachian state",
-    "louisiana monroe":     "ul monroe",
-    "ul monroe":            "ul monroe",
+    # Overrides must target a key that EXISTS in _TEAM_NAME_INDEX, i.e. a
+    # team's name, short or abbrev. Five entries here pointed at strings
+    # that were in neither, making them silent no-ops (2026-09-11 audit).
+    # Abbrevs are the safest target: always present, never ambiguous.
+    "app state":            "APP",
+    "louisiana monroe":     "ULM",
+    "ul monroe":            "ULM",
     "louisiana lafayette":  "louisiana",
-    "san jose state":       "san jose state",
+    "san jose state":       "SJSU",
     "california":           "cal",
     "connecticut":          "uconn",
     "florida international":"fiu",
-    "hawai'i":              "hawaii",
-    "hawaii":               "hawaii",
+    "hawai'i":              "HAW",
+    "hawaii":               "HAW",
     "louisiana":            "louisiana",
     "massachusetts":        "umass",
     "mississippi":          "ole miss",
@@ -135,13 +182,16 @@ def _lookup_team_id(cfbd_school: str) -> Optional[int]:
     """Given CFBD's team name, return the ESPN team_id from FBS_TEAMS or None."""
     if not cfbd_school:
         return None
-    key = cfbd_school.lower().strip()
+    key = _norm(cfbd_school)
     if key in _TEAM_NAME_INDEX:
         return _TEAM_NAME_INDEX[key]
     override = _CFBD_NAME_OVERRIDES.get(key)
-    if override and override in _TEAM_NAME_INDEX:
-        return _TEAM_NAME_INDEX[override]
-    return None
+    if override and _norm(override) in _TEAM_NAME_INDEX:
+        return _TEAM_NAME_INDEX[_norm(override)]
+    # Last resort: unambiguous school-name prefix. See
+    # _build_school_prefix_index for why this exists and why it insists on
+    # uniqueness.
+    return _SCHOOL_PREFIX_INDEX.get(key)
 
 
 # ── Fetch + parse ────────────────────────────────────────────────────────

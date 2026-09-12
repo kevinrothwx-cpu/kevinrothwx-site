@@ -60,7 +60,10 @@
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">PGA Tour</p>
-        <h1 class="mlb-page__title">This week's weather</h1>
+        {# "This week's weather" was unconditional and sat above a tournament
+           seven days out on 2026-09-11. pga_event_is_upcoming comes from the
+           same date check that gates the homepage preview card. #}
+        <h1 class="mlb-page__title">{% if pga_event_is_upcoming %}Next tournament{% else %}This week's weather{% endif %}</h1>
         <p class="mlb-page__sub">
           {% if slate|length == 0 %}No active tournament loaded.
           {% elif slate|length == 1 %}{{ slate[0].name }}.

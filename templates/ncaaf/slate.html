@@ -360,7 +360,9 @@
      out to detail pages). Flagged coming soon: OVERcast CFB is not
      purchasable yet. #}
   {% set tease_sport = "cfb" %}
-  {% set tease_coming_soon = true %}
+  {# OVERcast CFB went on sale 2026-09-12 at cfb.kevinrothwx.com/join,
+   so the badge is gone and the card links to the live sales page. #}
+{% set tease_coming_soon = false %}
   {% set tease_placement = "ncaaf-slate" %}
   {% include "_overcast_tease.html" with context %}
 

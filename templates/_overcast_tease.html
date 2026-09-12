@@ -54,7 +54,7 @@
   {% set _narrow = "/static/img/oc-cfb-wide.jpg" %}
   {% set _narrow2x = "/static/img/oc-cfb-wide@2x.jpg" %}
   {% set _w = 555 %}{% set _h = 236 %}
-  {% set _default_sub = "See how weather impacts scoring, passing, field goals, target depth and more with OVERcast. Real stats, real weather, real data. Not AI." %}
+  {% set _default_sub = "See how weather impacts scoring, passing yards, field goals and completion percentage with OVERcast. Real stats, real weather, real data. Not AI." %}
   {% set _alt = "OVERcast college football view showing an expanded game with the forecast, how the wind sits relative to the field, weather impact on scoring, passing yards, field goals and fumbles, and how similar games finished against their closing total." %}
 {% elif _sport == "nfl" %}
   {% set _wide = "/static/img/oc-nfl-wide.jpg" %}
@@ -82,11 +82,22 @@
    product has been misled, which is the same reason the "Coming soon"
    badge existed until today. MLB and anything else still go to app.
    CFB has no product yet, so it keeps the badge and the app link. #}
-{% set _domain = "nfl.kevinrothwx.com" if _sport == "nfl" else "app.kevinrothwx.com" %}
-{% set _href = "https://" ~ _domain ~ "/?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_tease&utm_content=" ~ _place %}
+{% if _sport == "cfb" %}
+  {# CFB shipped 2026-09-12 on its own host. Unlike NFL it has a real sales
+     page at /join (founding season pass, one payment, not a subscription),
+     so cold traffic lands there rather than on a login box. #}
+  {% set _domain = "cfb.kevinrothwx.com" %}{% set _path = "/join" %}
+{% elif _sport == "nfl" %}
+  {# No /join on the NFL host yet — it 404s — so this points at the front
+     door, which at least states the product and offers "Start here". #}
+  {% set _domain = "nfl.kevinrothwx.com" %}{% set _path = "/" %}
+{% else %}
+  {% set _domain = "app.kevinrothwx.com" %}{% set _path = "/" %}
+{% endif %}
+{% set _href = "https://" ~ _domain ~ _path ~ "?utm_source=mysportsweather&utm_medium=referral&utm_campaign=overcast_tease&utm_content=" ~ _place %}
 
 <a href="{{ _href }}" class="oc-tease" rel="noopener"
-   aria-label="OVERcast, Kevin's subscription app. {{ _sub }} Opens {{ _domain }}.">
+   aria-label="OVERcast, Kevin's {% if _sport == 'cfb' %}season pass{% else %}subscription app{% endif %}. {{ _sub }} Opens {{ _domain }}.">
   <span class="oc-tease__shot">
     <picture>
       <source media="(max-width: 600px)" srcset="{{ _narrow }} 1x, {{ _narrow2x }} 2x">
@@ -103,7 +114,7 @@
        imply paid third-party placement, which would be inaccurate in the
        other direction. #}
     <span class="oc-tease__eyebrow">
-      <span class="oc-tease__eyebrow-label">OVERcast &middot; Kevin's subscription app</span>
+      <span class="oc-tease__eyebrow-label">OVERcast &middot; {% if _sport == "cfb" %}Kevin's season pass{% else %}Kevin's subscription app{% endif %}</span>
       {% if tease_coming_soon %}<span class="oc-tease__badge">Coming soon</span>{% endif %}
     </span>
     <span class="oc-tease__sub">{{ _sub }}</span>

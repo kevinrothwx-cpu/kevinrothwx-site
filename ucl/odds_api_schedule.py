@@ -62,6 +62,17 @@ _raw_lock = threading.Lock()
 _warned_names: set[str] = set()
 
 
+def get_unmapped_clubs() -> list:
+    """Club names the Odds API sent that we could not resolve to a team.
+
+    Exposed for /admin/cache-health. The 2026-09-11 health check found a
+    UCL fixture missing and could not tell whether the cause was an alias
+    miss or the Odds API simply not carrying that match. A name appearing
+    here proves the former; an empty list with a missing fixture proves the
+    latter."""
+    return sorted(_warned_names)
+
+
 def _next_kickoff_within(raw_games: list[dict], hours: int) -> bool:
     """True if any cached fixture kicks off inside `hours` from now."""
     if not raw_games:

@@ -379,7 +379,9 @@
 {# OVERcast tease. Detail pages get one too, but the CTA row above the
    slate is the higher-traffic slot; this is secondary placement. #}
 {% set tease_sport = "cfb" %}
-{% set tease_coming_soon = true %}
+{# OVERcast CFB went on sale 2026-09-12 at cfb.kevinrothwx.com/join,
+   so the badge is gone and the card links to the live sales page. #}
+{% set tease_coming_soon = false %}
 {% set tease_placement = "ncaaf-game" %}
 {% include "_overcast_tease.html" with context %}
 

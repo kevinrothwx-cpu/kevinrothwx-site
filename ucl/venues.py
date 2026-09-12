@@ -33,6 +33,7 @@ Displaced / neutral home grounds (2026-27):
 
 from __future__ import annotations
 
+import unicodedata
 from typing import Optional
 
 ROOF_OPEN = "open"
@@ -147,7 +148,11 @@ ALIASES: dict[str, int] = {
     "sporting lisbon": 2250, "sporting cp": 2250, "sporting clube de portugal": 2250,
     "shakhtar donetsk": 493, "fc shakhtar donetsk": 493,
     "bodo/glimt": 2980, "bodo glimt": 2980, "bodø/glimt": 2980, "fk bodo/glimt": 2980,
+    # Health check 2026-09-11: Slavia Prague v Lens was absent from the
+    # slate. Czech and French clubs both travel under several spellings.
     "slavia prague": 494, "sk slavia praha": 494,
+    "sk slavia prague": 494, "slavia praha": 494, "slavia": 494,
+    "rc lens": 175, "racing club de lens": 175,
     "slovan bratislava": 521, "sk slovan bratislava": 521,
     "fenerbahce": 436, "fenerbahçe": 436, "fenerbahce sk": 436,
     "galatasaray": 432, "galatasaray sk": 432,
@@ -173,13 +178,29 @@ ALIASES: dict[str, int] = {
 }
 
 
+def _norm(v: str) -> str:
+    """Lowercase, strip accents, collapse whitespace.
+
+    Added 2026-09-11 after the weekly health check found Slavia Prague v
+    Lens missing from the slate. This competition is full of names that
+    arrive accented or not depending on the source: Atletico, Fenerbahce,
+    Bodo/Glimt, Besiktas. Listing every spelling in ALIASES is a losing
+    game; normalising both sides makes the accent irrelevant."""
+    if not v:
+        return ""
+    decomposed = unicodedata.normalize("NFKD", v)
+    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
+    return " ".join(stripped.lower().replace("'", "'").split())
+
+
 def _build_name_index() -> dict[str, int]:
     idx: dict[str, int] = {}
     for tid, t in UCL_TEAMS.items():
         for key in (t["name"], t["short"], t["abbrev"]):
             if key:
-                idx[key.lower().strip()] = tid
-    idx.update(ALIASES)
+                idx[_norm(key)] = tid
+    for alias, tid in ALIASES.items():
+        idx[_norm(alias)] = tid
     return idx
 
 
@@ -193,7 +214,7 @@ def lookup_team_id(name: str) -> Optional[int]:
     a club we can't resolve is a match with no venue and no forecast."""
     if not name:
         return None
-    return NAME_INDEX.get(name.lower().strip())
+    return NAME_INDEX.get(_norm(name))
 
 
 def get_team(team_id: int) -> Optional[dict]:
