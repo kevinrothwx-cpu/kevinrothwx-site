@@ -33,6 +33,35 @@ from hrrr import get_hrrr_periods
 from zoneinfo import ZoneInfo as _ZI_LABEL
 _ET_LABEL = _ZI_LABEL("America/New_York")   # hour_eastern labels only
 
+# ── Week cutoff (2026-09-13) ──────────────────────────────────────────
+# The slate fetches an 8-day rolling window. On a Sunday that reaches into
+# the FOLLOWING week, so /nfl showed this week's Sunday and Monday games
+# alongside next Thursday's and next Sunday's. Kevin: "we have next week's
+# NFL games showing, and I think it's confusing."
+#
+# NFL weeks run Thursday through Monday, so the clean boundary is the end
+# of the upcoming Monday in Eastern time. Sunday and Monday both cut at
+# that Monday; from Tuesday the cutoff becomes the NEXT Monday and the new
+# week appears. That is exactly "hold week N+1 until after Monday Night
+# Football".
+#
+# Set to False to go back to the plain rolling window.
+CAP_SLATE_AT_WEEK_END = True
+
+
+def _current_week_cutoff_utc() -> datetime:
+    """End of the upcoming Monday, Eastern, as UTC.
+
+    Monday=0 in weekday(), so (0 - weekday) % 7 gives days until the next
+    Monday and 0 when today already is Monday, which keeps that night's
+    game on the slate rather than hiding it."""
+    now_et = datetime.now(_ET_LABEL)
+    days_to_monday = (0 - now_et.weekday()) % 7
+    monday = (now_et + timedelta(days=days_to_monday)).replace(
+        hour=23, minute=59, second=59, microsecond=0)
+    return monday.astimezone(timezone.utc)
+
+
 HOURS_BEFORE_KICKOFF = 1
 HOURS_GAME_WINDOW    = 4   # how many hours after kickoff the hourly window extends
 HOURS_HIGHLIGHTED    = 3   # how many of those hours get the game-hour shaded highlight
@@ -77,9 +106,33 @@ def build_nfl_slate(start_date: Optional[datetime] = None,
     odds_list = nfl_odds_client.fetch_nfl_totals()
 
     now_utc = datetime.now(timezone.utc)
+
+    # Odds FIRST, for every game in the fetched window including ones the
+    # week cap is about to hide. _build_odds_for_game calls
+    # record_opening_if_new, and an opening line is immutable — miss the
+    # first sighting and that game's CLV is gone for good. This costs no
+    # extra API credits because odds_list was already fetched once above,
+    # so running it over the full window is pure CPU plus a storage write.
+    for g in games:
+        g["odds"] = _build_odds_for_game(g, odds_list, now_utc)
+
+    # Now hide next week's games. Weather is the expensive part (a network
+    # call per unique venue) and NWS barely forecasts eight days out
+    # anyway, so capping before the weather pass saves the calls too.
+    if CAP_SLATE_AT_WEEK_END:
+        cutoff = _current_week_cutoff_utc()
+        before = len(games)
+        games = [g for g in games
+                 if g.get("kickoff_utc") is None or g["kickoff_utc"] <= cutoff]
+        if len(games) != before:
+            print(f"[nfl.slate] week cap: {before - len(games)} game(s) after "
+                  f"{cutoff.astimezone(_ET_LABEL):%a %b %-d} held for next week "
+                  f"(their opening lines were still recorded)", flush=True)
+        if not games:
+            return []
+
     for g in games:
         _attach_weather_to_game(g, venue_weather)
-        g["odds"] = _build_odds_for_game(g, odds_list, now_utc)
 
     odds_ct = sum(1 for g in games if g.get("odds"))
     print(
