@@ -46,6 +46,8 @@ _ET_LABEL = _ZI_LABEL("America/New_York")   # hour_eastern labels only
 # Football".
 #
 # Set to False to go back to the plain rolling window.
+# Written 2026-09-13; if this line is missing on Windows, OneDrive has not
+# synced this file and GitHub Desktop is showing a stale copy.
 CAP_SLATE_AT_WEEK_END = True
 
 
