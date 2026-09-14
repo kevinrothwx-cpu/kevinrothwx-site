@@ -48,6 +48,49 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', '{{ ga_measurement_id }}');
+
+    /* Outbound click tracking (2026-09-14).
+       Key events read 0 in GA4, so there was no way to prove the site sends
+       anyone anywhere. That matters for a betting partnership: without it
+       any partner prices you on traffic alone rather than on delivered
+       clicks. GA's automatic `click` event fires for outbound links but is
+       untyped and unsegmented, so this sends a dedicated event instead.
+
+       Parameters are chosen so one report answers "how many clicks did we
+       send partner X, from which sport, from which slot":
+         link_domain  destination host, e.g. cfb.kevinrothwx.com
+         placement    read from the destination's own utm_content, so the
+                      per-slot tags already on the OVERcast cards
+                      (nfl-ctas, ncaaf-game, hero-mlb...) come through with
+                      no extra markup, and any future sportsbook link gets
+                      segmentation for free just by carrying a utm_content
+         campaign     utm_campaign, to separate overcast_tease from
+                      overcast_page and later from odds links
+         source_path  the page the click came from
+
+       Capture phase and no preventDefault, so navigation is never delayed.
+       gtag uses sendBeacon, which survives the page unload. */
+    (function () {
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a) return;
+        var url;
+        try { url = new URL(a.getAttribute('href'), window.location.href); }
+        catch (err) { return; }
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return;  /* mailto, tel */
+        if (url.host === window.location.host) return;                     /* internal */
+        try {
+          gtag('event', 'outbound_click', {
+            link_domain: url.host,
+            link_url: url.href.slice(0, 500),
+            link_text: (a.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 100),
+            placement: url.searchParams.get('utm_content') || '(none)',
+            campaign: url.searchParams.get('utm_campaign') || '(none)',
+            source_path: window.location.pathname
+          });
+        } catch (err) { /* never let analytics break a click */ }
+      }, true);
+    })();
   </script>
   {% endif %}
   {# Schema.org WebSite varies per host. Kevin Roth's identity (@id) stays
