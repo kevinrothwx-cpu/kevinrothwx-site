@@ -212,14 +212,6 @@
            icon + kicker + title + indicator only. Shorter cards, cleaner
            grid. Body copy carried some keyword filler but the kicker+title
            still hits the core SEO terms ("MLB Weather", "Today's slate"). #}
-        <a href="/mlb" class="home-sport-card home-sport-card--mlb">
-          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="MLB baseball weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Today's slate</span><h2 class="home-sport-card__title">MLB Weather</h2></div></div>
-          <span class="home-sport-card__indicator">
-            {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
-            <span class="home-sport-card__arrow">→</span>
-          </span>
-        </a>
-
         <a href="/nfl" class="home-sport-card home-sport-card--nfl">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="NFL football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">All 32 Stadiums</span><h2 class="home-sport-card__title">NFL Weather</h2></div></div>
           <span class="home-sport-card__indicator">
@@ -227,15 +219,6 @@
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>
-
-        <a href="/golf" class="home-sport-card home-sport-card--pga">
-          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="PGA Tour golf weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">{% if pga_event_is_upcoming %}Next tournament{% else %}This week's event{% endif %}</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
-          <span class="home-sport-card__indicator">
-            {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}{% if pga_event_is_upcoming %}See the next tournament{% else %}See this week's tournament{% endif %}{% endif %}
-            <span class="home-sport-card__arrow">→</span>
-          </span>
-        </a>
-
         <a href="/ncaaf" class="home-sport-card home-sport-card--ncaaf">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/ph:football-bold.svg?color=%231e3a8a" alt="College football weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">2026 Season</span><h2 class="home-sport-card__title">NCAAF Weather</h2></div></div>
           <span class="home-sport-card__indicator">
@@ -243,7 +226,20 @@
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>
-
+        <a href="/mlb" class="home-sport-card home-sport-card--mlb">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:ball-baseball.svg?color=%231e3a8a" alt="MLB baseball weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Today's slate</span><h2 class="home-sport-card__title">MLB Weather</h2></div></div>
+          <span class="home-sport-card__indicator">
+            {% if sport_counts.mlb %}<strong>{{ sport_counts.mlb }}</strong>&nbsp;games today{% else %}See today's slate{% endif %}
+            <span class="home-sport-card__arrow">→</span>
+          </span>
+        </a>
+        <a href="/golf" class="home-sport-card home-sport-card--pga">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/tabler:golf.svg?color=%231e3a8a" alt="PGA Tour golf weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">{% if pga_event_is_upcoming %}Next tournament{% else %}This week's event{% endif %}</span><h2 class="home-sport-card__title">PGA Tour</h2></div></div>
+          <span class="home-sport-card__indicator">
+            {% if sport_counts.pga %}<strong>{{ sport_counts.pga }}</strong>&nbsp;active tournament{% if sport_counts.pga != "1" %}s{% endif %}{% else %}{% if pga_event_is_upcoming %}See the next tournament{% else %}See this week's tournament{% endif %}{% endif %}
+            <span class="home-sport-card__arrow">→</span>
+          </span>
+        </a>
         <a href="/nascar" class="home-sport-card home-sport-card--nascar">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/fa6-solid:flag-checkered.svg?color=%231e3a8a" alt="NASCAR race weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Cup Series</span><h2 class="home-sport-card__title">NASCAR</h2></div></div>
           <span class="home-sport-card__indicator">
@@ -251,7 +247,6 @@
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>
-
         <a href="/mls" class="home-sport-card home-sport-card--mls">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="MLS soccer weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Major League Soccer</span><h2 class="home-sport-card__title">MLS Weather</h2></div></div>
           <span class="home-sport-card__indicator">
@@ -259,10 +254,15 @@
             <span class="home-sport-card__arrow">→</span>
           </span>
         </a>
-
-        {# Tennis card auto-shows during Grand Slam windows, hides between.
-           Driven by sport_counts.tennis which is set to "Live" by the
-           inject_sport_nav context_processor when is_any_slam_active(). #}
+        {% if sport_counts.prem %}
+        <a href="/prem" class="home-sport-card home-sport-card--prem">
+          <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:soccer.svg?color=%231e3a8a" alt="Premier League soccer weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Premier League</span><h2 class="home-sport-card__title">EPL Weather</h2></div></div>
+          <span class="home-sport-card__indicator">
+            <strong>{{ sport_counts.prem }}</strong>&nbsp;matches this week
+            <span class="home-sport-card__arrow">→</span>
+          </span>
+        </a>
+        {% endif %}
         {% if sport_counts.tennis %}
         <a href="/tennis" class="home-sport-card home-sport-card--tennis">
           <div class="home-sport-card__head"><img class="home-sport-card__icon" src="https://api.iconify.design/mdi:tennis.svg?color=%231e3a8a" alt="Tennis Grand Slam weather" loading="lazy"><div class="home-sport-card__heading"><span class="home-sport-card__kicker">Grand Slam</span><h2 class="home-sport-card__title">Tennis Weather</h2></div></div>
