@@ -14,6 +14,7 @@ from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
 from .tracks import lookup_track
+from game_precip import apply_game_window_precip
 from .schedule import get_nascar_scoreboard, parse_nascar_event, race_slug
 from . import forecast_freeze
 
@@ -142,6 +143,10 @@ def build_race(event):
                     event_id, forecast, hourly, hrrr_hourly,
                     source, err,
                 )
+
+    # Rain chance across the race window, not just the green-flag hour.
+    # See game_precip. Runs after the freeze branch; helper does not mutate.
+    forecast = apply_game_window_precip(forecast, hourly)
 
     return {
         **event,

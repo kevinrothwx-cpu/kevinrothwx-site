@@ -28,6 +28,7 @@ from cfb.nws_client import fetch_cfb_hourly
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import find_period_for_time
 from hrrr import get_hrrr_periods
+from game_precip import apply_game_window_precip
 
 
 # MLS regular-season match window: 1h before through 3h after kickoff.
@@ -127,7 +128,8 @@ def _attach_weather_to_match(match: dict, venue_cache: dict, hrrr_cache: dict) -
         if all_hrrr:
             hrrr_hourly = _hourly_window(all_hrrr, kickoff_utc)
 
-    match["forecast"] = snapshot
+    # Rain chance across the match, not just the kickoff hour. See game_precip.
+    match["forecast"] = apply_game_window_precip(snapshot, hourly)
     match["hourly"] = hourly
     match["hrrr_hourly"] = hrrr_hourly
     match["weather_source"] = source

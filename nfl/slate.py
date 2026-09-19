@@ -31,6 +31,7 @@ from hrrr import get_hrrr_periods
 # NFL game window: 1h before through 4h after kickoff.
 # Football is ~3.5 hours; 4h buffer covers halftime + late TV slate overrun.
 from zoneinfo import ZoneInfo as _ZI_LABEL
+from game_precip import apply_game_window_precip
 _ET_LABEL = _ZI_LABEL("America/New_York")   # hour_eastern labels only
 
 # ── Week cutoff (2026-09-13) ──────────────────────────────────────────
@@ -333,8 +334,9 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
 
     hourly = _hourly_window(periods, kickoff_utc)
 
-    game["forecast"] = snapshot
     game["hourly"] = hourly
+    # Rain chance across the game, not just the kickoff hour. See game_precip.
+    game["forecast"] = apply_game_window_precip(snapshot, hourly)
     game["weather_source"] = source
     game["weather_error"] = err
 

@@ -18,8 +18,21 @@
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">MLS · Matchday</p>
+        {# No bare calendar date in the H1 (2026-09-18). Google reads a date
+           this high on the page as the publish date and prints it in the
+           snippet as "2 days ago", which reads as stale on a page rebuilt
+           every day. Words for today/tomorrow can never go stale. See the
+           longer note in mlb/slate.html. #}
         <h1 class="mlb-page__title">
-          {% if showing_multiple %}Upcoming matches{% else %}{{ days_data[0].pretty_date if days_data else "Major League Soccer weather" }}{% endif %}
+          {% if showing_multiple %}Upcoming matches
+          {%- elif not days_data %}Major League Soccer weather
+          {%- elif days_data[0].is_today %}Today's matches
+          {%- elif days_data[0].is_tomorrow %}Tomorrow's matches
+          {# days_data only ever holds the next date >= today, so this branch
+             is always a future matchday. "Next matchday" says the same thing
+             without putting a bare date in the H1; the date still renders on
+             the day section below. #}
+          {%- else %}Next matchday{% endif %}
         </h1>
         <p class="mlb-page__sub">
           {% if showing_multiple %}{{ days_data|length }} days · {{ total_matches }} matches.

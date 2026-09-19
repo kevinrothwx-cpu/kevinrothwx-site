@@ -14,6 +14,7 @@ from typing import Optional
 
 from .venues import WORLD_CUP_VENUES, lookup_venue
 from .schedule import get_worldcup_schedule, parse_worldcup_event, match_slug
+from game_precip import apply_game_window_precip
 
 # Reuse weather provider code from the MLB module
 from mlb.nws import (
@@ -103,6 +104,8 @@ def build_matchday(date_str: str) -> list[dict]:
         forecast, all_periods, source, err = _forecast_for_venue(venue, ko_utc)
 
         hourly = _hourly_window(all_periods or [], ko_utc, venue_tz)
+        # Rain chance across the game, not just the kickoff hour. See game_precip.
+        forecast = apply_game_window_precip(forecast, hourly)
         slug = match_slug(parsed["away"]["name"], parsed["home"]["name"])
 
         out.append({

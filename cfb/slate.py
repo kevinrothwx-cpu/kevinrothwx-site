@@ -36,6 +36,7 @@ from . import odds_storage as cfb_odds_storage
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import extract_forecast, find_period_for_time
 from hrrr import get_hrrr_periods
+from game_precip import apply_game_window_precip
 
 
 # ── Tuning constants ──────────────────────────────────────────────────────
@@ -345,7 +346,8 @@ def _attach_weather_to_game(game: dict, venue_cache: dict, hrrr_cache: dict) -> 
         if all_hrrr:
             hrrr_hourly = _hourly_window(all_hrrr, kickoff_utc)
 
-    game["forecast"] = snapshot
+    # Rain chance across the game, not just the kickoff hour. See game_precip.
+    game["forecast"] = apply_game_window_precip(snapshot, hourly)
     game["hourly"] = hourly
     game["hrrr_hourly"] = hrrr_hourly
     game["weather_source"] = source

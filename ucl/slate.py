@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 
 from .schedule import get_ucl_week_matches
 from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
+from game_precip import apply_game_window_precip
 
 HOURS_BEFORE_KICKOFF = 1
 HOURS_MATCH_WINDOW   = 3   # 90 min + halftime + stoppage + buffer
@@ -88,8 +89,10 @@ def _attach_weather_to_match(match: dict, venue_cache: dict) -> None:
         match["weather_error"] = err
         return
 
-    match["forecast"] = find_weatherapi_period(periods, kickoff_utc)
     match["hourly"] = _hourly_window(periods, kickoff_utc, venue.get("tz"))
+    # Rain chance across the match, not just the kickoff hour. See game_precip.
+    match["forecast"] = apply_game_window_precip(
+        find_weatherapi_period(periods, kickoff_utc), match["hourly"])
     match["weather_source"] = source
     match["weather_error"] = err
 

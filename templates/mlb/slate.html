@@ -18,13 +18,22 @@
       <div>
         <p class="kicker kicker-storm">MLB Weather</p>
         <h1 class="mlb-page__title">MLB Weather Forecasts</h1>
-        {# Date demoted from the H1 on 2026-09-08. The H1 is a top-tier
-           ranking signal and a bare date wastes it, and a date in the H1 is
-           what Google caches into the SERP headline, which is how a
-           "Thursday" snippet ended up showing on a Friday. Still rendered
-           here server-side, so it can never go stale. #}
+        {# Date demoted from the H1 on 2026-09-08, then removed from the
+           dateline entirely on 2026-09-18.
+
+           Google reads a visible calendar date near the top of a page as
+           the publish date and prints it in the snippet as "2 days ago".
+           On a hub URL that changes daily but only gets crawled every few
+           days, that date is ALWAYS behind, so the one page that is
+           updated every morning was the only result on the page advertising
+           itself as stale. Competitors print no date and get no date.
+
+           Today and tomorrow now render as words, which cannot go stale no
+           matter when Googlebot last came through. Specific-date URLs keep
+           the real date: they are genuinely dated, and they are not in the
+           sitemap, so they are not what ranks. #}
         <p class="sport-dateline">
-          {{ pretty_date }}{% if is_today %} · Today's slate{% elif is_tomorrow %} · Tomorrow's slate{% elif is_past %} · Archived{% endif %}
+          {% if is_today %}Today's slate{% elif is_tomorrow %}Tomorrow's slate{% else %}{{ pretty_date }}{% if is_past %} · Archived{% endif %}{% endif %}
         </p>
         <p class="mlb-page__sub">
           {% if is_today %}Today's slate. {% elif is_tomorrow %}Tomorrow's slate. {% elif is_past %}Archived. {% endif %}

@@ -8,6 +8,7 @@ from typing import Optional
 
 from .venue import CHARLES_SCHWAB_FIELD
 from .schedule import get_cws_schedule, parse_cws_event, game_slug
+from game_precip import apply_game_window_precip
 from . import forecast_freeze
 from mlb.nws import get_nws_hourly_url, get_nws_periods, find_period_for_time, extract_forecast
 from mlb.wind import get_wind_info
@@ -85,6 +86,9 @@ def build_cws_slate(date_str: str):
             hourly = _hourly_window(all_periods or [], fp_utc)
             if fp_utc > now_utc and event_id and forecast and hourly:
                 forecast_freeze.freeze(event_id, forecast, wind_info, hourly)
+
+        # Rain chance across the game, not just the kickoff hour. See game_precip.
+        forecast = apply_game_window_precip(forecast, hourly)
 
         slug = game_slug(parsed["away"]["name"], parsed["home"]["name"])
 

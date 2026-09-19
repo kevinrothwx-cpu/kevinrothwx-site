@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% from "cws/_macros.html" import cws_cheat_card, cws_hourly_table, cws_summary_panel %}
 
-{% block title %}College World Series Weather{% if not showing_multiple %}, {{ days_data[0].pretty_date }}{% endif %} | Kevin Roth{% endblock %}
+{# Calendar date pulled out of the title, og:title and H1 on 2026-09-18.
+   A date in the <title> is the strongest possible "this page is from
+   <date>" signal to Google, and it made the SERP headline itself go
+   stale between crawls. See the longer note in mlb/slate.html. #}
+{% block title %}College World Series Weather | Kevin Roth{% endblock %}
 {% block description %}Free College World Series weather forecasts for every game at Charles Schwab Field in Omaha. By sports meteorologist Kevin Roth.{% endblock %}
 
-{% block og_title %}CWS Weather{% if not showing_multiple %}, {{ days_data[0].pretty_date }}{% endif %}{% endblock %}
+{% block og_title %}CWS Weather{% endblock %}
 {% block og_description %}Every College World Series game in Omaha. By Kevin Roth, sports meteorologist.{% endblock %}
 
 {% block content %}
@@ -14,7 +18,11 @@
       <div>
         <p class="kicker kicker-storm">College World Series · Omaha</p>
         <h1 class="mlb-page__title">
-          {% if showing_multiple %}Upcoming games{% else %}{{ days_data[0].pretty_date }}{% endif %}
+          {% if showing_multiple %}Upcoming games
+          {%- elif not days_data %}College World Series weather
+          {%- elif days_data[0].is_today %}Today's games
+          {%- elif days_data[0].is_tomorrow %}Tomorrow's games
+          {%- else %}{{ days_data[0].pretty_date }}{% endif %}
         </h1>
         <p class="mlb-page__sub">
           {% if showing_multiple %}Today + next 2 days · {{ total_games }} {% if total_games == 1 %}game{% else %}games{% endif %} scheduled.

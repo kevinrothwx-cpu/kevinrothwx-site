@@ -35,6 +35,7 @@ from typing import Optional
 
 from .park_metadata import PARK_METADATA, PARK_NAME_TO_CANONICAL, EXCLUDED_VENUES
 from .wind import get_wind_info
+from game_precip import apply_game_window_precip
 from . import forecast_freeze
 from . import odds_storage
 from .odds import fetch_mlb_totals, match_odds_to_game
@@ -290,6 +291,11 @@ def build_slate(date_str: str) -> list[dict]:
                     odds=pre_freeze_odds,
                 )
                 frozen_odds = pre_freeze_odds
+
+        # Rain chance across the game, not just the first-pitch hour. Runs
+        # after the freeze branch so frozen games get it too; the helper
+        # copies rather than mutating, so the freeze store is untouched.
+        forecast = apply_game_window_precip(forecast, hourly)
 
         # HRRR overlay — CONUS-only 3km high-resolution model. Not frozen
         # (HRRR updates hourly, freezing defeats the purpose). International
