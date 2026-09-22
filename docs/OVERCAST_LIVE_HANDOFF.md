@@ -16,12 +16,19 @@ stadium→station map generated from MSW's venue tables.
 first one is not a style preference — it can take mysportsweather.com
 down.
 
-Two files in the MSW repo are yours to take:
+You are receiving three files:
 
-| File | What it is |
+| File | What to do with it |
 |---|---|
-| `tools/build_station_map.py` | Generates the stadium→station map. Run once. |
-| `tools/synoptic_live_client.py` | Reference client. Copy into Live. |
+| `OVERCAST_LIVE_HANDOFF.md` | This document. Read section 1 before anything else. |
+| `synoptic_live_client.py` | Reference client. Copy into Live and keep its behavior. |
+| `venue_station_map.json` | Data. 204 venues → observation stations. Load it, don't regenerate it. |
+
+**The generator that produced the JSON stays in the MSW repo** and is not
+part of this handoff. It imports MSW's venue tables (`cfb/venues.py`,
+`nfl/venues.py`, `mlb/park_metadata.py`) directly, so it can only run
+there. If venues move or a stadium is added, Kevin re-runs it and sends
+you a new JSON — don't try to rebuild the map on your side.
 
 ---
 
@@ -77,36 +84,37 @@ batching is the design.**
 
 ---
 
-## 3. Build the station map
+## 3. The station map
 
-```bash
-export SYNOPTIC_TOKEN=...        # https://synopticdata.com/pricing/free-trial/
-python3 tools/build_station_map.py
-```
-
-Writes `data/venue_station_map.json` and a `_report.txt` of anything worth
-a human glance.
+`venue_station_map.json` is generated on the MSW side and shipped to you as
+data. You load it; you do not build it.
 
 - Covers **204 venues**: 134 CFB home, 20 CFB neutral, 30 NFL, 10 NFL
   international, 33 MLB parks (deduped where a venue serves several sports —
   Yankee Stadium is MLB and a CFB bowl site, SoFi is NFL and the LA Bowl).
-- Costs **197 API calls, once**. Responses cache to disk, so re-runs are free.
 - Domes are included but flagged `needs_obs: false`. There is no weather
   indoors; the row exists so a lookup returns "indoor" rather than missing.
 - Each venue gets a **primary plus up to 2 fallbacks**, so a station going
-  quiet doesn't blank the game.
+  quiet doesn't blank the game. Request all of them — see §4.
 
-**Read the report before trusting the map.** It flags:
+Every station assignment came back from Synoptic's metadata service with a
+measured `distance_mi`. None were entered by hand or recalled from memory,
+so the failure mode is "nearest station is farther than you'd like," not
+"wrong station in the wrong state."
 
-- `FAR STATION` — nearest station >15 mi. Real for rural venues; decide
-  whether that's good enough to show.
-- `NO PRESENT-WX` — station reports accumulation but not rain/snow type,
-  so precip detection is weaker there.
-- `MLB MISMATCH` — the nearest station disagrees with the `asos_station`
-  already hand-entered in `mlb/park_metadata.py`. That file has entries
-  marked "verified by Kevin" and others marked "assumed"; a mismatch on an
-  assumed one probably means the generator is right, and on a verified one
-  probably means it's wrong. **Check, don't auto-apply.**
+Two caveats that survive into your UI:
+
+- Some rural venues have no station within 15 miles. `distance_mi` is on
+  every record — surface it, and consider suppressing the reading past
+  whatever threshold you think is honest.
+- Some stations report precipitation *accumulation* but not present-weather
+  type. Accumulation lags, so `is_precipitating` is a weaker signal at
+  those sites — it can read false for light rain that just started.
+
+Flagged rows are reviewed on the MSW side before the JSON ships, so what
+you receive should already be resolved. If a venue looks wrong, raise it
+rather than editing the JSON — the fix belongs upstream or it gets
+overwritten on the next regeneration.
 
 ---
 
@@ -207,10 +215,8 @@ relying on it as a safety net.
 
 ## 7. Checklist
 
-- [ ] Synoptic token; confirm the tier includes **mesonet networks**, not
-      airport-only — density is most of the value in metro areas
-- [ ] Run `build_station_map.py`, read the report, resolve flagged rows
-- [ ] Copy `synoptic_live_client.py` into Live
+- [ ] Get the Synoptic token from Kevin (same account that generated the map)
+- [ ] Copy `synoptic_live_client.py` into Live; load `venue_station_map.json`
 - [ ] Verify in logs that a poll cycle produces **exactly one** upstream request
 - [ ] Confirm no code path reaches `weather.gov`, `weatherapi.com`, or `open-meteo`
 - [ ] Surface `client.status()` somewhere you'll actually look

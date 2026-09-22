@@ -446,9 +446,12 @@ INTERNATIONAL_VENUES: dict[str, dict] = {
                   "lat": 51.5560, "lon": -0.2795, "timezone": "Europe/London",
                   "roof_type": "retractable", "capacity": 90000,
                   "nws_unsupported": True, "country": "GB"},
-    "azteca":    {"name": "Estadio Azteca", "city": "Mexico City, MX",
-                  "lat": 19.3029, "lon": -99.1505, "timezone": "America/Mexico_City",
-                  "roof_type": "open", "capacity": 87000,
+    # Renamed Estadio Banorte under a 2025 sponsorship deal, which is what
+    # the NFL and the broadcast call it now. Slug stays "azteca" so existing
+    # override keys keep resolving. Capacity 87,523 post the 2024-26 rebuild.
+    "azteca":    {"name": "Estadio Banorte", "city": "Mexico City, MX",
+                  "lat": 19.3030, "lon": -99.1505, "timezone": "America/Mexico_City",
+                  "roof_type": "open", "capacity": 87523,
                   "nws_unsupported": True, "country": "MX"},
     "frankfurt": {"name": "Deutsche Bank Park", "city": "Frankfurt, DE",
                   "lat": 50.0687, "lon": 8.6456, "timezone": "Europe/Berlin",
@@ -478,6 +481,23 @@ INTERNATIONAL_VENUES: dict[str, dict] = {
                   "lat": -37.8199, "lon": 144.9834, "timezone": "Australia/Melbourne",
                   "roof_type": "open", "capacity": 100024,
                   "nws_unsupported": True, "country": "AU"},
+    # NFL's first Rio game, 2026-09-27. Roof is "open": the 2013 renovation
+    # put a tensioned-membrane canopy over 95% of the SEATS, but the pitch
+    # is uncovered, so weather plays. Rio shares America/Sao_Paulo and
+    # Brazil has had no DST since 2019, so the offset is a flat UTC-3.
+    # Second Brazilian venue — see the note in lookup_international_venue
+    # about what that does to the country fallback.
+    "maracana":  {"name": "Maracana Stadium", "city": "Rio de Janeiro, BR",
+                  "lat": -22.9122, "lon": -43.2303, "timezone": "America/Sao_Paulo",
+                  "roof_type": "open", "capacity": 73139,
+                  "nws_unsupported": True, "country": "BR"},
+    # Paris debut, 2026-10-25. Physically in Saint-Denis; "Paris, FR" is what
+    # the NFL markets and what a reader expects. The famous elliptical roof
+    # is a ring over the stands only, so the pitch is open and weather plays.
+    "paris":     {"name": "Stade de France", "city": "Paris, FR",
+                  "lat": 48.9244, "lon": 2.3600, "timezone": "Europe/Paris",
+                  "roof_type": "open", "capacity": 81338,
+                  "nws_unsupported": True, "country": "FR"},
 }
 
 
@@ -529,6 +549,27 @@ def lookup_international_venue(fullname, city, country=None) -> Optional[dict]:
 # assembled, so it cannot be bypassed by the source that happened to win.
 NEUTRAL_SITE_OVERRIDES: dict[tuple[str, str, str], str] = {
     ("2026-09-10", "LAR", "SF"): "melbourne",
+    # NFL Rio Game. Dallas is the DESIGNATED HOME team (schedule feeds report
+    # this as "Baltimore Ravens at Dallas Cowboys"), so the key is DAL/BAL
+    # even though the game is nowhere near Arlington. Without this the slate
+    # served AT&T Stadium: 97 degrees, roof closed, weather irrelevant.
+    ("2026-09-27", "DAL", "BAL"): "maracana",
+    # Remaining 2026 international slate, from the NFL's own schedule table
+    # at operations.nfl.com. NOTE ON READING THAT TABLE: it prints matchups
+    # "AWAY vs. HOME", the reverse of the usual US convention. Verified
+    # against the two games we already knew — it lists Melbourne as
+    # "San Francisco vs. Los Angeles Rams" (our working key is LAR/SF) and
+    # Rio as "Baltimore vs. Dallas" (the feed says Ravens AT Cowboys). Keys
+    # below are (eastern_date, HOME, AWAY). Get the order backwards and the
+    # override silently does nothing, which is how the Rio game shipped a
+    # 97-degree Arlington forecast.
+    ("2026-10-04", "WAS", "IND"): "tottenham",
+    ("2026-10-11", "JAX", "PHI"): "tottenham",
+    ("2026-10-18", "JAX", "HOU"): "wembley",
+    ("2026-10-25", "NO",  "PIT"): "paris",
+    ("2026-11-08", "ATL", "CIN"): "madrid",
+    ("2026-11-15", "DET", "NE"):  "munich",
+    ("2026-11-22", "SF",  "MIN"): "azteca",
 }
 
 
