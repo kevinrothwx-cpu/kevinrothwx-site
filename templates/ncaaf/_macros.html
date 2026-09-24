@@ -185,7 +185,15 @@
         <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.temp|int }}°{% endif %}</div>
       </div>
       <div class="wx-stat wx-stat--wind">
-        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust_notable %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
+        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% endif %}</div>
+        {# Gust on its own line between the wind figure and the field icon
+           (Kevin, 2026-09-24). Was an inline "G36" badge riding the wind
+           number — compact, but not self-explanatory at a glance. Spelled
+           out and set smaller, it reads without a legend and stops the wind
+           row from getting crowded. #}
+        {% if f.gust_notable and not is_indoor %}
+          <div class="wx-stat__gust-line">gusts {{ f.gust|int }}</div>
+        {% endif %}
         <div class="wx-stat__secondary">
           {% if is_indoor %}
             —

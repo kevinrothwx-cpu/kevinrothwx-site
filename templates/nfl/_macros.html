@@ -117,13 +117,20 @@
         <span class="game-summary__primary-value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
         <span class="game-summary__primary-label">Rain</span>
       </div>
-      {# Gust badge sits beside the wind speed and the label stays "Wind"
-         (2026-09-24). It used to REPLACE the label with "Gusts 27", which
-         meant a gusty game lost the word Wind entirely. gust_notable is
-         computed in wind_gusts.py, not here, so NFL and CFB can't drift. #}
+      {# Wind cell. The "14 mph" value is left exactly as-is whether or not
+         there are gusts, so the number never shifts or re-wraps between
+         games. A qualifying gust takes over the LABEL slot instead of
+         sitting inside the value — putting it inline wrapped it onto its own
+         line next to "mph" and looked broken (Kevin, 2026-09-24). The word
+         "Wind" is redundant there anyway: the big number is obviously wind,
+         and the cell above already reads "AT KICKOFF".
+
+         Spelled "Gusts 31" here, not the "G31" used on the compact cheat
+         cards. There is room in this slot and the full word is clearer; the
+         cheat cards are tight enough to need the abbreviation. #}
       <div class="game-summary__cell">
-        <span class="game-summary__primary-value">{{ f.wind_speed }} <span style="font-size:0.55em;font-weight:500;color:var(--ash)">mph</span>{% if f.gust_notable %}<span class="wx-gust-badge">G{{ f.gust|int }}</span>{% endif %}</span>
-        <span class="game-summary__primary-label">Wind</span>
+        <span class="game-summary__primary-value">{{ f.wind_speed }} <span style="font-size:0.55em;font-weight:500;color:var(--ash)">mph</span></span>
+        <span class="game-summary__primary-label">{% if f.gust_notable %}<span class="wx-gust-label">Gusts {{ f.gust|int }}</span>{% else %}Wind{% endif %}</span>
       </div>
     {% else %}
       <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">

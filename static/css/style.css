@@ -1137,19 +1137,44 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   margin-left: 0.25rem;
   letter-spacing: 0.02em;
 }
-/* Gust badge on the NFL summary card (2026-09-24). Same amber G## treatment
-   as the CFB cheat card above so the two sports read identically. Sized in
-   em rather than rem because it sits inside game-summary__primary-value,
-   which is much larger type than the CFB card — em keeps it proportional
-   and lets it ride any future change to the wind number's size. */
+/* Gust line on the CFB cheat card (2026-09-24). Sits between the sustained
+   wind figure and the field icon. Smaller than the old inline G## badge it
+   replaced, because spelling out "gusts 36" is wider and needs to stay
+   visually subordinate to the wind number above it. */
+.cheat-card--cfb .wx-stat__gust-line {
+  font-family: var(--font-sans);
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #b45309;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
+  margin-top: 0.05rem;
+  white-space: nowrap;
+}
+/* Gust badge, amber G## (2026-09-24). Two variants, same treatment as the
+   CFB cheat card above so every sport reads identically.
+
+   --badge sits INLINE to the right of a sustained wind figure on the compact
+   cheat cards. em-sized so it stays proportional to whatever it sits beside.
+
+   --label REPLACES the word "Wind" underneath the big number in the game
+   summary panel. It lives in the label slot rather than inside the value
+   because inline there wrapped onto its own line next to "mph" and looked
+   broken. Sized in rem to match the label type it stands in for. */
 .wx-gust-badge {
   font-family: var(--font-sans);
-  font-size: 0.45em;
+  font-size: 0.75em;
   font-weight: 700;
   color: #b45309;
   margin-left: 0.3em;
-  vertical-align: 0.35em;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.wx-gust-label {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: #b45309;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 .cheat-card--cfb .wx-stat__secondary {

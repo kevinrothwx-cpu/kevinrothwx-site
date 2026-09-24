@@ -57,6 +57,12 @@ from persistence import load_json, save_json, parse_dt
 
 _DISK_FILE = "weather_spotlight_lock.json"
 _LOCK_HOURS = 6
+# One bar for every sport. A per-sport threshold (NFL at 20) was tried on
+# 2026-09-24 and reverted the same day — Kevin preferred a single standard,
+# so a game earns the Spotlight on its weather alone regardless of league.
+# Worth knowing if you revisit this: the wind ladder starts at 15 mph, so a
+# 14 mph game scores nothing for wind and tops out at 20 on rain alone. That
+# is the band that goes unfeatured.
 _THRESHOLD_SCORE = 25
 
 EASTERN_TZ = ZoneInfo("America/New_York")
@@ -277,15 +283,119 @@ def _mlb_candidates(now_utc: datetime) -> list[dict]:
     return out
 
 
-# Ordered list of sport-adapter callables. Add more sports by appending here.
+def _roof_of(venue: dict) -> str:
+    """Read a venue's roof type regardless of which key it uses.
+
+    The two sports disagree: CFB stadium records use "roof" (cfb/venues.py
+    _stadium), while NFL records and every neutral-site international venue
+    use "roof_type". A CFB game at a neutral international site therefore
+    carries "roof_type" even though its normal venues carry "roof". Checking
+    only one key would silently disable the roof filter for half the slate,
+    which is the kind of bug that shows up as a dome game being advertised
+    as a weather spotlight."""
+    if not isinstance(venue, dict):
+        return ""
+    return (venue.get("roof_type") or venue.get("roof") or "").lower()
+
+
+# Roofs that disqualify a game. Fixed domes are indoors. Retractables close
+# precisely when weather turns extreme, which is exactly when the Spotlight
+# would want to feature them, so the advertised condition never reaches the
+# field. fixed_canopy stays eligible — partial cover, weather still plays.
+_EXCLUDED_ROOFS = ("fixed_dome", "retractable")
+
+
+def _football_candidates(now_utc: datetime, sport: str, sport_label: str,
+                         slate_getter, url_prefix: str) -> list[dict]:
+    """Shared adapter for NFL and CFB.
+
+    Both expose a flat slate (not MLB's per-date dict), and both carry the
+    same game fields: kickoff_utc, slug, venue, home/away, forecast. The
+    only real differences are the URL prefix and which venue key holds the
+    roof, so one function covers both rather than two near-copies drifting.
+    """
+    try:
+        slate, _meta = slate_getter(allow_build=False)
+    except Exception as e:
+        print(f"[spotlight] {sport} slate fetch failed: {e}", flush=True)
+        return []
+    if not slate:
+        return []
+
+    allowed_dates = set(_date_strs_for_sport(sport))
+    out: list[dict] = []
+    for g in slate:
+        try:
+            ko = g.get("kickoff_utc")
+            if not ko or ko <= now_utc:      # upcoming only
+                continue
+            date_str = (g.get("kickoff_date_eastern")
+                        or ko.astimezone(EASTERN_TZ).strftime("%Y-%m-%d"))
+            if date_str not in allowed_dates:
+                continue
+            f = g.get("forecast")
+            if not f:
+                continue
+            venue = g.get("venue_meta") or g.get("venue") or {}
+            roof = _roof_of(venue)
+            if roof in _EXCLUDED_ROOFS:
+                continue
+            away = (g.get("away") or {}).get("name") or (g.get("away") or {}).get("abbrev") or ""
+            home = (g.get("home") or {}).get("name") or (g.get("home") or {}).get("abbrev") or ""
+            slug = g.get("slug") or ""
+            url = g.get("url_path") or (
+                f"{url_prefix}/{date_str}/{slug}" if slug else url_prefix)
+            out.append({
+                "sport":       sport,
+                "sport_label": sport_label,
+                "key":         f"{sport}-{date_str}-{slug}",
+                "title":       f"{away} @ {home}",
+                "venue":       venue.get("name") or f"{sport_label} game",
+                "venue_city":  venue.get("city") or "",
+                "roof_type":   roof,
+                "kickoff_utc": ko,
+                "kickoff_date_label": _friendly_date_str(ko),
+                "kickoff_local_str":  g.get("kickoff_eastern_str") or "",
+                "url_path":    url,
+                "forecast":    dict(f),
+                "score":       _score_forecast(f),
+            })
+        except Exception as e:
+            print(f"[spotlight] {sport} candidate skipped: {e}", flush=True)
+            continue
+    return out
+
+
+def _nfl_candidates(now_utc: datetime) -> list[dict]:
+    from nfl.cache import get_nfl_slate
+    return _football_candidates(now_utc, "nfl", "NFL", get_nfl_slate, "/nfl")
+
+
+def _cfb_candidates(now_utc: datetime) -> list[dict]:
+    from cfb.cache import get_cfb_slate
+    return _football_candidates(now_utc, "cfb", "CFB", get_cfb_slate, "/ncaaf")
+
+
+# Sport adapters in PRIORITY ORDER (Kevin, 2026-09-24). These are NOT pooled
+# and scored against each other. NFL is scanned first, and CFB is consulted
+# only when no NFL game clears the threshold. If neither does, the strip
+# hides. A quiet NFL week therefore surfaces a big CFB game rather than
+# nothing, but a qualifying NFL game always outranks a higher-scoring CFB
+# one. See _pick_by_priority.
+#
+# MLB was removed on 2026-09-24 at Kevin's request. _mlb_candidates is kept
+# above as a working reference (and for a possible playoff return) but is
+# deliberately unregistered. ACTIVE_SPORTS below is what clears stale locks.
 SPORT_ADAPTERS = [
-    _mlb_candidates,
-    # _cfb_candidates,  # add when CFB season starts
-    # _nfl_candidates,  # add when NFL preseason picks up
-    # _mls_candidates,
-    # _pga_candidates,
-    # _nascar_candidates,
+    _nfl_candidates,
+    _cfb_candidates,
 ]
+
+# Sports allowed to hold the Spotlight. Derived from the registry rather
+# than hardcoded, so retiring a sport automatically invalidates any lock
+# still holding one of its games — without this, a locked MLB pick would
+# have stayed on the homepage for up to 6 more hours after deploy.
+ACTIVE_SPORTS = {"nfl", "cfb"}
 
 
 # ── Selection + lock management ─────────────────────────────────────────────
@@ -302,7 +412,10 @@ def _all_candidates(now_utc: datetime) -> list[dict]:
 
 
 def _pick_best(candidates: list[dict]) -> Optional[dict]:
-    """Return the highest-scoring candidate that clears the threshold, or None."""
+    """Return the highest-scoring candidate that clears the threshold, or None.
+
+    Operates WITHIN one sport. Cross-sport ordering is priority-based, not
+    score-based — see _pick_by_priority."""
     if not candidates:
         return None
     scored = sorted(candidates, key=lambda c: c["score"], reverse=True)
@@ -310,6 +423,29 @@ def _pick_best(candidates: list[dict]) -> Optional[dict]:
     if top["score"] < _THRESHOLD_SCORE:
         return None
     return top
+
+
+def _pick_by_priority(now_utc: datetime) -> Optional[dict]:
+    """Walk SPORT_ADAPTERS in order and return the first sport's best
+    qualifying game. NFL first, then CFB, then nothing.
+
+    Deliberately NOT "pool everything and take the top score": Kevin wants a
+    qualifying NFL game to win even when a CFB game scores higher, because
+    the NFL game is the one the audience came for. CFB is the fallback for a
+    quiet NFL week, not a competitor."""
+    for adapter in SPORT_ADAPTERS:
+        try:
+            candidates = adapter(now_utc)
+        except Exception as e:
+            print(f"[spotlight] adapter {adapter.__name__} failed: {e}", flush=True)
+            continue
+        top = _pick_best(candidates)
+        if top:
+            print(f"[spotlight] picked {top['sport']} {top['key']} "
+                  f"(score {top['score']}) from {len(candidates)} candidates",
+                  flush=True)
+            return top
+    return None
 
 
 def _refresh_locked_game_forecast(now_utc: datetime) -> None:
@@ -349,6 +485,11 @@ def _locked_game_still_valid(locked_game: dict) -> bool:
     sport = locked_game.get("sport")
     kickoff_utc = locked_game.get("kickoff_utc")
     if not sport or not kickoff_utc:
+        return False
+    # Sport must still be registered. Without this, the MLB game locked at
+    # deploy time would have held the homepage strip for up to 6 more hours
+    # after MLB was retired on 2026-09-24.
+    if sport not in ACTIVE_SPORTS:
         return False
     try:
         kickoff_date_et = kickoff_utc.astimezone(EASTERN_TZ).strftime("%Y-%m-%d")
@@ -399,9 +540,8 @@ def get_current() -> Optional[dict]:
         with _state_lock:
             return dict(_lock_state.get("game", {})) or None
 
-    # Lock expired or never set — re-pick
-    candidates = _all_candidates(now_utc)
-    top = _pick_best(candidates)
+    # Lock expired or never set — re-pick, NFL before CFB
+    top = _pick_by_priority(now_utc)
     if not top:
         # Nothing weather-notable; clear any stale lock and return None
         _clear_lock()

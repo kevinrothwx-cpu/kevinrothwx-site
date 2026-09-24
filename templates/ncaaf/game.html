@@ -219,9 +219,13 @@
         <span class="game-summary__value {{ f.precip_pct|precip_color }}">{{ f.precip_pct|int }}%</span>
         <span class="game-summary__cell-label">Rain</span>
       </div>
+      {# A qualifying gust takes over the label slot, same as the NFL summary
+         panel (2026-09-24). The mph value never moves whether or not there
+         are gusts. "Wind" is redundant under a big wind number anyway, so
+         the slot is better spent on the gust. #}
       <div class="game-summary__cell">
         <span class="game-summary__value">{{ f.wind_speed|int }} <span style="font-size:0.7em;font-weight:500;color:var(--ash)">mph</span></span>
-        <span class="game-summary__cell-label">Wind</span>
+        <span class="game-summary__cell-label">{% if f.gust_notable %}<span class="wx-gust-label">Gusts {{ f.gust|int }}</span>{% else %}Wind{% endif %}</span>
       </div>
     </div>
   {% elif _roof == "fixed_dome" %}
