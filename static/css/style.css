@@ -257,7 +257,13 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
 .cheat-card__wx { display: grid; grid-template-columns: auto 1fr auto; gap: 0.7rem; align-items: center; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; }
 .cheat-card__temp { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .cheat-card__wxmid { display: flex; flex-direction: column; gap: 0.15rem; }
-.cheat-card__wind { font-family: var(--font-sans); font-size: 0.75rem; color: var(--slate); display: flex; align-items: center; gap: 0.3rem; }
+/* white-space:nowrap added 2026-09-24. This is a flex row, so the bare
+   "12 mph" text is an anonymous flex item — when a gust span sits beside it
+   and the column gets tight, that anonymous item breaks internally and the
+   card renders "12 / mph" on two lines, which wrecks the whole card's
+   rhythm. nowrap keeps the wind figure intact; .wx-gust-badge is sized small
+   enough that the pair still fits. */
+.cheat-card__wind { font-family: var(--font-sans); font-size: 0.75rem; color: var(--slate); display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
 .cheat-card__precip { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; }
 .cheat-card__skyicon { width: 32px; height: 32px; }
 .cheat-card__wx--missing { color: var(--fog); font-size: 0.8rem; font-style: italic; padding-top: 0.65rem; border-top: 1px solid var(--mist); margin-top: auto; display: flex; align-items: center; min-height: 3.1rem; }
@@ -1137,34 +1143,22 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   margin-left: 0.25rem;
   letter-spacing: 0.02em;
 }
-/* Gust line on the CFB cheat card (2026-09-24). Sits between the sustained
-   wind figure and the field icon.
-
-   FIXED HEIGHT, and rendered in EVERY column even when empty. .wx-stat is a
-   centered flex column, so a third child in the wind column alone re-centred
-   that column and knocked its field icon out of line with the precip icon
-   (Kevin flagged the misalignment same day). A reserved slot of identical
-   height in all three columns holds the wind number and field icon still,
-   whether or not a game has gusts.
-
-   Do NOT change this to height:auto — that reintroduces the shift. */
-.cheat-card--cfb .wx-stat__gust-line {
-  height: 0.62rem;
-  font-family: var(--font-sans);
-  font-size: 0.55rem;
-  font-weight: 700;
-  color: #b45309;
-  letter-spacing: 0.03em;
-  line-height: 0.62rem;
-  white-space: nowrap;
-}
+/* NOTE (2026-09-24): a .wx-stat__gust-line rule lived here briefly, putting
+   the CFB gust on its own row under the wind figure. Removed — .wx-stat is a
+   centered flex column, so the extra row either shifted the field icon out of
+   line with the precip icon, or (with a reserved fixed-height slot in all
+   three columns) left visible dead space in every gust-free card. The inline
+   .wx-stat__gust-inline badge above is what CFB uses. Don't re-add a row here
+   without solving the vertical rhythm first. */
 /* Gust badge, amber G## (2026-09-24). Two variants, same treatment as the
    CFB cheat card above so every sport reads identically.
 
    --badge sits INLINE to the right of a sustained wind figure on the compact
-   cheat cards, reading "(gusts 31)". Deliberately font-size:inherit so it
-   matches the sustained wind exactly rather than shrinking away — the
-   parentheses, not a size change, are what mark it as secondary.
+   cheat cards, reading "(gusts 31)". Started at font-size:inherit to match
+   the sustained wind, but at full size the pair overflowed the narrow middle
+   grid column on smaller viewports and forced "12 mph" to break in half.
+   0.78em is small enough to share the line at realistic card widths while
+   staying legible. Paired with white-space:nowrap on .cheat-card__wind.
 
    --label REPLACES the word "Wind" underneath the big number in the game
    summary panel. It lives in the label slot rather than inside the value
@@ -1175,7 +1169,7 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
    in — NFL uses primary-label, CFB uses cell-label, different base sizes. */
 .wx-gust-badge {
   font-family: inherit;
-  font-size: inherit;
+  font-size: 0.78em;
   font-weight: 600;
   color: #b45309;
   letter-spacing: 0.01em;
