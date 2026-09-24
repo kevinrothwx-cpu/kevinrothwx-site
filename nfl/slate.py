@@ -32,6 +32,8 @@ from hrrr import get_hrrr_periods
 # Football is ~3.5 hours; 4h buffer covers halftime + late TV slate overrun.
 from zoneinfo import ZoneInfo as _ZI_LABEL
 from game_precip import apply_game_window_precip
+from wind_gusts import annotate_card_gust
+from mlb.nws import attach_nws_gusts
 _ET_LABEL = _ZI_LABEL("America/New_York")   # hour_eastern labels only
 
 # ── Week cutoff (2026-09-13) ──────────────────────────────────────────
@@ -334,9 +336,25 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
 
     hourly = _hourly_window(periods, kickoff_utc)
 
+    # Wind gusts. NWS leaves them off the hourly forecast endpoint, so they
+    # need a second gridpoint call. Safe to use mlb.nws's fetcher here:
+    # it caches per location and the NFL slate is ~16 stadiums, nowhere near
+    # the burst volume that made CFB build its own paced client. Only the
+    # NWS path needs it; WeatherAPI periods already carry a gust.
+    # Applied to the windowed copies so shared venues (MetLife: NYG+NYJ,
+    # SoFi: LAR+LAC) can't contaminate each other through venue_cache.
+    if source == "nws":
+        try:
+            attach_nws_gusts(hourly, lat, lon)
+            if snapshot:
+                attach_nws_gusts([snapshot], lat, lon)
+        except Exception as e:
+            print(f"[nfl.slate] gust attach failed for {lat},{lon}: {e}", flush=True)
+
     game["hourly"] = hourly
     # Rain chance across the game, not just the kickoff hour. See game_precip.
-    game["forecast"] = apply_game_window_precip(snapshot, hourly)
+    game["forecast"] = annotate_card_gust(
+        apply_game_window_precip(snapshot, hourly))
     game["weather_source"] = source
     game["weather_error"] = err
 

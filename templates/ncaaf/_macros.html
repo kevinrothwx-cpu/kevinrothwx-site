@@ -185,7 +185,7 @@
         <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.temp|int }}°{% endif %}</div>
       </div>
       <div class="wx-stat wx-stat--wind">
-        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust and f.gust|int >= (f.wind_speed|int + 5) %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
+        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust_notable %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
         <div class="wx-stat__secondary">
           {% if is_indoor %}
             —

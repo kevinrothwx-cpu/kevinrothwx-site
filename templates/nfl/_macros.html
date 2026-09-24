@@ -117,9 +117,13 @@
         <span class="game-summary__primary-value {{ f.precip_pct|precip_color }}">{{ f.precip_pct }}%</span>
         <span class="game-summary__primary-label">Rain</span>
       </div>
+      {# Gust badge sits beside the wind speed and the label stays "Wind"
+         (2026-09-24). It used to REPLACE the label with "Gusts 27", which
+         meant a gusty game lost the word Wind entirely. gust_notable is
+         computed in wind_gusts.py, not here, so NFL and CFB can't drift. #}
       <div class="game-summary__cell">
-        <span class="game-summary__primary-value">{{ f.wind_speed }} <span style="font-size:0.55em;font-weight:500;color:var(--ash)">mph</span></span>
-        <span class="game-summary__primary-label">{% if f.gust %}Gusts {{ f.gust }}{% else %}Wind{% endif %}</span>
+        <span class="game-summary__primary-value">{{ f.wind_speed }} <span style="font-size:0.55em;font-weight:500;color:var(--ash)">mph</span>{% if f.gust_notable %}<span class="wx-gust-badge">G{{ f.gust|int }}</span>{% endif %}</span>
+        <span class="game-summary__primary-label">Wind</span>
       </div>
     {% else %}
       <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">

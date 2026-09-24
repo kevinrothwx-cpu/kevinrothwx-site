@@ -36,6 +36,7 @@ import requests
 
 from nws_health import record as nws_record
 from mlb.nws import extract_forecast  # reuse the period normalizer
+from wind_gusts import expand_gust_series
 
 log = logging.getLogger(__name__)
 
@@ -82,6 +83,17 @@ _pacing_lock = threading.Lock()
 _circuit_open_until = 0.0
 _circuit_lock = threading.Lock()
 
+# Gust series cache: (lat_4dp, lon_4dp) → (fetched_at_epoch, {iso_hour: mph}).
+# Unlike the gridpoint cache this DOES expire, because it holds forecast
+# values rather than a permanent URL. Three hours is deliberate: gusts are a
+# second request per venue, and ~70 CFB stadiums refetching every 25-minute
+# warmer cycle would roughly double this module's NWS traffic. Gust forecasts
+# move slowly enough that a 3h TTL is invisible to a reader while cutting the
+# added load about sevenfold.
+GUST_CACHE_TTL_SEC = 3 * 60 * 60
+_gust_cache: dict[tuple[float, float], tuple[float, dict[str, int]]] = {}
+_gust_lock = threading.Lock()
+
 
 # ── Public API ────────────────────────────────────────────────────────────
 
@@ -111,6 +123,78 @@ def fetch_cfb_hourly(lat: float, lon: float) -> Optional[list[dict]]:
         log.warning(f"[cfb.nws] unexpected error for {lat},{lon}: {e}")
         nws_record("other_error", f"cfb {lat},{lon}", msg=str(e))
         return None
+
+
+def fetch_cfb_gusts(lat: float, lon: float) -> dict[str, int]:
+    """Fetch the NWS gridpoint windGust series for a CFB venue.
+
+    Returns {iso_utc_hour: mph}, or {} on any failure.
+
+    Why this lives here instead of calling mlb.nws.attach_nws_gusts:
+    that function is unpaced and has no circuit breaker, which is fine for
+    golf and NASCAR (one venue each) but would fire ~70 unthrottled
+    requests on a CFB Saturday — precisely the burst this module exists to
+    prevent (see reason 2 in the module docstring).
+
+    Cost note: gusts live on the raw gridpoint URL, which is the hourly URL
+    minus its '/forecast/hourly' suffix. Deriving it from the already-cached
+    hourly URL means gusts add ONE request per venue, not two — no second
+    /points lookup.
+    """
+    if _circuit_is_open():
+        return {}
+
+    key = (round(lat, 4), round(lon, 4))
+    now = time.time()
+    with _gust_lock:
+        entry = _gust_cache.get(key)
+        if entry and (now - entry[0]) < GUST_CACHE_TTL_SEC:
+            return entry[1]
+
+    try:
+        hourly_url = _get_or_resolve_gridpoint(lat, lon)
+        if not hourly_url:
+            return {}
+        grid_url = hourly_url.split("/forecast/hourly")[0]
+        if not grid_url or grid_url == hourly_url:
+            # URL shape changed upstream; don't guess.
+            nws_record("other_error", hourly_url, msg="cannot derive grid url")
+            return {}
+
+        _pace()
+        try:
+            resp = requests.get(grid_url, headers=NWS_HEADERS,
+                                timeout=REQUEST_TIMEOUT_SEC)
+        except requests.Timeout:
+            nws_record("timeout", grid_url)
+            return {}
+        except Exception as e:
+            nws_record("other_error", grid_url, msg=str(e))
+            return {}
+
+        if resp.status_code == 429:
+            nws_record("rate_limit", grid_url, code=429)
+            _trip_circuit()
+            return {}
+        if resp.status_code != 200:
+            nws_record("other_error", grid_url, code=resp.status_code)
+            return {}
+
+        nws_record("ok", grid_url)
+        gust_obj = (resp.json().get("properties") or {}).get("windGust") or {}
+        gusts = expand_gust_series(gust_obj)
+
+        with _gust_lock:
+            _gust_cache[key] = (time.time(), gusts)
+        return gusts
+    except Exception as e:
+        log.warning(f"[cfb.nws] gust fetch failed for {lat},{lon}: {e}")
+        return {}
+
+
+def gust_cache_size() -> int:
+    """Number of venues with a cached gust series, for the admin page."""
+    return len(_gust_cache)
 
 
 def circuit_status() -> dict:

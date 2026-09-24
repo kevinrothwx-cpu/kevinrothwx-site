@@ -37,6 +37,8 @@ from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import extract_forecast, find_period_for_time
 from hrrr import get_hrrr_periods
 from game_precip import apply_game_window_precip
+from wind_gusts import annotate_card_gust, attach_gusts_to_periods
+from .nws_client import fetch_cfb_gusts
 
 
 # ── Tuning constants ──────────────────────────────────────────────────────
@@ -346,8 +348,27 @@ def _attach_weather_to_game(game: dict, venue_cache: dict, hrrr_cache: dict) -> 
         if all_hrrr:
             hrrr_hourly = _hourly_window(all_hrrr, kickoff_utc)
 
+    # Wind gusts. NWS omits them from the hourly forecast endpoint, so they
+    # come from a second gridpoint call, paced and circuit-broken by
+    # cfb.nws_client (never mlb.nws — see fetch_cfb_gusts for why). Only the
+    # NWS path has them; WeatherAPI periods already carry their own gust.
+    # Applied to the windowed copies, not the shared venue_cache periods, so
+    # two games at one stadium can't contaminate each other.
+    if source == "nws":
+        try:
+            gusts = fetch_cfb_gusts(lat, lon)
+            if gusts:
+                attach_gusts_to_periods(hourly, gusts)
+                # The kickoff snapshot is a different dict than the windowed
+                # copies, so it needs the value copied across by start_time.
+                if snapshot:
+                    attach_gusts_to_periods([snapshot], gusts)
+        except Exception as e:
+            print(f"[cfb.slate] gust attach failed at {lat},{lon}: {e}", flush=True)
+
     # Rain chance across the game, not just the kickoff hour. See game_precip.
-    game["forecast"] = apply_game_window_precip(snapshot, hourly)
+    game["forecast"] = annotate_card_gust(
+        apply_game_window_precip(snapshot, hourly))
     game["hourly"] = hourly
     game["hrrr_hourly"] = hrrr_hourly
     game["weather_source"] = source

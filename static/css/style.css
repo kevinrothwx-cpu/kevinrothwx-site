@@ -1137,6 +1137,21 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   margin-left: 0.25rem;
   letter-spacing: 0.02em;
 }
+/* Gust badge on the NFL summary card (2026-09-24). Same amber G## treatment
+   as the CFB cheat card above so the two sports read identically. Sized in
+   em rather than rem because it sits inside game-summary__primary-value,
+   which is much larger type than the CFB card — em keeps it proportional
+   and lets it ride any future change to the wind number's size. */
+.wx-gust-badge {
+  font-family: var(--font-sans);
+  font-size: 0.45em;
+  font-weight: 700;
+  color: #b45309;
+  margin-left: 0.3em;
+  vertical-align: 0.35em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 .cheat-card--cfb .wx-stat__secondary {
   display: inline-flex;
   align-items: center;

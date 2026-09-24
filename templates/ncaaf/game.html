@@ -276,6 +276,21 @@
               <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{{ p.wind_speed }} mph</td>
             {% endfor %}
           </tr>
+          {# Gusts (2026-09-24). Deliberately UNFILTERED — the 10-and-5 rule
+             in wind_gusts.py governs the summary cards only. Kevin wants an
+             hourly gust on every hour here so the trend is readable even on
+             a calm day. Row hides entirely when no hour has a gust, which is
+             the WeatherAPI fallback case; NWS supplies them for US venues.
+             Mirrors the HRRR table's Gusts row further down this file. #}
+          {% set any_gust = game.hourly|selectattr('gust')|list|length > 0 %}
+          {% if any_gust %}
+          <tr>
+            <td class="hourly__label">Gusts</td>
+            {% for p in game.hourly %}
+              <td class="hourly__cell {% if p.is_game_hour %}is-game-hour{% endif %}">{% if p.gust %}{{ p.gust }} mph{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
           <tr>
             <td class="hourly__label">Wind dir</td>
             {% for p in game.hourly %}
