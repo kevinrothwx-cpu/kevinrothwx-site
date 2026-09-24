@@ -96,7 +96,7 @@
              (2026-09-24). Shared macro: MLS and World Cup also render it, but
              only sports whose slate calls wind_gusts.annotate_card_gust ever
              set gust_notable, so this is a no-op for them until they opt in. #}
-          <span class="cheat-card__wind">{{ f.wind_speed }} mph{% if f.gust_notable %}<span class="wx-gust-badge">G{{ f.gust|int }}</span>{% endif %}</span>
+          <span class="cheat-card__wind">{{ f.wind_speed }} mph{% if f.gust_notable %} <span class="wx-gust-badge">(gusts {{ f.gust|int }})</span>{% endif %}</span>
           <span class="cheat-card__precip {{ f.precip_pct|precip_color }}">Rain {{ f.precip_pct }}%</span>
         </div>
         <span class="cheat-card__skyicon">{{ weather_icon(f.precip_pct|precip_icon, 28) }}</span>

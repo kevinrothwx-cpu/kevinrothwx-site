@@ -1138,40 +1138,52 @@ body { font-family: var(--font-sans); color: var(--ink); background: var(--white
   letter-spacing: 0.02em;
 }
 /* Gust line on the CFB cheat card (2026-09-24). Sits between the sustained
-   wind figure and the field icon. Smaller than the old inline G## badge it
-   replaced, because spelling out "gusts 36" is wider and needs to stay
-   visually subordinate to the wind number above it. */
+   wind figure and the field icon.
+
+   FIXED HEIGHT, and rendered in EVERY column even when empty. .wx-stat is a
+   centered flex column, so a third child in the wind column alone re-centred
+   that column and knocked its field icon out of line with the precip icon
+   (Kevin flagged the misalignment same day). A reserved slot of identical
+   height in all three columns holds the wind number and field icon still,
+   whether or not a game has gusts.
+
+   Do NOT change this to height:auto — that reintroduces the shift. */
 .cheat-card--cfb .wx-stat__gust-line {
+  height: 0.62rem;
   font-family: var(--font-sans);
   font-size: 0.55rem;
   font-weight: 700;
   color: #b45309;
   letter-spacing: 0.03em;
-  line-height: 1.1;
-  margin-top: 0.05rem;
+  line-height: 0.62rem;
   white-space: nowrap;
 }
 /* Gust badge, amber G## (2026-09-24). Two variants, same treatment as the
    CFB cheat card above so every sport reads identically.
 
    --badge sits INLINE to the right of a sustained wind figure on the compact
-   cheat cards. em-sized so it stays proportional to whatever it sits beside.
+   cheat cards, reading "(gusts 31)". Deliberately font-size:inherit so it
+   matches the sustained wind exactly rather than shrinking away — the
+   parentheses, not a size change, are what mark it as secondary.
 
    --label REPLACES the word "Wind" underneath the big number in the game
    summary panel. It lives in the label slot rather than inside the value
    because inline there wrapped onto its own line next to "mph" and looked
-   broken. Sized in rem to match the label type it stands in for. */
+   broken. Set 25% up from the surrounding label type (Kevin, 2026-09-24) so
+   it carries more weight than a caption while staying under the wind number
+   it describes. em, not rem, so it scales from whichever label class it sits
+   in — NFL uses primary-label, CFB uses cell-label, different base sizes. */
 .wx-gust-badge {
-  font-family: var(--font-sans);
-  font-size: 0.75em;
-  font-weight: 700;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
   color: #b45309;
-  margin-left: 0.3em;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 .wx-gust-label {
   font-family: var(--font-sans);
+  font-size: 1.25em;
   font-weight: 700;
   color: #b45309;
   letter-spacing: 0.04em;

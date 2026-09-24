@@ -181,8 +181,17 @@
          Column 3: precip % on top, weather icon centered below.
          All secondary content lives inside its stat cell — no separate detail row. #}
     <div class="cheat-card__wx">
+      {# Every column carries a gust slot, even the ones that can never use it
+         (2026-09-24). .wx-stat is a centered flex column, so a third child in
+         ONE column re-centers that column alone — which pushed the wind
+         number up and dropped its field icon below the precip icon. Reserving
+         an identical empty slot everywhere keeps all three columns aligned and
+         keeps every card identical whether or not it has gusts. Total content
+         goes 2.8rem -> 3.8rem, still under .cheat-card__wx's 4.5rem
+         min-height, so card height is unchanged. #}
       <div class="wx-stat wx-stat--temp">
         <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.temp|int }}°{% endif %}</div>
+        <div class="wx-stat__gust-line"></div>
       </div>
       <div class="wx-stat wx-stat--wind">
         <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% endif %}</div>
@@ -191,9 +200,7 @@
            number — compact, but not self-explanatory at a glance. Spelled
            out and set smaller, it reads without a legend and stops the wind
            row from getting crowded. #}
-        {% if f.gust_notable and not is_indoor %}
-          <div class="wx-stat__gust-line">gusts {{ f.gust|int }}</div>
-        {% endif %}
+        <div class="wx-stat__gust-line">{% if f.gust_notable and not is_indoor %}gusts {{ f.gust|int }}{% endif %}</div>
         <div class="wx-stat__secondary">
           {% if is_indoor %}
             —
@@ -204,6 +211,7 @@
       </div>
       <div class="wx-stat wx-stat--precip">
         <div class="wx-stat__primary wx-stat__primary--precip-{{ precip_class }}">{% if is_indoor %}—{% else %}{{ f.precip_pct|int }}%{% endif %}</div>
+        <div class="wx-stat__gust-line"></div>
         <div class="wx-stat__secondary">
           {% if is_indoor %}—{% else %}{{ weather_icon(f.precip_pct|precip_icon, 22) }}{% endif %}
         </div>
