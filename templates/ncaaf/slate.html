@@ -127,6 +127,11 @@
   /* ── New v2 additions (2026-08-06): 2-item detail row, mph unit, gust inline, odds row ── */
   .wx-stat__unit { font-family: var(--font-sans); font-size: 0.55rem; font-weight: 500; color: var(--fog); letter-spacing: 0.03em; margin-left: 0.15rem; vertical-align: 0.15em; }
   .wx-stat__gust-inline { font-family: var(--font-sans); font-size: 0.6rem; font-weight: 700; color: #b45309; margin-left: 0.3rem; vertical-align: 0.2em; letter-spacing: 0.02em; }
+  /* Desktop defaults for the phone-only swaps (2026-09-24): gusts read "G36",
+     and the dome badge sits in the header, not the weather block. The
+     max-width:600px block below flips both. */
+  .wx-gust-word { display: none; }
+  .wx-indoor-badge { display: none; }
   .cheat-card__wx-detail { display: flex; justify-content: space-around; align-items: center; padding: 0.3rem 1rem 0.55rem; gap: 0.5rem; }
   .wx-detail__item { display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--font-sans); font-size: 0.7rem; color: var(--fog); font-weight: 500; white-space: nowrap; }
 
@@ -250,6 +255,37 @@
     .cheat-card--cfb .cheat-card__at { padding: 0; font-size: 0.62rem; }
     .cheat-card--cfb .cheat-card__logo { width: 14px; height: 14px; }
     .cheat-card--cfb .cheat-card__abbr--long { font-size: 0.86rem; letter-spacing: -0.04em; }
+
+    /* ── Gusts on phones (2026-09-24) ─────────────────────────────────
+       Measured at 375px: the wind column is 38px wide, so the inline
+       "21 mph G36" overflowed 4-6px into the rain %. There is 11px of empty
+       space between the wind figure and the field icon.
+       The gust span goes position:absolute, so it leaves the flex flow
+       entirely: "21 mph" re-centres in its column and NOTHING else moves,
+       including the field icon. It hangs just under the wind figure as
+       "gusts 36" (8px bold = 34px wide, fits the 38px column for any
+       two-digit gust). Gusty cards only: the wind figure lifts 2px so the
+       line has air above the icon. Cards without gusts are untouched. */
+    .cheat-card--cfb .wx-stat--gusty .wx-stat__primary { position: relative; transform: translateY(-2px); }
+    .cheat-card--cfb .wx-stat--gusty .wx-stat__gust-inline {
+      position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      margin: 1px 0 0; font-size: 0.5rem; line-height: 1;
+      vertical-align: baseline; white-space: nowrap; letter-spacing: 0.02em;
+    }
+    .cheat-card--cfb .wx-stat--gusty .wx-gust-abbr { display: none; }
+    .cheat-card--cfb .wx-stat--gusty .wx-gust-word { display: inline; }
+
+    /* ── Dome badge on phones (2026-09-24) ────────────────────────────
+       The header row is full before any badge (time + city = 139 of 143px;
+       even badge-free long cities like "Bowling Green, OH" already sit
+       8-10px into the card padding), so "DOME" pushed "San Antonio, TX"
+       54px off the card. No amount of shrinking frees 54px. On phones the
+       header badge hides and a copy replaces the big "—" in the weather
+       block, which carried no information for a dome game anyway. Same
+       grid cell, same card height. */
+    .cheat-card--cfb .cheat-card__rule .cheat-card__badge--dome { display: none; }
+    .cheat-card--cfb .wx-indoor-dash { display: none; }
+    .cheat-card--cfb .wx-indoor-badge { display: inline-block; font-size: 0.56rem; }
   }
 </style>
 {% endblock %}

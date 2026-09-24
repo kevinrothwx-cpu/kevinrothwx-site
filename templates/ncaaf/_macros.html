@@ -182,17 +182,30 @@
          All secondary content lives inside its stat cell — no separate detail row. #}
     <div class="cheat-card__wx">
       <div class="wx-stat wx-stat--temp">
-        <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.temp|int }}°{% endif %}</div>
+        {# Dome badge copy (2026-09-24). On phones the header row is already
+           full before any badge — time + "San Antonio, TX" use 139 of 143px —
+           so the header badge pushed the city ~54px off the card. On phones
+           ONLY, the header badge hides and this copy takes the place of the
+           big dash, which says nothing anyway. Desktop is unchanged: this
+           copy is display:none there and the header badge shows as before.
+           Rules live in ncaaf/slate.html's max-width:600px block. #}
+        <div class="wx-stat__primary{% if temp_class %} wx-stat__primary--{{ temp_class }}{% endif %}">{% if is_indoor %}<span class="wx-indoor-dash">—</span><span class="cheat-card__badge cheat-card__badge--dome wx-indoor-badge">Dome</span>{% else %}{{ f.temp|int }}°{% endif %}</div>
       </div>
-      <div class="wx-stat wx-stat--wind">
-        {# Gust stays INLINE on the wind figure here (2026-09-24). Tried it on
-           its own line between the wind and the field icon: .wx-stat is a
-           centered flex column, so a third child re-centres that column and
-           knocks the field icon out of line with the precip icon. Reserving a
-           fixed slot in all three columns fixed the alignment but left dead
-           space in every card that has no gusts, which looked worse. Inline
-           costs no vertical space at all. #}
-        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust_notable %}<span class="wx-stat__gust-inline">G{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
+      <div class="wx-stat wx-stat--wind{% if f.gust_notable and not is_indoor %} wx-stat--gusty{% endif %}">
+        {# Gust display (2026-09-24).
+           DESKTOP: inline "G36" riding the wind figure. Tried a separate row
+           between wind and field icon: .wx-stat is a centered flex column, so
+           a third child re-centres that column and knocks the field icon out
+           of line with the precip icon; reserving a slot in all columns fixed
+           that but left dead space in every gust-free card. Inline costs no
+           vertical space.
+           PHONE (<=600px): the wind column is only 38px wide, so "21 mph G36"
+           spilled 4-6px into the rain %. The same span is taken out of flow
+           (position:absolute) and shown as "gusts 36" in the 11px gap under
+           the wind figure, which lifts slightly on gusty cards only. Being out
+           of flow, it moves nothing else — the field icon stays put. The
+           word/abbreviation swap is the two child spans below. #}
+        <div class="wx-stat__primary{% if wind_class %} wx-stat__primary--{{ wind_class }}{% endif %}">{% if is_indoor %}—{% else %}{{ f.wind_speed|int }}<span class="wx-stat__unit">mph</span>{% if f.gust_notable %}<span class="wx-stat__gust-inline"><span class="wx-gust-abbr">G</span><span class="wx-gust-word">gusts </span>{{ f.gust|int }}</span>{% endif %}{% endif %}</div>
         <div class="wx-stat__secondary">
           {% if is_indoor %}
             —
