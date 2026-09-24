@@ -7,7 +7,14 @@
 {% block title %}NFL Weather This Week: Hourly Updates, by a Meteorologist{% endblock %}
 {% block description %}NFL weather forecasts for fantasy sports and sports bettors from an actual meteorologist. Stadium-specific hourly temp, wind, and precipitation for every game.{% endblock %}
 
-{% block og_title %}NFL Weather Forecasts | Kevin Roth{% endblock %}
+{# og:title matches <title> as of 2026-09-24. Previously "NFL Weather
+   Forecasts | Kevin Roth" — Kevin's call that a stranger sharing or seeing
+   the link gets nothing from his name, while "updated hourly, by a
+   meteorologist" is the actual reason to click. Social cards now lead with
+   the product. Note this was NOT the fix for Google showing the old title:
+   MLB carried the identical og:title and Google rendered its <title> fine,
+   so that was a stale crawl, not an og override. #}
+{% block og_title %}NFL Weather This Week: Hourly Updates, by a Meteorologist{% endblock %}
 {% block og_description %}NFL weather forecasts for fantasy sports and sports bettors from an actual meteorologist.{% endblock %}
 
 {% block content %}
