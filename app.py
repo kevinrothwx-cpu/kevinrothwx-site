@@ -425,8 +425,79 @@ def redirect_sport_paths_to_product_site():
 # Without that toggle, these headers do nothing bad — they just don't help.
 _NO_CACHE_PREFIXES = ("/health", "/admin", "/api/")
 
+
+# ─── Static file caching (2026-09-28) ─────────────────────────────────────
+# The 2026-08-24 policy below meant to give /static a 1h cache, but it never
+# took effect: Flask's own static handler stamps "Cache-Control: no-cache" on
+# every file, and the policy deliberately steps aside for any response that
+# already has a Cache-Control header. So since August every stylesheet and
+# image went out as "don't cache" and every new visitor pulled them from
+# Render — measured 2026-09-28 at ~90KB of the ~100KB a first /nfl visit
+# costs (69KB promo JPEG + 23KB stylesheet vs ~7-15KB for the page itself).
+#
+# Two tiers:
+#   FINGERPRINTED — any url_for('static', ...) gets ?v=<content hash>. The
+#     URL changes whenever the file's bytes change, so browsers and Render's
+#     edge can keep it for a year: an edit can never be served stale.
+#   PLAIN — hard-coded /static/... paths (the promo images, og images) have
+#     no fingerprint, so browsers get 1 hour. Render's edge gets a day via
+#     s-maxage, which is safe because Render purges its edge cache on every
+#     deploy. Worst case after swapping an image in place: a returning
+#     visitor sees the old one for up to an hour.
+#
+# Pages are NOT affected by any of this.
+import hashlib as _hashlib
+from functools import lru_cache as _lru_cache
+
+_STATIC_LONG  = "public, max-age=31536000, immutable"
+_STATIC_SHORT = "public, max-age=3600, s-maxage=86400"
+
+
+@_lru_cache(maxsize=512)
+def _static_fingerprint(filename: str) -> "str | None":
+    """Short content hash for a static file, or None if it can't be read.
+    Cached per process — static files only change on deploy, which is a
+    fresh process."""
+    try:
+        path = os.path.join(app.static_folder, filename)
+        with open(path, "rb") as fh:
+            return _hashlib.md5(fh.read()).hexdigest()[:10]
+    except Exception:
+        return None
+
+
+@app.url_defaults
+def _fingerprint_static_urls(endpoint, values):
+    """Append ?v=<hash> to every url_for('static', filename=...)."""
+    if endpoint == "static" and "filename" in values and "v" not in values:
+        fp = _static_fingerprint(values["filename"])
+        if fp:
+            values["v"] = fp
+
+
+def _static_cache_control() -> str:
+    """Long-lived only when the fingerprint matches the file being served.
+    A missing or stale ?v= (an old cached page asking for an old version)
+    falls back to the short tier, so a mismatch can never be pinned for a
+    year."""
+    filename = (request.view_args or {}).get("filename", "")
+    v = request.args.get("v")
+    if v and filename and v == _static_fingerprint(filename):
+        return _STATIC_LONG
+    return _STATIC_SHORT
+
+
 @app.after_request
 def set_cache_control(response):
+    # Static files first: Flask's static handler has already set "no-cache",
+    # which would otherwise trip the "never override" rule just below.
+    # Successful GET/HEAD only — a missing file (404) still falls through to
+    # no-store. 304s keep their validators; only the header changes.
+    if (request.endpoint == "static"
+            and request.method in ("GET", "HEAD")
+            and response.status_code in (200, 304)):
+        response.headers["Cache-Control"] = _static_cache_control()
+        return response
     # Never override an explicit Cache-Control set by an endpoint (e.g. the
     # API blueprint sets no-cache on JSON responses already).
     if response.headers.get("Cache-Control"):

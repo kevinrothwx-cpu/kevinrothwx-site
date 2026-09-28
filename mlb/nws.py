@@ -63,8 +63,20 @@ def get_mlb_schedule(date_str: str) -> list[dict]:
 
 def parse_mlb_game(game: dict) -> Optional[dict]:
     """Extract the fields we need from a raw Stats API game object."""
-    state = game.get("status", {}).get("abstractGameState", "")
-    if state in ("Postponed", "Cancelled", "Suspended"):
+    status   = game.get("status", {}) or {}
+    state    = status.get("abstractGameState", "")
+    detailed = status.get("detailedState", "") or ""
+    coded    = status.get("codedGameState", "") or ""
+    # Drop games that won't be played as scheduled (fixed 2026-09-26).
+    # This used to test abstractGameState for "Postponed"/"Cancelled"/
+    # "Suspended", but abstractGameState only ever holds Preview, Live or
+    # Final — verified against the live Stats API — so the filter could never
+    # fire and same-day rainouts stayed on the slate. Those words live in
+    # detailedState ("Postponed", "Cancelled", "Suspended: Rain"), with
+    # codedGameState "D" (postponed) and "C" (cancelled) as a backstop.
+    if (detailed in ("Postponed", "Cancelled")
+            or detailed.startswith("Suspended")
+            or coded in ("D", "C")):
         return None
 
     venue_name = game.get("venue", {}).get("name", "")

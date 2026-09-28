@@ -57,6 +57,12 @@ from .nws import clear_periods_cache
 
 EASTERN_TZ = ZoneInfo("America/New_York")
 
+# A cached slate older than this is rebuilt on the next request (today and
+# future dates only). Matches cfb/nfl cache. With the warmer on a 25-min
+# cycle, a healthy warmer always beats it, so requests only pay for a build
+# when the warmer has actually fallen behind or died.
+STALE_CACHE_THRESHOLD_SEC = 30 * 60
+
 REFRESH_SECONDS = 25 * 60   # 25 min. Briefly tried 5 min (2026-06-17) to
                              # match OVERcast more tightly; reverted because
                              # OVERcast started failing intermittently and
@@ -174,10 +180,39 @@ def get_slate(date_str: str, allow_build: bool = True) -> tuple[list[dict] | Non
     # Step 1: pick up any fresher disk copy before we look at memory.
     _read_slate_from_disk_if_fresher(date_str)
 
+    # Self-healing (2026-09-26). Before this, a slate already in memory was
+    # NEVER rebuilt by a request — freshness depended entirely on the warmer
+    # thread, and nothing noticed when it stopped. Found when Cubs @ Red Sox
+    # stayed on today's slate at Fenway for hours after MLB moved it into
+    # Friday's doubleheader: MLB's feed no longer listed it, but today's slate
+    # predated the change and never rebuilt. Tomorrow's slate was correct
+    # (Tropicana Field) only because it wasn't cached yet, so its first visitor
+    # triggered a fresh build. CFB and NFL already had this recovery path;
+    # MLB never got it.
+    if allow_build:
+        _ensure_warmer_alive()
+
     with _cache_lock:
         entry = _slate_cache.get(date_str)
 
-    if entry is None and allow_build:
+    needs_rebuild = entry is None
+    # Stale today/future slates rebuild on request. Past dates are left alone:
+    # those games are over and their started-game forecasts are frozen.
+    if entry is not None and allow_build and date_str >= _today_eastern_str():
+        built = entry.get("built_at_utc")
+        age_sec = ((datetime.now(timezone.utc) - built).total_seconds()
+                   if isinstance(built, datetime) else float("inf"))
+        if age_sec > STALE_CACHE_THRESHOLD_SEC:
+            print(f"[mlb.cache] {date_str} slate is {age_sec/60:.0f}min old "
+                  f"(>{STALE_CACHE_THRESHOLD_SEC//60}min) — rebuilding on request "
+                  f"(warmer may be stuck or dead)", flush=True)
+            needs_rebuild = True
+
+    if needs_rebuild and allow_build:
+        # Request-path _rebuild is non-blocking: if the warmer or another
+        # request is already building, this skips and serves the current
+        # cache rather than stacking a second 30-park build on gunicorn's
+        # four threads. Same stampede guard as cfb.cache.get_cfb_slate.
         _rebuild(date_str)
         with _cache_lock:
             entry = _slate_cache.get(date_str)
@@ -291,6 +326,21 @@ def start_warmer() -> None:
 def stop_warmer() -> None:
     """Stop the warmer (used in tests or graceful shutdown)."""
     _warmer_stop.set()
+
+
+def _ensure_warmer_alive() -> None:
+    """Restart the warmer if it was running and has since died.
+
+    warmer_loop catches Exception inside its loop, but anything that escapes
+    that (or a thread killed out from under it) leaves the site serving an
+    ever-older slate with no error anywhere. Only restarts a warmer that was
+    started in the first place and not deliberately stopped, so scripts and
+    tests that never start it are unaffected. The stale-rebuild check in
+    get_slate covers the other failure mode: a warmer that is alive but hung."""
+    t = _warmer_thread
+    if t is not None and not t.is_alive() and not _warmer_stop.is_set():
+        print("[mlb.cache] warmer thread found dead — restarting", flush=True)
+        start_warmer()
 
 
 # ── Build lock (2026-08-31) ────────────────────────────────────────────
