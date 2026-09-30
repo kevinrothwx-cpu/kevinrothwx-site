@@ -293,6 +293,7 @@ If MSW is up but its own upstream fetches failed (`weather_source: "all-failed"`
 - 2026-07-04 — Contract signed off by MSW + OVERcast. API implementation in progress.
 - 2026-09-01 — Added `Game.odds` (O/U total, opener, delta, book, kickoff freeze) and `Meta.odds` (pipeline health). Additive only — existing fields unchanged, so v1 consumers need no changes to keep working. Lets OVERcast drop its own Odds API calls.
 - 2026-09-01 — Added `Venue.field_bearing_degrees` for field-relative wind. All CFB home venues populated; 13 neutral-site venues still `null`. Additive only.
+- 2026-09-30 — **Fix:** `total_opening` could be replaced ~24h before kickoff. MSW's opener store evicted entries 168h after first sighting, and NFL openers are first seen ~8 days out, so the real opener was dropped the day before the game and the current line was re-recorded as the "opener". Openers are now kept until 7 days after kickoff, so `total_opening` is stable through the game. NFL and CFB. No schema change. Archived closing lines recorded before this date for NFL can be ~24h early; the archive now folds in the true close when the later record ages out.
 
 
 {# EOF-CANARY 2026-07-04-api-contract-draft #}

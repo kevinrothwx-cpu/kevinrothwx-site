@@ -180,10 +180,13 @@ def _build_odds_for_game(game: dict, odds_list: list[dict],
 
     if not game_started:
         # Opening is immutable — first total we ever saw for this game.
-        nfl_odds_storage.record_opening_if_new(event_id, live_total, book_display)
+        # kickoff_utc sets how long the entry is kept (2026-09-30 fix).
+        nfl_odds_storage.record_opening_if_new(event_id, live_total, book_display,
+                                               kickoff_utc)
         # Kickoff line is last-write-wins; the final pre-kickoff write is
         # what we freeze and display once the game is underway.
-        nfl_odds_storage.record_kickoff_line(event_id, live_total, book_display)
+        nfl_odds_storage.record_kickoff_line(event_id, live_total, book_display,
+                                             kickoff_utc)
 
     opening_rec   = nfl_odds_storage.get_opening(event_id)
     opening_total = opening_rec["total"] if opening_rec else None

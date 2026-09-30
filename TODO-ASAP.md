@@ -19,6 +19,13 @@ The order: fix what Google can't see → tune what it already shows → build li
       `mlb/slate.py`, `cfb/nws_client.py`, `cfb/slate.py`, `nfl/slate.py`,
       `nascar/slate.py`.
 
+- [ ] **Opening-line fix (4 files, built and tested 2026-09-30).** Openers
+      were replaced ~24h before kickoff, so on game day OVERcast's "opener"
+      was within a point of the current line. Push before Saturday morning
+      to save Week 4 (tonight also saves Thursday's). Files:
+      `nfl/odds_storage.py`, `cfb/odds_storage.py`, `nfl/slate.py`, `cfb/slate.py`.
+      After it's live, OVERcast can go back to showing openers.
+
 ## 1. SEO — Claude builds (approved 2026-09-24, not yet built)
 
 About a day of work, low risk.

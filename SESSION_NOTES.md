@@ -213,6 +213,23 @@ plan around the geographic argument.
 a few hundred a month, not PropFinder-replacement money. OVERcast
 subscriptions are the thing that closes that gap.
 
+## COMPLETED 2026-09-30: opening-line retention fix (NFL + CFB)
+
+- **Bug:** `nfl/` and `cfb/odds_storage.py` evicted entries 168h after
+  `first_seen_at`. NFL slate looks 8 days ahead, so the real opener was
+  evicted ~24h before kickoff and the next cycle re-recorded the current
+  line as the opener. On game day every opener was within ~1 pt of current
+  (Kevin saw it in OVERcast, which reads `total_opening` from the MSW API).
+  Archive also stored the ~24h-early line as the closing line.
+- **Fix:** entries store `kickoff_utc`; evicted 7 days after kickoff
+  (`_is_expired`). No kickoff stored → 21-day fallback from first sighting.
+  Archive merges a newer closing line onto an existing record
+  (`_merge_closing_line`) without touching the opener.
+- **Lost for good:** NFL Weeks 1-2 true closing lines. Week 3 closes are
+  repaired when the replacement records age out (~3 weeks).
+- MLB untouched (48h retention, today/tomorrow window; only very late
+  West Coast games are borderline).
+
 ## COMPLETED 2026-09-02 (long session)
 
 - **Postgres/SEO indexation crisis found and fixed.** GSC showed 45 indexed

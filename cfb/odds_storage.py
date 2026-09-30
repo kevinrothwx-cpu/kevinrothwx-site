@@ -18,11 +18,10 @@ Schema:
     as the unique game identifier. Note: MLB uses int game_pk; CFB uses
     str event_id. Same shape, different key type — do not cross-import.
 
-Cleanup:
-    Openings for games older than 168 hours (1 week) are removed on next
-    save. CFB has a much longer window than MLB (bowl games, missed
-    Saturdays, etc.) — a week's buffer keeps the closing line queryable
-    after the game while still bounding disk growth.
+Cleanup (changed 2026-09-30):
+    Entries move to the archive 7 days after KICKOFF (kickoff_utc, stored
+    with the entry). They used to move 168h after first_seen_at, which
+    evicted the real opener ~24h before the game. See _is_expired().
 """
 
 from __future__ import annotations
@@ -35,7 +34,21 @@ from persistence import load_json, save_json, parse_dt
 
 
 _DISK_FILE = "cfb_odds_openings.json"
-_KEEP_AFTER_HOURS = 168  # drop entries older than 1 week
+# Hot-store retention (2026-09-30). Keyed on KICKOFF, not first sighting.
+#
+# THE BUG THIS FIXES: retention used to be 168h after first_seen_at. The
+# slate looks up to 8 days ahead, so an opener first seen 8 days out was
+# evicted ~1 day BEFORE kickoff. The next warmer cycle found no entry and
+# recorded the current line as a brand-new "opener", so on game day
+# every opener sat within a point of the current line (OVERcast showed
+# this). The archive also kept that ~24h-early line as the closing line.
+#
+# Now: an entry stays until 7 days after its kickoff. Entries with no
+# stored kickoff (written before this change, or first seen after the
+# game started) fall back to 21 days after first sighting. That is longer
+# than any slate window plus the post-game buffer, so it cannot fire early.
+_KEEP_AFTER_KICKOFF_HOURS = 168
+_FALLBACK_KEEP_HOURS      = 21 * 24
 
 # event_id (str) -> {"total": float, "book_display": str, "first_seen_at": datetime}
 _openings: dict[str, dict] = {}
@@ -56,16 +69,36 @@ def _load_from_disk() -> None:
             _openings[str(k)] = v
 
 
+def _as_utc(value) -> Optional[datetime]:
+    """parse_dt plus a UTC default for naive values, so comparing with an
+    aware now() can never raise inside the slate build."""
+    dt = parse_dt(value)
+    if dt is not None and dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _is_expired(entry: dict, now: datetime) -> bool:
+    """True once an entry may leave the hot store. See the retention note
+    at _KEEP_AFTER_KICKOFF_HOURS."""
+    kickoff = _as_utc(entry.get("kickoff_utc"))
+    if kickoff is not None:
+        return kickoff < now - timedelta(hours=_KEEP_AFTER_KICKOFF_HOURS)
+    first_seen = _as_utc(entry.get("first_seen_at"))
+    if first_seen is not None:
+        return first_seen < now - timedelta(hours=_FALLBACK_KEEP_HOURS)
+    return False
+
+
 def _persist() -> None:
-    """Atomic write of the hot store. Entries older than _KEEP_AFTER_HOURS
+    """Atomic write of the hot store. Expired entries (see _is_expired)
     are moved to the permanent archive — NOT deleted. See the archive
     section below for why the hot store stays bounded."""
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=_KEEP_AFTER_HOURS)
+    now = datetime.now(timezone.utc)
     evicted = {}
     with _lock:
         for event_id in list(_openings.keys()):
-            ts = _openings[event_id].get("first_seen_at")
-            if ts and ts < cutoff:
+            if _is_expired(_openings[event_id], now):
                 evicted[event_id] = _openings[event_id]
         snapshot = dict(_openings)
 
@@ -85,9 +118,13 @@ def _persist() -> None:
 _load_from_disk()
 
 
-def record_opening_if_new(event_id: str, total: float, book_display: str) -> None:
+def record_opening_if_new(event_id: str, total: float, book_display: str,
+                          kickoff_utc: Optional[datetime] = None) -> None:
     """Save the first-seen total for this event_id. IMMUTABLE — if we
-    already have an entry, do nothing."""
+    already have an entry, do nothing.
+
+    kickoff_utc drives hot-store retention (see _is_expired). Optional so
+    older callers keep working; without it the 21-day fallback applies."""
     if not event_id or total is None:
         return
     key = str(event_id)
@@ -99,6 +136,8 @@ def record_opening_if_new(event_id: str, total: float, book_display: str) -> Non
             "book_display":  book_display or "",
             "first_seen_at": datetime.now(timezone.utc),
         }
+        if kickoff_utc is not None:
+            _openings[key]["kickoff_utc"] = kickoff_utc
     _persist()
 
 
@@ -111,7 +150,8 @@ def get_opening(event_id: str) -> Optional[dict]:
     return dict(entry) if entry else None
 
 
-def record_kickoff_line(event_id: str, total: float, book_display: str) -> None:
+def record_kickoff_line(event_id: str, total: float, book_display: str,
+                        kickoff_utc: Optional[datetime] = None) -> None:
     """Snapshot the CURRENT (most-recent-seen) total on the opening dict.
 
     Called every warmer cycle while the game is pre-kickoff. Overwrites
@@ -138,10 +178,16 @@ def record_kickoff_line(event_id: str, total: float, book_display: str) -> None:
                 "kickoff_book":     book_display or "",
                 "kickoff_snapshot_at": datetime.now(timezone.utc),
             }
+            entry = _openings[key]
         else:
             entry["kickoff_total"]        = float(total)
             entry["kickoff_book"]         = book_display or ""
             entry["kickoff_snapshot_at"]  = datetime.now(timezone.utc)
+        # Refreshed every pre-kickoff cycle, so a flexed or moved kickoff
+        # moves the retention date with it. Also backfills entries written
+        # before 2026-09-30, which had no kickoff_utc.
+        if kickoff_utc is not None:
+            entry["kickoff_utc"] = kickoff_utc
     _persist()
 
 
@@ -189,6 +235,31 @@ def clear_all() -> None:
 _ARCHIVE_FILE = "cfb_odds_archive.json"
 
 
+def _merge_closing_line(archived: dict, newer: dict) -> bool:
+    """Copy the closing-line fields from `newer` onto an already-archived
+    record when newer's snapshot is later. Never touches the opener
+    fields (total, book_display, first_seen_at): the first archived
+    opener is the real one. Returns True if anything changed.
+
+    Why (2026-09-30): before the retention fix, the real opener was
+    archived ~24h before kickoff carrying a ~24h-early closing line,
+    and the true close landed on a replacement record for the same game.
+    This folds that true close back in when the replacement ages out."""
+    new_ts = _as_utc(newer.get("kickoff_snapshot_at"))
+    if new_ts is None or "kickoff_total" not in newer:
+        return False
+    old_ts = _as_utc(archived.get("kickoff_snapshot_at"))
+    if old_ts is not None and new_ts <= old_ts:
+        return False
+    archived["kickoff_total"]       = newer["kickoff_total"]
+    archived["kickoff_book"]        = newer.get("kickoff_book", "")
+    archived["kickoff_snapshot_at"] = newer["kickoff_snapshot_at"]
+    if archived.get("kickoff_utc") is None and newer.get("kickoff_utc") is not None:
+        archived["kickoff_utc"] = newer["kickoff_utc"]
+    archived["closing_line_updated_at"] = datetime.now(timezone.utc)
+    return True
+
+
 def _archive_records(evicted: dict) -> bool:
     """Append aged-out records to the permanent archive. Never overwrites
     an existing archived entry — the first write for a game wins, same
@@ -202,17 +273,23 @@ def _archive_records(evicted: dict) -> bool:
     try:
         archive = load_json(_ARCHIVE_FILE, default={}) or {}
         added = 0
+        updated = 0
         for key, rec in evicted.items():
             k = str(key)
             if k in archive:
+                # Opener already archived (first write wins). Only the
+                # closing line may be newer; see _merge_closing_line.
+                if _merge_closing_line(archive[k], rec):
+                    updated += 1
                 continue
             out = dict(rec)
             out["archived_at"] = datetime.now(timezone.utc)
             archive[k] = out
             added += 1
-        if added:
+        if added or updated:
             save_json(_ARCHIVE_FILE, archive)
-            print(f"[cfb.odds_storage] archived {added} closing line(s); "
+            print(f"[cfb.odds_storage] archived {added} closing line(s), "
+                  f"updated {updated} closing line(s); "
                   f"archive now {len(archive)} games", flush=True)
     except Exception as e:
         # Archiving must never break the live odds path — odds are additive,

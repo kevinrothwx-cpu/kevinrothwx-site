@@ -209,12 +209,15 @@ def _build_odds_for_game(game: dict, odds_list: list[dict], now_utc: datetime) -
     # between our 25-min warmer cycles — don't record it as an opening for
     # a game we started tracking late.
     if not game_started:
-        cfb_odds_storage.record_opening_if_new(event_id, live_total, book_display)
+        # kickoff_utc sets how long the entry is kept (2026-09-30 fix).
+        cfb_odds_storage.record_opening_if_new(event_id, live_total, book_display,
+                                               kickoff_utc)
         # Also snapshot the CURRENT total each cycle so we have a "last
         # seen before kickoff" value to freeze at. Overwrites previous
         # kickoff-line snapshot each time; the final write just before
         # kickoff is what we lock and display through the game window.
-        cfb_odds_storage.record_kickoff_line(event_id, live_total, book_display)
+        cfb_odds_storage.record_kickoff_line(event_id, live_total, book_display,
+                                             kickoff_utc)
 
     opening_rec   = cfb_odds_storage.get_opening(event_id)
     opening_total = opening_rec["total"] if opening_rec else None
