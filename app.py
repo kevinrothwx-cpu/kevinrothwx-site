@@ -323,6 +323,17 @@ _threading.Thread(target=_delayed_start_warmers, daemon=True, name="delayed-warm
 # Consumers: OVERcast NFL + OVERcast CFB. Auth via MSW_API_KEYS env var.
 msw_api.register(app)
 
+# Weather-only partner feed (2026-09-30), e.g. Establish The Run. Separate
+# module, URLs (/api/partner/v1/...) and keys (MSW_PARTNER_KEYS): nothing
+# here touches /api/v1 or OVERcast. Guarded so a failure can never stop
+# the site from booting. See partner_api.py.
+try:
+    import partner_api as _partner_api
+    _partner_api.register(app)
+except Exception as _partner_err:
+    print(f"[app.startup] partner API not registered: "
+          f"{type(_partner_err).__name__}: {_partner_err}", flush=True)
+
 
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
 #

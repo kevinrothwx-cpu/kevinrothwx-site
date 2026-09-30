@@ -26,6 +26,15 @@ The order: fix what Google can't see → tune what it already shows → build li
       `nfl/odds_storage.py`, `cfb/odds_storage.py`, `nfl/slate.py`, `cfb/slate.py`.
       After it's live, OVERcast can go back to showing openers.
 
+- [ ] **Partner weather API (built and tested 2026-09-30, for ETR).** New,
+      separate feed at `/api/partner/v1/nfl/slate` and `/cfb/slate`: weather
+      only (no odds, no write-ups), own keys, reads the cache only. Files:
+      `partner_api.py` (new), `app.py` (11-line guarded registration),
+      `docs/PARTNER_API_v1.md` (send this to ETR). To turn on: Render →
+      Environment → add `MSW_PARTNER_KEYS` = `etr:<40+ random letters/numbers>`.
+      Send ETR that secret (the part after `etr:`) plus the doc.
+      International games included (WeatherAPI data, no gusts).
+
 ## 1. SEO — Claude builds (approved 2026-09-24, not yet built)
 
 About a day of work, low risk.
@@ -74,40 +83,71 @@ About a day of work, low risk.
 
 ### Source-replacement outreach (researched 2026-09-30)
 
-Outlets already publishing NFL weather and crediting someone else. Ask: use
-MSW, credit + link it. Offer a meteorologist quote on big weather games. Pitch
-Wed/Thu, before their Fri/Sat weather piece. Never offer money for a link.
+Pitch only PEOPLE WHO WRITE ARTICLES. They already cite AccuWeather or
+Weather.com; the ask is to cite a better source. Their win: a quotable
+meteorologist, a faster stadium-level source (every game, hourly, one page),
+and a Thursday note on which games weather will matter. Lead with the quote
+and the note, not the link. Pitch Wed/Thu. Never offer money for a link.
 
-Ranked best first. Ranking: weekly piece > one-off, credits a big brand or
-nothing > credits a specialist, reachable writer > contact form.
+National outlets only (Kevin, 2026-09-30: no team-specific sites).
 
-| # | Sent | Outlet | Their piece | Credits now | Writer / public contact |
+| # | Outlet | Credits now | Who | Status (2026-09-30) | Next step |
 |---|---|---|---|---|---|
-| 1 | [ ] | Sportsbook Review | Weekly "NFL Weather Report Week N" | NFLWeather.com (competitor) | Liam Fox, Publishing Editor. sportsbookreview.com/writers/liamfox, site contact page |
-| 2 | [ ] | The Big Lead | Weekly "NFL weather report Week N" | Weather.com | Matt Reed. Contact form only. **Warm:** TBL quoted Kevin (as RotoGrinders) Dec 27, 2025, Bills-Eagles |
-| 3 | [ ] | Sporting News (reprinted on Yahoo) | NFL weather roundups | AccuWeather | Mike Moraitis; also Billy Heyen. Moraitis writes for Bears On SI too |
-| 4 | [ ] | Fantasy Alarm | Weekly "NFL Week N Weather Report" | Nothing | Jon Impemba, content manager. X @jimpemba777 |
-| 5 | [ ] | The Fantasy Footballers | Weekly "Weather Conditions" (since 2025) | Nothing | Zach Langlois. Site contact page |
-| 6 | [ ] | Packers On SI | Lambeau weather stories | AccuWeather | Bill Huber, publisher. Email + X @BillHuberNFL in his bio |
-| 7 | [ ] | Sharp Football Analysis | Daily "NFL Weather Today" page | weatherqb.com + weather.football | Staff. Contact page |
-| 8 | [ ] | Broncos On SI | Game weather stories | Nothing / Denver7 | Chad Jensen, publisher. X @ChadNJensen |
-| 9 | [ ] | Cowboys On SI | Road/neutral game weather (Rio) | AccuWeather | Josh Sanchez, Managing Editor. Email on author box, X @jnsanchez |
-| 10 | [ ] | CBS Sports | Weekly + playoff NFL weather | Nothing | Chinmay Vaidya |
-| 11 | [ ] | RotoWire | Live NFL weather tool | Forecast.io (dead since 2023) + weather.com | Editorial team. Contact page |
-| 12 | [ ] | Rochester Democrat and Chronicle (reprinted on Yahoo) | Every Bills game | NWS + AccuWeather | Steve Howe, weather reporter; also Kerria Weaver |
-| 13 | [ ] | Arrowhead Pride (SB Nation) | Weekly how-to-watch, weather line | Nothing | Ron Kopp Jr. Site X @arrowheadpride |
-| 14 | [ ] | Bears On SI | Soldier Field weather | Nothing | Andrew Hughes. X @ARJHughes |
-| 15 | [ ] | Heavy (team pages) | Quick weather posts | AccuWeather / nothing | Pitch the NFL editor once to cover all team pages |
-| 16 | [ ] | Seahawks On SI | Game weather | AccuWeather | Richie Whitt. X @richiewhitt |
-| 17 | [ ] | NorthJersey.com (reprinted on Yahoo) | Giants/Jets storm games | Weather.com | Dave Rivera |
-| 18 | [ ] | Giants Wire (USA Today) | Storm games | AccuWeather | Dan Benton |
-| 19 | [ ] | Chargers On SI | Weekly game info (road games only) | Nothing | Brennan Isham |
-| 20 | [ ] | DraftKings Network | AI-written weekly forecast | Nothing | Site X @DKNetwork. Check against any Underdog exclusivity first |
-| 21 | [ ] | Pro Football Network | Weekly weather report | Own tool | Jason Katz. X @jasonkatz13. Low odds |
-| 22 | [ ] | Covers | NFL weather tool | Visual Crossing (paid data) | Product team. Only fits an API deal |
+| 1 | The Big Lead (weekly NFL weather report) | Weather.com | Second editor said yes; Matt Reed (contact form) | **Yes, unconfirmed** | Confirm credit wording + link to `/nfl`; send Thursday note |
+| 2 | Sportsbook Review (weekly NFL Weather Report) | NFLWeather.com | New editor contact; Liam Fox | Reaching out | Pitch the new contact |
+| 3 | Sporting News (reprinted on Yahoo) | AccuWeather | Mike Moraitis; Billy Heyen | Pitched | Nudge Oct 6-7 |
+| 4 | Sports Illustrated | AccuWeather / nothing | Group email to SI | Pitched | Wait. No team-site follow-ups |
+| 5 | The Fantasy Footballers (weekly weather column) | Nothing | DM to a higher-up; Zach Langlois | Pitched | Nudge Oct 6-7 |
+| 6 | CBS Sports | Nothing | Writer of last week's weather story (X) | Pitched | Nudge Oct 6-7 |
+| 7 | DraftKings Network (weekly "NFL Week N Weather Forecast", also daily MLB weather) | Nothing (AI-written, human-edited) | Site X @DKNetwork; masthead page | Next | Check Underdog exclusivity first. Angle: a named meteorologist makes an unsourced AI piece credible |
 
-Skip: Bleacher Report (its weather.com links carry a BR tracking tag, likely a
-deal), local TV (own meteorologists), OddsTrader / Action Network (in-house tools).
+**Round 3: national outlets (researched 2026-09-30).** Checked on the page by
+Claude. Some pieces are from the 2024 or 2025 season: confirm the writer is
+still active before pitching. Winter-only pieces: pitch in November, before the
+snow and cold games.
+
+| # | Outlet | Their piece | Credits now | Who / public contact | Notes |
+|---|---|---|---|---|---|
+| 8 | BettingPros | Weekly "NFL Week N Weather Report & Predictions" (2023-2025) | AccuWeather ("All forecasts courtesy of AccuWeather.com") | Joe Williams. X @WinWithJoe | **Dropped (Kevin, 9/30): nothing recent** |
+| 9 | Sports Betting Dime | NFL late-season weather + totals series; weekly CFB weather report | NFL: nothing / The Weather Network. CFB: NWS, timeanddate | Sascha Paruk, Managing Editor. X @SBD_Sascha. CFB: Chris Amberley X @SBD_Chris | ~1M visits/mo, owned by Sportradar since late 2024. Paruk also owns their MLB weather page (forecast graphic empty). Pitch editorial (quote + credit), NOT the API. API only as a paid license if they ask |
+| 10 | USA TODAY Sports (national desk, runs on Yahoo) | "NFL Week N weather updates" on storm and winter weeks | National Weather Service | Joe Rivera, breaking-news editor. X @JoeRiveraSays (not confirmed on article) | **Pitched (email) 9/30.** Nudge Oct 6-7 |
+| 11 | NBC Sports (runs on Yahoo) | Weekly CFB best bets; Week 4 built around the nor'easter | Nothing | Vaughn Dalzell. X @VmoneySports | CFB angle for `/ncaaf` |
+| 12 | Establish The Run | Weekly "The Rundown" | NFLweather.com (competitor) | Staff byline. X @EstablishTheRun | Pitch the outlet |
+| 13 | The Spun + Athlon Sports + Men's Journal (one owner) | Frequent one-off weather stories, NFL and CFB | Secondhand: NWS, local TV, reporter tweets, NFLweather.com | The Spun: Tzvi Machlin X @TzviLovesSports. Men's Journal: Jonathan Giles X @jgileswrites. Athlon: Ayomide Adeduyite X @ayoadeduyite | Six writers, one company. Widely syndicated on Yahoo and Yardbarker |
+| 14 | VSiN | Nor'easter piece (Sept 24) | Nothing | Adam Burke, Managing Editor. X @VSiNLive | Also radio/TV: pitch as an on-air guest too |
+| 15 | Newsweek Sports | "Weather warning before X game" pieces | The Weather Channel, NWS, or reporter tweets | Sports desk (Andrew McCarty, Jordan Sigler) | Pitch the desk |
+| 16 | Fantasy Life | Weekly cheat sheet with a weather section | Weather Underground | Chris Allen. X @chrisallenffwx | He's a fantasy weather analyst, not a meteorologist: pitch as a quote, not a replacement |
+| 17 | Yahoo Sports (originals) | Winter weather roundup (Dec 2025); Hayden Winks covers weather in "The Blueprint" | Weather.com (Cwik); Winks not verified | Chris Cwik. X @Chris_Cwik | Pitch in November |
+| 18 | Boyd's Bets | Evergreen "NFL weather handicapping" guide | Sends readers to RotoGrinders, RotoWire, Covers | Jimmy Boyd. X @boydsbets | Ask to be added to their resource list. Low effort |
+| 19 | EssentiallySports | Templated per-game weather series (2024-25); CFB weather roundups | NFLweather.com; James Spann | Ashutosh Kadam. X @ashutoshk2024 | Check if the series is still running |
+| 20 | FanSided (national) | Playoff weather reports | AccuWeather + NWS | Wynston Wilcox | Seasonal: pitch before the playoffs |
+| 21 | On3 (national) | College Football Playoff weather pieces | The Weather Channel | Alex Byington. X @_AlexByington | Seasonal: pitch in December |
+| 22 | OutKick (Fox) | "NFL weather report" tag, playoff snow games | Fox Weather meteorologist | Mark Harris. Email on author box, X @itismarkharris | Lower odds: Fox has its own meteorologists |
+| 23 | FanDuel Research | Weekly "Fantasy Football Weather Report" (2024) | Weather Underground | Jim Sannes. X @JimSannes | Dormant since 2024: offer to help restart it |
+| 24 | PlayerProfiler | Weekly "NFL Weather Report" (2024) | Nothing | Matt Babich. X @babich_matt10 | Dormant since 2024 |
+| 25 | BetMGM | Per-game weather pages, late season | AccuWeather | House byline. X @BetMGM | Template pages. Check Underdog exclusivity first |
+
+FYI: RotoGrinders hasn't published an NFL weather article since Kevin's own
+Conference Championships piece (Jan 23, 2026). Underdog Network has no weather
+content.
+
+Follow-ups: one short nudge 5-7 days after the pitch, tied to that week's
+weather game, then stop. When a credit runs: check the link goes to `/nfl`,
+thank them on X, and watch GA Traffic acquisition → Referral for their domain.
+
+Dropped:
+- Automated weather tools that compete with `/nfl` (no win for them):
+  RotoWire, Covers, Pro Football Network, Action Network, OddsTrader.
+- Fantasy Alarm: has its own weather page.
+- Sharp Football Analysis: partnered with a similar weather site.
+- Bleacher Report: its Weather.com links carry a BR tracking tag (likely a deal).
+- Local TV: own meteorologists.
+- Covers editorial weather articles (Covers has its own weather tool).
+- College Football Network (same company as Pro Football Network).
+- Old or dead: 4for4 (2021), Rotoworld (2019), WagerTalk (2022), Pickswise.
+- Team-specific sites (Kevin's call): SI team follow-ups, Rochester Democrat
+  and Chronicle, Arrowhead Pride, NorthJersey.com, Giants Wire, Heavy
+  (heavy.com; its NFL coverage is organized by team).
 
 ---
 
