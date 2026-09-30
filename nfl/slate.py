@@ -32,7 +32,7 @@ from hrrr import get_hrrr_periods
 # Football is ~3.5 hours; 4h buffer covers halftime + late TV slate overrun.
 from zoneinfo import ZoneInfo as _ZI_LABEL
 from game_precip import apply_game_window_precip
-from wind_gusts import annotate_card_gust
+from wind_gusts import annotate_card_gust, blank_unresolved_calm_direction
 from mlb.nws import attach_nws_gusts
 _ET_LABEL = _ZI_LABEL("America/New_York")   # hour_eastern labels only
 
@@ -350,6 +350,10 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
                 attach_nws_gusts([snapshot], lat, lon)
         except Exception as e:
             print(f"[nfl.slate] gust attach failed for {lat},{lon}: {e}", flush=True)
+        # attach_nws_gusts also fills hours the hourly feed rounded to
+        # "0 mph" (2026-09-28). Hourly rows only: any calm hour left unfilled
+        # shows no direction rather than a made-up "N". Snapshot untouched.
+        blank_unresolved_calm_direction(hourly)
 
     game["hourly"] = hourly
     # Rain chance across the game, not just the kickoff hour. See game_precip.

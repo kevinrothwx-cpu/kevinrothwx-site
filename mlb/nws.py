@@ -26,6 +26,8 @@ import requests
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from wind_gusts import expand_grid_series, backfill_calm_wind
+
 
 MLB_SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
 NWS_POINTS_URL   = "https://api.weather.gov/points/{lat},{lon}"
@@ -107,6 +109,9 @@ def parse_mlb_game(game: dict) -> Optional[dict]:
 _nws_point_cache: dict[str, dict] = {}
 _nws_periods_cache: dict[str, list] = {}
 _nws_gusts_cache: dict[str, dict] = {}
+# {"lat,lon": {"speed": {...}, "dir": {...}}} from the same gridpoint fetch as
+# gusts. Cleared alongside it.
+_nws_grid_wind_cache: dict[str, dict] = {}
 
 # Long-lived "last successful fetch" cache. Survives warmer cache clears so
 # that brief NWS outages don't blank out a page — we keep serving the most
@@ -124,6 +129,7 @@ def clear_periods_cache() -> None:
     The last-good cache is also preserved — it's the safety net for NWS outages."""
     _nws_periods_cache.clear()
     _nws_gusts_cache.clear()
+    _nws_grid_wind_cache.clear()
 
 
 def _get_nws_point_data(lat: float, lon: float) -> dict:
@@ -225,7 +231,18 @@ def get_nws_gusts(lat: float, lon: float) -> dict[str, int]:
             return {}
         resp = requests.get(grid_url, headers=NWS_HEADERS, timeout=15)
         resp.raise_for_status()
-        gust_obj = resp.json().get("properties", {}).get("windGust", {}) or {}
+        props = resp.json().get("properties", {}) or {}
+        # Same payload also carries the real sustained speed/direction. Kept
+        # (2026-09-28) to fill hours the hourly feed rounds to "0 mph" — see
+        # wind_gusts.backfill_calm_wind. No extra request.
+        try:
+            _nws_grid_wind_cache[key] = {
+                "speed": expand_grid_series(props.get("windSpeed") or {}, "speed"),
+                "dir":   expand_grid_series(props.get("windDirection") or {}, "dir"),
+            }
+        except Exception:
+            _nws_grid_wind_cache[key] = {}
+        gust_obj = props.get("windGust", {}) or {}
         values = gust_obj.get("values") or []
         unit = gust_obj.get("uom", "")
         # NWS reports km/h by default; convert if needed.
@@ -272,7 +289,11 @@ def attach_nws_gusts(periods: list, lat: float, lon: float) -> list:
     """
     if not periods:
         return periods
-    gusts = get_nws_gusts(lat, lon)
+    gusts = get_nws_gusts(lat, lon)   # also fills _nws_grid_wind_cache
+    # Real light-wind values for hours the hourly feed rounded to "0 mph".
+    # Runs whether or not gust data came back.
+    grid = _nws_grid_wind_cache.get(f"{lat:.4f},{lon:.4f}") or {}
+    backfill_calm_wind(periods, grid.get("speed"), grid.get("dir"))
     if not gusts:
         return periods
     for p in periods:
@@ -371,7 +392,20 @@ def extract_forecast(period: dict) -> dict:
         dew = round(float(dew_obj) * 9 / 5 + 32) if dew_obj is not None else None
 
     wind_speed = round(parse_wind_speed(period.get("windSpeed", "0")))
-    wind_deg   = parse_wind_direction(period.get("windDirection"))
+    raw_dir    = period.get("windDirection")
+    wind_deg   = parse_wind_direction(raw_dir)
+    # NWS's hourly feed rounds light wind (under ~3 mph) down to "0 mph" with
+    # a BLANK direction — its way of saying calm. parse_wind_direction turns
+    # that blank into 0°, which renders as a fake "N" (found on IND @ RUT,
+    # 2026-09-28: feed said 0 mph, raw grid said 1-2 mph from the NE). Flag it
+    # so wind_gusts.backfill_calm_wind can fill the real light value from the
+    # gridpoint data, and so leftover calm hours can show no direction rather
+    # than a made-up one. wind_deg itself is left untouched here on purpose:
+    # summary cards and field arrows do math on it.
+    calm_reported = (
+        wind_speed == 0
+        and (raw_dir is None or str(raw_dir).strip().upper() in ("", "CALM"))
+    )
 
     pop_obj = period.get("probabilityOfPrecipitation")
     if isinstance(pop_obj, dict):
@@ -392,6 +426,7 @@ def extract_forecast(period: dict) -> dict:
         "dew":            dew,
         "wind_speed":     wind_speed,
         "wind_deg":       wind_deg,
+        "wind_calm_reported": calm_reported,
         "gust":           None,
         "precip_pct":     precip_pct,
         "humidity_pct":   humidity_pct,

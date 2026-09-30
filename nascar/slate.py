@@ -56,6 +56,12 @@ def _forecast_for_track(track, target_utc):
             for p in normalized:
                 if p.get("start_time") == chosen.get("start_time"):
                     chosen["gust"] = p.get("gust")
+                    # Carry the filled-in light wind too, if NWS had rounded
+                    # this hour to "0 mph" (2026-09-28, backfill_calm_wind).
+                    if p.get("wind_backfilled"):
+                        chosen["wind_speed"] = p.get("wind_speed")
+                        chosen["wind_deg"] = p.get("wind_deg")
+                        chosen["wind_backfilled"] = True
                     break
         return chosen, normalized, "nws", None
     except Exception as e:

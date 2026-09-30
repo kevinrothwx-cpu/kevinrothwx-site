@@ -174,6 +174,10 @@ The 60 MLB pages (stadiums + teams) have some earlier-drafted numeric climate cl
 
 ## ACTIVE list — Sept 2026 (use these numbers when talking to Kevin)
 
+**2026-09-30: the current priority list is `TODO-ASAP.md` in the repo root.
+Read it first. It supersedes the table below where they overlap. SEO is the
+#1 priority; the mid-October deadline and its reasoning are at the top.**
+
 The task tool's list was wiped mid-session on 2026-09-02. THIS FILE is the
 source of truth now. Keep it current; do not rely on the task tool.
 

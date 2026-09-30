@@ -36,6 +36,7 @@ from typing import Optional
 from .park_metadata import PARK_METADATA, PARK_NAME_TO_CANONICAL, EXCLUDED_VENUES
 from .wind import get_wind_info
 from game_precip import apply_game_window_precip
+from wind_gusts import blank_unresolved_calm_direction
 from . import forecast_freeze
 from . import odds_storage
 from .odds import fetch_mlb_totals, match_odds_to_game
@@ -278,6 +279,11 @@ def build_slate(date_str: str) -> list[dict]:
                     wind_speed=forecast["wind_speed"],
                 )
             hourly = _hourly_window(all_periods or [], fp_utc, park_tz)
+            # MLB doesn't fetch gridpoint data, so hours NWS rounded to
+            # "0 mph" can't be filled in. Hourly rows show "—" for their
+            # direction instead of a made-up "N" (2026-09-28). The summary
+            # card already reads "Calm" at 0 mph via get_wind_info.
+            blank_unresolved_calm_direction(hourly)
             # Lock the snapshot while game is still upcoming. Include odds
             # in the freeze so the post-first-pitch view shows the closing
             # line and (later) the delta from open.

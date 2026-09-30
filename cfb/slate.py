@@ -37,8 +37,9 @@ from mlb.weatherapi import fetch_weatherapi_hourly, find_weatherapi_period
 from mlb.nws import extract_forecast, find_period_for_time
 from hrrr import get_hrrr_periods
 from game_precip import apply_game_window_precip
-from wind_gusts import annotate_card_gust, attach_gusts_to_periods
-from .nws_client import fetch_cfb_gusts
+from wind_gusts import (annotate_card_gust, attach_gusts_to_periods,
+                        backfill_calm_wind, blank_unresolved_calm_direction)
+from .nws_client import fetch_cfb_grid_wind
 
 
 # ── Tuning constants ──────────────────────────────────────────────────────
@@ -356,15 +357,24 @@ def _attach_weather_to_game(game: dict, venue_cache: dict, hrrr_cache: dict) -> 
     # two games at one stadium can't contaminate each other.
     if source == "nws":
         try:
-            gusts = fetch_cfb_gusts(lat, lon)
+            grid = fetch_cfb_grid_wind(lat, lon)
+            gusts = grid.get("gust") or {}
             if gusts:
                 attach_gusts_to_periods(hourly, gusts)
                 # The kickoff snapshot is a different dict than the windowed
                 # copies, so it needs the value copied across by start_time.
                 if snapshot:
                     attach_gusts_to_periods([snapshot], gusts)
+            # Same payload: real light-wind values for hours the hourly feed
+            # rounded to "0 mph" (2026-09-28, see wind_gusts.backfill_calm_wind).
+            backfill_calm_wind(hourly, grid.get("speed"), grid.get("dir"))
+            if snapshot:
+                backfill_calm_wind([snapshot], grid.get("speed"), grid.get("dir"))
         except Exception as e:
             print(f"[cfb.slate] gust attach failed at {lat},{lon}: {e}", flush=True)
+        # Hourly rows only: any calm hour still unfilled shows no direction
+        # instead of a made-up "N". Never applied to the kickoff snapshot.
+        blank_unresolved_calm_direction(hourly)
 
     # Rain chance across the game, not just the kickoff hour. See game_precip.
     game["forecast"] = annotate_card_gust(

@@ -125,6 +125,103 @@ def expand_gust_series(gust_obj: Optional[dict]) -> dict[str, int]:
         return {}
 
 
+def expand_grid_series(obj: Optional[dict], kind: str) -> dict:
+    """Expand an NWS gridpoint windSpeed or windDirection series per hour.
+
+    kind="speed" -> {iso_utc_hour: whole mph} (km/h converted)
+    kind="dir"   -> {iso_utc_hour: degrees FROM, float}
+
+    Same span-expansion as expand_gust_series. Never raises; {} on bad data.
+    """
+    if not obj:
+        return {}
+    try:
+        is_kmh = "km_h-1" in (obj.get("uom") or "")
+        out: dict = {}
+        for entry in obj.get("values") or []:
+            valid_time = entry.get("validTime", "")
+            val = entry.get("value")
+            if val is None or "/" not in valid_time:
+                continue
+            time_str, duration_str = valid_time.split("/", 1)
+            try:
+                start = datetime.fromisoformat(time_str)
+            except ValueError:
+                continue
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            start_utc = start.astimezone(timezone.utc).replace(
+                minute=0, second=0, microsecond=0)
+            m = _ISO_HOURS_RE.match(duration_str or "")
+            hours = int(m.group(1)) if m else 1
+            if kind == "speed":
+                v = round(float(val) * (_KMH_TO_MPH if is_kmh else 1.0))
+            else:
+                v = float(val) % 360
+            for h in range(hours):
+                out[(start_utc + timedelta(hours=h)).isoformat()] = v
+        return out
+    except Exception:
+        return {}
+
+
+def _hour_key(p: dict) -> Optional[str]:
+    st_raw = p.get("start_time")
+    if not st_raw:
+        return None
+    try:
+        st = datetime.fromisoformat(st_raw)
+    except (TypeError, ValueError):
+        return None
+    if st.tzinfo is None:
+        st = st.replace(tzinfo=timezone.utc)
+    return st.astimezone(timezone.utc).replace(
+        minute=0, second=0, microsecond=0).isoformat()
+
+
+def backfill_calm_wind(periods: Optional[list], speeds: Optional[dict],
+                       dirs: Optional[dict]) -> Optional[list]:
+    """Replace NWS's rounded-to-calm hours with the real light wind.
+
+    NWS's hourly feed reports anything under ~3 mph as "0 mph" with no
+    direction; the raw gridpoint data (already downloaded for gusts) has
+    the actual value. Kevin's call (2026-09-28): show the real light wind,
+    e.g. "1 mph NE", not "Calm". Only touches periods extract_forecast
+    flagged wind_calm_reported. If the grid itself says 0 mph there is
+    nothing real to show, so that hour is left as calm. Mutates in place.
+    """
+    if not periods or not speeds:
+        return periods
+    for p in periods:
+        try:
+            if not p.get("wind_calm_reported") or p.get("wind_backfilled"):
+                continue
+            key = _hour_key(p)
+            sp = speeds.get(key) if key else None
+            if not sp:            # missing, or genuinely 0 in the grid too
+                continue
+            p["wind_speed"] = sp
+            d = (dirs or {}).get(key)
+            if d is not None:
+                p["wind_deg"] = d
+            p["wind_backfilled"] = True
+        except Exception:
+            continue
+    return periods
+
+
+def blank_unresolved_calm_direction(hourly: Optional[list]) -> Optional[list]:
+    """For HOURLY TABLE ROWS ONLY: calm hours that couldn't be filled get no
+    direction instead of the fake "N" that 0° renders as. Every hourly
+    template already shows a blank or "—" for a missing direction. Never
+    call this on a summary/kickoff snapshot — cards and field arrows do
+    math on wind_deg."""
+    for p in hourly or []:
+        if p.get("wind_calm_reported") and not p.get("wind_backfilled"):
+            p["wind_deg"] = None
+    return hourly
+
+
 def attach_gusts_to_periods(periods: Optional[list],
                             gusts: Optional[dict]) -> Optional[list]:
     """Fill each period's 'gust' from an expanded {iso_hour: mph} map.

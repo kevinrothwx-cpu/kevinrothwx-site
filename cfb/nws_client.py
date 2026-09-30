@@ -36,7 +36,7 @@ import requests
 
 from nws_health import record as nws_record
 from mlb.nws import extract_forecast  # reuse the period normalizer
-from wind_gusts import expand_gust_series
+from wind_gusts import expand_gust_series, expand_grid_series
 
 log = logging.getLogger(__name__)
 
@@ -126,9 +126,20 @@ def fetch_cfb_hourly(lat: float, lon: float) -> Optional[list[dict]]:
 
 
 def fetch_cfb_gusts(lat: float, lon: float) -> dict[str, int]:
-    """Fetch the NWS gridpoint windGust series for a CFB venue.
+    """Gust series only ({iso_utc_hour: mph}). Kept for existing callers;
+    see fetch_cfb_grid_wind for the full bundle."""
+    return fetch_cfb_grid_wind(lat, lon).get("gust") or {}
 
-    Returns {iso_utc_hour: mph}, or {} on any failure.
+
+def fetch_cfb_grid_wind(lat: float, lon: float) -> dict:
+    """Fetch the NWS gridpoint wind series for a CFB venue.
+
+    Returns {"gust": {...}, "speed": {...}, "dir": {...}}, each keyed by
+    iso_utc_hour, or {} on any failure. One request covers all three: the
+    gridpoint payload already carried windSpeed/windDirection alongside
+    windGust, they were simply discarded until 2026-09-28, when they became
+    the fill-in for hours the hourly feed rounds to "0 mph" (see
+    wind_gusts.backfill_calm_wind). Zero extra API calls.
 
     Why this lives here instead of calling mlb.nws.attach_nws_gusts:
     that function is unpaced and has no circuit breaker, which is fine for
@@ -181,12 +192,16 @@ def fetch_cfb_gusts(lat: float, lon: float) -> dict[str, int]:
             return {}
 
         nws_record("ok", grid_url)
-        gust_obj = (resp.json().get("properties") or {}).get("windGust") or {}
-        gusts = expand_gust_series(gust_obj)
+        props = resp.json().get("properties") or {}
+        bundle = {
+            "gust":  expand_gust_series(props.get("windGust") or {}),
+            "speed": expand_grid_series(props.get("windSpeed") or {}, "speed"),
+            "dir":   expand_grid_series(props.get("windDirection") or {}, "dir"),
+        }
 
         with _gust_lock:
-            _gust_cache[key] = (time.time(), gusts)
-        return gusts
+            _gust_cache[key] = (time.time(), bundle)
+        return bundle
     except Exception as e:
         log.warning(f"[cfb.nws] gust fetch failed for {lat},{lon}: {e}")
         return {}
