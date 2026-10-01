@@ -35,6 +35,11 @@ The order: fix what Google can't see → tune what it already shows → build li
       Send ETR that secret (the part after `etr:`) plus the doc.
       International games included (WeatherAPI data, no gusts).
 
+- [ ] **PGA fix (built 2026-10-01).** ESPN took over Bank of Utah with no course →
+      forecast vanished, and the event_id change deleted Kevin's note. Fix fills the
+      course from the fallback schedule and keeps a stable event_id. File:
+      `golf/schedule.py`. **Push first, then re-add the note.**
+
 ## 1. SEO — Claude builds (approved 2026-09-24, not yet built)
 
 About a day of work, low risk.
@@ -51,6 +56,16 @@ About a day of work, low risk.
       (Not "archived" pages — avoids piling up ~1,000 dead pages a season.)
 
 ## 2. SEO — Kevin: data that decides what's next
+
+**Indexing report (Kevin, 2026-09-30):** 404s 52 (finished game pages, fixed by the
+redirect above), Discovered-not-indexed 437 (≈ all ~390 evergreen pages + game
+pages), Crawled-not-indexed 47, redirect 2, canonical 1. Plan: hide (noindex +
+drop from sitemap) every evergreen page with zero impressions in 3 months; keep
+any with impressions. Needs: Performance → Pages tab (3 mo, by impressions) and
+the example URLs under "Discovered – currently not indexed." Section 1 builds
+are low risk and ready to go on Kevin's word.
+
+
 
 - [ ] **Search Console → Performance → Queries**, last 3 months, sorted by
       Impressions, with **Average position** turned on. Screenshot.
@@ -109,12 +124,12 @@ snow and cold games.
 | # | Outlet | Their piece | Credits now | Who / public contact | Notes |
 |---|---|---|---|---|---|
 | 8 | BettingPros | Weekly "NFL Week N Weather Report & Predictions" (2023-2025) | AccuWeather ("All forecasts courtesy of AccuWeather.com") | Joe Williams. X @WinWithJoe | **Dropped (Kevin, 9/30): nothing recent** |
-| 9 | Sports Betting Dime | NFL late-season weather + totals series; weekly CFB weather report | NFL: nothing / The Weather Network. CFB: NWS, timeanddate | Sascha Paruk, Managing Editor. X @SBD_Sascha. CFB: Chris Amberley X @SBD_Chris | ~1M visits/mo, owned by Sportradar since late 2024. Paruk also owns their MLB weather page (forecast graphic empty). Pitch editorial (quote + credit), NOT the API. API only as a paid license if they ask |
+| 9 | Sports Betting Dime | NFL late-season weather + totals series; weekly CFB weather report | NFL: nothing / The Weather Network. CFB: NWS, timeanddate | Sascha Paruk, Managing Editor. X @SBD_Sascha. CFB: Chris Amberley X @SBD_Chris | **Pitched 9/30 (an SBD contact who follows Kevin); Paruk if no reply.** ~1M visits/mo, owned by Sportradar since late 2024. Paruk also owns their MLB weather page (forecast graphic empty). Pitch editorial (quote + credit), NOT the API. API only as a paid license if they ask |
 | 10 | USA TODAY Sports (national desk, runs on Yahoo) | "NFL Week N weather updates" on storm and winter weeks | National Weather Service | Joe Rivera, breaking-news editor. X @JoeRiveraSays (not confirmed on article) | **Pitched (email) 9/30.** Nudge Oct 6-7 |
-| 11 | NBC Sports (runs on Yahoo) | Weekly CFB best bets; Week 4 built around the nor'easter | Nothing | Vaughn Dalzell. X @VmoneySports | CFB angle for `/ncaaf` |
-| 12 | Establish The Run | Weekly "The Rundown" | NFLweather.com (competitor) | Staff byline. X @EstablishTheRun | Pitch the outlet |
-| 13 | The Spun + Athlon Sports + Men's Journal (one owner) | Frequent one-off weather stories, NFL and CFB | Secondhand: NWS, local TV, reporter tweets, NFLweather.com | The Spun: Tzvi Machlin X @TzviLovesSports. Men's Journal: Jonathan Giles X @jgileswrites. Athlon: Ayomide Adeduyite X @ayoadeduyite | Six writers, one company. Widely syndicated on Yahoo and Yardbarker |
-| 14 | VSiN | Nor'easter piece (Sept 24) | Nothing | Adam Burke, Managing Editor. X @VSiNLive | Also radio/TV: pitch as an on-air guest too |
+| 11 | NBC Sports (runs on Yahoo) | Weekly CFB best bets; Week 4 built around the nor'easter | Nothing | Vaughn Dalzell. X @VmoneySports | **Not yet.** CFB angle for `/ncaaf` |
+| 12 | Establish The Run | Weekly "The Rundown" | NFLweather.com (competitor) | Staff byline. X @EstablishTheRun | **Pitched 9/30.** Partner API ready if they say yes (see section 0) |
+| 13 | The Spun + Athlon Sports + Men's Journal (one owner) | Frequent one-off weather stories, NFL and CFB | Secondhand: NWS, local TV, reporter tweets, NFLweather.com | The Spun: Tzvi Machlin X @TzviLovesSports. Men's Journal: Jonathan Giles X @jgileswrites. Athlon: Ayomide Adeduyite X @ayoadeduyite | **Not yet.** Six writers, one company. Widely syndicated on Yahoo and Yardbarker |
+| 14 | VSiN | Nor'easter piece (Sept 24) | Nothing | Adam Burke, Managing Editor. X @VSiNLive | **Not yet.** Also radio/TV: pitch as an on-air guest too |
 | 15 | Newsweek Sports | "Weather warning before X game" pieces | The Weather Channel, NWS, or reporter tweets | Sports desk (Andrew McCarty, Jordan Sigler) | Pitch the desk |
 | 16 | Fantasy Life | Weekly cheat sheet with a weather section | Weather Underground | Chris Allen. X @chrisallenffwx | He's a fantasy weather analyst, not a meteorologist: pitch as a quote, not a replacement |
 | 17 | Yahoo Sports (originals) | Winter weather roundup (Dec 2025); Hayden Winks covers weather in "The Blueprint" | Weather.com (Cwik); Winks not verified | Chris Cwik. X @Chris_Cwik | Pitch in November |

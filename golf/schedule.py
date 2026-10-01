@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from .schedule_fallback import get_fallback_events
+from .courses import lookup_course
 
 
 ESPN_PGA_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard"
@@ -58,32 +59,81 @@ def get_pga_scoreboard() -> list[dict]:
     except Exception as e:
         print(f"[golf.schedule] ESPN error: {e}", flush=True)
 
-    # Merge in fallback events that ESPN didn't already surface, deduped by
-    # tournament name OR shortName (case-insensitive). ESPN wins on duplicates
-    # so a live tournament keeps its canonical ESPN event_id. We check BOTH
-    # name and shortName because ESPN sometimes returns just "The Open" while
-    # the fallback carries "The Open Championship" as the full name — without
-    # cross-checking shortName, both survive and we get a duplicate on /golf.
+    # Merge ESPN with the hand-curated fallback (2026-10-01 rewrite).
+    #
+    # WHAT BROKE: on 10/1 ESPN started listing the Bank of Utah Championship
+    # with no course, and ESPN won the dedupe, so /golf showed "course not
+    # mapped" on Round 1 day. The event_id also flipped from the fallback id
+    # to ESPN's, so delete_orphaned() treated Kevin's write-up as an orphan
+    # and deleted it.
+    #
+    # NOW, when an ESPN event matches a fallback event (by name/shortName, or
+    # by start date when that date has exactly one event on each side):
+    #   1. Fill in the course from the fallback if ESPN's is missing or not
+    #      in our course table.
+    #   2. Keep the fallback's event_id, so write-ups and round freezes keyed
+    #      to it survive ESPN taking over. ESPN's leaderboard link is kept.
     fallback = get_fallback_events(datetime.now(timezone.utc))
-    espn_identifiers = set()
+
+    def _names(ev):
+        return {(ev.get(k, "") or "").strip().lower()
+                for k in ("name", "shortName")} - {""}
+
+    def _start_day(ev):
+        return (ev.get("date") or "")[:10]
+
+    espn_days: dict[str, int] = {}
     for e in espn_events:
-        for key in ("name", "shortName"):
-            v = (e.get(key, "") or "").strip().lower()
-            if v:
-                espn_identifiers.add(v)
-    merged = list(espn_events)
-    added = 0
+        d = _start_day(e)
+        if d:
+            espn_days[d] = espn_days.get(d, 0) + 1
+    fb_days: dict[str, int] = {}
     for fe in fallback:
-        fe_name = (fe.get("name", "") or "").strip().lower()
-        fe_short = (fe.get("shortName", "") or "").strip().lower()
-        if (fe_name and fe_name in espn_identifiers) or \
-           (fe_short and fe_short in espn_identifiers):
+        d = _start_day(fe)
+        if d:
+            fb_days[d] = fb_days.get(d, 0) + 1
+
+    used: set[int] = set()
+    for e in espn_events:
+        match_i = None
+        for i, fe in enumerate(fallback):
+            if i not in used and (_names(e) & _names(fe)):
+                match_i = i
+                break
+        if match_i is None:
+            d = _start_day(e)
+            if d and espn_days.get(d) == 1 and fb_days.get(d) == 1:
+                for i, fe in enumerate(fallback):
+                    if i not in used and _start_day(fe) == d:
+                        match_i = i
+                        break
+        if match_i is None:
             continue
-        merged.append(fe)
-        added += 1
+        used.add(match_i)
+        fe = fallback[match_i]
+        try:
+            comps = e.get("competitions") or []
+            venue = (comps[0].get("venue") if comps else None) or {}
+            course = (venue.get("fullName") or "").strip()
+            if not course or lookup_course(course) is None:
+                fb_venue = dict(((fe.get("competitions") or [{}])[0]).get("venue") or {})
+                if fb_venue.get("fullName"):
+                    if comps:
+                        comps[0]["venue"] = fb_venue
+                    else:
+                        e["competitions"] = [{"venue": fb_venue}]
+                    print(f"[golf.schedule] {e.get('name')!r}: ESPN course "
+                          f"{course or '(none)'!r} -> fallback {fb_venue['fullName']!r}",
+                          flush=True)
+            e["espn_id"] = e.get("id")
+            e["id"] = fe.get("id")
+        except Exception as ex:
+            print(f"[golf.schedule] merge patch failed for {e.get('name')!r}: {ex}", flush=True)
+
+    merged = list(espn_events) + [fe for i, fe in enumerate(fallback) if i not in used]
     print(
-        f"[golf.schedule] ESPN={len(espn_events)} events, "
-        f"fallback added {added} of {len(fallback)}, merged={len(merged)}",
+        f"[golf.schedule] ESPN={len(espn_events)} events, matched {len(used)} "
+        f"to fallback, fallback added {len(fallback) - len(used)}, merged={len(merged)}",
         flush=True,
     )
     return merged
@@ -204,6 +254,16 @@ TOURNAMENT_NAME_TO_COURSE = {
     "the rsm classic":           "Sea Island Resort (Seaside Course)",
     "sanderson farms championship": "Country Club of Jackson",
     "world wide technology championship": "El Cardonal at Diamante",
+    # Fall 2026 (added 2026-10-01; names as ESPN and pgatour.com list them)
+    "bank of utah championship":  "Black Desert Resort",
+    "black desert championship":  "Black Desert Resort",
+    "baycurrent classic":         "Yokohama Country Club",
+    "butterfield bermuda championship": "Port Royal Golf Course",
+    "vidantaworld mexico open":   "Vidanta Vallarta",
+    "austin championship":        "Omni Barton Creek Resort",
+    "good good championship":     "Omni Barton Creek Resort",
+    "hero world challenge":       "Albany GC",
+    "grant thornton invitational": "Tiburon Golf Club",
 }
 
 
