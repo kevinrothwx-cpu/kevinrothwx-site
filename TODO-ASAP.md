@@ -13,20 +13,20 @@ The order: fix what Google can't see → tune what it already shows → build li
 
 ## 0. Push right away
 
-- [ ] **Calm-wind fix (7 files, built and tested 2026-09-28, not yet pushed).**
+- [x] **Calm-wind fix (7 files, built and tested 2026-09-28, not yet pushed).**
       Fills hours NWS rounds to "0 mph" with the real light wind, e.g. Rutgers
       "0 mph N" → "1 mph NNE". Files: `wind_gusts.py`, `mlb/nws.py`,
       `mlb/slate.py`, `cfb/nws_client.py`, `cfb/slate.py`, `nfl/slate.py`,
       `nascar/slate.py`.
 
-- [ ] **Opening-line fix (4 files, built and tested 2026-09-30).** Openers
+- [x] **Opening-line fix (4 files, built and tested 2026-09-30).** Openers
       were replaced ~24h before kickoff, so on game day OVERcast's "opener"
       was within a point of the current line. Push before Saturday morning
       to save Week 4 (tonight also saves Thursday's). Files:
       `nfl/odds_storage.py`, `cfb/odds_storage.py`, `nfl/slate.py`, `cfb/slate.py`.
       After it's live, OVERcast can go back to showing openers.
 
-- [ ] **Partner weather API (built and tested 2026-09-30, for ETR).** New,
+- [x] **Partner weather API (built and tested 2026-09-30, for ETR).** New,
       separate feed at `/api/partner/v1/nfl/slate` and `/cfb/slate`: weather
       only (no odds, no write-ups), own keys, reads the cache only. Files:
       `partner_api.py` (new), `app.py` (11-line guarded registration),
@@ -35,7 +35,7 @@ The order: fix what Google can't see → tune what it already shows → build li
       Send ETR that secret (the part after `etr:`) plus the doc.
       International games included (WeatherAPI data, no gusts).
 
-- [ ] **PGA fix (built 2026-10-01).** ESPN took over Bank of Utah with no course →
+- [x] **PGA fix (built 2026-10-01).** ESPN took over Bank of Utah with no course →
       forecast vanished, and the event_id change deleted Kevin's note. Fix fills the
       course from the fallback schedule and keeps a stable event_id. File:
       `golf/schedule.py`. **Push first, then re-add the note.**
@@ -44,12 +44,12 @@ The order: fix what Google can't see → tune what it already shows → build li
 
 About a day of work, low risk.
 
-- [ ] Drop "| Kevin Roth" from game page titles; lead with how people search
+- [x] (2026-10-02, NFL/CFB/MLB game pages) Drop "| Kevin Roth" from game page titles; lead with how people search
       ("Ravens vs Cowboys Weather: Rio Forecast, Sep 27").
-- [ ] Remove the misleading "free, in stock" `Offer` from game-page schema
+- [x] (2026-10-02, all 5 game templates) Remove the misleading "free, in stock" `Offer` from game-page schema
       (keep the `SportsEvent`).
-- [ ] Add `max-image-preview:large` so Google Discover can show large images.
-- [ ] Add a small **"Link to this game"** at the bottom of each NFL game block.
+- [~] DEFERRED (Kevin 10/2: a big generic or stale/wrong-sport card adds risk; revisit with per-page images). Add `max-image-preview:large` so Google Discover can show large images.
+- [~] DROPPED (Kevin 10/2: makes the product worse; game pages get found via sitemap anyway). Add a small **"Link to this game"** at the bottom of each NFL game block.
       Gives Google a path to all 16 orphaned game pages without changing how
       the page scrolls. (Kevin: no card clicks to game pages — intentional.)
 - [ ] Redirect finished game pages to `/nfl` instead of letting them 404.
@@ -97,6 +97,8 @@ are low risk and ready to go on Kevin's word.
 - Note: partner links (Underdog etc.) carry `rel="sponsored"` — no ranking credit.
 
 ### Source-replacement outreach (researched 2026-09-30)
+
+**Live log of who's pitched and who's next: `OUTREACH-LOG.md`.** The tables below are the original research.
 
 Pitch only PEOPLE WHO WRITE ARTICLES. They already cite AccuWeather or
 Weather.com; the ask is to cite a better source. Their win: a quotable

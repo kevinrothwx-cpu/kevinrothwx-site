@@ -2,7 +2,7 @@
 {% from "mlb/_macros.html" import weather_icon %}
 {% from "ncaaf/_macros.html" import cfb_stadium_icon %}
 
-{% block title %}{{ game.away.short }} at {{ game.home.short }} Weather, {{ pretty_date }} | Kevin Roth{% endblock %}
+{% block title %}{{ game.away.short }} vs {{ game.home.short }} Weather Forecast, {{ pretty_date }}{% endblock %}
 {% block description %}{{ game.away.name }} at {{ game.home.name }} weather forecast for {{ pretty_date }}. Kickoff {{ game.kickoff_eastern_str }}{% if game.forecast %}, {{ game.forecast.temp }}°F at kickoff, {{ game.forecast.wind_speed }} mph wind{% endif %}. Stadium-specific hourly forecast by sports meteorologist Kevin Roth.{% endblock %}
 
 {% block og_title %}{{ game.away.short }} at {{ game.home.short }}, Weather Forecast{% endblock %}
@@ -67,15 +67,6 @@
     "@type": "SportsOrganization",
     "name": "NCAA Division I FBS",
     "url": "https://www.ncaa.com/sports/football/fbs"
-  },
-  "offers": {
-    "@type": "Offer",
-    "validFrom": "{{ game.kickoff_utc.isoformat() }}",
-    "url": "{{ site_url }}/ncaaf/{{ date_str }}/{{ game.slug }}",
-    "price": "0",
-    "priceCurrency": "USD",
-    "availability": "https://schema.org/InStock",
-    "category": "Free weather forecast"
   }{% if game.forecast %},
   "additionalProperty": [
     { "@type": "PropertyValue", "name": "Temperature at kickoff", "value": "{{ game.forecast.temp }}°F" },

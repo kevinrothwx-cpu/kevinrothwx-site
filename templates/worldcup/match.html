@@ -50,15 +50,6 @@
     "@type": "SportsOrganization",
     "name": "FIFA",
     "url": "https://www.fifa.com/"
-  },
-  "offers": {
-    "@type": "Offer",
-    "validFrom": "{{ match.kickoff_utc_dt.isoformat() }}",
-    "url": "{{ site_url }}/worldcup/{{ date_str }}/{{ match.slug }}",
-    "price": "0",
-    "priceCurrency": "USD",
-    "availability": "https://schema.org/InStock",
-    "category": "Free weather forecast"
   }{% if match.forecast %},
   "additionalProperty": [
     { "@type": "PropertyValue", "name": "Temperature at kickoff", "value": "{{ match.forecast.temp }}°F" },
