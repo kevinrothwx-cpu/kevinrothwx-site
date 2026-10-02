@@ -534,6 +534,34 @@ def set_cache_control(response):
     return response
 
 
+
+# ─── Pages hidden from Google (2026-10-02) ───────────────────────────────
+# Kevin's call from the Search Console export (3 months to 2026-10-01):
+# these sections had ZERO impressions, i.e. Google never showed them once,
+# so hiding them cannot cost traffic. They stay live for visitors and keep
+# passing links ("follow"); they just get a noindex header and come off the
+# sitemap + IndexNow list so Google spends its attention on pages that earn.
+# Reversible: delete a rule here and the page is indexable again.
+#   /ncaaf/stadium/*  134 college stadium pages
+#   /mls/stadium/*    MLS stadium pages (MLS team pages stay)
+#   /ipl, /ipl/*      cricket hub, team and ground pages
+#   /horse            horse racing hub only
+def _hidden_from_google(path: str) -> bool:
+    p = (path or "").split("?", 1)[0].rstrip("/") or "/"
+    if p in ("/horse", "/ipl") or p.startswith("/ipl/"):
+        return True
+    return p.startswith("/ncaaf/stadium/") or p.startswith("/mls/stadium/")
+
+
+@app.after_request
+def noindex_hidden_pages(response):
+    if (request.method in ("GET", "HEAD") and response.status_code == 200
+            and _hidden_from_google(request.path)
+            and not response.headers.get("X-Robots-Tag")):
+        response.headers["X-Robots-Tag"] = "noindex, follow"
+    return response
+
+
 @app.context_processor
 def inject_globals():
     """Make a few values available in every template, including the
@@ -888,6 +916,25 @@ def _valid_date_str(date_str: str) -> bool:
     return (today - timedelta(days=1)) <= d <= (today + timedelta(days=7))
 
 
+def _finished_game_response(date_str, hub_path):
+    """Game page that can't be served (2026-10-02).
+
+    Finished games used to 404 once they dropped off the slate (52 in Search
+    Console). Now a game whose DATE IS ALREADY PAST 301s to its sport page,
+    so an old Google result or outside link lands on this week's games.
+
+    Guard: today, future, or malformed dates still 404 exactly as before.
+    A live game that briefly vanishes from the slate (data glitch) must
+    never be redirected away."""
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        abort(404)
+    if d < datetime.now(EASTERN_TZ).date():
+        return redirect(hub_path, code=301)
+    abort(404)
+
+
 def _render_mlb_slate(date_str, canonical_path):
     """Render the MLB slate for date_str with an explicit canonical URL.
     Used by all the MLB landing routes (/mlb, /mlb/today, /mlb/tomorrow,
@@ -955,14 +1002,14 @@ def mlb_slate(date_str):
 def mlb_game(date_str, slug):
     """Per-game detail page."""
     if not _valid_date_str(date_str):
-        abort(404)
+        return _finished_game_response(date_str, "/mlb")
     slate, meta = get_slate(date_str)
     if slate is None:
-        abort(404)
+        return _finished_game_response(date_str, "/mlb")
 
     game = next((g for g in slate if g["slug"] == slug), None)
     if not game:
-        abort(404)
+        return _finished_game_response(date_str, "/mlb")
 
     game["writeup"] = get_writeup(game["game_pk"])
 
@@ -1351,10 +1398,10 @@ def nfl_game(date_str, slug):
     + meteorologist analysis. Dome venues render an indoor notice instead
     of a forecast. Retractable venues default to Closed with a toggle to Open."""
     if not _valid_date_str(date_str):
-        abort(404)
+        return _finished_game_response(date_str, "/nfl")
     game_raw = find_nfl_game(date_str, slug)
     if not game_raw:
-        abort(404)
+        return _finished_game_response(date_str, "/nfl")
     game = _nfl_to_wc_shape(game_raw)
 
     kickoff = game.get("kickoff_utc")
@@ -1905,10 +1952,10 @@ def prem_match(date_str, slug):
     """Per-match Premier League detail page with schema.org SportsEvent +
     hourly forecast around kickoff. UK-local dates."""
     if not _valid_date_str(date_str):
-        abort(404)
+        return _finished_game_response(date_str, "/prem")
     match = find_prem_match(date_str, slug)
     if not match:
-        abort(404)
+        return _finished_game_response(date_str, "/prem")
 
     # Schema.org end time: 3h after kickoff covers 90-min match + halftime +
     # injury time + a buffer.
@@ -2133,10 +2180,10 @@ def ncaaf_game(date_str, slug):
     structured weather data attributed to mysportsweather.com.
     """
     if not _valid_date_str(date_str):
-        abort(404)
+        return _finished_game_response(date_str, "/ncaaf")
     game = find_cfb_game(date_str, slug)
     if not game:
-        abort(404)
+        return _finished_game_response(date_str, "/ncaaf")
 
     # End time for schema.org: kickoff + ~3.5h game window
     kickoff = game.get("kickoff_utc")
@@ -2323,10 +2370,10 @@ def mls_match(date_str, slug):
     """Per-match MLS detail page with schema.org SportsEvent + hourly
     forecast + meteorologist analysis paragraph."""
     if not _valid_date_str(date_str):
-        abort(404)
+        return _finished_game_response(date_str, "/mls")
     match_raw = find_mls_match(date_str, slug)
     if not match_raw:
-        abort(404)
+        return _finished_game_response(date_str, "/mls")
     match = _mls_to_wc_shape(match_raw)
 
     # End time for schema.org: kickoff + 2.5h covers 90-min match +
@@ -2436,13 +2483,13 @@ def cws_date(date_str):
 @app.route("/cws/<date_str>/<slug>")
 def cws_game(date_str, slug):
     if not _valid_date_str(date_str):
-        abort(404)
+        return _finished_game_response(date_str, "/cws")
     slate, meta = get_cws_slate(date_str)
     if slate is None:
-        abort(404)
+        return _finished_game_response(date_str, "/cws")
     game = next((g for g in slate if g["slug"] == slug), None)
     if not game:
-        abort(404)
+        return _finished_game_response(date_str, "/cws")
     game["writeup"] = cws_get_writeup(game["event_id"])
     d = datetime.strptime(date_str, "%Y-%m-%d").date()
     return render_template("cws/game.html", game=game, meta=meta, date_str=date_str,
@@ -3064,6 +3111,7 @@ def sitemap_evergreen():
     """Stable pages: hubs, guides, and every stadium/team/course landing
     page. lastmod here reflects real publication dates, not today."""
     base_url, evergreen_urls, _ = _build_sitemap_buckets()
+    evergreen_urls = [u for u in evergreen_urls if not _hidden_from_google(u[0])]
     return _render_urlset(base_url, evergreen_urls)
 
 
@@ -4097,6 +4145,7 @@ def _msw_all_url_paths() -> list[str]:
         if p not in seen:
             seen.add(p)
             unique.append(p)
+    unique = [p for p in unique if not _hidden_from_google(p)]
     return unique
 
 

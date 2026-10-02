@@ -52,7 +52,9 @@ About a day of work, low risk.
 - [~] DROPPED (Kevin 10/2: makes the product worse; game pages get found via sitemap anyway). Add a small **"Link to this game"** at the bottom of each NFL game block.
       Gives Google a path to all 16 orphaned game pages without changing how
       the page scrolls. (Kevin: no card clicks to game pages — intentional.)
-- [ ] Redirect finished game pages to `/nfl` instead of letting them 404.
+- [x] (2026-10-02) Redirect finished game pages to their sport page (past dates only; today/future still 404). `_finished_game_response` in app.py.
+- [x] (2026-10-02) Hidden from Google (noindex header + off sitemap/IndexNow), zero impressions in 3 months: /ncaaf/stadium/*, /mls/stadium/*, /ipl + /ipl/*, /horse. Rules in `_hidden_from_google` in app.py. Kevin kept everything else, incl. the 62 NFL team/stadium pages (also zero) for now.
+- [~] was: Redirect finished game pages to `/nfl` instead of letting them 404.
       (Not "archived" pages — avoids piling up ~1,000 dead pages a season.)
 
 ## 2. SEO — Kevin: data that decides what's next
