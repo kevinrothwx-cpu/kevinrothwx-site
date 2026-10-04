@@ -306,7 +306,8 @@ _EXCLUDED_ROOFS = ("fixed_dome", "retractable")
 
 
 def _football_candidates(now_utc: datetime, sport: str, sport_label: str,
-                         slate_getter, url_prefix: str) -> list[dict]:
+                         slate_getter, url_prefix: str,
+                         include_started: bool = False) -> list[dict]:
     """Shared adapter for NFL and CFB.
 
     Both expose a flat slate (not MLB's per-date dict), and both carry the
@@ -327,7 +328,7 @@ def _football_candidates(now_utc: datetime, sport: str, sport_label: str,
     for g in slate:
         try:
             ko = g.get("kickoff_utc")
-            if not ko or ko <= now_utc:      # upcoming only
+            if not ko or (ko <= now_utc and not include_started):  # upcoming only
                 continue
             date_str = (g.get("kickoff_date_eastern")
                         or ko.astimezone(EASTERN_TZ).strftime("%Y-%m-%d"))
@@ -396,6 +397,19 @@ SPORT_ADAPTERS = [
 # still holding one of its games — without this, a locked MLB pick would
 # have stayed on the homepage for up to 6 more hours after deploy.
 ACTIVE_SPORTS = {"nfl", "cfb"}
+
+# Manual pin (Kevin, 2026-10-04). Keys in the candidate format
+# "<sport>-<YYYY-MM-DD>-<slug>". A pinned game is featured ahead of the
+# automatic pick, regardless of score, until it kicks off; after kickoff it
+# drops out of the candidate list and the normal NFL-then-CFB pick resumes.
+# Why: on NFL Sunday the auto-pick (NFL needs 25 pts) skipped Cardinals at
+# Giants (60% rain = 20 pts) and featured a CFB game four days out.
+# Each pin is (key, ISO end time). The pin holds until the end time, even
+# after kickoff (Kevin: keep the Giants game up through 3 PM ET). Leave the
+# tuple empty for fully automatic. Expired pins are harmless.
+MANUAL_PINS: tuple = (
+    ("nfl-2026-10-04-ari-nyg", "2026-10-04T15:00:00-04:00"),
+)
 
 
 # ── Selection + lock management ─────────────────────────────────────────────
@@ -508,11 +522,47 @@ def _locked_game_still_valid(locked_game: dict) -> bool:
     return True
 
 
+def _pinned_pick(now_utc: datetime) -> Optional[dict]:
+    """The first MANUAL_PINS game whose end time hasn't passed, or None.
+    Built from the normal candidate logic (with started games allowed), so
+    domes, retractables and out-of-window games can never be pinned."""
+    live = []
+    for key, until_iso in MANUAL_PINS:
+        try:
+            if now_utc < datetime.fromisoformat(until_iso):
+                live.append(key)
+        except Exception:
+            continue
+    if not live:
+        return None
+    try:
+        from nfl.cache import get_nfl_slate
+        from cfb.cache import get_cfb_slate
+        cands = (_football_candidates(now_utc, "nfl", "NFL", get_nfl_slate, "/nfl", include_started=True)
+                 + _football_candidates(now_utc, "cfb", "CFB", get_cfb_slate, "/ncaaf", include_started=True))
+    except Exception as e:
+        print(f"[spotlight] pin lookup failed (ignored): {e}", flush=True)
+        return None
+    by_key = {c["key"]: c for c in cands}
+    for key in live:
+        c = by_key.get(key)
+        if c:
+            pick = dict(c)
+            pick["story"] = _story_line(pick["forecast"])
+            return pick
+    return None
+
+
 def get_current() -> Optional[dict]:
     """Return the currently-featured game dict, or None if the strip should
     hide. Handles lock TTL, kickoff release, policy-validity check, and
-    re-pick automatically."""
+    re-pick automatically. A manual pin (MANUAL_PINS) wins over all of it
+    until its end time; the lock file is left untouched."""
     now_utc = datetime.now(timezone.utc)
+
+    pinned = _pinned_pick(now_utc)
+    if pinned:
+        return pinned
 
     with _state_lock:
         locked_game = dict(_lock_state.get("game", {})) if _lock_state.get("game") else None
