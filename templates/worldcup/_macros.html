@@ -82,7 +82,9 @@
         {{ wc_logo(match.away) }}
         <span class="cheat-card__abbr">{{ match.away.abbreviation or match.away.short_name or match.away.name }}</span>
       </div>
-      <span class="cheat-card__at">vs</span>
+      {# Away team is listed first, so "@" (US convention: away @ home), matching
+         the MLB and NCAAF cards. Was "vs", which reads as home-first. 2026-10-05 #}
+      <span class="cheat-card__at">@</span>
       <div class="cheat-card__team" style="justify-content:flex-end">
         <span class="cheat-card__abbr">{{ match.home.abbreviation or match.home.short_name or match.home.name }}</span>
         {{ wc_logo(match.home) }}
