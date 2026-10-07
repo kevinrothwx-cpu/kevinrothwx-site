@@ -119,7 +119,7 @@
                 <h3 class="mlb-game-block__matchup">{{ r.round_label or ("Round " ~ r.round_num) }}</h3>
                 <div class="mlb-game-block__venue">
                   {{ r.date_label }} · play hours shown
-                  <span class="nws-source-tag">· National Weather Service data</span>
+                  <span class="nws-source-tag">· {% if (tournament.weather_source or "").startswith("nws") %}National Weather Service data{% else %}WeatherAPI.com data{% endif %}</span>
                 </div>
               </div>
             </header>

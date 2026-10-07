@@ -52,3 +52,21 @@ Last updated: 2026-10-02. Kevin has multiple meetings set for the week of Oct 5.
 - Fantasy Alarm (own weather page). Sharp Football Analysis (partnered with a weather site).
 - BettingPros (nothing recent). Bleacher Report (Weather Channel deal). Local TV (own meteorologists).
 - Team-specific sites (Kevin's rule): SI team follow-ups, Rochester D&C, Arrowhead Pride, NorthJersey.com, Giants Wire, Heavy.
+
+## Money partners (sponsors / affiliates), researched 2026-10-05
+
+Underdog: no reply to the sponsor pitch (only public address: media@underdogsports.com).
+Novig: offered $80 flat per new user. Fair-to-good for a prediction market; get the
+qualifying-user definition, payment timing, cap, volume tier and non-exclusivity in writing.
+Partner links need rel="sponsored" + a visible "Partner" label before launch.
+
+| Priority | Company | Type | How to get in | Reported payout | Licensing |
+|---|---|---|---|---|---|
+| 1 | Novig | Prediction market | Existing offer | $80 flat | None known |
+| 2 | Kalshi | Prediction market | Direct pitch (no public program). Angle: a meteorologist + Kalshi's weather markets; they do media data deals (CNN, CNBC, Fox) | Negotiated | None known |
+| 3 | PrizePicks | DFS pick'em | prizepicks.com/prizepicks-partner-application | $25-60+ per depositor (3rd-party, 2025) | None for DFS |
+| 4 | Betr Picks | DFS pick'em | Affiliate form via help.betr.app | ~$50 per depositor (3rd-party, older) | None for DFS |
+| 5 | Crypto.com | Prediction market | crypto.com/us/affiliate (Impact), ~1 week review | Up to 50% rev share (official) | None known |
+| 6 | Polymarket | Prediction market | partners.dub.co/polymarket (may be the international product) | $10 per depositor (official) | None known |
+| Later | ProphetX | Prediction market | prophetx.co/lobby/partners (media distribution) | n/a | None known |
+| Later | BetMGM, Caesars, FanDuel, DraftKings, Fanatics, bet365, Hard Rock | Sportsbooks | Affiliate sites (BetMGM: partners@betmgm.com) | $100-400 per depositor (3rd-party) | Vendor registration in ~11 states (NJ, PA, MI, CO, AZ, IN, MD, MA, VA, WV, LA) |

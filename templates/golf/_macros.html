@@ -42,7 +42,10 @@
 {% macro round_hourly_table(round_data, hours=None) %}
   {% if hours is none %}{% set hours = round_data.hourly or [] %}{% endif %}
   {% if hours %}
-    {% set has_gusts = hours|selectattr('gust', 'ne', none)|list|length > 0 %}
+    {# 'is number', not 'ne none': WeatherAPI hours (international events) have no
+       gust key at all, and an undefined value passed the old test, printing a
+       bare "mph" in every cell. 2026-10-07 #}
+    {% set has_gusts = hours|selectattr('gust', 'number')|list|length > 0 %}
     <div class="hourly">
       <table class="hourly__table">
         <thead>
@@ -81,7 +84,7 @@
           <tr>
             <td class="hourly__label">Gusts</td>
             {% for h in hours %}
-              <td class="hourly__cell">{% if h.gust is not none %}{{ h.gust }} mph{% else %}—{% endif %}</td>
+              <td class="hourly__cell">{% if h.gust is number %}{{ h.gust }} mph{% else %}—{% endif %}</td>
             {% endfor %}
           </tr>
           {% elif hours[0].dew is not none %}
