@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<meta name="robots" content="noindex, nofollow">
+<title>The Big Board (preview) | MySportsWeather</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root { --navy:#1e3a8a; --ink:#111827; --muted:#6b7280; --line:#e5e7eb; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color:var(--ink); }
+  body { display:flex; flex-direction:column; }
+  .bar { padding:10px 14px; border-bottom:1px solid var(--line); background:#fff; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; z-index:1000; }
+  .brand { display:flex; align-items:baseline; gap:8px; margin-right:auto; }
+  .brand b { font-family: Georgia, serif; font-size:20px; }
+  .brand a { color:var(--muted); font-size:12px; text-decoration:none; }
+  .chip-preview { font-size:10px; font-weight:700; letter-spacing:.08em; color:#b45309; border:1px solid #f59e0b; border-radius:4px; padding:1px 5px; }
+  .group { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .group label.title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-right:2px; }
+  .tog { border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 11px; font-size:13px; cursor:pointer; user-select:none; }
+  .tog.on { background:var(--navy); border-color:var(--navy); color:#fff; }
+  select { border:1px solid var(--line); border-radius:8px; padding:5px 8px; font-size:13px; background:#fff; }
+  #map { flex:1; min-height:300px; }
+  .summary { font-size:12px; color:var(--muted); width:100%; }
+  .legend { background:#fff; padding:8px 10px; border-radius:8px; box-shadow:0 1px 6px rgba(0,0,0,.2); font-size:12px; line-height:1.7; }
+  .legend i { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:6px; vertical-align:-1px; border:1.5px solid rgba(0,0,0,.25); }
+  .pop h4 { margin:0 0 2px; font-size:14px; }
+  .pop .meta { color:var(--muted); font-size:12px; margin-bottom:6px; }
+  .pop table { border-collapse:collapse; font-size:13px; }
+  .pop td { padding:1px 10px 1px 0; }
+  .pop td:first-child { color:var(--muted); }
+  .pop .flags { margin:6px 0 4px; }
+  .pop .flag { display:inline-block; font-size:11px; font-weight:700; border-radius:4px; padding:1px 6px; margin-right:4px; color:#fff; }
+  .pop a { font-size:13px; font-weight:600; color:var(--navy); text-decoration:none; }
+  .attrib-note { font-size:11px; }
+  @media (max-width:640px) {
+    .bar { padding:8px 10px; gap:6px 10px; }
+    .brand b { font-size:17px; }
+    .tog { padding:4px 9px; font-size:12px; }
+  }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="brand"><b>The Big Board</b><span class="chip-preview">PREVIEW</span><a href="/">MySportsWeather</a></div>
+  <div class="group" id="sports">
+    <label class="title">Sport</label>
+    <span class="tog on" data-sport="nfl">NFL</span>
+    <span class="tog on" data-sport="cfb">CFB</span>
+    <span class="tog on" data-sport="mlb">MLB</span>
+  </div>
+  <div class="group">
+    <label class="title" for="day">Day</label>
+    <select id="day"><option value="all">All days</option></select>
+  </div>
+  <div class="group" id="layers">
+    <label class="title">Layers</label>
+    <span class="tog" data-layer="nhc">Hurricane track</span>
+    <span class="tog" data-layer="radar">Radar</span>
+  </div>
+  <div class="summary" id="summary">Loading games…</div>
+</div>
+<div id="map"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var COLORS = { both:"#dc2626", wind:"#f97316", rain:"#2563eb", cold:"#7c3aed", heat:"#be123c", calm:"#16a34a", indoor:"#9ca3af", none:"#d1d5db" };
+  var FLAG_COLORS = { wind:"#f97316", rain:"#2563eb", cold:"#7c3aed", heat:"#be123c" };
+  var SPORT_LABEL = { nfl:"NFL", cfb:"College football", mlb:"MLB" };
+
+  var map = L.map("map", { zoomControl:true, worldCopyJump:true, minZoom:3 }).setView([38.5, -96], 4);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 18, subdomains: "abcd",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  // ── Overlays (official NOAA products) ──────────────────────────────────
+  var radar = L.tileLayer("https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png", {
+    opacity: 0.6, zIndex: 300,
+    attribution: 'Radar: NWS NEXRAD via <a href="https://mesonet.agron.iastate.edu/">Iowa Environmental Mesonet</a>'
+  });
+
+  // NHC cone + track: ArcGIS export image, re-requested on every pan/zoom.
+  var NHC = "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer/export";
+  var nhcImg = null, nhcOn = false;
+  function drawNhc() {
+    if (!nhcOn) return;
+    var b = map.getBounds(), size = map.getSize();
+    var sw = map.options.crs.project(b.getSouthWest()), ne = map.options.crs.project(b.getNorthEast());
+    var url = NHC + "?bbox=" + [sw.x, sw.y, ne.x, ne.y].join(",") +
+      "&bboxSR=3857&imageSR=3857&size=" + size.x + "," + size.y +
+      "&format=png32&transparent=true&dpi=96&f=image&_=" + Date.now();
+    var next = L.imageOverlay(url, b, { opacity: 0.85, zIndex: 350,
+      attribution: 'Storm track: <a href="https://www.nhc.noaa.gov/">NOAA National Hurricane Center</a>' });
+    next.addTo(map);
+    next.once("load", function () { if (nhcImg) map.removeLayer(nhcImg); nhcImg = next; });
+  }
+  map.on("moveend", drawNhc);
+
+  // ── Legend ─────────────────────────────────────────────────────────────
+  var legend = L.control({ position: "bottomleft" });
+  legend.onAdd = function () {
+    var d = L.DomUtil.create("div", "legend");
+    d.innerHTML =
+      '<i style="background:' + COLORS.both + '"></i>Wind + rain<br>' +
+      '<i style="background:' + COLORS.wind + '"></i>Wind 15+ mph or gusts 25+<br>' +
+      '<i style="background:' + COLORS.rain + '"></i>Rain 50%+<br>' +
+      '<i style="background:' + COLORS.cold + '"></i>32°F or colder<br>' +
+      '<i style="background:' + COLORS.heat + '"></i>90°F or hotter<br>' +
+      '<i style="background:' + COLORS.calm + '"></i>No weather concerns<br>' +
+      '<i style="background:#fff;border-color:' + COLORS.indoor + '"></i>Dome';
+    return d;
+  };
+  legend.addTo(map);
+
+  // ── Games ──────────────────────────────────────────────────────────────
+  var games = [], dots = L.layerGroup().addTo(map);
+  var sportsOn = { nfl:true, cfb:true, mlb:true };
+  var dayEl = document.getElementById("day");
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+
+  function colorFor(g) {
+    if (g.indoor) return COLORS.indoor;
+    if (!g.forecast) return COLORS.none;
+    var f = g.flags || [];
+    if (f.indexOf("wind") > -1 && f.indexOf("rain") > -1) return COLORS.both;
+    for (var i = 0; i < ["wind", "rain", "cold", "heat"].length; i++) {
+      var k = ["wind", "rain", "cold", "heat"][i];
+      if (f.indexOf(k) > -1) return COLORS[k];
+    }
+    return COLORS.calm;
+  }
+
+  function popupHtml(g) {
+    var f = g.forecast, rows = "";
+    if (g.indoor) {
+      rows = '<div class="meta">Dome. Weather has no effect.</div>';
+    } else if (!f) {
+      rows = '<div class="meta">Forecast not available yet.</div>';
+    } else {
+      rows = "<table>" +
+        "<tr><td>Temp</td><td>" + esc(f.temp) + "°F</td></tr>" +
+        "<tr><td>Wind</td><td>" + esc(f.wind) + " mph" + (f.dir ? " " + esc(f.dir) : "") + (f.gust ? ", gusts " + esc(f.gust) : "") + "</td></tr>" +
+        "<tr><td>Rain</td><td>" + esc(f.rain) + "% during the game</td></tr>" +
+        (f.sky ? "<tr><td>Sky</td><td>" + esc(f.sky) + "</td></tr>" : "") +
+        "</table>";
+      if ((g.flags || []).length) {
+        rows += '<div class="flags">' + g.flags.map(function (k) {
+          return '<span class="flag" style="background:' + FLAG_COLORS[k] + '">' + k.toUpperCase() + "</span>";
+        }).join("") + "</div>";
+      }
+    }
+    return '<div class="pop"><h4>' + esc(g.away) + " @ " + esc(g.home) + "</h4>" +
+      '<div class="meta">' + esc(SPORT_LABEL[g.sport] || g.sport) + " · " + esc(g.day_label) + " · " + esc(g.time_label) +
+      "<br>" + esc(g.venue) + (g.city ? ", " + esc(g.city) : "") + "</div>" + rows +
+      (g.url ? '<div style="margin-top:6px"><a href="' + esc(g.url) + '">Full forecast →</a></div>' : "") + "</div>";
+  }
+
+  function render() {
+    dots.clearLayers();
+    var day = dayEl.value, shown = 0, flagged = 0;
+    games.forEach(function (g) {
+      if (!sportsOn[g.sport]) return;
+      if (day !== "all" && g.day !== day) return;
+      shown++;
+      if ((g.flags || []).length) flagged++;
+      var c = colorFor(g);
+      L.circleMarker([g.lat, g.lon], {
+        radius: g.sport === "nfl" ? 8 : 6.5,
+        color: g.indoor ? COLORS.indoor : "#ffffff",
+        weight: g.indoor ? 2 : 1.5,
+        fillColor: g.indoor ? "#ffffff" : c,
+        fillOpacity: 0.95
+      }).bindPopup(popupHtml(g), { maxWidth: 280 }).addTo(dots);
+    });
+    document.getElementById("summary").textContent =
+      shown + " game" + (shown === 1 ? "" : "s") + " shown · " + flagged + " with weather flags";
+  }
+
+  function fillDays() {
+    var seen = {}, keep = dayEl.value;
+    dayEl.innerHTML = '<option value="all">All days</option>';
+    games.forEach(function (g) {
+      if (seen[g.day]) return;
+      seen[g.day] = 1;
+      var o = document.createElement("option");
+      o.value = g.day; o.textContent = g.day_label;
+      dayEl.appendChild(o);
+    });
+    dayEl.value = seen[keep] ? keep : "all";
+  }
+
+  function load() {
+    fetch("/lab/big-board/data.json", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { games = d.games || []; fillDays(); render(); })
+      .catch(function () { document.getElementById("summary").textContent = "Couldn't load games. Refresh to try again."; });
+  }
+
+  // ── Controls ───────────────────────────────────────────────────────────
+  document.querySelectorAll("#sports .tog").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var s = el.getAttribute("data-sport");
+      sportsOn[s] = !sportsOn[s];
+      el.classList.toggle("on", sportsOn[s]);
+      render();
+    });
+  });
+  dayEl.addEventListener("change", render);
+  document.querySelectorAll("#layers .tog").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var k = el.getAttribute("data-layer"), on = !el.classList.contains("on");
+      el.classList.toggle("on", on);
+      if (k === "radar") { on ? radar.addTo(map) : map.removeLayer(radar); }
+      if (k === "nhc") {
+        nhcOn = on;
+        if (on) { drawNhc(); } else if (nhcImg) { map.removeLayer(nhcImg); nhcImg = null; }
+      }
+    });
+  });
+
+  load();
+  setInterval(load, 10 * 60 * 1000);
+})();
+</script>
+</body>
+</html>

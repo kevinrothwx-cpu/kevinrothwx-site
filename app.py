@@ -335,6 +335,32 @@ except Exception as _partner_err:
           f"{type(_partner_err).__name__}: {_partner_err}", flush=True)
 
 
+# ─── The Big Board: game-weather map, PREVIEW (2026-10-07) ───────────────
+# Kevin-only preview while it's being built. Not linked, not in the sitemap,
+# and every response carries noindex, so it has zero effect on SEO. To
+# launch: move to a public path, drop the noindex, add nav + sitemap entries.
+@app.route("/lab/big-board")
+def big_board_preview():
+    resp = Response(render_template("lab/big_board.html"), mimetype="text/html")
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.route("/lab/big-board/data.json")
+def big_board_data():
+    import big_board as _bb
+    try:
+        data = _bb.build_board_data()
+    except Exception as e:
+        print(f"[big_board] data failed: {type(e).__name__}: {e}", flush=True)
+        data = {"generated_utc": None, "games": [], "error": "unavailable"}
+    resp = jsonify(data)
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 # ===== Multi-domain support: kevinrothwx.com (personal) + mysportsweather.com (product) =====
 #
 # The same Flask app serves both domains from one Render service. Hostname

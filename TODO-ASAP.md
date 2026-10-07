@@ -40,6 +40,12 @@ The order: fix what Google can't see → tune what it already shows → build li
       course from the fallback schedule and keeps a stable event_id. File:
       `golf/schedule.py`. **Push first, then re-add the note.**
 
+- [ ] **The Big Board (game-weather map) PREVIEW, built 2026-10-07.** Hidden at
+      `/lab/big-board` (noindex, unlinked, not in sitemap). Files: `big_board.py`,
+      `templates/lab/big_board.html`, `app.py` (2 routes). Before public launch: pick
+      final path/name, drop noindex, add nav + sitemap, revisit basemap tile terms
+      (CARTO free tier) for public traffic, add NWS forecast-grid layers.
+
 ## 1. SEO — Claude builds (approved 2026-09-24, not yet built)
 
 About a day of work, low risk.
