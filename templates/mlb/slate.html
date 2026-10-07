@@ -102,6 +102,8 @@
                 </div>
               {% else %}
                 <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
+                {# Hidden until /mlb/radar-check says this game qualifies. #}
+                <button type="button" class="fr-btn" hidden data-radar-check="/mlb/radar-check/{{ date_str }}/{{ g.slug }}.json">Future radar</button>
               {% endif %}
               {{ game_odds_inline(g) }}
             </div>
@@ -204,6 +206,8 @@
    Added 2026-09-02: those pages were orphans (nothing on the site linked
    to them), so Google discovered them from the sitemap and then left them
    in "Discovered - currently not indexed". See landing_index.py. #}
+{% include "mlb/_future_radar.html" %}
+
 {% set landing_sport = "mlb" %}
 {% include "_landing_index.html" with context %}
 

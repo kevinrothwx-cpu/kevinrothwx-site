@@ -347,6 +347,35 @@ def big_board_preview():
     return resp
 
 
+# ─── Future radar popup, MLB first (2026-10-07) ──────────────────────────
+# Tells the MLB slate whether a game's "Future radar" button should appear
+# (open-air park, within HRRR range, HRRR agrees with our rain chance) and
+# hands the popup what it needs. See future_radar.py. JSON only, noindex.
+@app.route("/mlb/radar-check/<date_str>/<slug>.json")
+def mlb_radar_check(date_str, slug):
+    out = {"show": False, "reason": "not found"}
+    try:
+        import future_radar as _fr
+        slate, _ = get_slate(date_str, allow_build=False)
+        g = next((x for x in (slate or []) if x.get("slug") == slug), None)
+        if g:
+            park = g.get("park") or {}
+            fc = g.get("forecast") or {}
+            out = _fr.decide(park.get("lat"), park.get("lon"), g.get("first_pitch_utc"),
+                             fc.get("precip_pct"), park.get("roof_type"))
+            if out.get("show"):
+                out["title"] = f"{g.get('away_name')} at {g.get('home_name')}"
+                out["park"] = g.get("venue") or ""
+                out["pop"] = fc.get("precip_pct")
+    except Exception as e:
+        print(f"[mlb.radar] check failed for {date_str}/{slug}: {type(e).__name__}: {e}", flush=True)
+        out = {"show": False, "reason": "error"}
+    resp = jsonify(out)
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/lab/big-board/hrrr.json")
 def big_board_hrrr():
     import big_board as _bb

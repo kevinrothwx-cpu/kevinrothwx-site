@@ -1,0 +1,180 @@
+{# Future radar popup (2026-10-07, MLB first). Buttons start hidden; each one
+   asks /mlb/radar-check/<date>/<slug>.json and only appears when the park is
+   open-air, the game is inside the HRRR's 18-hour range, and the HRRR agrees
+   with our rain chance (see future_radar.py). Leaflet loads only when someone
+   opens the popup, so the slate page itself stays as light as before.
+   Imagery: Iowa Environmental Mesonet (real NEXRAD + NOAA HRRR, free).
+   Forecast frames use HRRR "REFD", whose colors match the observed radar, so
+   the switch from observed to forecast is seamless. All times Eastern. #}
+<style>
+  .fr-btn { margin-top:2px; border:1px solid var(--navy, #1e3a8a); background:#fff; color:var(--navy, #1e3a8a);
+    border-radius:999px; padding:4px 11px; font:600 12px/1.2 var(--font-sans, Arial, sans-serif); cursor:pointer; }
+  .fr-btn:hover { background:var(--navy, #1e3a8a); color:#fff; }
+  .fr-btn[hidden] { display:none; }
+  .fr-overlay { position:fixed; inset:0; background:rgba(15,23,42,.6); z-index:5000; display:none; align-items:center; justify-content:center; padding:12px; }
+  .fr-overlay.open { display:flex; }
+  .fr-panel { background:#fff; border-radius:14px; width:min(780px, 100%); max-height:100%; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,.35); }
+  .fr-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:12px 16px 8px; }
+  .fr-head h3 { margin:0; font:700 17px Georgia, serif; }
+  .fr-head .fr-sub { font:12px var(--font-sans, Arial, sans-serif); color:#6b7280; margin-top:2px; }
+  .fr-close { border:0; background:none; font-size:24px; line-height:1; cursor:pointer; color:#6b7280; }
+  #frMap { height:min(60vh, 480px); background:#dbe7f3; }
+  .fr-bar { padding:10px 16px 12px; border-top:1px solid #e5e7eb; }
+  .fr-row { display:flex; align-items:center; gap:10px; }
+  .fr-play { border:0; background:#1e3a8a; color:#fff; border-radius:999px; padding:8px 14px; font:600 13px var(--font-sans, Arial, sans-serif); cursor:pointer; flex:none; }
+  .fr-row input[type=range] { flex:1; accent-color:#1e3a8a; }
+  .fr-when { display:flex; align-items:center; gap:8px; margin-top:8px; font:600 14px var(--font-sans, Arial, sans-serif); }
+  .fr-tag { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; border-radius:4px; padding:2px 7px; color:#fff; }
+  .fr-tag.obs { background:#475569; }
+  .fr-tag.fcst { background:#c2410c; }
+  .fr-note { font:11px var(--font-sans, Arial, sans-serif); color:#6b7280; margin-top:6px; }
+  .fr-pin { background:#111827; color:#fff; border-radius:4px; padding:1px 6px; font:600 11px Arial, sans-serif; white-space:nowrap; border:0; box-shadow:none; }
+  .fr-pin::before { display:none; }
+</style>
+
+<div class="fr-overlay" id="frOverlay" aria-hidden="true">
+  <div class="fr-panel" role="dialog" aria-modal="true" aria-labelledby="frTitle">
+    <div class="fr-head">
+      <div><h3 id="frTitle">Future radar</h3><div class="fr-sub" id="frSub"></div></div>
+      <button class="fr-close" id="frClose" aria-label="Close">&times;</button>
+    </div>
+    <div id="frMap"></div>
+    <div class="fr-bar">
+      <div class="fr-row">
+        <button class="fr-play" id="frPlay">&#9654; Play forecast</button>
+        <input type="range" id="frSlider" min="0" max="0" step="1" value="0" aria-label="Radar time">
+      </div>
+      <div class="fr-when"><span class="fr-tag obs" id="frTag">Observed</span><span id="frTime"></span></div>
+      <div class="fr-note">Observed: NWS radar, last hour. Forecast: the HRRR model's simulated radar, one high-resolution model's best guess. Rain chances on the page blend many models. Imagery via Iowa Environmental Mesonet.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var IEM = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/";
+  var ET = "America/New_York";
+  var buttons = document.querySelectorAll(".fr-btn[data-radar-check]");
+  if (!buttons.length) return;
+
+  // 1) Ask the server which games qualify; reveal only those buttons.
+  buttons.forEach(function (btn) {
+    fetch(btn.getAttribute("data-radar-check"), { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (cfg) { if (cfg && cfg.show) { btn._cfg = cfg; btn.hidden = false; } })
+      .catch(function () {});
+    btn.addEventListener("click", function () { if (btn._cfg) open(btn._cfg); });
+  });
+
+  // 2) Popup
+  var overlay = document.getElementById("frOverlay"), slider = document.getElementById("frSlider");
+  var playBtn = document.getElementById("frPlay"), tag = document.getElementById("frTag"), timeEl = document.getElementById("frTime");
+  var map = null, frames = [], layers = {}, idx = 0, timer = null, mode = "obs", firstFcst = 0;
+
+  function loadLeaflet(cb) {
+    if (window.L) return cb();
+    var css = document.createElement("link"); css.rel = "stylesheet";
+    css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(css);
+    var s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    s.onload = cb; document.head.appendChild(s);
+  }
+  function pad(n, w) { n = String(n); while (n.length < w) n = "0" + n; return n; }
+  function stamp(d) { return d.getUTCFullYear() + pad(d.getUTCMonth() + 1, 2) + pad(d.getUTCDate(), 2) + pad(d.getUTCHours(), 2) + pad(d.getUTCMinutes(), 2); }
+  function etTime(d) { return d.toLocaleTimeString("en-US", { timeZone: ET, hour: "numeric", minute: "2-digit" }) + " ET"; }
+  function etDay(d) { return d.toLocaleDateString("en-US", { timeZone: ET, weekday: "short" }); }
+
+  function buildFrames(cfg) {
+    var out = [], step5 = 5 * 60000, now = Date.now();
+    // Observed: last hour of the national mosaic, 5-minute steps, ending
+    // ~10 minutes ago so every frame is guaranteed to exist.
+    var t0 = Math.floor((now - 10 * 60000) / step5) * step5;
+    for (var t = t0 - 55 * 60000; t <= t0; t += step5) {
+      var d = new Date(t);
+      out.push({ kind: "obs", time: d, url: IEM + "ridge::USCOMP-N0Q-" + stamp(d) + "/{z}/{x}/{y}.png" });
+    }
+    // Forecast: HRRR from the next quarter hour through the end of the game.
+    var init = Date.parse(cfg.init_utc), end = Date.parse(cfg.end_utc), q = 15 * 60000;
+    var start = Math.ceil((t0 + 1) / q) * q, span = (end - start) / 3600000;
+    var step = span <= 6 ? q : (span <= 10 ? 2 * q : 4 * q);
+    for (var v = start; v <= end; v += step) {
+      var mins = Math.round((v - init) / 60000);
+      if (mins < 0 || mins > 1080) continue;
+      out.push({ kind: "fcst", time: new Date(v), url: IEM + "hrrr::REFD-F" + pad(mins, 4) + "-" + cfg.init + "/{z}/{x}/{y}.png" });
+    }
+    return out;
+  }
+
+  function layerFor(i) {
+    if (!layers[i]) {
+      layers[i] = L.tileLayer(frames[i].url, { opacity: 0, maxNativeZoom: 10, pane: "radar" }).addTo(map);
+    }
+    return layers[i];
+  }
+  function show(i) {
+    idx = i; layerFor(i);
+    Object.keys(layers).forEach(function (k) { layers[k].setOpacity(+k === i ? 0.75 : 0); });
+    if (i + 1 < frames.length) layerFor(i + 1);
+    slider.value = i;
+    var f = frames[i], fc = f.kind === "fcst";
+    tag.textContent = fc ? "Forecast (HRRR)" : "Observed";
+    tag.className = "fr-tag " + (fc ? "fcst" : "obs");
+    timeEl.textContent = etDay(f.time) + " " + etTime(f.time);
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function loopObserved() {
+    stop(); mode = "obs"; playBtn.innerHTML = "&#9654; Play forecast";
+    show(0);
+    timer = setInterval(function () { show(idx >= firstFcst - 1 ? 0 : idx + 1); }, 450);
+  }
+  function playForecast() {
+    stop(); mode = "fcst"; playBtn.innerHTML = "&#10074;&#10074; Pause";
+    show(firstFcst);
+    timer = setInterval(function () {
+      if (idx >= frames.length - 1) { show(firstFcst); return; }
+      show(idx + 1);
+    }, 700);
+  }
+  playBtn.addEventListener("click", function () {
+    if (mode === "fcst" && timer) { stop(); playBtn.innerHTML = "&#9654; Play forecast"; return; }
+    playForecast();
+  });
+  slider.addEventListener("input", function () { stop(); mode = "manual"; playBtn.innerHTML = "&#9654; Play forecast"; show(+slider.value); });
+
+  function open(cfg) {
+    overlay.classList.add("open"); overlay.setAttribute("aria-hidden", "false");
+    document.getElementById("frTitle").textContent = cfg.title + " · Future radar";
+    var fp = new Date(cfg.first_pitch_utc);
+    document.getElementById("frSub").textContent = (cfg.park ? cfg.park + " · " : "") + "First pitch " + etTime(fp) +
+      (cfg.pop != null ? " · " + cfg.pop + "% rain chance during the game" : "");
+    loadLeaflet(function () {
+      if (map) { map.remove(); map = null; }
+      layers = {};
+      map = L.map("frMap", { minZoom: 6, maxZoom: 9, zoomControl: true, attributionControl: true })
+        .setView([cfg.lat, cfg.lon], 7);
+      map.createPane("base"); map.getPane("base").style.zIndex = 150;
+      map.createPane("radar"); map.getPane("radar").style.zIndex = 300;
+      fetch("/static/data/na-outline.json").then(function (r) { return r.json(); }).then(function (geo) {
+        var ST = { land: { stroke: false, fillColor: "#f6f5f1", fillOpacity: 1 }, lake: { stroke: false, fillColor: "#dbe7f3", fillOpacity: 1 },
+                   country: { color: "#6b7280", weight: 1.2, fill: false }, state: { color: "#94a3b8", weight: 1, fill: false } };
+        L.geoJSON(geo, { pane: "base", interactive: false, style: function (f) { return ST[f.properties.k] || ST.state; } }).addTo(map);
+      });
+      L.circleMarker([cfg.lat, cfg.lon], { radius: 7, color: "#fff", weight: 2, fillColor: "#111827", fillOpacity: 1 })
+        .bindTooltip(cfg.park || "Ballpark", { permanent: true, direction: "right", className: "fr-pin", offset: [8, 0] }).addTo(map);
+      map.attributionControl.addAttribution('Radar: NWS NEXRAD &amp; NOAA HRRR via <a href="https://mesonet.agron.iastate.edu/">Iowa Environmental Mesonet</a>');
+      frames = buildFrames(cfg);
+      firstFcst = 0;
+      for (var i = 0; i < frames.length; i++) { if (frames[i].kind === "fcst") { firstFcst = i; break; } }
+      slider.max = frames.length - 1;
+      setTimeout(function () { map.invalidateSize(); loopObserved(); }, 60);
+    });
+  }
+  function close() {
+    stop(); overlay.classList.remove("open"); overlay.setAttribute("aria-hidden", "true");
+    if (map) { map.remove(); map = null; layers = {}; }
+  }
+  document.getElementById("frClose").addEventListener("click", close);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && overlay.classList.contains("open")) close(); });
+})();
+</script>
