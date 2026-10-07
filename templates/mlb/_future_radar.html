@@ -180,20 +180,30 @@
                    country: { color: "#6b7280", weight: 1.2, fill: false }, state: { color: "#94a3b8", weight: 1, fill: false } };
         L.geoJSON(geo, { pane: "base", interactive: false, style: function (f) { return ST[f.properties.k] || ST.state; } }).addTo(map);
       });
-      // City labels (GeoNames, US/Canada/Mexico 60K+), above the radar so they
-      // stay readable. Bigger cities first; more appear as you zoom in.
+      // City labels (GeoNames; nearby duplicates/neighborhoods pre-merged in
+      // static/data/na-cities.json). Placed by population AND spacing: biggest
+      // city first, then the next biggest that is at least ~120 px from every
+      // label already placed, so labels spread across the map instead of
+      // clustering. Capped at 14 (Kevin: 10-15 total). Re-placed on zoom/pan.
       map.createPane("labels"); map.getPane("labels").style.zIndex = 400;
       var cityLayer = L.layerGroup().addTo(map), cities = [];
+      var MAX_LABELS = 14, MIN_GAP_PX = 120, PARK_GAP_PX = 70;
       function drawCities() {
         cityLayer.clearLayers();
-        var z = map.getZoom(), maxTier = z <= 6 ? 1 : (z === 7 ? 2 : 3), b = map.getBounds().pad(0.1);
-        cities.forEach(function (c) {
-          if (c[3] > maxTier || !b.contains([c[1], c[2]])) return;
-          if (Math.abs(c[1] - cfg.lat) < 0.06 && Math.abs(c[2] - cfg.lon) < 0.08) return;   // don't collide with the park label
+        var size = map.getSize(), park = map.latLngToContainerPoint([cfg.lat, cfg.lon]), placed = [];
+        var gap = Math.max(75, Math.min(MIN_GAP_PX, size.x / 8));               // tighter on phones
+        for (var i = 0; i < cities.length && placed.length < MAX_LABELS; i++) {
+          var c = cities[i], pt = map.latLngToContainerPoint([c[1], c[2]]);
+          if (pt.x < 10 || pt.y < 50 || pt.x > size.x - 90 || pt.y > size.y - 25) continue;   // keep off the edges and the badge
+          if (pt.distanceTo(park) < PARK_GAP_PX) continue;
+          var tooClose = false;
+          for (var j = 0; j < placed.length; j++) { if (pt.distanceTo(placed[j]) < gap) { tooClose = true; break; } }
+          if (tooClose) continue;
+          placed.push(pt);
           L.marker([c[1], c[2]], { pane: "labels", interactive: false, keyboard: false,
             icon: L.divIcon({ className: "fr-city-icon", iconSize: null, iconAnchor: [3, 6],
-              html: '<span class="fr-city t' + c[3] + '"><i></i>' + c[0] + "</span>" }) }).addTo(cityLayer);
-        });
+              html: '<span class="fr-city' + (c[3] >= 500000 ? " t1" : "") + '"><i></i>' + c[0] + "</span>" }) }).addTo(cityLayer);
+        }
       }
       fetch("/static/data/na-cities.json").then(function (r) { return r.json(); }).then(function (d) { cities = d; drawCities(); });
       map.on("zoomend moveend", drawCities);
