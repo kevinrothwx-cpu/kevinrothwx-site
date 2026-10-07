@@ -21,7 +21,7 @@
   .tog { border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 11px; font-size:13px; cursor:pointer; user-select:none; }
   .tog.on { background:var(--navy); border-color:var(--navy); color:#fff; }
   select { border:1px solid var(--line); border-radius:8px; padding:5px 8px; font-size:13px; background:#fff; }
-  #map { flex:1; min-height:300px; }
+  #map { flex:1; min-height:300px; background:#dbe7f3; }
   .summary { font-size:12px; color:var(--muted); width:100%; }
   .legend { background:#fff; padding:8px 10px; border-radius:8px; box-shadow:0 1px 6px rgba(0,0,0,.2); font-size:12px; line-height:1.7; }
   .legend i { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:6px; vertical-align:-1px; border:1.5px solid rgba(0,0,0,.25); }
@@ -71,15 +71,30 @@
   var FLAG_COLORS = { wind:"#f97316", rain:"#2563eb", cold:"#7c3aed", heat:"#be123c" };
   var SPORT_LABEL = { nfl:"NFL", cfb:"College football", mlb:"MLB" };
 
-  var map = L.map("map", { zoomControl:true, worldCopyJump:true, minZoom:3 }).setView([38.5, -96], 4);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-    maxZoom: 18, subdomains: "abcd",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-  }).addTo(map);
+  var map = L.map("map", { zoomControl:true, minZoom:3, maxZoom:10,
+    maxBounds: [[5, -180], [72, -40]] }).setView([38.5, -96], 4);
+
+  // Our own base map (no tile service, no API key, no usage limits): land,
+  // lakes, country and state lines from static/data/na-outline.json.
+  // Panes keep the stacking right: base < radar < storm < dots.
+  map.createPane("base"); map.getPane("base").style.zIndex = 150;
+  map.createPane("storm"); map.getPane("storm").style.zIndex = 420;
+  map.createPane("dots"); map.getPane("dots").style.zIndex = 450;
+  var STYLE = {
+    land:    { pane:"base", stroke:false, fillColor:"#f6f5f1", fillOpacity:1 },
+    lake:    { pane:"base", stroke:false, fillColor:"#dbe7f3", fillOpacity:1 },
+    country: { pane:"base", color:"#6b7280", weight:1.2, fill:false },
+    state:   { pane:"base", color:"#a3acba", weight:0.8, fill:false }
+  };
+  fetch("/static/data/na-outline.json").then(function (r) { return r.json(); }).then(function (geo) {
+    L.geoJSON(geo, { pane: "base", interactive: false,
+      style: function (f) { return STYLE[f.properties.k] || STYLE.state; } }).addTo(map);
+  });
+  map.attributionControl.addAttribution("Coastlines and borders: GSHHG / Basemap");
 
   // ── Overlays (official NOAA products) ──────────────────────────────────
   var radar = L.tileLayer("https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png", {
-    opacity: 0.6, zIndex: 300,
+    opacity: 0.6, zIndex: 300, maxNativeZoom: 10,
     attribution: 'Radar: NWS NEXRAD via <a href="https://mesonet.agron.iastate.edu/">Iowa Environmental Mesonet</a>'
   });
 
@@ -93,7 +108,7 @@
     var url = NHC + "?bbox=" + [sw.x, sw.y, ne.x, ne.y].join(",") +
       "&bboxSR=3857&imageSR=3857&size=" + size.x + "," + size.y +
       "&format=png32&transparent=true&dpi=96&f=image&_=" + Date.now();
-    var next = L.imageOverlay(url, b, { opacity: 0.85, zIndex: 350,
+    var next = L.imageOverlay(url, b, { opacity: 0.85, pane: "storm",
       attribution: 'Storm track: <a href="https://www.nhc.noaa.gov/">NOAA National Hurricane Center</a>' });
     next.addTo(map);
     next.once("load", function () { if (nhcImg) map.removeLayer(nhcImg); nhcImg = next; });
@@ -170,6 +185,7 @@
       if ((g.flags || []).length) flagged++;
       var c = colorFor(g);
       L.circleMarker([g.lat, g.lon], {
+        pane: "dots",
         radius: g.sport === "nfl" ? 8 : 6.5,
         color: g.indoor ? COLORS.indoor : "#ffffff",
         weight: g.indoor ? 2 : 1.5,
