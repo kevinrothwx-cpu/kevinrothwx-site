@@ -347,6 +347,15 @@ def big_board_preview():
     return resp
 
 
+@app.route("/lab/big-board/hrrr.json")
+def big_board_hrrr():
+    import big_board as _bb
+    resp = jsonify(_bb.hrrr_latest())
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/lab/big-board/data.json")
 def big_board_data():
     import big_board as _bb

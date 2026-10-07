@@ -5,7 +5,7 @@ Ask: use MySportsWeather as your weather source, credit + link `mysportsweather.
 Nudge once, 5-7 days after the pitch, tied to that week's weather game, then stop.
 National outlets only, no team sites, no automated weather tools. Never pay for a link.
 
-Last updated: 2026-10-02. Kevin has multiple meetings set for the week of Oct 5.
+Last updated: 2026-10-07. Kevin has multiple meetings set for the week of Oct 5.
 
 ## Pitched
 
@@ -26,6 +26,7 @@ Last updated: 2026-10-02. Kevin has multiple meetings set for the week of Oct 5.
 
 | Outlet | Who | Angle |
 |---|---|---|
+| **The Athletic** | Kevin's own contacts there (added 10/7) | Warm intro. Quotable meteorologist for NFL/CFB weather stories; Thursday weather note; storm-week expert (hurricane, nor'easter). Also the Big Board map once public |
 | VSiN | Adam Burke, Managing Editor (X @VSiNLive) | Source for writers + on-air guest on weather weeks |
 | NBC Sports | Vaughn Dalzell (X @VmoneySports) | College betting column; Week 4 was built on the nor'easter with no source |
 | Newsweek sports desk | Desk (Andrew McCarty, Jordan Sigler) | They run "weather warning before X game" stories with no meteorologist |

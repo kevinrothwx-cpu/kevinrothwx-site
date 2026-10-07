@@ -34,6 +34,14 @@
   .pop .flag { display:inline-block; font-size:11px; font-weight:700; border-radius:4px; padding:1px 6px; margin-right:4px; color:#fff; }
   .pop a { font-size:13px; font-weight:600; color:var(--navy); text-decoration:none; }
   .attrib-note { font-size:11px; }
+  #futureBar { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1001; display:none;
+    background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.25); padding:10px 14px; width:min(560px, calc(100% - 24px)); }
+  #futureBar .row { display:flex; align-items:center; gap:10px; }
+  #futureBar button { border:0; background:var(--navy); color:#fff; border-radius:999px; width:36px; height:36px; font-size:15px; cursor:pointer; flex:none; }
+  #futureBar input[type=range] { flex:1; accent-color:var(--navy); }
+  #futureBar .when { font-weight:700; font-size:14px; min-width:150px; text-align:right; }
+  #futureBar .sub { font-size:11px; color:var(--muted); margin-top:4px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+  #futureBar .sub img { height:14px; max-width:55%; }
   @media (max-width:640px) {
     .bar { padding:8px 10px; gap:6px 10px; }
     .brand b { font-size:17px; }
@@ -58,10 +66,25 @@
     <label class="title">Layers</label>
     <span class="tog" data-layer="nhc">Hurricane track</span>
     <span class="tog" data-layer="radar">Radar</span>
+    <span class="tog" data-layer="future">Future radar</span>
+    <span class="tog" data-layer="qpf">Rain forecast</span>
+    <select id="qpfDay" title="Rain forecast period" style="display:none">
+      <option value="1">Day 1</option><option value="2">Day 2</option><option value="3">Day 3</option>
+      <option value="4">Days 4-5</option><option value="5">Days 6-7</option>
+    </select>
   </div>
   <div class="summary" id="summary">Loading games…</div>
 </div>
 <div id="map"></div>
+<div id="futureBar">
+  <div class="row">
+    <button id="futPlay" title="Play / pause">&#9654;</button>
+    <input id="futSlider" type="range" min="0" max="18" step="1" value="0">
+    <div class="when" id="futWhen">…</div>
+  </div>
+  <div class="sub"><span id="futRun">HRRR model future radar</span>
+    <img src="https://mesonet.agron.iastate.edu/GIS/legends/REFP.png" alt="Rain, snow, ice color scale"></div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -98,22 +121,104 @@
     attribution: 'Radar: NWS NEXRAD via <a href="https://mesonet.agron.iastate.edu/">Iowa Environmental Mesonet</a>'
   });
 
-  // NHC cone + track: ArcGIS export image, re-requested on every pan/zoom.
-  var NHC = "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer/export";
-  var nhcImg = null, nhcOn = false;
-  function drawNhc() {
-    if (!nhcOn) return;
-    var b = map.getBounds(), size = map.getSize();
-    var sw = map.options.crs.project(b.getSouthWest()), ne = map.options.crs.project(b.getNorthEast());
-    var url = NHC + "?bbox=" + [sw.x, sw.y, ne.x, ne.y].join(",") +
-      "&bboxSR=3857&imageSR=3857&size=" + size.x + "," + size.y +
-      "&format=png32&transparent=true&dpi=96&f=image&_=" + Date.now();
-    var next = L.imageOverlay(url, b, { opacity: 0.85, pane: "storm",
-      attribution: 'Storm track: <a href="https://www.nhc.noaa.gov/">NOAA National Hurricane Center</a>' });
-    next.addTo(map);
-    next.once("load", function () { if (nhcImg) map.removeLayer(nhcImg); nhcImg = next; });
+  // NOAA ArcGIS map services, drawn as one image per view and re-requested on
+  // every pan/zoom (the services don't offer cached tiles).
+  //   storm: NHC cone + track for every active storm
+  //   qpf:   WPC rainfall forecast (inches), the NWS forecasters' blend of
+  //          the GFS, Euro, NAM and other models. Day 1-3, 4-5, 6-7.
+  function arcgisOverlay(base, opts) {
+    var self = { on: false, img: null, layers: opts.layers || null };
+    self.draw = function () {
+      if (!self.on) return;
+      var b = map.getBounds(), size = map.getSize();
+      var sw = map.options.crs.project(b.getSouthWest()), ne = map.options.crs.project(b.getNorthEast());
+      var url = base + "/export?bbox=" + [sw.x, sw.y, ne.x, ne.y].join(",") +
+        "&bboxSR=3857&imageSR=3857&size=" + size.x + "," + size.y +
+        (self.layers ? "&layers=" + encodeURIComponent(self.layers) : "") +
+        "&format=png32&transparent=true&dpi=96&f=image&_=" + Date.now();
+      var next = L.imageOverlay(url, b, { opacity: opts.opacity, pane: opts.pane, attribution: opts.attribution });
+      next.addTo(map);
+      next.once("load", function () { if (self.img) map.removeLayer(self.img); self.img = next; });
+      next.once("error", function () { map.removeLayer(next); });
+    };
+    self.set = function (on) {
+      self.on = on;
+      if (on) { self.draw(); } else if (self.img) { map.removeLayer(self.img); self.img = null; }
+    };
+    map.on("moveend", self.draw);
+    return self;
   }
-  map.on("moveend", drawNhc);
+  map.createPane("qpf"); map.getPane("qpf").style.zIndex = 320;
+  var storm = arcgisOverlay("https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer",
+    { opacity: 0.85, pane: "storm",
+      attribution: 'Storm track: <a href="https://www.nhc.noaa.gov/">NOAA National Hurricane Center</a>' });
+  var qpf = arcgisOverlay("https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer",
+    { opacity: 0.6, pane: "qpf", layers: "show:1",
+      attribution: 'Rain forecast: <a href="https://www.wpc.ncep.noaa.gov/qpf/qpf2.shtml">NOAA Weather Prediction Center</a>' });
+
+  // ── Future radar: HRRR simulated reflectivity (rain/snow/ice colors) ─────
+  // Hourly frames 0-18h from ONE model run (run time from /lab/big-board/
+  // hrrr.json, so frames never mix runs). Each frame is its own tile layer;
+  // hidden frames stay loaded at opacity 0, so playback is smooth after the
+  // first loop. Game dots in play at the frame's time get a dark ring.
+  map.createPane("future"); map.getPane("future").style.zIndex = 330;
+  var FUT_MAX = 18;
+  var future = { on:false, init:null, initDate:null, layers:{}, idx:0, timer:null };
+  var futBar = document.getElementById("futureBar"), futSlider = document.getElementById("futSlider");
+  var futWhen = document.getElementById("futWhen"), futPlay = document.getElementById("futPlay");
+  function futLayer(i) {
+    if (!future.layers[i]) {
+      var m = ("000" + (i * 60)).slice(-4);
+      future.layers[i] = L.tileLayer("https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/hrrr::REFP-F" + m + "-" + future.init + "/{z}/{x}/{y}.png", {
+        pane: "future", opacity: 0, maxNativeZoom: 10,
+        attribution: 'Future radar: NOAA HRRR via <a href="https://mesonet.agron.iastate.edu/GIS/model.phtml">Iowa Environmental Mesonet</a>'
+      }).addTo(map);
+    }
+    return future.layers[i];
+  }
+  function futValid(i) { return new Date(future.initDate.getTime() + i * 3600000); }
+  function fmtET(d) {
+    return d.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric" }) + " ET";
+  }
+  function futShow(i) {
+    future.idx = i;
+    futLayer(i);
+    Object.keys(future.layers).forEach(function (k) { future.layers[k].setOpacity(+k === i ? 0.75 : 0); });
+    futLayer((i + 1) % (FUT_MAX + 1));                       // preload the next frame
+    futSlider.value = i;
+    futWhen.textContent = fmtET(futValid(i)) + (i ? "  (+" + i + "h)" : "  (now)");
+    render();
+  }
+  function futStop() { if (future.timer) { clearInterval(future.timer); future.timer = null; } futPlay.innerHTML = "&#9654;"; }
+  function futSet(on) {
+    future.on = on;
+    if (!on) {
+      futStop();
+      Object.keys(future.layers).forEach(function (k) { map.removeLayer(future.layers[k]); });
+      future.layers = {}; futBar.style.display = "none"; render();
+      return;
+    }
+    fetch("/lab/big-board/hrrr.json", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (h) {
+      if (!h.init || !future.on) {
+        if (!h.init) { document.getElementById("summary").textContent = "Future radar is unavailable right now. Try again in a few minutes."; }
+        return;
+      }
+      future.init = h.init; future.initDate = new Date(h.init_utc);
+      document.getElementById("futRun").textContent = "HRRR model run " + fmtET(future.initDate) + " · updates hourly";
+      futBar.style.display = "block";
+      futShow(0);
+    });
+  }
+  futSlider.addEventListener("input", function () { futStop(); futShow(+futSlider.value); });
+  futPlay.addEventListener("click", function () {
+    if (future.timer) { futStop(); return; }
+    futPlay.innerHTML = "&#10074;&#10074;";
+    future.timer = setInterval(function () { futShow(future.idx >= FUT_MAX ? 0 : future.idx + 1); }, 900);
+  });
+  function inPlayAt(g, t) {
+    var ko = Date.parse(g.kickoff_utc);
+    return t >= ko - 30 * 60000 && t <= ko + 3.5 * 3600000;
+  }
 
   // ── Legend ─────────────────────────────────────────────────────────────
   var legend = L.control({ position: "bottomleft" });
@@ -184,11 +289,12 @@
       shown++;
       if ((g.flags || []).length) flagged++;
       var c = colorFor(g);
+      var live = future.on && future.initDate && inPlayAt(g, futValid(future.idx).getTime());
       L.circleMarker([g.lat, g.lon], {
         pane: "dots",
-        radius: g.sport === "nfl" ? 8 : 6.5,
-        color: g.indoor ? COLORS.indoor : "#ffffff",
-        weight: g.indoor ? 2 : 1.5,
+        radius: (g.sport === "nfl" ? 8 : 6.5) + (live ? 3 : 0),
+        color: live ? "#111827" : (g.indoor ? COLORS.indoor : "#ffffff"),
+        weight: live ? 3 : (g.indoor ? 2 : 1.5),
         fillColor: g.indoor ? "#ffffff" : c,
         fillOpacity: 0.95
       }).bindPopup(popupHtml(g), { maxWidth: 280 }).addTo(dots);
@@ -227,14 +333,18 @@
     });
   });
   dayEl.addEventListener("change", render);
+  var qpfDayEl = document.getElementById("qpfDay");
+  qpfDayEl.addEventListener("change", function () { qpf.layers = "show:" + qpfDayEl.value; qpf.draw(); });
   document.querySelectorAll("#layers .tog").forEach(function (el) {
     el.addEventListener("click", function () {
       var k = el.getAttribute("data-layer"), on = !el.classList.contains("on");
       el.classList.toggle("on", on);
       if (k === "radar") { on ? radar.addTo(map) : map.removeLayer(radar); }
-      if (k === "nhc") {
-        nhcOn = on;
-        if (on) { drawNhc(); } else if (nhcImg) { map.removeLayer(nhcImg); nhcImg = null; }
+      if (k === "nhc") { storm.set(on); }
+      if (k === "future") { futSet(on); }
+      if (k === "qpf") {
+        qpfDayEl.style.display = on ? "" : "none";
+        qpf.set(on);
       }
     });
   });

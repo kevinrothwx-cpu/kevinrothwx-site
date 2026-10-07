@@ -164,4 +164,37 @@ def build_board_data() -> dict:
     return data
 
 
+
+# ── HRRR "future radar" (2026-10-07) ────────────────────────────────────────
+# Iowa Environmental Mesonet renders NCEP HRRR simulated reflectivity as map
+# tiles, every 15 minutes out to 18 hours, with a rain/snow/ice color ramp
+# (REFP). Free, and IEM explicitly allows commercial use. The map needs the
+# model run time so every frame comes from the SAME run; IEM recommends
+# reading it from this metadata file rather than using "latest" in tile URLs.
+_HRRR_META_URL = "https://mesonet.agron.iastate.edu/data/gis/images/4326/hrrr/refp_1080.json"
+_hrrr_cache: dict = {"at": 0.0, "data": None}
+
+
+def hrrr_latest() -> dict:
+    """{'init': 'YYYYMMDDHHMI', 'init_utc': iso} for the latest HRRR run IEM
+    has finished processing. Cached 10 minutes. Never raises."""
+    with _lock:
+        if _hrrr_cache["data"] and time.time() - _hrrr_cache["at"] < 600:
+            return _hrrr_cache["data"]
+    out = {"init": None, "init_utc": None}
+    try:
+        import requests
+        r = requests.get(_HRRR_META_URL, timeout=8,
+                         headers={"User-Agent": "mysportsweather.com big-board"})
+        r.raise_for_status()
+        iso = r.json().get("model_init_utc")
+        dt = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        out = {"init": dt.strftime("%Y%m%d%H%M"), "init_utc": iso}
+        with _lock:
+            _hrrr_cache.update(at=time.time(), data=out)
+    except Exception as e:
+        print(f"[big_board] HRRR metadata unavailable: {type(e).__name__}: {e}", flush=True)
+    return out
+
+
 # EOF-CANARY 2026-10-07-big-board
