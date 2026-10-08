@@ -103,7 +103,7 @@
               {% else %}
                 <div class="mlb-game-block__time">First pitch · {{ g.first_pitch_eastern_str }}</div>
                 {# Hidden until /mlb/radar-check says this game qualifies. #}
-                <button type="button" class="fr-btn" hidden data-radar-check="/mlb/radar-check/{{ date_str }}/{{ g.slug }}.json">Future radar</button>
+                <button type="button" class="fr-btn fr-btn--header" hidden data-radar-check="/mlb/radar-check/{{ date_str }}/{{ g.slug }}.json">Future radar</button>
               {% endif %}
               {{ game_odds_inline(g) }}
             </div>

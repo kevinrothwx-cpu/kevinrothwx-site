@@ -11,6 +11,15 @@
     border-radius:999px; padding:4px 11px; font:600 12px/1.2 var(--font-sans, Arial, sans-serif); cursor:pointer; }
   .fr-btn:hover { background:var(--navy, #1e3a8a); color:#fff; }
   .fr-btn[hidden] { display:none; }
+  /* Desktop: lift the button out of the header's right column so the header
+     keeps its original height. It sits on the header's bottom row (same line
+     as the O/U), centered over the hourly table. The table column starts
+     after the 240px summary panel, hence the calc. Narrow screens keep it
+     inline under the first-pitch time. 2026-10-08 */
+  @media (min-width: 900px) {
+    .mlb-game-block__header { position: relative; }
+    .fr-btn--header { position:absolute; left:calc(240px + (100% - 240px) / 2); bottom:0.7rem; transform:translateX(-50%); margin:0; }
+  }
   .fr-overlay { position:fixed; inset:0; background:rgba(15,23,42,.6); z-index:5000; display:none; align-items:center; justify-content:center; padding:12px; }
   .fr-overlay.open { display:flex; }
   .fr-panel { background:#fff; border-radius:14px; width:min(780px, 100%); max-height:100%; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 10px 40px rgba(0,0,0,.35); }
