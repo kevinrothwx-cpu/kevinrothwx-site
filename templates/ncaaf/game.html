@@ -188,6 +188,10 @@
     {% if _roof == "retractable" %} · Retractable roof{% endif %}
     {% if _roof == "fixed_dome" %} · Domed venue{% endif %}
   </p>
+  {# Future radar (2026-10-09). Hidden until /ncaaf/radar-check says the game
+     qualifies: open-air, inside the HRRR's 18-hour range. See future_radar.py. #}
+  <button type="button" class="fr-btn" hidden style="margin:0 0 0.9rem"
+          data-radar-check="/ncaaf/radar-check/{{ date_str }}/{{ game.slug }}.json">Future radar</button>
 
   {# ── Summary panel — 2x2 grid of temp / rain / wind / stadium field.
        Mirrors the MLB/NFL detail-page pattern so all sports feel cohesive.
@@ -394,5 +398,7 @@
 {% set tease_coming_soon = false %}
 {% set tease_placement = "ncaaf-game" %}
 {% include "_overcast_tease.html" with context %}
+
+{% include "_future_radar.html" %}
 
 {% endblock %}

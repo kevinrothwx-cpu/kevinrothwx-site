@@ -376,6 +376,34 @@ def mlb_radar_check(date_str, slug):
     return resp
 
 
+@app.route("/ncaaf/radar-check/<date_str>/<slug>.json")
+def ncaaf_radar_check(date_str, slug):
+    """Same as mlb_radar_check, for college football game pages (2026-10-09).
+    Football window is kickoff + 4 hours."""
+    out = {"show": False, "reason": "not found"}
+    try:
+        import future_radar as _fr
+        g = find_cfb_game(date_str, slug)
+        if g:
+            v = g.get("venue") or {}
+            fc = g.get("forecast") or {}
+            out = _fr.decide(v.get("lat"), v.get("lon"), g.get("kickoff_utc"),
+                             fc.get("precip_pct"), v.get("roof") or v.get("roof_type") or "open",
+                             game_hours=4.0)
+            if out.get("show"):
+                out["title"] = f"{(g.get('away') or {}).get('short')} at {(g.get('home') or {}).get('short')}"
+                out["park"] = v.get("name") or ""
+                out["pop"] = fc.get("precip_pct")
+                out["start_word"] = "Kickoff"
+    except Exception as e:
+        print(f"[ncaaf.radar] check failed for {date_str}/{slug}: {type(e).__name__}: {e}", flush=True)
+        out = {"show": False, "reason": "error"}
+    resp = jsonify(out)
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/lab/big-board/hrrr.json")
 def big_board_hrrr():
     import big_board as _bb

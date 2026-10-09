@@ -49,8 +49,9 @@ The order: fix what Google can't see → tune what it already shows → build li
 - [ ] **Future radar popup, MLB slate (built 2026-10-07).** Button appears only for
       open-air parks within HRRR range (agreement check built but OFF per Kevin 10/7,
       `AGREEMENT_CHECK` in `future_radar.py`). Files: `future_radar.py`, `templates/mlb/_future_radar.html`,
-      `templates/mlb/slate.html`, `app.py` (`/mlb/radar-check/...`). Next: Kevin reviews
-      look on phone + desktop, then NFL/CFB cards.
+      `templates/mlb/slate.html`, `app.py` (`/mlb/radar-check/...`). Popup now shared
+      (`templates/_future_radar.html`); also on NCAAF game pages (2026-10-09,
+      `/ncaaf/radar-check/...`). Next: NFL.
 
 ## 1. SEO — Claude builds (approved 2026-09-24, not yet built)
 

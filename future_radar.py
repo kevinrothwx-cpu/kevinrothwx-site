@@ -108,14 +108,14 @@ def _hrrr_hourly_rain(lat: float, lon: float) -> Optional[dict]:
 
 
 def decide(lat, lon, first_pitch_utc: datetime, pop_pct, roof_type: str,
-           now: Optional[datetime] = None) -> dict:
+           now: Optional[datetime] = None, game_hours: float = GAME_HOURS) -> dict:
     """Return {'show': bool, 'reason': str, ...popup config when shown}."""
     now = now or datetime.now(timezone.utc)
-    if (roof_type or "").lower() not in ("open_air", "open"):
+    if (roof_type or "").lower() not in ("open_air", "open", "fixed_canopy", ""):
         return {"show": False, "reason": "roof"}
     if lat is None or lon is None or first_pitch_utc is None:
         return {"show": False, "reason": "no location"}
-    end = first_pitch_utc + timedelta(hours=GAME_HOURS)
+    end = first_pitch_utc + timedelta(hours=game_hours)
     if end <= now:
         return {"show": False, "reason": "game over"}
     init = hrrr_init()
@@ -129,7 +129,7 @@ def decide(lat, lon, first_pitch_utc: datetime, pop_pct, roof_type: str,
     if rain is None:
         return {"show": False, "reason": "HRRR point data unavailable"}
     start_hr = first_pitch_utc.replace(minute=0, second=0, microsecond=0)
-    hours = [start_hr + timedelta(hours=i) for i in range(int(GAME_HOURS) + 1)]
+    hours = [start_hr + timedelta(hours=i) for i in range(int(game_hours) + 1)]
     vals = [rain.get(h.strftime("%Y-%m-%dT%H:%M:00Z"), 0.0) for h in hours]
     wet, heavy = any(v >= WET_IN for v in vals), any(v >= HEAVY_IN for v in vals)
     pop = int(pop_pct or 0)
