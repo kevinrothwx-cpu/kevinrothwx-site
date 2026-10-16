@@ -60,7 +60,7 @@ NEUTRAL_VENUES: dict[str, dict] = {
     "wembley": {
         "name": "Wembley Stadium", "city": "London, UK",
         "lat": 51.5560, "lon": -0.2795, "tz": "Europe/London",
-        "roof": "retractable", "cap": 90000,
+        "roof": "open", "cap": 90000,   # roof covers stands only, never the pitch
         "nws_unsupported": True, "country": "GB",
     },
     "allianz_arena": {

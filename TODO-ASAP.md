@@ -53,6 +53,17 @@ The order: fix what Google can't see → tune what it already shows → build li
       (`templates/_future_radar.html`); also on NCAAF game pages (2026-10-09,
       `/ncaaf/radar-check/...`). Next: NFL.
 
+- [ ] **About page "who Kevin is" structured data (Kevin OK'd for the list 10/12).** Person +
+      Organization schema on /about: Kevin Roth = founder of MySportsWeather, sameAs X,
+      LinkedIn, The Athletic quote, Covers author page, RotoGrinders author page. Goal:
+      Google treats MSW as Kevin's home, not Covers/RotoGrinders. Also: ask RotoGrinders to
+      update Kevin's old author bio to link MSW.
+- [ ] **Covers deal (10/12):** $75/article, 5 evergreen pieces (football wind, precip, temp;
+      MLB humidity, temp). Publish the full version on MSW FIRST (new guide pages under
+      /nfl-weather/ and /mlb-weather/), Covers gets a fresh shorter write-up with in-body
+      links to the matching MSW guide + /nfl. Bio links to MSW. Ask if links are followed.
+      Partner API key for Covers (articles only).
+
 ## 1. SEO — Claude builds (approved 2026-09-24, not yet built)
 
 About a day of work, low risk.

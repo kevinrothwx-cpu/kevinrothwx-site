@@ -335,6 +335,16 @@ except Exception as _partner_err:
           f"{type(_partner_err).__name__}: {_partner_err}", flush=True)
 
 
+# Automatic IndexNow for NEW pages (2026-10-12). Bing flagged that recently
+# published pages weren't being submitted; IndexNow only ran from the manual
+# /admin/indexnow button. See indexnow_auto.py. Guarded like the partner API.
+try:
+    import indexnow_auto as _indexnow_auto
+    _indexnow_auto.start(lambda: _msw_all_url_paths(), indexnow_notify)
+except Exception as _ia_err:
+    print(f"[app.startup] indexnow_auto not started: {type(_ia_err).__name__}: {_ia_err}", flush=True)
+
+
 # ─── The Big Board: game-weather map, PREVIEW (2026-10-07) ───────────────
 # Kevin-only preview while it's being built. Not linked, not in the sitemap,
 # and every response carries noindex, so it has zero effect on SEO. To

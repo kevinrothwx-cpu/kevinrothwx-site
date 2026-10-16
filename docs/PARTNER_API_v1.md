@@ -34,6 +34,13 @@ the URL in `attribution.url`:
 - NFL: `https://mysportsweather.com/nfl`
 - College football: `https://mysportsweather.com/ncaaf`
 
+## Permitted use
+
+- Use the data in articles and posts, with the attribution above.
+- Do not use it to power a standalone weather page, weather hub or weather tool.
+- Do not resell or redistribute the raw data.
+- Keys are per partner and can be revoked. Keep yours private.
+
 ## Example response (`/nfl/slate`, trimmed to two games)
 
 ```json

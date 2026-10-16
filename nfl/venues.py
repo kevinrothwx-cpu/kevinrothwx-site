@@ -442,9 +442,12 @@ INTERNATIONAL_VENUES: dict[str, dict] = {
                   "lat": 51.6042, "lon": -0.0666, "timezone": "Europe/London",
                   "roof_type": "open", "capacity": 62850,
                   "nws_unsupported": True, "country": "GB"},
+    # Wembley's movable roof only covers the stands; it can't close over the
+    # pitch, so weather always reaches the field. "open", not "retractable"
+    # (Kevin, 2026-10-16). Same fix in cfb/neutral_venues.py.
     "wembley":   {"name": "Wembley Stadium", "city": "London, UK",
                   "lat": 51.5560, "lon": -0.2795, "timezone": "Europe/London",
-                  "roof_type": "retractable", "capacity": 90000,
+                  "roof_type": "open", "capacity": 90000,
                   "nws_unsupported": True, "country": "GB"},
     # Renamed Estadio Banorte under a 2025 sponsorship deal, which is what
     # the NFL and the broadcast call it now. Slug stays "azteca" so existing
