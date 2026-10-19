@@ -335,6 +335,15 @@ except Exception as _partner_err:
           f"{type(_partner_err).__name__}: {_partner_err}", flush=True)
 
 
+# Iframe forecast cards for partner articles (2026-10-19, Covers first).
+# noindex, weather-only, reads warm caches only. See embed.py. Guarded.
+try:
+    import embed as _embed
+    _embed.register(app)
+except Exception as _embed_err:
+    print(f"[app.startup] embed not registered: {type(_embed_err).__name__}: {_embed_err}", flush=True)
+
+
 # Automatic IndexNow for NEW pages (2026-10-12). Bing flagged that recently
 # published pages weren't being submitted; IndexNow only ran from the manual
 # /admin/indexnow button. See indexnow_auto.py. Guarded like the partner API.
@@ -651,6 +660,8 @@ def set_cache_control(response):
 def _hidden_from_google(path: str) -> bool:
     p = (path or "").split("?", 1)[0].rstrip("/") or "/"
     if p in ("/horse", "/ipl") or p.startswith("/ipl/"):
+        return True
+    if p.startswith("/embed/"):   # partner iframe cards (embed.py), never indexed
         return True
     return p.startswith("/ncaaf/stadium/") or p.startswith("/mls/stadium/")
 

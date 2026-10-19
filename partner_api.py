@@ -224,6 +224,16 @@ def _game(game: dict, sport: str) -> dict:
         else:
             game_max = _round_int(forecast.get("precip_pct"))
 
+    # Links to the game's page and its iframe card (embed.py, 2026-10-19).
+    # Additive fields; existing consumers ignore them.
+    seg = "nfl" if sport == "nfl" else "ncaaf"
+    day = game.get("kickoff_date_eastern") if sport == "nfl" else game.get("date_local")
+    slug = game.get("slug")
+    page_url = embed_url = None
+    if day and slug:
+        page_url = f"https://mysportsweather.com/{seg}/{day}/{slug}"
+        embed_url = f"https://mysportsweather.com/embed/{seg}/{day}/{slug}"
+
     return {
         "event_id": str(game.get("event_id") or game.get("id") or ""),
         "sport": sport,
@@ -244,6 +254,8 @@ def _game(game: dict, sport: str) -> dict:
         "kickoff_forecast": kickoff_fc,
         "game_max_precip_pct": game_max,
         "hourly": hourly_out,
+        "page_url": page_url,
+        "embed_url": embed_url,
     }
 
 

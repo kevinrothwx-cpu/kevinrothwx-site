@@ -149,6 +149,9 @@ the URL in `attribution.url`:
   `retractable`, the forecast is the outdoor weather; the roof may be closed.
 - **Units and times**: °F, mph, percent. All times are UTC, ISO 8601.
 - **`week`**: college football only. Null for the NFL.
+- **`page_url`**: the game's forecast page on MySportsWeather.
+- **`embed_url`**: the game's iframe forecast card. See the embed guide
+  (EMBED_v1.md) for the code to paste into an article.
 - **Slate window**: games appear about a week ahead and drop off the day after
   they are played. Forecasts lock in shortly before kickoff.
 - Field order in responses is not significant.
