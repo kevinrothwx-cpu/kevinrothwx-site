@@ -26,9 +26,9 @@
   button{font:inherit;font-size:13px;font-weight:600;padding:7px 12px;border-radius:7px;border:1px solid #1e3a8a;background:#1e3a8a;color:#fff;cursor:pointer}
   button.ghost{background:#fff;color:#1e3a8a}
   button.done{background:#15803d;border-color:#15803d}
-  textarea{width:100%;margin-top:10px;font-family:ui-monospace,Consolas,monospace;font-size:12px;border:1px solid #e5e5e5;border-radius:6px;padding:8px;color:#525252;background:#fafafa;resize:none;height:92px}
+  textarea{width:100%;margin-top:10px;font-family:ui-monospace,Consolas,monospace;font-size:12px;border:1px solid #e5e5e5;border-radius:6px;padding:8px;color:#525252;background:#fafafa;resize:none;height:120px}
   .preview{margin-top:10px}
-  .preview iframe{border:0;width:100%;max-width:640px;height:540px;display:block}
+  .preview iframe{border:0;width:100%;max-width:640px;height:360px;display:block}
   .empty{background:#fff;border:1px dashed #d4d4d4;border-radius:10px;padding:20px;color:#525252}
   .help{font-size:13px;color:#525252;margin-top:24px}
 </style>
@@ -61,8 +61,9 @@
           <button type="button" onclick="copyCode(this)">Copy embed code</button>
         </div>
       </div>
-      <textarea readonly onclick="this.select()">&lt;iframe src="{{ g.embed_url }}" title="{{ g.away }} at {{ g.home }} weather forecast" width="100%" height="540" loading="lazy" style="border:0;max-width:640px;display:block"&gt;&lt;/iframe&gt;
-&lt;p&gt;Weather forecast by &lt;a href="{{ g.page_url }}"&gt;MySportsWeather&lt;/a&gt;&lt;/p&gt;</textarea>
+      <textarea readonly onclick="this.select()">&lt;iframe src="{{ g.embed_url }}" title="{{ g.away }} at {{ g.home }} weather forecast" width="100%" height="360" loading="lazy" style="border:0;max-width:640px;display:block"&gt;&lt;/iframe&gt;
+&lt;p&gt;Weather forecast by &lt;a href="{{ g.page_url }}"&gt;MySportsWeather&lt;/a&gt;&lt;/p&gt;
+&lt;script&gt;window.addEventListener("message",function(e){if(e.origin!=="https://mysportsweather.com"||!e.data||!e.data.msw_embed_height)return;document.querySelectorAll('iframe[src^="https://mysportsweather.com/embed/"]').forEach(function(f){if(f.contentWindow===e.source)f.style.height=e.data.msw_embed_height+"px";});});&lt;/script&gt;</textarea>
       <div class="preview"></div>
     </div>
     {% endfor %}
@@ -90,6 +91,12 @@ function togglePreview(btn) {
   f.src = btn.getAttribute("data-src"); f.loading = "lazy"; f.title = "Forecast preview";
   box.appendChild(f); btn.textContent = "Hide preview";
 }
+window.addEventListener("message", function (e) {
+  if (!e.data || !e.data.msw_embed_height) return;
+  document.querySelectorAll(".preview iframe").forEach(function (f) {
+    if (f.contentWindow === e.source) f.style.height = e.data.msw_embed_height + "px";
+  });
+});
 function filterGames(q) {
   q = (q || "").toLowerCase().trim();
   document.querySelectorAll(".game").forEach(function (el) {

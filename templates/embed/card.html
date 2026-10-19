@@ -1,6 +1,8 @@
 <!doctype html>
 {# Partner iframe card (embed.py). Standalone on purpose: no base.html, no
-   nav, no analytics, no web fonts, so it loads fast inside other sites. #}
+   nav, no analytics, no web fonts, so it loads fast inside other sites.
+   2026-10-19 v3 (Kevin): no hourly table and no extra text lines. Kickoff
+   temp / field wind arrow / wind (gusts only when notable) / rain. #}
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -10,25 +12,31 @@
 <style>
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:#fff}
-  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#0a0a0a;font-size:14px;line-height:1.35}
-  .card{border:1px solid #e5e5e5;border-radius:10px;padding:14px 16px 12px;max-width:640px;margin:0 auto}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#0a0a0a;font-size:14px;line-height:1.3}
+  .card{border:1px solid #e5e5e5;border-radius:10px;padding:12px 14px 10px;max-width:640px;margin:0 auto}
   .kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1e3a8a}
-  .match{font-size:18px;font-weight:700;margin:4px 0 2px}
+  .match{font-size:17px;font-weight:700;margin:3px 0 1px}
   .where{color:#525252;font-size:13px}
-  .stats{display:flex;gap:8px;margin:12px 0 10px}
-  .stat{flex:1 1 0;min-width:0;background:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:8px 10px}
-  .stat b{display:block;font-size:20px;line-height:1.1}
-  .stat span{font-size:11px;color:#737373;text-transform:uppercase;letter-spacing:.06em}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+  .stats.no-field{grid-template-columns:repeat(3,1fr)}
+  .stat{background:#fafafa;border:1px solid #e5e5e5;border-radius:8px;padding:8px 10px;min-width:0}
+  .stat span{display:block;font-size:10.5px;color:#737373;text-transform:uppercase;letter-spacing:.06em}
+  .stat b{display:block;font-size:22px;line-height:1.15;margin-top:2px}
+  .stat b i{font-style:normal;font-size:13px;font-weight:500;color:#525252}
   .stat small{display:block;font-size:12px;color:#525252;margin-top:2px}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
-  th,td{padding:4px 6px;text-align:center;border-bottom:1px solid #f0f0f0}
-  th{font-size:11px;color:#737373;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-  td:first-child,th:first-child{text-align:left}
-  .note{background:#eff6ff;border-radius:8px;padding:10px 12px;margin:12px 0;color:#1e3a8a}
+  .field{display:flex;align-items:center;justify-content:center;padding:4px}
+  .field svg{width:100%;max-width:90px;height:auto;display:block}
+  .note{background:#eff6ff;border-radius:8px;padding:10px 12px;margin:10px 0;color:#1e3a8a}
   .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#737373;border-top:1px solid #e5e5e5;padding-top:8px}
   .foot a{color:#1e3a8a;font-weight:700;text-decoration:none}
   .foot a:hover{text-decoration:underline}
-  @media (max-width:420px){.card{padding:12px}.match{font-size:16px}.stat{padding:7px 8px}.stat b{font-size:17px}th,td{padding:4px 3px}}
+  @media (max-width:480px){
+    .card{padding:11px 12px 9px}
+    .match{font-size:16px}
+    .stats,.stats.no-field{grid-template-columns:repeat(2,1fr)}
+    .stats.no-field .stat:last-child{grid-column:1/-1}
+    .stat b{font-size:20px}
+  }
 </style>
 </head>
 <body>
@@ -37,7 +45,7 @@
   <div class="kicker">{{ sport_label }} weather</div>
   <div class="match">Forecast not available</div>
   <div class="where">This game is over or its forecast isn't posted yet.</div>
-  <div class="foot" style="margin-top:12px">
+  <div class="foot" style="margin-top:10px">
     <a href="{{ hub_url }}" target="_blank" rel="noopener">See every {{ sport_label }} game forecast at MySportsWeather</a>
   </div>
 {% else %}
@@ -50,20 +58,27 @@
   {% elif status != "ok" or not ko %}
     <div class="note">The forecast for this game isn't posted yet. Check back closer to kickoff.</div>
   {% else %}
-    <div class="stats">
-      <div class="stat"><span>Kickoff temp</span><b>{{ ko.temp_f }}°F</b>{% if ko.conditions %}<small>{{ ko.conditions }}</small>{% endif %}</div>
-      <div class="stat"><span>Wind</span><b>{{ ko.wind_mph }} mph</b><small>{% if ko.wind_dir %}From the {{ ko.wind_dir }}{% endif %}{% if ko.show_gust %}{% if ko.wind_dir %}, {% endif %}gusts {{ ko.gust_mph }}{% endif %}</small></div>
-      <div class="stat"><span>{{ ko.precip_label }} chance</span><b>{{ ko.precip_pct }}%</b>{% if game_max is not none and game_max > ko.precip_pct %}<small>Up to {{ game_max }}% during the game</small>{% endif %}</div>
+    <div class="stats{% if field_rot is none %} no-field{% endif %}">
+      <div class="stat"><span>At kickoff</span><b>{{ ko.temp_f }}°</b></div>
+      {% if field_rot is not none %}
+      <div class="stat field" title="Wind direction relative to the field">
+        <svg viewBox="0 0 40 24" aria-label="Wind direction relative to the field" role="img">
+          <rect x="2" y="2" width="36" height="20" rx="0.6" ry="0.6" fill="#f4f7f2" stroke="#9aa0a6" stroke-width="0.7"/>
+          <rect x="2.5" y="2.5" width="5.5" height="19" fill="#dfe5d8"/>
+          <rect x="32" y="2.5" width="5.5" height="19" fill="#dfe5d8"/>
+          <line x1="8" y1="2" x2="8" y2="22" stroke="#94a190" stroke-width="0.6"/>
+          <line x1="32" y1="2" x2="32" y2="22" stroke="#94a190" stroke-width="0.6"/>
+          <line x1="20" y1="2.5" x2="20" y2="21.5" stroke="#c8ccc0" stroke-width="0.5" stroke-dasharray="1.2 0.8"/>
+          <g transform="rotate({{ field_rot }} 20 12)">
+            <line x1="20" y1="18" x2="20" y2="7" stroke="{{ arrow_color }}" stroke-width="1.6" stroke-linecap="round"/>
+            <polygon points="20,5 16.5,9.5 23.5,9.5" fill="{{ arrow_color }}"/>
+          </g>
+        </svg>
+      </div>
+      {% endif %}
+      <div class="stat"><span>Wind</span><b>{{ ko.wind_mph }} <i>mph</i></b>{% if ko.show_gust %}<small>Gusts {{ ko.gust_mph }}</small>{% endif %}</div>
+      <div class="stat"><span>{{ ko.precip_label }}</span><b>{{ ko.precip_pct }}%</b></div>
     </div>
-    {% if hourly %}
-    <table>
-      <tr><th>Hour (ET)</th>{% for h in hourly %}<th>{{ h.label }}</th>{% endfor %}</tr>
-      <tr><td>Temp</td>{% for h in hourly %}<td>{{ h.temp_f }}°</td>{% endfor %}</tr>
-      <tr><td>Wind</td>{% for h in hourly %}<td>{{ h.wind_dir or "" }} {{ h.wind_mph }}</td>{% endfor %}</tr>
-      <tr><td>Precip</td>{% for h in hourly %}<td>{{ h.precip_pct }}%</td>{% endfor %}</tr>
-    </table>
-    {% endif %}
-    {% if roof == "retractable" %}<div class="where" style="margin-bottom:8px">Outdoor conditions shown. The team decides whether the roof is open.</div>{% endif %}
   {% endif %}
 
   <div class="foot">
@@ -73,9 +88,9 @@
 {% endif %}
 </div>
 <script>
-/* Optional auto-height: tells the host page how tall this card is. Hosts
-   that add the listener in docs/EMBED_v1.md resize the iframe to fit;
-   hosts that don't just ignore the message. */
+/* Auto-height: tells the host page how tall this card is. The embed code
+   from the picker includes a listener that resizes the iframe to fit;
+   hosts that strip scripts just keep the fixed height. */
 (function () {
   function send() {
     try {

@@ -106,21 +106,27 @@ def _card_context(sport_seg, date_str, slug, raw):
     if ko:
         ko = dict(ko)
         ko["show_gust"] = gust_is_notable(ko.get("wind_mph"), ko.get("gust_mph"))
-        ko["precip_label"] = _precip_label(ko.get("precip_type"))
+        ptype = ko.get("precip_type")
+        cond = (ko.get("conditions") or "").lower()
+        # api.precip_type_from counts "showers" as a rain word, so NWS "Snow
+        # Showers" comes out "mix". Card-only correction; the shared API
+        # function feeds OVERcast and is left alone.
+        if ptype == "mix" and "snow" in cond and "rain" not in cond and "sleet" not in cond:
+            ptype = "snow"
+        ko["precip_label"] = _precip_label(ptype)
 
-    rows = [r for r in shaped.get("hourly") or [] if r.get("in_game")]
-    if not rows and kickoff:
-        rows = [r for r in shaped.get("hourly") or []
-                if (_parse_utc(r.get("time_utc")) or kickoff) >= kickoff]
-    hourly = []
-    for r in rows[:5]:
-        hourly.append({
-            "label": _hour_label(_parse_utc(r.get("time_utc"))),
-            "temp_f": r.get("temp_f"),
-            "wind_mph": r.get("wind_mph"),
-            "wind_dir": r.get("wind_dir"),
-            "precip_pct": r.get("precip_pct"),
-        })
+    # Field-relative wind arrow, same math as nfl/_macros.html
+    # nfl_football_field: rotation = (wind_to - field_bearing + 90) mod 360.
+    # Only drawn when the venue has a measured bearing. The site falls back
+    # to compass-east for unmeasured fields; a partner card shouldn't show
+    # an orientation we haven't checked, so it just omits the graphic.
+    field_rot = None
+    arrow_color = "#15803d"
+    bearing = (raw.get("venue") or {}).get("field_bearing_degrees")
+    if ko and isinstance(bearing, (int, float)) and ko.get("wind_deg") is not None:
+        field_rot = round(((ko["wind_deg"] + 180) - bearing + 90) % 360, 1)
+        w = ko.get("wind_mph") or 0
+        arrow_color = "#b91c1c" if w >= 25 else "#b45309" if w >= 18 else "#15803d"
 
     return {
         "sport_label": label,
@@ -135,7 +141,8 @@ def _card_context(sport_seg, date_str, slug, raw):
         "status": shaped.get("forecast_status"),
         "ko": ko,
         "game_max": shaped.get("game_max_precip_pct"),
-        "hourly": hourly,
+        "field_rot": field_rot,
+        "arrow_color": arrow_color,
         "game_url": f"{SITE}/{sport_seg}/{date_str}/{slug}",
         "hub_url": f"{SITE}{hub}",
     }
