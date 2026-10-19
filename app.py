@@ -2719,6 +2719,23 @@ def _admin_required(fn):
     return wrapper
 
 
+@app.route("/admin/embed")
+@_admin_required
+def admin_embed():
+    """Partner iframe card usage by site, card and day (embed_stats.py)."""
+    try:
+        import embed_stats
+        data = embed_stats.summary()
+    except Exception as e:
+        print(f"[admin.embed] summary failed: {type(e).__name__}: {e}", flush=True)
+        data = {"today": _eastern_today(), "sites": [], "cards": [], "daily": [],
+                "keep_days": 60, "error": f"{type(e).__name__}: {e}"}
+    resp = Response(render_template("admin/embed.html", **data), mimetype="text/html")
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.route("/admin/mlb", methods=["GET", "POST"])
 @_admin_required
 def admin_mlb():

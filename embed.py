@@ -173,7 +173,18 @@ def embed_card(sport_seg, date_str, slug):
             print(f"[embed] lookup failed {sport_seg}/{date_str}/{slug}: "
                   f"{type(e).__name__}: {e}", flush=True)
 
-    ref = urlparse(request.headers.get("Referer") or "").netloc or "-"
+    ref_host = urlparse(request.headers.get("Referer") or "").netloc
+    ref = ref_host or "-"
+
+    # Usage counts for /admin/embed (embed_stats.py). Well-formed card URLs
+    # only, found or not, so old articles still showing "game is over"
+    # cards are counted too. record() never raises.
+    if _DATE_RE.match(date_str or "") and _SLUG_RE.match(slug or ""):
+        try:
+            import embed_stats
+            embed_stats.record(f"{sport_seg}/{date_str}/{slug}", ref_host)
+        except Exception:
+            pass
 
     if not raw:
         # Game is over, not on the slate yet, or a bad URL. Old articles
@@ -270,6 +281,11 @@ def embed_picker(sport_seg):
 
 def register(app):
     app.register_blueprint(embed_bp)
+    try:
+        import embed_stats
+        embed_stats.start()
+    except Exception as e:
+        print(f"[embed] stats not started: {type(e).__name__}: {e}", flush=True)
 
 
 # EOF-CANARY 2026-10-19-embed

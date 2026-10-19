@@ -1,0 +1,78 @@
+<!doctype html>
+{# /admin/embed — partner iframe card usage (app.admin_embed, embed_stats.py). #}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Embed usage | MySportsWeather admin</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#0a0a0a;background:#fafafa;font-size:14px;line-height:1.4}
+  .wrap{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+  .kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1e3a8a}
+  h1{font-size:24px;margin:4px 0 4px}
+  h2{font-size:16px;margin:28px 0 8px}
+  .lede{color:#525252;margin:0 0 8px}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e5e5;border-radius:8px;overflow:hidden}
+  th,td{padding:7px 10px;text-align:left;border-bottom:1px solid #f0f0f0;vertical-align:top}
+  th{font-size:11px;color:#737373;text-transform:uppercase;letter-spacing:.05em;background:#fafafa}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  .empty{background:#fff;border:1px dashed #d4d4d4;border-radius:8px;padding:16px;color:#525252}
+  .err{background:#fef2f2;color:#991b1b;border-radius:8px;padding:10px 12px;margin:10px 0}
+  a{color:#1e3a8a}
+  .muted{color:#737373;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Admin</div>
+  <h1>Embed card usage</h1>
+  <p class="lede">Card views by the site showing them. Your own previews aren't counted. Today is {{ today }} (Eastern). Counts save every 5 minutes; history kept {{ keep_days }} days.</p>
+  {% if error %}<div class="err">Couldn't load stats: {{ error }}</div>{% endif %}
+
+  <h2>Sites showing cards</h2>
+  {% if sites %}
+  <table>
+    <tr><th>Site</th><th class="n">Today</th><th class="n">7 days</th><th class="n">30 days</th><th>First seen</th><th>Last seen</th></tr>
+    {% for s in sites %}
+    <tr>
+      <td>{% if s.site.startswith("(") %}{{ s.site }}{% else %}<a href="https://{{ s.site }}" target="_blank" rel="noopener noreferrer">{{ s.site }}</a>{% endif %}</td>
+      <td class="n">{{ s.today }}</td><td class="n">{{ s.d7 }}</td><td class="n">{{ s.d30 }}</td>
+      <td>{{ s.first }}</td><td>{{ s.last }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="muted">"(no referrer)" is usually bots or browsers with strict privacy settings.</p>
+  {% else %}
+  <div class="empty">No card views yet.</div>
+  {% endif %}
+
+  <h2>Cards, last 7 days</h2>
+  {% if cards %}
+  <table>
+    <tr><th>Card</th><th class="n">Views</th><th>Where</th></tr>
+    {% for c in cards %}
+    <tr>
+      <td><a href="/embed/{{ c.card }}" target="_blank" rel="noopener">{{ c.card }}</a></td>
+      <td class="n">{{ c.views }}</td>
+      <td>{{ c.site_list }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div class="empty">No card views in the last 7 days.</div>
+  {% endif %}
+
+  <h2>Views per day, last 30 days</h2>
+  {% if daily %}
+  <table>
+    <tr><th>Day</th><th class="n">Views</th></tr>
+    {% for d in daily %}<tr><td>{{ d.day }}</td><td class="n">{{ d.views }}</td></tr>{% endfor %}
+  </table>
+  {% else %}
+  <div class="empty">Nothing yet.</div>
+  {% endif %}
+</div>
+</body>
+</html>
