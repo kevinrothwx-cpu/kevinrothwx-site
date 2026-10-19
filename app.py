@@ -661,7 +661,7 @@ def _hidden_from_google(path: str) -> bool:
     p = (path or "").split("?", 1)[0].rstrip("/") or "/"
     if p in ("/horse", "/ipl") or p.startswith("/ipl/"):
         return True
-    if p.startswith("/embed/"):   # partner iframe cards (embed.py), never indexed
+    if p == "/embed" or p.startswith("/embed/"):   # partner cards + picker (embed.py), never indexed
         return True
     return p.startswith("/ncaaf/stadium/") or p.startswith("/mls/stadium/")
 

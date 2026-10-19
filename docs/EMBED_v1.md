@@ -24,13 +24,18 @@ The line under the iframe is the required attribution. Keep the link text as
 
 ## Finding a game's embed URL
 
-Two ways:
+Three ways:
 
-1. **From the website.** Open the game's forecast page and add `/embed` after
+1. **For writers: the embed picker.** Go to
+   **https://mysportsweather.com/embed**, pick NFL or College Football, find
+   the game and click **Copy embed code**. It copies the iframe and the
+   attribution line together, ready to paste. There's a Preview button too.
+2. **From the website.** Open the game's forecast page and add `/embed` after
    the domain:
    - Page: `https://mysportsweather.com/nfl/2026-10-25/hou-jax`
    - Embed: `https://mysportsweather.com/embed/nfl/2026-10-25/hou-jax`
-2. **From the Partner API.** Every game includes `page_url` and `embed_url`.
+3. **For developers: the Partner API.** Every game includes `page_url` and
+   `embed_url`.
 
 URL format:
 

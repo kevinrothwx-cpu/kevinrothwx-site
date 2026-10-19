@@ -192,6 +192,75 @@ def embed_card(sport_seg, date_str, slug):
     return _finish(render_template("embed/card.html", missing=False, **ctx))
 
 
+# ── Picker: hidden page for partner writers (2026-10-19) ─────────────────
+# Lists the current slate with a "Copy embed code" button per game so
+# nobody has to hand-build URLs. Not linked anywhere on the site, noindex,
+# nofollow, out of the sitemap (/embed/ is in app._hidden_from_google).
+# Reads warm caches only, like the cards.
+
+def _picker_games(sport_seg):
+    if sport_seg == "nfl":
+        from nfl.cache import get_nfl_slate
+        games, _ = get_nfl_slate(allow_build=False)
+        date_key = "kickoff_date_eastern"
+    else:
+        from cfb.cache import get_cfb_slate
+        games, _ = get_cfb_slate(allow_build=False)
+        date_key = "date_local"
+    out = []
+    for g in games or []:
+        try:
+            day, slug = g.get(date_key), g.get("slug")
+            if not day or not slug:
+                continue
+            ko = g.get("kickoff_utc")
+            ko = ko if isinstance(ko, datetime) else _parse_utc(ko)
+            venue = g.get("venue") or {}
+            short = sport_seg == "ncaaf"
+            out.append({
+                "away": _team_name(g.get("away"), {}, short),
+                "home": _team_name(g.get("home"), {}, short),
+                "kickoff_str": _et(ko, "%a, %b %-d · %-I:%M %p ET") if ko else "Time TBD",
+                "sort": ko.timestamp() if ko else 9e12,
+                "venue": venue.get("name") or "",
+                "page_url": f"{SITE}/{sport_seg}/{day}/{slug}",
+                "embed_url": f"{SITE}/embed/{sport_seg}/{day}/{slug}",
+            })
+        except Exception as e:
+            print(f"[embed] picker skipped a {sport_seg} game: {type(e).__name__}: {e}", flush=True)
+    out.sort(key=lambda x: x["sort"])
+    return out
+
+
+def _picker_response(html):
+    resp = Response(html, mimetype="text/html")
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@embed_bp.route("/embed")
+@embed_bp.route("/embed/")
+def embed_index():
+    return _picker_response(render_template("embed/picker.html", index=True,
+                                            sports=[(k, v[2]) for k, v in SPORTS.items()]))
+
+
+@embed_bp.route("/embed/<sport_seg>")
+def embed_picker(sport_seg):
+    if sport_seg not in SPORTS:
+        return _finish("Not found", 404, "no-store")
+    try:
+        games = _picker_games(sport_seg)
+    except Exception as e:
+        print(f"[embed] picker failed for {sport_seg}: {type(e).__name__}: {e}", flush=True)
+        games = []
+    return _picker_response(render_template(
+        "embed/picker.html", index=False, sport_seg=sport_seg,
+        sport_label=SPORTS[sport_seg][2], games=games,
+        sports=[(k, v[2]) for k, v in SPORTS.items()]))
+
+
 def register(app):
     app.register_blueprint(embed_bp)
 
