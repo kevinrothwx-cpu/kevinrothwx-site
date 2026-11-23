@@ -1488,21 +1488,40 @@ def nfl_root():
     Uses MLB-style layout: cheat cards → writeup section → per-game blocks
     with summary panel + hourly table side-by-side."""
     games, meta = get_nfl_slate(allow_build=True)
+
+    # "Next week" tab (2026-11-23): Saturday-Monday the cache also holds
+    # next week's games (see nfl/slate.py). /nfl?week=next shows them with
+    # the same layout. Outside that window, or with nothing to show, the
+    # param just redirects to /nfl so stale links land somewhere useful.
+    from nfl.cache import get_nfl_next_week
+    next_raw = get_nfl_next_week()
+    want_next = request.args.get("week") == "next"
+    if want_next and not next_raw:
+        return redirect("/nfl", code=302)
+    src = next_raw if want_next else games
+
     shaped = []
-    if games:
-        nfl_attach_writeups(games)
-        for g in games:
+    if src:
+        nfl_attach_writeups(src)
+        for g in src:
             wc = _nfl_to_wc_shape(g)
             wc["url_path"] = f"/nfl/{g.get('kickoff_date_eastern')}/{g.get('slug')}"
             shaped.append(wc)
 
-    return render_template(
+    html = render_template(
         "nfl/slate.html",
         games=shaped,
         total_games=len(shaped),
         meta=meta,
         canonical_path="/nfl",
+        has_next_week=bool(next_raw),
+        showing_next_week=want_next,
     )
+    resp = Response(html, mimetype="text/html")
+    if want_next:
+        # A short-lived view of /nfl; the game pages carry the SEO.
+        resp.headers["X-Robots-Tag"] = "noindex, follow"
+    return resp
 
 
 @app.route("/nfl/<date_str>/<slug>")
@@ -1510,9 +1529,20 @@ def nfl_game(date_str, slug):
     """Per-game NFL detail page with schema.org SportsEvent + hourly forecast
     + meteorologist analysis. Dome venues render an indoor notice instead
     of a forecast. Retractable venues default to Closed with a toggle to Open."""
-    if not _valid_date_str(date_str):
-        return _finished_game_response(date_str, "/nfl")
-    game_raw = find_nfl_game(date_str, slug)
+    # _valid_date_str caps at +7 days; next-week preview games (Saturday-
+    # Monday) can be up to ~9 days out, so let those through when the
+    # cache actually has the game.
+    game_raw = None
+    if _valid_date_str(date_str):
+        game_raw = find_nfl_game(date_str, slug)
+    elif __import__("re").fullmatch(r"\d{4}-\d{2}-\d{2}", date_str or ""):
+        try:
+            from nfl.cache import get_nfl_next_week
+            game_raw = next((g for g in get_nfl_next_week()
+                             if g.get("kickoff_date_eastern") == date_str
+                             and g.get("slug") == slug), None)
+        except Exception:
+            game_raw = None
     if not game_raw:
         return _finished_game_response(date_str, "/nfl")
     game = _nfl_to_wc_shape(game_raw)

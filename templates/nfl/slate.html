@@ -50,6 +50,20 @@
     </div>
   </header>
 
+  {# "This week / Next week" tabs (2026-11-23). Only Saturday-Monday, when
+     the cache holds next week's games; see nfl/slate.py. #}
+  {% if has_next_week %}
+    <nav class="nfl-week-tabs" aria-label="Choose week">
+      <a href="/nfl" class="nfl-week-tabs__tab{% if not showing_next_week %} is-on{% endif %}">This week</a>
+      <a href="/nfl?week=next" class="nfl-week-tabs__tab{% if showing_next_week %} is-on{% endif %}">Next week</a>
+    </nav>
+    <style>
+      .nfl-week-tabs{display:flex;gap:0.5rem;margin:0 0 1rem}
+      .nfl-week-tabs__tab{padding:0.45rem 1rem;border:1px solid var(--smoke,#d4d4d4);border-radius:999px;text-decoration:none;color:var(--slate,#1f1f1f);font-weight:600;font-size:0.9rem;background:#fff}
+      .nfl-week-tabs__tab.is-on{background:var(--storm,#1e3a8a);border-color:var(--storm,#1e3a8a);color:#fff}
+    </style>
+  {% endif %}
+
   {# ── Cheat-sheet row (top, above the fold) — flat, no day headers.
       Cards themselves show the date in the top-right corner already. #}
   {% if games %}

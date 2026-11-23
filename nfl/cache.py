@@ -22,7 +22,8 @@ STALE_CACHE_THRESHOLD_SEC = 30 * 60
 DEFAULT_WINDOW_DAYS = 8
 
 
-_slate_cache: dict = {"games": None, "built_at_utc": None, "build_err": None}
+_slate_cache: dict = {"games": None, "built_at_utc": None, "build_err": None,
+                      "next_week": []}   # Sat-Mon preview, see nfl/slate.py
 _cache_lock = threading.Lock()
 _warmer_thread = None
 _warmer_stop = threading.Event()
@@ -61,17 +62,27 @@ def get_nfl_slate(allow_build: bool = True) -> tuple[list, dict | None]:
 def _rebuild() -> None:
     err = None
     games = []
+    next_week: list = []
     try:
-        games = build_nfl_slate(days_ahead=DEFAULT_WINDOW_DAYS)
+        games = build_nfl_slate(days_ahead=DEFAULT_WINDOW_DAYS, next_week_out=next_week)
         _apply_freeze(games)
-        _cleanup_after_rebuild(games)
+        _cleanup_after_rebuild(games + next_week)
     except Exception as e:
         err = f"{type(e).__name__}: {e}"
         traceback.print_exc()
     with _cache_lock:
         _slate_cache["games"] = games
+        _slate_cache["next_week"] = next_week
         _slate_cache["built_at_utc"] = datetime.now(timezone.utc)
         _slate_cache["build_err"] = err
+
+
+def get_nfl_next_week() -> list:
+    """Next week's games, Saturday-Monday only (empty otherwise). Never
+    builds; filled by the regular rebuild. Kept out of get_nfl_slate so
+    /api/v1, the partner API, embeds and the Big Board are unchanged."""
+    with _cache_lock:
+        return list(_slate_cache.get("next_week") or [])
 
 
 def _apply_freeze(games: list[dict]) -> None:
@@ -128,7 +139,7 @@ def find_game_in_slate(date_str: str, slug: str) -> dict | None:
     """Find by kickoff_date_eastern + slug (NFL games are typically
     addressed by Eastern date since national TV broadcasts standardize on it)."""
     games, _meta = get_nfl_slate(allow_build=False)
-    for g in games:
+    for g in list(games) + get_nfl_next_week():
         if g.get("kickoff_date_eastern") == date_str and g.get("slug") == slug:
             return g
     return None
@@ -231,9 +242,11 @@ def _save_warm_snapshot() -> None:
         with _cache_lock:
             games = _slate_cache.get("games")
             built = _slate_cache.get("built_at_utc")
+            next_week = _slate_cache.get("next_week") or []
         if not games:
             return
-        _save_json(_WARM_KEY, {"games": games, "built_at_utc": built})
+        _save_json(_WARM_KEY, {"games": games, "built_at_utc": built,
+                               "next_week": next_week})
     except Exception as e:
         print(f"[{__name__}] warm snapshot save failed: {type(e).__name__}: {e}",
               flush=True)
@@ -250,6 +263,7 @@ def _load_warm_snapshot() -> None:
             return
         with _cache_lock:
             _slate_cache["games"] = raw["games"]
+            _slate_cache["next_week"] = raw.get("next_week") or []
             _slate_cache["built_at_utc"] = raw.get("built_at_utc")
             _slate_cache["build_err"] = None
         n = len(raw["games"])

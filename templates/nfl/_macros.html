@@ -133,8 +133,11 @@
         <span class="game-summary__primary-label">{% if f.gust_notable %}<span class="wx-gust-label">Gusts {{ f.gust|int }}</span>{% else %}Wind{% endif %}</span>
       </div>
     {% else %}
+      {# Was always "Indoor · no forecast", which mislabeled outdoor games
+         whose forecast isn't out yet (next-week preview, 2026-11-23). #}
+      {% set _vm = game.venue_meta if game.venue_meta else (game.venue if game.venue is mapping else none) %}
       <div class="game-summary__cell" style="grid-column:1/-1;grid-row:1/-1">
-        <span class="game-summary__cell-label">Indoor · no forecast</span>
+        <span class="game-summary__cell-label">{% if _vm and _vm.roof_type == "fixed_dome" %}Indoor · no forecast{% elif game.forecast_note %}{{ game.forecast_note }}{% else %}Forecast pending{% endif %}</span>
       </div>
     {% endif %}
   </div>
@@ -198,6 +201,6 @@
       </table>
     </div>
   {% else %}
-    <p class="hourly__missing">Hourly forecast not available for this game.</p>
+    <p class="hourly__missing">{% if game.forecast_note %}{{ game.forecast_note }}.{% else %}Hourly forecast not available for this game.{% endif %}</p>
   {% endif %}
 {% endmacro %}

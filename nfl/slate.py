@@ -67,6 +67,40 @@ def _current_week_cutoff_utc() -> datetime:
     return monday.astimezone(timezone.utc)
 
 
+# ── "Next week" preview (2026-11-23) ─────────────────────────────────
+# Kevin: a terrible Thursday forecast in Buffalo was moving the total on
+# Monday, but /nfl only showed MNF because of the week cap above. So from
+# Saturday through Monday (Eastern), the games the cap holds back are
+# built anyway and handed back through `next_week_out`. They never go into
+# the main list, so the cache's "games", /api/v1 (OVERcast), the partner
+# API, the embed picker, the Big Board and the spotlight all see exactly
+# what they saw before. Only /nfl?week=next and the game pages use them.
+#
+# Forecast reach: NWS hourly runs about 156 hours (6.5 days). From Saturday,
+# next Thursday is in range; next Sunday/Monday fill in early in the week.
+# Games past that show "Forecast posts about a week before kickoff".
+NEXT_WEEK_PREVIEW_WEEKDAYS = (5, 6, 0)   # Sat, Sun, Mon (Python: Mon=0)
+NEXT_WEEK_FORECAST_NOTE = "Forecast posts about a week before kickoff"
+
+
+def show_next_week_now() -> bool:
+    return datetime.now(_ET_LABEL).weekday() in NEXT_WEEK_PREVIEW_WEEKDAYS
+
+
+def _hourly_covers(hourly, kickoff_utc) -> bool:
+    """True when some hourly row's hour contains kickoff."""
+    if not hourly or kickoff_utc is None:
+        return False
+    for h in hourly:
+        try:
+            st = datetime.fromisoformat(str(h.get("start_time")).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            continue
+        if st <= kickoff_utc < st + timedelta(hours=1):
+            return True
+    return False
+
+
 HOURS_BEFORE_KICKOFF = 1
 HOURS_GAME_WINDOW    = 4   # how many hours after kickoff the hourly window extends
 HOURS_HIGHLIGHTED    = 3   # how many of those hours get the game-hour shaded highlight
@@ -75,10 +109,15 @@ HOURS_GAME_HIGHLIGHT = 3   # only 3 in-game hours get highlighted, per Kevin
 
 
 def build_nfl_slate(start_date: Optional[datetime] = None,
-                    days_ahead: int = 8) -> list[dict]:
+                    days_ahead: int = 8,
+                    next_week_out: Optional[list] = None) -> list[dict]:
     """Build full weather-attached NFL slate.
 
-    Default 8-day window covers Thu→Mon spread + buffer."""
+    Default 8-day window covers Thu→Mon spread + buffer.
+
+    next_week_out: optional list. Saturday-Monday, the games the week cap
+    holds back get weather attached and are appended to it (see the
+    "Next week" preview note above). The returned list is unchanged."""
     if start_date is None:
         # Back the window start up 24h so today's already-kicked-off
         # games stay on the slate all day. Same fix Kevin flagged for
@@ -127,8 +166,37 @@ def build_nfl_slate(start_date: Optional[datetime] = None,
     if CAP_SLATE_AT_WEEK_END:
         cutoff = _current_week_cutoff_utc()
         before = len(games)
+        held = [g for g in games
+                if g.get("kickoff_utc") is not None and g["kickoff_utc"] > cutoff]
         games = [g for g in games
                  if g.get("kickoff_utc") is None or g["kickoff_utc"] <= cutoff]
+        if next_week_out is not None and held and show_next_week_now():
+            try:
+                nxt_cutoff = cutoff + timedelta(days=7)
+                nxt_cache: dict = {}
+                for g in held:
+                    if g["kickoff_utc"] > nxt_cutoff:
+                        continue
+                    _attach_weather_to_game(g, nxt_cache, skip_hrrr=True)
+                    # find_period_for_time falls back to the FIRST period
+                    # (i.e. right now) when kickoff is past the end of the
+                    # forecast, which would pass today's weather off as
+                    # next week's. Only keep a forecast whose hourly rows
+                    # actually cover the kickoff hour.
+                    if g.get("weather_source") != "indoor-skip" and not _hourly_covers(g.get("hourly"), g["kickoff_utc"]):
+                        g["forecast"] = None
+                        g["hourly"] = []
+                    if not g.get("forecast") and g.get("weather_source") != "indoor-skip":
+                        g["forecast_note"] = NEXT_WEEK_FORECAST_NOTE
+                    g["next_week"] = True
+                    next_week_out.append(g)
+                print(f"[nfl.slate] next-week preview: {len(next_week_out)} game(s)",
+                      flush=True)
+            except Exception as e:
+                # Never let the preview cost the main slate.
+                print(f"[nfl.slate] next-week preview failed: {type(e).__name__}: {e}",
+                      flush=True)
+                del next_week_out[:]
         if len(games) != before:
             print(f"[nfl.slate] week cap: {before - len(games)} game(s) after "
                   f"{cutoff.astimezone(_ET_LABEL):%a %b %-d} held for next week "
@@ -289,7 +357,7 @@ def _is_game_stale(game: dict) -> bool:
         return False
 
 
-def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
+def _attach_weather_to_game(game: dict, venue_cache: dict, skip_hrrr: bool = False) -> None:
     venue = game.get("venue") or {}
     roof = (venue.get("roof_type") or "").lower()
     lat = venue.get("lat")
@@ -370,7 +438,9 @@ def _attach_weather_to_game(game: dict, venue_cache: dict) -> None:
     # cached in-process by lat/lon so shared venues (MetLife: NYG+NYJ,
     # SoFi: LAR+LAC) get one fetch. Skip HRRR entirely for international
     # venues — HRRR is CONUS only. Fail-soft: no HRRR = no toggle.
-    if venue.get("nws_unsupported"):
+    # skip_hrrr: next-week preview games (kickoff days away, beyond the
+    # high-res window anyway) so the preview adds no Open-Meteo calls.
+    if venue.get("nws_unsupported") or skip_hrrr:
         game["hrrr_hourly"] = []
     else:
         try:
