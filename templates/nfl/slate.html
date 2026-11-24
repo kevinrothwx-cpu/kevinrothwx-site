@@ -67,6 +67,25 @@
     </div>
   </header>
 
+  {# Phone side-to-side wiggle fix (2026-11-23). The shared mobile rule is
+     `.cheat-row { grid-template-columns: 1fr 1fr }`, and a plain 1fr won't
+     shrink below its content, so on a 390px phone the two NFL cards came
+     out ~192px each and the page was ~15px wider than the screen.
+     minmax(0, 1fr) is the same fix CFB already uses (ncaaf/slate.html).
+     The wraps let a long top row ("8:00 PM ET · CANOPY · 11/25") or odds
+     row drop to a second line instead of spilling past the card. Scoped to
+     this page so MLB / MLS / EPL cards are untouched. #}
+  <style>
+    @media (max-width: 720px) {
+      .mlb-page .cheat-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .mlb-page .cheat-row > * { min-width: 0; }
+      .mlb-page .cheat-card__rule { flex-wrap: wrap; row-gap: 0.2rem; }
+      .mlb-page .cheat-card__rule-right { margin-left: auto; }
+      .mlb-page .cheat-card__odds { flex-wrap: wrap; row-gap: 0.15rem; }
+      .mlb-page .cheat-card__wx, .mlb-page .cheat-card__wxmid { min-width: 0; }
+    }
+  </style>
+
   {# ── Cheat-sheet row (top, above the fold) — flat, no day headers.
       Cards themselves show the date in the top-right corner already. #}
   {% if games %}
