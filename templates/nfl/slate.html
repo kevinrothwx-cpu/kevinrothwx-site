@@ -24,7 +24,24 @@
     <div class="mlb-page__hed">
       <div>
         <p class="kicker kicker-storm">NFL · Weather</p>
-        <h1 class="mlb-page__title">NFL Weather Forecasts</h1>
+        {# "This week / Next week" tabs (2026-11-23), beside the H1. Only
+           Saturday-Monday, when the cache holds next week's games; see
+           nfl/slate.py. #}
+        <div class="nfl-title-row">
+          <h1 class="mlb-page__title">NFL Weather Forecasts</h1>
+          {% if has_next_week %}
+            <nav class="nfl-week-tabs" aria-label="Choose week">
+              <a href="/nfl" class="nfl-week-tabs__tab{% if not showing_next_week %} is-on{% endif %}">This week</a>
+              <a href="/nfl?week=next" class="nfl-week-tabs__tab{% if showing_next_week %} is-on{% endif %}">Next week</a>
+            </nav>
+            <style>
+              .nfl-title-row{display:flex;align-items:center;flex-wrap:wrap;gap:0.6rem 1.25rem}
+              .nfl-week-tabs{display:flex;gap:0.5rem}
+              .nfl-week-tabs__tab{padding:0.4rem 0.95rem;border:1px solid var(--smoke,#d4d4d4);border-radius:999px;text-decoration:none;color:var(--slate,#1f1f1f);font-weight:600;font-size:0.88rem;background:#fff;white-space:nowrap}
+              .nfl-week-tabs__tab.is-on{background:var(--storm,#1e3a8a);border-color:var(--storm,#1e3a8a);color:#fff}
+            </style>
+          {% endif %}
+        </div>
         {# Week label moved out of the H1 on 2026-09-08. The H1 is the
            strongest on-page signal after <title>, and "NFL Regular Season ·
            Week 2" carries neither the head term nor anything a person
@@ -49,20 +66,6 @@
       </div>
     </div>
   </header>
-
-  {# "This week / Next week" tabs (2026-11-23). Only Saturday-Monday, when
-     the cache holds next week's games; see nfl/slate.py. #}
-  {% if has_next_week %}
-    <nav class="nfl-week-tabs" aria-label="Choose week">
-      <a href="/nfl" class="nfl-week-tabs__tab{% if not showing_next_week %} is-on{% endif %}">This week</a>
-      <a href="/nfl?week=next" class="nfl-week-tabs__tab{% if showing_next_week %} is-on{% endif %}">Next week</a>
-    </nav>
-    <style>
-      .nfl-week-tabs{display:flex;gap:0.5rem;margin:0 0 1rem}
-      .nfl-week-tabs__tab{padding:0.45rem 1rem;border:1px solid var(--smoke,#d4d4d4);border-radius:999px;text-decoration:none;color:var(--slate,#1f1f1f);font-weight:600;font-size:0.9rem;background:#fff}
-      .nfl-week-tabs__tab.is-on{background:var(--storm,#1e3a8a);border-color:var(--storm,#1e3a8a);color:#fff}
-    </style>
-  {% endif %}
 
   {# ── Cheat-sheet row (top, above the fold) — flat, no day headers.
       Cards themselves show the date in the top-right corner already. #}
