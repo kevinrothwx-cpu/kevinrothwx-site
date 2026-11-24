@@ -201,6 +201,8 @@
       </table>
     </div>
   {% else %}
-    <p class="hourly__missing">{% if game.forecast_note %}{{ game.forecast_note }}.{% else %}Hourly forecast not available for this game.{% endif %}</p>
+    {# Next-week games already say "Forecast posts..." in the summary box;
+       don't repeat it here. #}
+    {% if not game.forecast_note %}<p class="hourly__missing">Hourly forecast not available for this game.</p>{% endif %}
   {% endif %}
 {% endmacro %}

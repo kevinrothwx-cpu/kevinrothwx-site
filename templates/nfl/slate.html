@@ -163,7 +163,12 @@
           <h2 class="wc-dayhed" style="margin:{% if loop.first %}0.25rem{% else %}2rem{% endif %} 0 0.75rem">{{ this_date_label }}</h2>
           {% set ns2.last_date = this_date_key %}
         {% endif %}
-        {% set has_toggle = g.venue_meta and (g.venue_meta.roof_type == "retractable" or g.venue_meta.roof_type == "fixed_dome") %}
+        {# 2026-11-23 (Kevin): domes get no toggle and no weather at all;
+           retractable roofs keep the Closed/Open toggle but lose the
+           explanatory sentence (it read badly on phones). Closed = the
+           header row only. #}
+        {% set is_dome = g.venue_meta and g.venue_meta.roof_type == "fixed_dome" %}
+        {% set has_toggle = g.venue_meta and g.venue_meta.roof_type == "retractable" %}
         <article class="mlb-game-block {% if has_toggle %}has-roof-toggle is-roof-closed{% endif %}" id="match-{{ g.slug }}">
           <header class="mlb-game-block__header">
             <div>
@@ -203,11 +208,7 @@
               <div class="mlb-game-block__time">Kickoff · {{ g.kickoff_eastern_str }}</div>
             {% endif %}
           </header>
-          {% if has_toggle %}
-            <div class="roof-closed-message">
-              <strong>{% if g.venue_meta.roof_type == "fixed_dome" %}Fixed dome{% else %}Retractable roof{% endif %}</strong>, weather has no impact when closed. Toggle <strong>Open</strong> above to see the outdoor forecast for {{ g.kickoff_eastern_str }}.
-            </div>
-          {% endif %}
+          {% if not is_dome %}
           <div class="mlb-game-block__body">
             {{ nfl_summary_panel(g) }}
             <div class="mlb-game-block__hourly">
@@ -246,6 +247,7 @@
               {% endif %}
             </div>
           </div>
+          {% endif %}
           {# "Full forecast" deep-link removed 2026-07-23 for UX consistency
              with MLB — per-game page doesn't add info beyond this slate.
              Page kept in sitemap for SEO discovery. See mlb/slate.html for
